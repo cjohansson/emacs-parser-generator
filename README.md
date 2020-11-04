@@ -31,4 +31,4 @@ We use push down transducer (PDT) based algorithms:
 
 ## Test
 
-Run in terminal `make clean && make test && make compile`
+Run in terminal `make clean && make tests && make compile`

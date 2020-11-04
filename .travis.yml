@@ -14,5 +14,5 @@ env:
 
 script:
   - emacs -Q -batch --eval '(message (emacs-version))'
-  - emacs -Q -batch -L . -l test/parser-test.el
+  - make tests
 
