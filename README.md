@@ -15,10 +15,10 @@ We use a deterministic push down transducer (DPDT) based algorithms.
 ### Top-down
 #### With backtracking
 #### Without backtracking
+##### LL(k)
 ### Bottom-up
 #### With backtracking
 #### Without backtracking
-##### LL(k)
 ##### LR(k)
 ##### LALR(k)
 
