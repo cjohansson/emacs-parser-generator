@@ -15,7 +15,6 @@ We use push down transducer (PDT) based algorithms:
 ## The Top-Down Parsing Algorithm
 ## The Cocke-Younger-Kasami Algorithm
 ## The Parsing Method of Earley
-
 # Without Backtracking
 ## LL(k)
 ## Deterministic Shift-Reduce Parsing
