@@ -9,8 +9,6 @@
 (defvar parser--debug nil)
 
 
-;; page 402
-
 (defmacro parser--debug (&rest message)
   "Output MESSAGE but only if debug is enabled."
   `(when parser--debug
@@ -198,9 +196,18 @@
               (push leading-terminals f-set))))))
     f-set))
 
+;; page 402
 (defun parser--empty-free-first (k production productions)
   "Calculate empty-free-first K tokens of PRODUCTION in PRODUCTIONS."
   (parser--first k production productions t))
+
+(defun parser--v-set (viable-prefix productions start)
+  "Calculate valid LR-sets for each VIABLE-PREFIX of PRODUCTIONS from START."
+  (let ((v-set))
+    (dolist (production productions)
+      )
+    v-set))
+
 
 (provide 'parser)
 

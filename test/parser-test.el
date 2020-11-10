@@ -9,8 +9,24 @@
 (require 'parser)
 (require 'ert)
 
+(defun parser-test--distinct ()
+  "Test `parser--distinct'."
+  (message "Starting tests for (parser--distinct)")
+
+  (should
+   (equal
+    '(a b c)
+    (parser--distinct '(a a b c))))
+
+  (should
+   (equal
+    '("aa" "b" "cc" "c" "a")
+    (parser--distinct '("aa" "b" "cc" "c" "b" "a" "aa"))))
+  (message "Passed tests for (parser--distinct)"))
+
 (defun parser-test--first ()
   "Test `parser--first'."
+  (message "Starting tests for (parser--first)")
 
   (should
    (equal
@@ -156,8 +172,9 @@
 ;; Example 5.28 page 402
 (defun parser-test--empty-free-first ()
   "Test `parser--empty-free-first'."
+  (message "Starting tests for (parser-test--empty-free-first)")
 
-    ;; Example 5.28 p 402
+  ;; Example 5.28 p 402
   (should
    (equal
     '("ca" "cb")
@@ -173,24 +190,31 @@
 
   (message "Passed tests for (parser-test--empty-free-first)"))
 
-(defun parser-test--distinct ()
-  "Test `parser--distinct'."
-  (should
-   (equal
-    '(a b c)
-    (parser--distinct '(a a b c))))
+(defun parser-test--v-set ()
+  "Test `parser--v-set'."
+  (message "Starting tests for (parser-test--v-set)")
 
+    ;; Example 5.29 p 407
   (should
    (equal
-    '("aa" "b" "cc" "c" "a")
-    (parser--distinct '("aa" "b" "cc" "c" "b" "a" "aa"))))
-  (message "Passed tests for (parser--distinct)"))
+    '("ca" "cb")
+    (parser--v-set
+     'e
+     '((S' S)
+       (S SaSb)
+       (S e))
+     'S')))
+  (message "Passed empty-free-first 2 with complex grammar")
+
+  (message "Passed tests for (parser-test--v-set)"))
+
 
 (defun parser-test ()
   "Run test."
   (parser-test--distinct)
   (parser-test--first)
-  (parser-test--empty-free-first))
+  (parser-test--empty-free-first)
+  (parser-test--v-set))
 
 (provide 'parser-test)
 
