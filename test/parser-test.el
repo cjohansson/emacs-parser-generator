@@ -172,7 +172,7 @@
 ;; Example 5.28 page 402
 (defun parser-test--empty-free-first ()
   "Test `parser--empty-free-first'."
-  (message "Starting tests for (parser-test--empty-free-first)")
+  (message "Starting tests for (parser--empty-free-first)")
 
   ;; Example 5.28 p 402
   (should
@@ -188,33 +188,97 @@
        (C c e)))))
   (message "Passed empty-free-first 2 with complex grammar")
 
-  (message "Passed tests for (parser-test--empty-free-first)"))
+  (message "Passed tests for (parser--empty-free-first)"))
 
-(defun parser-test--v-set ()
-  "Test `parser--v-set'."
-  (message "Starting tests for (parser-test--v-set)")
+;; (defun parser-test--v-set ()
+;;   "Test `parser--v-set'."
+;;   (message "Starting tests for (parser-test--v-set)")
 
-    ;; Example 5.29 p 407
+;;   ;; Example 5.29 p 407
+;;   (should
+;;    (equal
+;;     '("ca" "cb")
+;;     (parser--v-set
+;;      'e
+;;      '((S' S)
+;;        (S SaSb)
+;;        (S e))
+;;      'S')))
+;;   (message "Passed empty-free-first 2 with complex grammar")
+
+;;   (message "Passed tests for (parser-test--v-set)"))
+
+(defun parser-test--valid-grammar-p ()
+  "Test function `parser--valid-grammar-p'."
+  (message "Starting tests for (parser--valid-grammar-p)")
+
   (should
    (equal
-    '("ca" "cb")
-    (parser--v-set
-     'e
-     '((S' S)
-       (S SaSb)
-       (S e))
-     'S')))
-  (message "Passed empty-free-first 2 with complex grammar")
+    nil
+    (parser--valid-grammar-p 'B)))
 
-  (message "Passed tests for (parser-test--v-set)"))
+  (should
+   (equal
+    nil
+    (parser--valid-grammar-p "A")))
 
+  (should
+   (equal
+    nil
+    (parser--valid-grammar-p '(A B C))))
+
+  (should
+   (equal
+    t
+    (parser--valid-grammar-p '((A B C) (a b c) ((A ab a)(B b)(C c)) A))))
+
+  (message "Passed tests for (parser--valid-grammar-p)"))
+
+(defun parser-test--valid-look-ahead-number-p ()
+  "Test function `parser--valid-look-ahead-number-p'."
+  (message "Starting tests for (parser--valid-look-ahead-number-p)")
+
+  (should
+   (equal
+    nil
+    (parser--valid-look-ahead-number-p 'A)))
+
+  (should
+   (equal
+   nil
+   (parser--valid-look-ahead-number-p "A")))
+
+  (should
+   (equal
+    nil
+     (parser--valid-look-ahead-number-p -2)))
+
+  (should
+   (equal
+    nil
+     (parser--valid-look-ahead-number-p 3.3)))
+
+  (should
+   (equal
+    t
+    (parser--valid-look-ahead-number-p 2)))
+
+  (should
+   (equal
+    t
+     (parser--valid-look-ahead-number-p 1)))
+
+  (message "Passed tests for (parser--valid-look-ahead-number-p)"))
 
 (defun parser-test ()
   "Run test."
+  (parser-test--valid-look-ahead-number-p)
+  (parser-test--valid-grammar-p)
   (parser-test--distinct)
   (parser-test--first)
   (parser-test--empty-free-first)
-  (parser-test--v-set))
+  ;; (parser-test--v-set)
+  )
 
 (provide 'parser-test)
 

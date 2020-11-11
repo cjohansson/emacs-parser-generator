@@ -201,11 +201,53 @@
   "Calculate empty-free-first K tokens of PRODUCTION in PRODUCTIONS."
   (parser--first k production productions t))
 
-(defun parser--v-set (viable-prefix productions start)
-  "Calculate valid LR-sets for each VIABLE-PREFIX of PRODUCTIONS from START."
+(defun parser--valid-look-ahead-number-p (k)
+  "Return if look-ahead number K is valid or not."
+  (and
+   (integerp k)
+   (>= k 0)))
+
+(defun parser--valid-grammar-p (G)
+  "Return if grammar G is valid or not.  Grammar should contain list with 4 elements: non-terminals (N), terminals (T), productions (P), start (S) where N, T and P are lists and S is a symbol."
+  (let ((valid-p t))
+    (unless (listp G)
+      (setq valid-p nil))
+    (when (and
+           valid-p
+           (not (= (length G) 4)))
+      (setq valid-p nil))
+    (when (and
+           valid-p
+           (or
+            (not (listp (nth 0 G)))
+            (not (listp (nth 1 G)))
+            (not (listp (nth 2 G)))
+            (not (symbolp (nth 3 G)))))
+      (setq valid-p nil))
+    valid-p))
+
+(defun parser--get-grammar-nonterminals (G)
+  "Return non-terminals of grammar G."
+  (nth 0 G))
+
+(defun parser--get-grammar-terminals (G)
+  "Return terminals of grammar G."
+  (nth 1 G))
+
+(defun parser--get-grammar-productions (G)
+  "Return productions of grammar G."
+  (nth 2 G))
+
+(defun parser--get-grammar-start (G)
+  "Return start of grammar G."
+  (nth 3 G))
+
+(defun parser--v-set (y G k)
+  "Calculate valid LRk-sets for the viable-prefix Y in grammar G with look-ahead K."
   (let ((v-set))
-    (dolist (production productions)
-      )
+    (unless (parser--valid-grammar-p G)
+      (error "Invalid grammar G!"))
+    
     v-set))
 
 
