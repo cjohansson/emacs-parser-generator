@@ -6,13 +6,46 @@
 
 ;;; Code:
 
-(defvar parser--debug nil)
+
+;;; Variables:
+
+
+(defvar parser--debug
+  nil
+  "Whether to print debug messages or not.")
+
+(defvar parser--table-terminal-p
+  nil
+  "Hash-table of non-terminals for quick checking.")
+
+(defvar parser--table-non-terminal-p
+  nil
+  "Hash-table of terminals for quick checking.")
+
+(defvar parser--grammar
+  nil
+  "Current grammar used in parser.")
+
+(defvar parser--look-ahead-number
+  nil
+  "Current look-ahead number used.")
+
+
+;; Macros
 
 
 (defmacro parser--debug (&rest message)
   "Output MESSAGE but only if debug is enabled."
   `(when parser--debug
      ,@message))
+
+
+;; Helper Functions
+
+
+(defun parser--empty-p (symbol)
+  "Return whether SYMBOL is empty identifier or not."
+  (eq symbol 'e))
 
 (defun parser--distinct (elements)
   "Return distinct of ELEMENTS."
@@ -24,50 +57,109 @@
         (push element new-elements)))
     (nreverse new-elements)))
 
-;; page 377, Algorithm 5.5
-(defun parser--first (k production productions &optional disallow-empty-first)
-  "Calculate first K tokens of PRODUCTION in PRODUCTIONS, optionally DISALLOW-EMPTY-FIRST."
-  (let ((f-sets (make-hash-table :test 'equal))
-        (i 0)
-        (i-max (length productions)))
-    (while (< i i-max)
-      (parser--debug (message "i = %s" i))
-      (let ((f-set (make-hash-table :test 'equal)))
+(defun parser--get-grammar-nonterminals (&optional G)
+  "Return non-terminals of grammar G."
+  (unless G
+    (if parser--grammar
+        (setq G parser--grammar)
+      (error "No grammar G defined!")))
+  (nth 0 G))
 
-        ;; Iterate all productions, set F_i
-        (dolist (p productions)
-          (let ((production-lhs (symbol-name (car p)))
-                (production-rhs (cdr p)))
-            (parser--debug
-             (message "Production-LHS: %s" production-lhs)
-             (message "Production-RHS: %s" production-rhs))
+(defun parser--get-grammar-productions (&optional G)
+  "Return productions of grammar G."
+  (unless G
+    (if parser--grammar
+        (setq G parser--grammar)
+      (error "No grammar G defined!")))
+  (nth 2 G))
 
-            ;; Iterate all blocks in RHS
-            (let ((f-p-set))
-              (dolist (rhs-p production-rhs)
-                (let ((rhs-string (symbol-name rhs-p)))
-                  (let ((rhs-leading-terminals
-                         (parser--f-set rhs-string `(,k ,i ,f-sets ,disallow-empty-first) '(("" t 0)))))
-                    (parser--debug
-                     (message "Leading %d terminals at index %s (%s) -> %s = %s" k i production-lhs rhs-string rhs-leading-terminals))
-                    (when rhs-leading-terminals
-                      (when (and
-                             (listp rhs-leading-terminals)
-                             (> (length rhs-leading-terminals) 0))
-                        (dolist (rhs-leading-terminals-string rhs-leading-terminals)
-                          (when (and
-                                 (stringp rhs-leading-terminals-string)
-                                 (> (length rhs-leading-terminals-string) 0))
-                            (push rhs-leading-terminals-string f-p-set))))))))
+(defun parser--get-grammar-start (&optional G)
+  "Return start of grammar G."
+  (unless G
+    (if parser--grammar
+        (setq G parser--grammar)
+      (error "No grammar G defined!")))
+  (nth 3 G))
 
-              ;; Make set distinct
-              (setq f-p-set (parser--distinct f-p-set))
-              (parser--debug
-               (message "F_%s_%s(%s) = %s" i k production-lhs f-p-set))
-              (puthash production-lhs (nreverse f-p-set) f-set))))
-        (puthash i f-set f-sets)
-        (setq i (+ i 1))))
-    (sort (gethash (symbol-name production) (gethash (1- i-max) f-sets)) 'string<)))
+(defun parser--get-grammar-terminals (&optional G)
+  "Return terminals of grammar G."
+  (unless G
+    (if parser--grammar
+        (setq G parser--grammar)
+      (error "No grammar G defined!")))
+  (nth 1 G))
+
+(defun parser--load-symbols ()
+  "Load terminals and non-terminals in grammar."
+  (let ((terminals (parser--get-grammar-terminals)))
+    (setq parser--table-terminal-p (make-hash-table :test 'equal))
+    (dolist (terminal terminals)
+      (puthash terminal t parser--table-terminal-p)))
+  (let ((non-terminals (parser--get-grammar-non-terminals)))
+    (setq parser--table-non-terminal-p (make-hash-table :test 'equal))
+    (dolist (non-terminal non-terminals)
+      (puthash non-terminal t parser--table-non-terminal-p))))
+
+(defun parser--non-terminal-p (symbol)
+  "Return whether SYMBOL is a non-terminal in grammar or not."
+  (if (gethash symbol parser--table-non-terminal-p)
+      t
+    nil))
+
+(defun parser--sentential-form-p (symbols)
+  "Return whether SYMBOLS is a valid sentential form in grammar or not."
+  ;; TODO Implement this
+  )
+
+(defun parser--set-grammar (G k)
+  "Set grammar G with look-ahead number K."
+  (unless (parser--valid-grammar-p G)
+    (error "Invalid grammar G!"))
+  (unless (parser--valid-look-ahead-number-p k)
+    (error "Invalid look-ahead number k!"))
+  (setq parser--grammar G)
+  (setq parser--look-ahead-number k)
+  (parser--load-symbols))
+
+(defun parser--terminal-p (symbol)
+  "Return whether SYMBOL is a terminal in grammar or not."
+  (if (gethash symbol parser--table-terminal-p)
+      t
+    nil))
+
+(defun parser--valid-grammar-p (G)
+  "Return if grammar G is valid or not.  Grammar should contain list with 4 elements: non-terminals (N), terminals (T), productions (P), start (S) where N, T and P are lists and S is a symbol."
+  (let ((valid-p t))
+    (unless (listp G)
+      (setq valid-p nil))
+    (when (and
+           valid-p
+           (not (= (length G) 4)))
+      (setq valid-p nil))
+    (when (and
+           valid-p
+           (or
+            (not (listp (nth 0 G)))
+            (not (listp (nth 1 G)))
+            (not (listp (nth 2 G)))
+            (not (symbolp (nth 3 G)))))
+      (setq valid-p nil))
+    valid-p))
+
+(defun parser--valid-look-ahead-number-p (k)
+  "Return if look-ahead number K is valid or not."
+  (and
+   (integerp k)
+   (>= k 0)))
+
+
+;; Main Algorithms
+
+
+;; page 402
+(defun parser--empty-free-first (k production productions)
+  "Calculate empty-free-first K tokens of PRODUCTION in PRODUCTIONS."
+  (parser--first k production productions t))
 
 (defun parser--f-set (input-tape state stack)
   "A deterministic push-down transducer (DPDT) for building F-sets from INPUT-TAPE, STATE and STACK."
@@ -196,51 +288,57 @@
               (push leading-terminals f-set))))))
     f-set))
 
-;; page 402
-(defun parser--empty-free-first (k production productions)
-  "Calculate empty-free-first K tokens of PRODUCTION in PRODUCTIONS."
-  (parser--first k production productions t))
+;; page 357, Algorithm 5.5
+(defun parser--first (β G k &optional disallow-empty-first)
+  "For string β, in grammar G, calculate first K terminals, optionally DISALLOW-EMPTY-FIRST."
+  (unless (parser--valid-grammar-p G)
+    (error "Invalid grammar G!"))
+  (unless (parser--valid-look-ahead-number-p k)
+    (error "Invalid look-ahead number k!"))
+  (let ((productions (parser--get-grammar-productions G)))
+    (let ((f-sets (make-hash-table :test 'equal))
+          (i 0)
+          (i-max (length productions)))
+      (while (< i i-max)
+        (parser--debug (message "i = %s" i))
+        (let ((f-set (make-hash-table :test 'equal)))
 
-(defun parser--valid-look-ahead-number-p (k)
-  "Return if look-ahead number K is valid or not."
-  (and
-   (integerp k)
-   (>= k 0)))
+          ;; Iterate all productions, set F_i
+          (dolist (p productions)
+            (let ((production-lhs (symbol-name (car p)))
+                  (production-rhs (cdr p)))
+              (parser--debug
+               (message "Production-LHS: %s" production-lhs)
+               (message "Production-RHS: %s" production-rhs))
 
-(defun parser--valid-grammar-p (G)
-  "Return if grammar G is valid or not.  Grammar should contain list with 4 elements: non-terminals (N), terminals (T), productions (P), start (S) where N, T and P are lists and S is a symbol."
-  (let ((valid-p t))
-    (unless (listp G)
-      (setq valid-p nil))
-    (when (and
-           valid-p
-           (not (= (length G) 4)))
-      (setq valid-p nil))
-    (when (and
-           valid-p
-           (or
-            (not (listp (nth 0 G)))
-            (not (listp (nth 1 G)))
-            (not (listp (nth 2 G)))
-            (not (symbolp (nth 3 G)))))
-      (setq valid-p nil))
-    valid-p))
+              ;; Iterate all blocks in RHS
+              (let ((f-p-set))
+                (dolist (rhs-p production-rhs)
+                  (let ((rhs-string (symbol-name rhs-p)))
+                    (let ((rhs-leading-terminals
+                           (parser--f-set rhs-string `(,k ,i ,f-sets ,disallow-empty-first) '(("" t 0)))))
+                      (parser--debug
+                       (message "Leading %d terminals at index %s (%s) -> %s = %s" k i production-lhs rhs-string rhs-leading-terminals))
+                      (when rhs-leading-terminals
+                        (when (and
+                               (listp rhs-leading-terminals)
+                               (> (length rhs-leading-terminals) 0))
+                          (dolist (rhs-leading-terminals-string rhs-leading-terminals)
+                            (when (and
+                                   (stringp rhs-leading-terminals-string)
+                                   (> (length rhs-leading-terminals-string) 0))
+                              (push rhs-leading-terminals-string f-p-set))))))))
 
-(defun parser--get-grammar-nonterminals (G)
-  "Return non-terminals of grammar G."
-  (nth 0 G))
+                ;; Make set distinct
+                (setq f-p-set (parser--distinct f-p-set))
+                (parser--debug
+                 (message "F_%s_%s(%s) = %s" i k production-lhs f-p-set))
+                (puthash production-lhs (nreverse f-p-set) f-set))))
+          (puthash i f-set f-sets)
+          (setq i (+ i 1))))
 
-(defun parser--get-grammar-terminals (G)
-  "Return terminals of grammar G."
-  (nth 1 G))
-
-(defun parser--get-grammar-productions (G)
-  "Return productions of grammar G."
-  (nth 2 G))
-
-(defun parser--get-grammar-start (G)
-  "Return start of grammar G."
-  (nth 3 G))
+      ;; TODO Iterate each symbol in β
+      (sort (gethash (symbol-name production) (gethash (1- i-max) f-sets)) 'string<))))
 
 (defun parser--v-set (y G k)
   "Calculate valid LRk-sets for the viable-prefix Y in grammar G with look-ahead K."
