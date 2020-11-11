@@ -43,10 +43,6 @@
 ;; Helper Functions
 
 
-(defun parser--empty-p (symbol)
-  "Return whether SYMBOL is empty identifier or not."
-  (eq symbol 'e))
-
 (defun parser--distinct (elements)
   "Return distinct of ELEMENTS."
   (let ((processed (make-hash-table :test 'equal))
@@ -100,19 +96,6 @@
     (dolist (non-terminal non-terminals)
       (puthash non-terminal t parser--table-non-terminal-p))))
 
-(defun parser--non-terminal-p (symbol)
-  "Return whether SYMBOL is a non-terminal in grammar or not."
-  (unless parser--table-non-terminal-p
-    (error "Table for non-terminals is undefined!"))
-  (if (gethash symbol parser--table-non-terminal-p)
-      t
-    nil))
-
-(defun parser--sentential-form-p (symbols)
-  "Return whether SYMBOLS is a valid sentential form in grammar or not."
-  ;; TODO Implement this
-  )
-
 (defun parser--set-grammar (G k)
   "Set grammar G with look-ahead number K."
   (unless (parser--valid-grammar-p G)
@@ -123,13 +106,9 @@
   (setq parser--look-ahead-number k)
   (parser--load-symbols))
 
-(defun parser--terminal-p (symbol)
-  "Return whether SYMBOL is a terminal in grammar or not."
-  (unless parser--table-terminal-p
-    (error "Table for terminals is undefined!"))
-  (if (gethash symbol parser--table-terminal-p)
-      t
-    nil))
+(defun parser--valid-empty-p (symbol)
+  "Return whether SYMBOL is empty identifier or not."
+  (eq symbol "e"))
 
 (defun parser--valid-grammar-p (G)
   "Return if grammar G is valid or not.  Grammar should contain list with 4 elements: non-terminals (N), terminals (T), productions (P), start (S) where N, T and P are lists and S is a symbol."
@@ -146,7 +125,7 @@
             (not (listp (nth 0 G)))
             (not (listp (nth 1 G)))
             (not (listp (nth 2 G)))
-            (not (symbolp (nth 3 G)))))
+            (not (stringp (nth 3 G)))))
       (setq valid-p nil))
     valid-p))
 
@@ -155,6 +134,39 @@
   (and
    (integerp k)
    (>= k 0)))
+
+(defun parser--valid-non-terminal-p (symbol)
+  "Return whether SYMBOL is a non-terminal in grammar or not."
+  (unless parser--table-non-terminal-p
+    (error "Table for non-terminals is undefined!"))
+  (if (gethash symbol parser--table-non-terminal-p)
+      t
+    nil))
+
+(defun parser--valid-sentential-form-p (symbols)
+  "Return whether SYMBOLS is a valid sentential form in grammar or not."
+  (let ((is-valid t))
+    (let ((symbols-string (symbol-name symbols)))
+      (let ((symbols-length (length symbols-string))
+            (symbol-index 0))
+        (while (and
+                is-valid
+                (< symbol-index symbols-length))
+          (let ((symbol-string (substring symbols-string symbol-index (1+ symbol-index))))
+            (unless (or
+                     (parser--valid-empty-p symbol-string)
+                     (parser--valid-non-terminal-p symbol-string)
+                     (parser--valid-terminal-p symbol-string))
+              (setq is-valid nil))))))
+    is-valid))
+
+(defun parser--valid-terminal-p (symbol)
+  "Return whether SYMBOL is a terminal in grammar or not."
+  (unless parser--table-terminal-p
+    (error "Table for terminals is undefined!"))
+  (if (gethash symbol parser--table-terminal-p)
+      t
+    nil))
 
 
 ;; Main Algorithms
@@ -165,6 +177,7 @@
   "For sentential string Α, Calculate e-free-first k terminals in grammar."
   (parser--first α t))
 
+;; p. 358
 (defun parser--f-set (input-tape state stack)
   "A deterministic push-down transducer (DPDT) for building F-sets from INPUT-TAPE, STATE and STACK."
   (parser--debug
@@ -293,6 +306,7 @@
     f-set))
 
 ;; Algorithm 5.5, p. 357
+;; TODO Make this work on strings instead of symbols
 (defun parser--first (β &optional disallow-e-first)
   "For sentential-form Β, in grammar, calculate first k terminals, optionally DISALLOW-E-FIRST."
   (unless (parser--sentential-form-p β)
@@ -340,7 +354,21 @@
           (puthash i f-set f-sets)
           (setq i (+ i 1))))
 
-      ;; TODO Iterate each symbol in β
+      ;; TODO Iterate each symbol in β using a PDA algorithm
+      (let ((symbol-length (length β))
+            (symbol-index 0)
+            (first-string "")
+            (first-length 0))
+        (while (and
+                (< symbol-index symbol-length)
+                (< first-length k))
+          (let ((symbol-string (substring β symbol-index (1+ symbol-index))))
+            (cond
+             ((parser--valid-terminal-p symbol-string)
+              (setq first-string (concat first-string symbol-string))
+              (setq first-length (1+ first-length)))
+             ((parser--valid-non-terminal-p symbol-string)
+              ;; TODO Handle this scenario here were a non-terminal can result in different FIRST sets
       (sort (gethash (symbol-name production) (gethash (1- i-max) f-sets)) 'string<))))
 
 (defun parser--v-set (y)
