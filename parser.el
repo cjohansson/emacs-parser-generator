@@ -57,7 +57,7 @@
         (push element new-elements)))
     (nreverse new-elements)))
 
-(defun parser--get-grammar-nonterminals (&optional G)
+(defun parser--get-grammar-non-terminals (&optional G)
   "Return non-terminals of grammar G."
   (unless G
     (if parser--grammar
@@ -102,6 +102,8 @@
 
 (defun parser--non-terminal-p (symbol)
   "Return whether SYMBOL is a non-terminal in grammar or not."
+  (unless parser--table-non-terminal-p
+    (error "Table for non-terminals is undefined!"))
   (if (gethash symbol parser--table-non-terminal-p)
       t
     nil))
@@ -123,6 +125,8 @@
 
 (defun parser--terminal-p (symbol)
   "Return whether SYMBOL is a terminal in grammar or not."
+  (unless parser--table-terminal-p
+    (error "Table for terminals is undefined!"))
   (if (gethash symbol parser--table-terminal-p)
       t
     nil))
@@ -156,10 +160,10 @@
 ;; Main Algorithms
 
 
-;; page 402
-(defun parser--empty-free-first (k production productions)
-  "Calculate empty-free-first K tokens of PRODUCTION in PRODUCTIONS."
-  (parser--first k production productions t))
+;; p. 381
+(defun parser--e-free-first (α)
+  "For sentential string Α, Calculate e-free-first k terminals in grammar."
+  (parser--first α t))
 
 (defun parser--f-set (input-tape state stack)
   "A deterministic push-down transducer (DPDT) for building F-sets from INPUT-TAPE, STATE and STACK."
@@ -288,14 +292,13 @@
               (push leading-terminals f-set))))))
     f-set))
 
-;; page 357, Algorithm 5.5
-(defun parser--first (β G k &optional disallow-empty-first)
-  "For string β, in grammar G, calculate first K terminals, optionally DISALLOW-EMPTY-FIRST."
-  (unless (parser--valid-grammar-p G)
-    (error "Invalid grammar G!"))
-  (unless (parser--valid-look-ahead-number-p k)
-    (error "Invalid look-ahead number k!"))
-  (let ((productions (parser--get-grammar-productions G)))
+;; Algorithm 5.5, p. 357
+(defun parser--first (β &optional disallow-e-first)
+  "For sentential-form Β, in grammar, calculate first k terminals, optionally DISALLOW-E-FIRST."
+  (unless (parser--sentential-form-p β)
+    (error "Invalid sentential form β!"))
+  (let ((productions (parser--get-grammar-productions))
+        (k parser--look-ahead-number))
     (let ((f-sets (make-hash-table :test 'equal))
           (i 0)
           (i-max (length productions)))
@@ -316,7 +319,7 @@
                 (dolist (rhs-p production-rhs)
                   (let ((rhs-string (symbol-name rhs-p)))
                     (let ((rhs-leading-terminals
-                           (parser--f-set rhs-string `(,k ,i ,f-sets ,disallow-empty-first) '(("" t 0)))))
+                           (parser--f-set rhs-string `(,k ,i ,f-sets ,disallow-e-first) '(("" t 0)))))
                       (parser--debug
                        (message "Leading %d terminals at index %s (%s) -> %s = %s" k i production-lhs rhs-string rhs-leading-terminals))
                       (when rhs-leading-terminals
@@ -340,7 +343,7 @@
       ;; TODO Iterate each symbol in β
       (sort (gethash (symbol-name production) (gethash (1- i-max) f-sets)) 'string<))))
 
-(defun parser--v-set (y G k)
+(defun parser--v-set (y)
   "Calculate valid LRk-sets for the viable-prefix Y in grammar G with look-ahead K."
   (let ((v-set))
     (unless (parser--valid-grammar-p G)
