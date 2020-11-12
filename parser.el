@@ -234,6 +234,7 @@
                      (listp (car (cdr production)))
                      (symbolp (car (cdr production)))
                      (stringp (car (cdr production))))))
+      (message "RHS is invalid")
       (setq is-valid nil))
 
     ;; Validate right-hand-side (RHS) of production

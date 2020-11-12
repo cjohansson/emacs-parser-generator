@@ -201,25 +201,41 @@
   "Test function `parser--valid-grammar-p'."
   (message "Starting tests for (parser--valid-grammar-p)")
 
-  (should
-   (equal
-    nil
-    (parser--valid-grammar-p 'B)))
+  (should (equal
+    t
+    (parser--valid-grammar-p '((A B C) ("a" "b" "c") ((A "a")) A))))
 
-  (should
-   (equal
+  (should (equal
+    nil
+    (parser--valid-grammar-p '((A B C) ("a" "b" "c") ((A "a")) (A)))))
+
+  (should (equal
+    nil
+    (parser--valid-grammar-p '((A B C) (("a" "b") "c") ((A "a")) A))))
+
+  (should (equal
+    nil
+    (parser--valid-grammar-p '(((A B) C) ("a" "b" "c") ((A "a")) A))))
+
+  (should (equal
+    nil
+    (parser--valid-grammar-p '(((A B) C) ("a" "b" "c") ((A)) A))))
+
+  (should (equal
     nil
     (parser--valid-grammar-p "A")))
 
-  (should
-   (equal
+  (should (equal
     nil
     (parser--valid-grammar-p '(A B C))))
 
-  (should
-   (equal
-    t
-    (parser--valid-grammar-p '((A B C) (a b c) ((A ab a)(B b)(C c)) A))))
+  (should (equal
+    nil
+    (parser--valid-grammar-p '((A B)))))
+
+  (should (equal
+    nil
+    (parser--valid-grammar-p '((A B C) (a (b c) "c") (A ("a" "b") (a b)) (B b) (C "c")))))
 
   (message "Passed tests for (parser--valid-grammar-p)"))
 
@@ -227,35 +243,29 @@
   "Test function `parser--valid-look-ahead-number-p'."
   (message "Starting tests for (parser--valid-look-ahead-number-p)")
 
-  (should
-   (equal
-    nil
-    (parser--valid-look-ahead-number-p 'A)))
+  (should (equal
+           nil
+           (parser--valid-look-ahead-number-p 'A)))
 
-  (should
-   (equal
-   nil
-   (parser--valid-look-ahead-number-p "A")))
+  (should (equal
+           nil
+           (parser--valid-look-ahead-number-p "A")))
 
-  (should
-   (equal
-    nil
-     (parser--valid-look-ahead-number-p -2)))
+  (should (equal
+           nil
+           (parser--valid-look-ahead-number-p -2)))
 
-  (should
-   (equal
-    nil
-     (parser--valid-look-ahead-number-p 3.3)))
+  (should (equal
+           nil
+           (parser--valid-look-ahead-number-p 3.3)))
 
-  (should
-   (equal
-    t
-    (parser--valid-look-ahead-number-p 2)))
+  (should (equal
+           t
+           (parser--valid-look-ahead-number-p 2)))
 
-  (should
-   (equal
-    t
-     (parser--valid-look-ahead-number-p 1)))
+  (should (equal
+           t
+           (parser--valid-look-ahead-number-p 1)))
 
   (message "Passed tests for (parser--valid-look-ahead-number-p)"))
 
@@ -265,9 +275,28 @@
 
   (message "Passed tests for (parser--valid-sentential-form-p)"))
 
+(defun parser-test--valid-production-p ()
+  "Test `parser--valid-production-p'."
+  (message "Starting tests  for (parser--valid-production-p)")
+
+  (should (equal
+           t
+           (parser--valid-production-p '(A a))))
+
+  (should (equal
+           nil
+           (parser--valid-production-p "A")))
+
+  (should (equal
+           nil
+           (parser--valid-production-p '((A a)))))
+
+  (message "Passed tests  for (parser--valid-production-p)"))
+
 (defun parser-test ()
   "Run test."
   (parser-test--valid-look-ahead-number-p)
+  (parser-test--valid-production-p)
   (parser-test--valid-grammar-p)
   (parser-test--distinct)
   (parser-test--valid-sentential-form-p)
