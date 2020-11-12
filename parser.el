@@ -164,7 +164,7 @@
                 (setq valid-p nil)))
             (setq terminal-index (1+ terminal-index)))))
 
-      ;; TODO Check every production
+      ;; Check every production
       (let ((productions (nth 2 G)))
         (let ((production-count (length productions))
               (production-index 0))
@@ -172,9 +172,7 @@
                   valid-p
                   (< production-index production-count))
             (let ((production (nth production-index productions)))
-              (unless (or
-                       (symbolp production)
-                       (stringp production))
+              (unless (parser--valid-production-p production)
                 (setq valid-p nil)))
             (setq production-index (1+ production-index)))))
 
@@ -183,8 +181,7 @@
         (when (and
                valid-p
                (not (or (stringp start) (symbolp start))))
-          (setq valid-p nil)))
-      )
+          (setq valid-p nil))))
     valid-p))
 
 (defun parser--valid-look-ahead-number-p (k)
@@ -200,6 +197,66 @@
   (if (gethash symbol parser--table-non-terminal-p)
       t
     nil))
+
+(defun parser--valid-production-p (production)
+  "Return whether PRODUCTION is valid or not."
+  (let ((is-valid t))
+    (unless (listp production)
+      (setq is-valid nil))
+    (when (and is-valid
+               (not (> (length production) 1)))
+      (setq is-valid nil))
+    (when (and is-valid
+               (not (or
+                     (stringp (car production))
+                     (symbolp (car production))
+                     (listp (car production)))))
+      (setq is-valid nil))
+
+    ;; Validate left-hand-side (LHS) of production
+    (when (and is-valid
+               (listp (car production)))
+      (let ((lhs (car production)))
+        (let ((lhs-index 0)
+              (lhs-length (length lhs)))
+          (while (and is-valid
+                      (< lhs-index lhs-length))
+            (let ((p (nth lhs-index lhs)))
+              (unless (or
+                       (stringp p)
+                       (symbolp p))
+                (setq is-valid nil)))
+            (setq lhs-index (1+ lhs-index))))))
+
+    ;; Validate that RHS is a list or symbol or a string
+    (when (and is-valid
+               (not (or
+                     (listp (car (cdr production)))
+                     (symbolp (car (cdr production)))
+                     (stringp (car (cdr production))))))
+      (setq is-valid nil))
+
+    ;; Validate right-hand-side (RHS) of production
+    (when is-valid
+      (let ((rhs (cdr production)))
+        (let ((rhs-index 0)
+              (rhs-length (length rhs)))
+          (while (and is-valid
+                      (< rhs-index rhs-length))
+            (let ((rhs-element (nth rhs-index rhs)))
+              (cond
+               ((stringp rhs-element))
+               ((symbolp rhs-element))
+               ((listp rhs-element)
+                (dolist (rhs-sub-element rhs-element)
+                  (unless (or
+                           (stringp rhs-sub-element)
+                           (symbolp rhs-sub-element))
+                    (setq is-valid nil))))
+               (t (setq is-valid nil)))
+              (setq rhs-index (1+ rhs-index)))))))
+
+    is-valid))
 
 (defun parser--valid-sentential-form-p (symbols)
   "Return whether SYMBOLS is a valid sentential form in grammar or not."

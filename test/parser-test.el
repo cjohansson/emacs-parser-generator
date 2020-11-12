@@ -196,6 +196,7 @@
 
 ;;   (message "Passed tests for (parser-test--v-set)"))
 
+;; TODO Re-implement this function
 (defun parser-test--valid-grammar-p ()
   "Test function `parser--valid-grammar-p'."
   (message "Starting tests for (parser--valid-grammar-p)")
