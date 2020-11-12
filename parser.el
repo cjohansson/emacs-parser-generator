@@ -134,6 +134,39 @@
                   (stringp (nth 3 G))
                   (symbolp (nth 3 G))))))
       (setq valid-p nil))
+    (when valid-p
+
+      ;; Check every non-terminal
+      (let ((non-terminals (nth 0 G)))
+        (let ((non-terminal-count (length non-terminals))
+              (non-terminal-index 0))
+          (while (and
+                  valid-p
+                  (< non-terminal-index non-terminal-count))
+            (let ((non-terminal (nth non-terminal-index non-terminals)))
+              (unless (or
+                       (symbolp non-terminal)
+                       (stringp non-terminal))
+                (setq valid-p nil)))
+            (setq non-terminal-index (1+ non-terminal-index)))))
+
+      ;; Check every terminal
+      (let ((terminals (nth 1 G)))
+        (let ((terminal-count (length terminals))
+              (terminal-index 0))
+          (while (and
+                  valid-p
+                  (< terminal-index terminal-count))
+            (let ((terminal (nth terminal-index terminals)))
+              (unless (or
+                       (symbolp terminal)
+                       (stringp terminal))
+                (setq valid-p nil)))
+            (setq terminal-index (1+ terminal-index)))))
+
+      ;; TODO Check every production
+      ;; TODO Check start
+      )
     valid-p))
 
 (defun parser--valid-look-ahead-number-p (k)

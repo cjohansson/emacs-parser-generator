@@ -270,11 +270,18 @@
 
   (message "Passed tests for (parser--valid-look-ahead-number-p)"))
 
+(defun parser-test--valid-sentential-form-p ()
+  "Test `parser--valid-sentential-form-p'."
+  (message "Starting tests  for (parser--valid-sentential-form-p)")
+
+  (message "Passed tests for (parser--valid-sentential-form-p)"))
+
 (defun parser-test ()
   "Run test."
   (parser-test--valid-look-ahead-number-p)
   (parser-test--valid-grammar-p)
   (parser-test--distinct)
+  (parser-test--valid-sentential-form-p)
   (parser-test--first)
   (parser-test--empty-free-first)
   ;; (parser-test--v-set)
