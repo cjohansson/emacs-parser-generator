@@ -30,162 +30,150 @@
 
   (should
    (equal
-    '("a")
+    '(a)
     (parser--first
      1
      'S
-     '(
-       (S a)))))
+     '((S a)))))
   (message "Passed first 1 with rudimentary grammar")
 
   (should
    (equal
-    '("ab")
+    '("a" "b")
     (parser--first
      2
      'S
      '(
-       (S abc)))))
+       (S "a" "b" "c")))))
   (message "Passed first 2 with rudimentary grammar")
 
   (should
    (equal
-    '("abc")
+    '("a" b "c")
     (parser--first
      3
      'S
-     '(
-       (S abc)))))
+     '((S "a" b "c")))))
   (message "Passed first 3 with rudimentary grammar")
 
   (should
    (equal
-    '("b")
+    '(b)
     (parser--first
      1
      'S
-     '(
-       (S A)
+     '((S A)
        (A b)))))
   (message "Passed first 1 with intermediate grammar")
 
   (should
    (equal
-    '("ba")
+    '("b" "a")
     (parser--first
      2
      'S
-     '(
-       (S A)
-       (A ba)))))
+     '((S A)
+       (A ("b" "a"))))))
   (message "Passed first 2 with intermediate grammar")
 
   (should
    (equal
-    '("bac")
+    '("b" "a" "c")
     (parser--first
      3
      'S
-     '(
-       (S A)
-       (A bace)))))
+     '((S A)
+       (A ("b" "a" "c" e))))))
   (message "Passed first 3 with intermediate grammar")
 
   (should
    (equal
-    '("c" "d")
+    '(c d)
     (parser--first
      1
      'S
-     '(
-       (S A)
+     '((S A)
        (A B)
-       (B c d)))))
+       (B (c d))))))
   (message "Passed first 1 with semi-complex grammar")
 
   (should
    (equal
-    '("cf" "da")
+    '((c f) (da))
     (parser--first
      2
      'S
-     '(
-       (S Aa)
+     '((S (A a))
        (A B)
-       (B cf d)))))
+       (B (c f) d)))))
   (message "Passed first 2 with semi-complex grammar")
 
   (should
    (equal
-    '("cam" "dam")
+    '(("c" "a" "m") ("d" "a" "m"))
     (parser--first
      3
      'S
-     '(
-       (S A)
-       (A Bam)
-       (B c d)))))
+     '((S A)
+       (A (B "a" "m"))
+       (B "c" "d")))))
   (message "Passed first 3 with semi-complex grammar")
 
   (should
    (equal
-    '("a" "b" "c" "e")
+    '((a) (b) (c) (e))
     (parser--first
      1
      'S
-     '(
-       (S AB)
-       (A Ba e)
-       (B Cb C)
+     '((S (A B))
+       (A (B a) e)
+       (B (C b) C)
        (C c e)))))
   (message "Passed first 1 with complex grammar")
 
   ;; Example 5.28 p 402
   (should
    (equal
-    '("a" "ab" "ac" "b" "ba" "c" "ca" "cb" "e")
+    '(("a") ("a" "b") ("a" "c") ("b") ("b" "a") ("c") ("c" "a") ("c" "b") (e))
     (parser--first
      2
      'S
-     '(
-       (S AB)
-       (A Ba e)
-       (B Cb C)
-       (C c e)))))
+     '((S (AB))
+       (A (B "a") e)
+       (B (C "b") C)
+       (C "c" e)))))
   (message "Passed first 2 with complex grammar")
 
   (should
    (equal
-    '("a" "ab" "ac" "acb" "b" "ba" "bab" "bac" "c" "ca" "cab" "cac" "cb" "cba" "e")
+    '(("a") ("a" "b") ("a" "c") ("a" "c" "b") "b" ("b" "a") ("b" "a" "b") ("b" "a" "c") "c" ("c" "a") ("c" "a" "b") ("c" "a" "c") ("c" "b") ("c" "b" "a") e)
     (parser--first
      3
      'S
-     '(
-       (S AB)
-       (A Ba e)
-       (B Cb C)
-       (C c e)))))
+     '((S (A B))
+       (A (B "a") e)
+       (B (C "b") C)
+       (C "c" e)))))
   (message "Passed first 3 with complex grammar")
 
   (message "Passed tests for (parser--first)"))
 
 ;; Example 5.28 page 402
-(defun parser-test--empty-free-first ()
-  "Test `parser--empty-free-first'."
-  (message "Starting tests for (parser--empty-free-first)")
+(defun parser-test--e-free-first ()
+  "Test `parser--e-free-first'."
+  (message "Starting tests for (parser--e-free-first)")
 
   ;; Example 5.28 p 402
   (should
    (equal
-    '("ca" "cb")
-    (parser--empty-free-first
+    '(("c" "a") ("c" "b"))
+    (parser--e-free-first
      2
      'S
-     '(
-       (S AB)
-       (A Ba e)
-       (B Cb C)
-       (C c e)))))
+     '((S (A B))
+       (A (B "a") e)
+       (B (C "b") C)
+       (C "c" e)))))
   (message "Passed empty-free-first 2 with complex grammar")
 
   (message "Passed tests for (parser--empty-free-first)"))
@@ -283,7 +271,7 @@
   (parser-test--distinct)
   (parser-test--valid-sentential-form-p)
   (parser-test--first)
-  (parser-test--empty-free-first)
+  (parser-test--e-free-first)
   ;; (parser-test--v-set)
   )
 

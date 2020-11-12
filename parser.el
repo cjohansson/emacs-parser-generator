@@ -165,7 +165,25 @@
             (setq terminal-index (1+ terminal-index)))))
 
       ;; TODO Check every production
-      ;; TODO Check start
+      (let ((productions (nth 2 G)))
+        (let ((production-count (length productions))
+              (production-index 0))
+          (while (and
+                  valid-p
+                  (< production-index production-count))
+            (let ((production (nth production-index productions)))
+              (unless (or
+                       (symbolp production)
+                       (stringp production))
+                (setq valid-p nil)))
+            (setq production-index (1+ production-index)))))
+
+      ;; Check start
+      (let ((start (nth 3 G)))
+        (when (and
+               valid-p
+               (not (or (stringp start) (symbolp start))))
+          (setq valid-p nil)))
       )
     valid-p))
 
