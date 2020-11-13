@@ -385,19 +385,27 @@
                                   (let ((sub-terminal-index 0))
                                     (dolist (sub-terminal-alternative-set sub-terminal-sets)
                                       (unless (= sub-terminal-index 0)
-                                        (parser--debug (message "Sub-terminal-alternative-set: %s" sub-terminal-alternative-set))
+                                        (let ((alternative-all-leading-terminals-p all-leading-terminals-p))
+                                          (parser--debug (message "Sub-terminal-alternative-set: %s" sub-terminal-alternative-set))
 
-                                        ;; When we have a leading terminal and sub-terminal set is empty, don't append it
-                                        (when (and
-                                               (< input-tape-index (1- input-tape-length))
-                                               (parser--valid-e-p (car sub-terminal-alternative-set)))
-                                          (setq sub-terminal-alternative-set nil))
+                                          ;; When sub-set only contains the e symbol
+                                          (when (parser--valid-e-p (car sub-terminal-alternative-set))
+                                            (parser--debug (message "alternative-set is e symbol"))
+                                            (if disallow-e-first
+                                                (when (= leading-terminals-count 0)
+                                                  (setq alternative-all-leading-terminals-p nil))
+                                              (when (or
+                                                     (> leading-terminals-count 0)
+                                                     (< input-tape-index (1- input-tape-length)))
+                                                (setq sub-terminal-alternative-set nil)
+                                                (parser--debug (message "Cleared sub-terminal-alternative-set")))))
 
-                                        (let ((sub-rhs-leading-terminals (append leading-terminals sub-terminal-alternative-set)))
-                                          (when (> (length sub-rhs-leading-terminals) k)
-                                            (setq sub-rhs-leading-terminals (butlast sub-rhs-leading-terminals (- (length sub-rhs-leading-terminals) k))))
-                                          (push `(,sub-rhs-leading-terminals ,all-leading-terminals-p ,(1+ input-tape-index)) stack)))
-                                      (setq sub-terminal-index (1+ sub-terminal-index)))))
+                                          (let ((sub-rhs-leading-terminals (append leading-terminals sub-terminal-alternative-set)))
+                                            (parser--debug (message "sub-rhs-leading-terminals: %s" sub-rhs-leading-terminals))
+                                            (when (> (length sub-rhs-leading-terminals) k)
+                                              (setq sub-rhs-leading-terminals (butlast sub-rhs-leading-terminals (- (length sub-rhs-leading-terminals) k))))
+                                            (push `(,sub-rhs-leading-terminals ,alternative-all-leading-terminals-p ,(1+ input-tape-index)) stack)))
+                                        (setq sub-terminal-index (1+ sub-terminal-index))))))
 
                                 (parser--debug (message "Sub-terminal-set: %s" sub-terminal-set))
                                 (when (or
@@ -413,16 +421,14 @@
                     (setq all-leading-terminals-p nil)))
 
                  ((equal rhs-type 'EMPTY)
-                  (if all-leading-terminals-p
-                      (if disallow-e-first
-                          (when (= leading-terminals-count 0)
-                            (setq all-leading-terminals-p nil))
-                        (when (and
-                               (= leading-terminals-count 0)
-                               (= input-tape-index (1- input-tape-length)))
-                          (setq leading-terminals (append leading-terminals rhs-element))
-                          (setq leading-terminals-count (1+ leading-terminals-count))))
-                    (setq all-leading-terminals-p nil)))
+                  (if disallow-e-first
+                      (when (= leading-terminals-count 0)
+                        (setq all-leading-terminals-p nil))
+                    (when (and
+                           (= leading-terminals-count 0)
+                           (= input-tape-index (1- input-tape-length)))
+                      (setq leading-terminals (append leading-terminals rhs-element))
+                      (setq leading-terminals-count (1+ leading-terminals-count)))))
 
                  ((equal rhs-type 'TERMINAL)
                   (when all-leading-terminals-p

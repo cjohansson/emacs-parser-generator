@@ -99,10 +99,10 @@
   (message "Passed first 1 with complex grammar")
 
   ;; Example 5.28 p 382
-  (parser--set-grammar '((S A B C) ("a" "b" "c") ((S A B) (A (B "a") e) (B (C "b") C) (C "c" e)) S) 2)
+  (parser--set-grammar '((S A B C) (a b c) ((S (A B)) (A (B a) e) (B (C b) C) (C c e)) S) 2)
   (should
    (equal
-    '(("a") ("a" "b") ("a" "c") ("b") ("b" "a") ("c") ("c" "a") ("c" "b") (e))
+    '((a) (a c) (a b) (c a) (b a) (e) (c) (b) (c b))
     (parser--first 'S)))
   (message "Passed first 2 with complex grammar")
 
