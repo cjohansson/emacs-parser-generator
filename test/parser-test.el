@@ -120,11 +120,10 @@
     (parser--first 'S)))
   (message "Passed first 2 with complex grammar")
 
-  (parser--set-grammar '((S A B C) (a b c) ((S A B) (A (B a) e) (B (C b) C) (C c e)) S) 3)
-  (message "FIRST = %s" (parser--first 'S))
+  (parser--set-grammar '((S A B C) (a b c) ((S (A B)) (A (B a) e) (B (C b) C) (C c e)) S) 3)
   (should
    (equal
-    '((a) (a b) (a c) (a c b) (b) (b a) (b a b) (b a c) c (c a) (c a b) (c a c) (c b) (c b a) (e))
+    '((a c b) (a) (a c) (a b) (c a) (c a c) (c a b) (b a) (b a c) (b a b) (c b) (e) (c) (b) (c b a))
     (parser--first 'S)))
   (message "Passed first 3 with complex grammar")
 
@@ -136,16 +135,11 @@
   (message "Starting tests for (parser--e-free-first)")
 
   ;; Example 5.28 p 402
+  (parser--set-grammar '((S A B C) (a b c) ((S (A B)) (A (B a) e) (B (C b) C) (C c e)) S) 2)
   (should
    (equal
-    '(("c" "a") ("c" "b"))
-    (parser--e-free-first
-     2
-     'S
-     '((S (A B))
-       (A (B "a") e)
-       (B (C "b") C)
-       (C "c" e)))))
+    '((c b) (c a))
+    (parser--e-free-first 'S)))
   (message "Passed empty-free-first 2 with complex grammar")
 
   (message "Passed tests for (parser--empty-free-first)"))

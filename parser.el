@@ -11,7 +11,7 @@
 
 
 (defvar parser--debug
-  t
+  nil
   "Whether to print debug messages or not.")
 
 (defvar parser--table-terminal-p
