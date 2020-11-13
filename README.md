@@ -43,7 +43,7 @@ Grammar consists of `N`, `T`, `P` and `S`, where `N` is non-terminals, `T` is te
 * P = ((S (A B)) (A (B a) e) (B (C b) C) (C c e))
 * S = S
 
-```elisp
+``` emacs-lisp
 (parser--set-grammar '((S A B C) (a b c) ((S (A B)) (A (B a) e) (B (C b) C) (C c e)) S) 2)
 ```
 
@@ -61,13 +61,13 @@ A production consists of a list of at least two elements. The first element is t
 
 Example, production `S -> A | B` is defined as:
 
-``` elisp
+``` emacs-lisp
 (S A B)
 ```
 
 Another example, production `S -> IF "{" EXPRESSION "}" | EXIT` is declared as:
 
-```elisp
+``` emacs-lisp
 (S (IF "{" EXPRESSION "}") EXIT)
 ```
 
