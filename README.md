@@ -34,6 +34,51 @@ We use push down transducer (PDT) based algorithms:
 ## Operator Precedence Grammars
 ## Floyd-Evans Production Language
 
+## Grammar
+
+Grammar consists of `N`, `T`, `P` and `S`, where `N` is non-terminals, `T` is terminals, `P` is productions and `S` is start-production. N, T, P consists of lists of one or more strings and symbols. When initializing grammar you also set the number of look-ahead to use, like this:
+
+* N = (S A B C)
+* T = (a b c)
+* P = ((S (A B)) (A (B a) e) (B (C b) C) (C c e))
+* S = S
+
+```elisp
+(parser--set-grammar '((S A B C) (a b c) ((S (A B)) (A (B a) e) (B (C b) C) (C c e)) S) 2)
+```
+
+### Non-terminals
+
+A non-terminal is either a symbol or a string so `"A"` and `A` are equally valid.
+
+### Terminals
+
+A terminal is either a symbol or a string so `"{"` and `A` are equally valid.
+
+### Productions
+
+A production consists of a list of at least two elements. The first element is the left-hand-side (LHS) and should contain at least one element. The right-hand-side (RHS) consists of the rest of the elements, if there is more than one list in RHS then each list will be treated as a alternative production RHS.
+
+Example, production `S -> A | B` is defined as:
+
+``` elisp
+(S A B)
+```
+
+Another example, production `S -> IF "{" EXPRESSION "}" | EXIT` is declared as:
+
+```elisp
+(S (IF "{" EXPRESSION "}") EXIT)
+```
+
+### Look-ahead number
+
+Is a simple integer above zero.
+
+### Start
+
+The start symbol is either a string or a symbol and should exists in the list of productions as the LHS.
+
 ## Test
 
 Run in terminal `make clean && make tests && make compile`
