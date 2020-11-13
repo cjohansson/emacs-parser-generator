@@ -94,7 +94,7 @@
   (parser--set-grammar '((S A B C) (a b c) ((S A B) (A (B a) e) (B (C b) C) (C c e)) S) 1)
   (should
    (equal
-    '((a) (b) (c) (e))
+    '((e) (c) (b) (a))
     (parser--first 'S)))
   (message "Passed first 1 with complex grammar")
 

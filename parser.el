@@ -383,16 +383,17 @@
                                   ;; Should branch off here, each unique permutation should be included in set
                                   ;; Follow first alternative in this scope but follow the rest in separate scopes
                                   (let ((sub-terminal-index 0))
-                                    (dolist (sub-terminal-set sub-terminal-sets)
+                                    (dolist (sub-terminal-alternative-set sub-terminal-sets)
                                       (unless (= sub-terminal-index 0)
+                                        (parser--debug (message "Sub-terminal-alternative-set: %s" sub-terminal-alternative-set))
 
                                         ;; When we have a leading terminal and sub-terminal set is empty, don't append it
                                         (when (and
-                                               (> leading-terminals-count 0)
-                                               (parser--valid-e-p sub-terminal-set))
-                                          (setq sub-terminal-set nil))
+                                               (< input-tape-index (1- input-tape-length))
+                                               (parser--valid-e-p (car sub-terminal-alternative-set)))
+                                          (setq sub-terminal-alternative-set nil))
 
-                                        (let ((sub-rhs-leading-terminals (append leading-terminals sub-terminal-set)))
+                                        (let ((sub-rhs-leading-terminals (append leading-terminals sub-terminal-alternative-set)))
                                           (when (> (length sub-rhs-leading-terminals) k)
                                             (setq sub-rhs-leading-terminals (butlast sub-rhs-leading-terminals (- (length sub-rhs-leading-terminals) k))))
                                           (push `(,sub-rhs-leading-terminals ,all-leading-terminals-p ,(1+ input-tape-index)) stack)))
@@ -400,7 +401,7 @@
 
                                 (parser--debug (message "Sub-terminal-set: %s" sub-terminal-set))
                                 (when (or
-                                       (not (parser--valid-e-p sub-terminal-set))
+                                       (not (parser--valid-e-p (car sub-terminal-set)))
                                        (= input-tape-index (1- input-tape-length)))
                                   (setq leading-terminals (append leading-terminals sub-terminal-set))
                                   (setq leading-terminals-count (+ leading-terminals-count (length sub-terminal-set)))
