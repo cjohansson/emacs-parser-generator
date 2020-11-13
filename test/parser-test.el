@@ -98,7 +98,7 @@
     (parser--first 'S)))
   (message "Passed first 1 with complex grammar")
 
-  ;; Example 5.28 p 402
+  ;; Example 5.28 p 382
   (parser--set-grammar '((S A B C) ("a" "b" "c") ((S A B) (A (B "a") e) (B (C "b") C) (C "c" e)) S) 2)
   (should
    (equal
