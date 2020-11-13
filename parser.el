@@ -11,7 +11,7 @@
 
 
 (defvar parser--debug
-  nil
+  t
   "Whether to print debug messages or not.")
 
 (defvar parser--table-terminal-p
@@ -424,7 +424,7 @@
 
                  ((equal rhs-type 'TERMINAL)
                   (when all-leading-terminals-p
-                    (setq leading-terminals (append leading-terminals rhs-element))
+                    (setq leading-terminals (append leading-terminals (list rhs-element)))
                     (setq leading-terminals-count (1+ leading-terminals-count))))))
               (setq input-tape-index (1+ input-tape-index)))
             (when (> leading-terminals-count 0)
