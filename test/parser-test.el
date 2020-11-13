@@ -73,28 +73,28 @@
   (parser--set-grammar '((S A B) ("c" "d") ((S A) (A B) (B "c" "d")) S) 1)
   (should
    (equal
-    '(("d") ("c"))
+    '(("c") ("d"))
     (parser--first 'S)))
   (message "Passed first 1 with semi-complex grammar")
 
   (parser--set-grammar '((S A B) (a c d f) ((S (A a)) (A B) (B (c f) d)) S) 2)
   (should
    (equal
-    '((d a) (c f))
+    '((c f) (d a))
     (parser--first 'S)))
   (message "Passed first 2 with semi-complex grammar")
 
   (parser--set-grammar '((S A B) ("a" "c" "d" "m") ((S A) (A (B "a" "m")) (B "c" "d")) S) 3)
   (should
    (equal
-    '(("d" "a" "m") ("c" "a" "m"))
+    '(("c" "a" "m") ("d" "a" "m"))
     (parser--first 'S)))
   (message "Passed first 3 with semi-complex grammar")
 
   (parser--set-grammar '((S A B C) (a b c) ((S A B) (A (B a) e) (B (C b) C) (C c e)) S) 1)
   (should
    (equal
-    '((e) (c) (b) (a))
+    '((a) (e) (c) (b) )
     (parser--first 'S)))
   (message "Passed first 1 with complex grammar")
 

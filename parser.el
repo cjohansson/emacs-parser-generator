@@ -487,48 +487,55 @@
       (parser--debug
        (message "Generated F-sets"))
 
-      ;; Iterate each symbol in β using a PDA algorithm
-      (let ((input-tape β)
-            (input-tape-length (length β))
-            (stack '((0 0 nil)))
-            (first-list nil))
-        (while stack
-          (let ((stack-topmost (pop stack)))
-            (parser--debug
-             (message "stack-topmost: %s" stack-topmost))
-            (let ((input-tape-index (car stack-topmost))
-                  (first-length (car (cdr stack-topmost)))
-                  (first (car (cdr (cdr stack-topmost)))))
-              (while (and
-                      (< input-tape-index input-tape-length)
-                      (< first-length k))
-                (let ((symbol (nth input-tape-index input-tape)))
-                  (cond
-                   ((parser--valid-terminal-p symbol)
-                    (push symbol first)
-                    (setq first-length (1+ first-length)))
-                   ((parser--valid-non-terminal-p symbol)
-                    (parser--debug
-                     (message "non-terminal symbol: %s" symbol))
-                    (let ((symbol-f-set (gethash symbol (gethash (1- i-max) parser--f-sets))))
-                      (parser--debug
-                       (message "symbol-f-set: %s" symbol-f-set))
-                      (when (> (length symbol-f-set) 1)
-                        ;; Handle this scenario here were a non-terminal can result in different FIRST sets
-                        (let ((symbol-f-set-index 1)
-                              (symbol-f-set-length (length symbol-f-set)))
-                          (while (< symbol-f-set-index symbol-f-set-length)
-                            (let ((symbol-f-set-element (nth symbol-f-set-index symbol-f-set)))
-                              (let ((alternative-first-length (+ first-length (length symbol-f-set-element)))
-                                    (alternative-first (append first symbol-f-set-element))
-                                    (alternative-tape-index (1+ input-tape-index)))
-                                (push `(,alternative-tape-index ,alternative-first-length ,alternative-first) stack)))
-                            (setq symbol-f-set-index (1+ symbol-f-set-index)))))
-                      (setq first-length (+ first-length (length (car symbol-f-set))))
-                      (setq first (append first (car symbol-f-set)))))))
-                (setq input-tape-index (1+ input-tape-index)))
-              (when (> first-length 0)
-                (push first first-list)))))
+      (let ((first-list nil))
+        (if (> (length β) 1)
+            ;; Iterate each symbol in β using a PDA algorithm
+            (let ((input-tape β)
+                  (input-tape-length (length β))
+                  (stack '((0 0 nil)))
+                  (first-list nil))
+              (while stack
+                (let ((stack-topmost (pop stack)))
+                  (parser--debug
+                   (message "stack-topmost: %s" stack-topmost))
+                  (let ((input-tape-index (car stack-topmost))
+                        (first-length (car (cdr stack-topmost)))
+                        (first (car (cdr (cdr stack-topmost)))))
+                    (while (and
+                            (< input-tape-index input-tape-length)
+                            (< first-length k))
+                      (let ((symbol (nth input-tape-index input-tape)))
+                        (cond
+                         ((parser--valid-terminal-p symbol)
+                          (push symbol first)
+                          (setq first-length (1+ first-length)))
+                         ((parser--valid-non-terminal-p symbol)
+                          (parser--debug
+                           (message "non-terminal symbol: %s" symbol))
+                          (let ((symbol-f-set (gethash symbol (gethash (1- i-max) parser--f-sets))))
+                            (parser--debug
+                             (message "symbol-f-set: %s" symbol-f-set))
+                            (when (> (length symbol-f-set) 1)
+                              ;; Handle this scenario here were a non-terminal can result in different FIRST sets
+                              (let ((symbol-f-set-index 1)
+                                    (symbol-f-set-length (length symbol-f-set)))
+                                (while (< symbol-f-set-index symbol-f-set-length)
+                                  (let ((symbol-f-set-element (nth symbol-f-set-index symbol-f-set)))
+                                    (let ((alternative-first-length (+ first-length (length symbol-f-set-element)))
+                                          (alternative-first (append first symbol-f-set-element))
+                                          (alternative-tape-index (1+ input-tape-index)))
+                                      (parser--debug
+                                       (message "alternative-first: %s" alternative-first))
+                                      (push `(,alternative-tape-index ,alternative-first-length ,alternative-first) stack)))
+                                  (setq symbol-f-set-index (1+ symbol-f-set-index)))))
+                            (parser--debug
+                             (message "main-symbol-f-set: %s" (car symbol-f-set)))
+                            (setq first-length (+ first-length (length (car symbol-f-set))))
+                            (setq first (append first (car symbol-f-set)))))))
+                      (setq input-tape-index (1+ input-tape-index)))
+                    (when (> first-length 0)
+                      (push first first-list))))))
+          (setq first-list (gethash (car β) (gethash (1- i-max) parser--f-sets))))
         first-list))))
 
 (defun parser--v-set (y)
