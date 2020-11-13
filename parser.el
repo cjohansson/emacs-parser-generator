@@ -498,8 +498,7 @@
             ;; Iterate each symbol in β using a PDA algorithm
             (let ((input-tape β)
                   (input-tape-length (length β))
-                  (stack '((0 0 nil)))
-                  (first-list nil))
+                  (stack '((0 0 nil))))
               (while stack
                 (let ((stack-topmost (pop stack)))
                   (parser--debug

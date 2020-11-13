@@ -35,11 +35,19 @@
     (parser--first 'S)))
   (message "Passed first 1 with rudimentary grammar")
 
-  ;; (should
-  ;;  (equal
-  ;;   '((a a))
-  ;;   (parser--first '(S a))))
-  ;; (message "Passed first 1b with rudimentary grammar")
+  (parser--set-grammar '((S) (a) ((S a)) S) 1)
+  (should
+   (equal
+    '((a))
+    (parser--first '(S a))))
+  (message "Passed first 1b with rudimentary grammar")
+
+  (parser--set-grammar '((S) (a) ((S a)) S) 2)
+  (should
+   (equal
+    '((a a))
+    (parser--first '(S a))))
+  (message "Passed first 1c with rudimentary grammar")
 
   (parser--set-grammar '((S) ("a" "b" "c") ((S ("a" "b" "c"))) S) 2)
   (should
