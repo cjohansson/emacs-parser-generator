@@ -506,7 +506,11 @@
                     (push symbol first)
                     (setq first-length (1+ first-length)))
                    ((parser--valid-non-terminal-p symbol)
-                    (let ((symbol-f-set (sort (gethash symbol (gethash (1- i-max) parser--f-sets)) 'string<)))
+                    (parser--debug
+                     (message "non-terminal symbol: %s" symbol))
+                    (let ((symbol-f-set (gethash symbol (gethash (1- i-max) parser--f-sets))))
+                      (parser--debug
+                       (message "symbol-f-set: %s" symbol-f-set))
                       (when (> (length symbol-f-set) 1)
                         ;; Handle this scenario here were a non-terminal can result in different FIRST sets
                         (let ((symbol-f-set-index 1)
@@ -516,7 +520,8 @@
                               (let ((alternative-first-length (+ first-length (length symbol-f-set-element)))
                                     (alternative-first (append first symbol-f-set-element))
                                     (alternative-tape-index (1+ input-tape-index)))
-                                (push `(,alternative-tape-index ,alternative-first-length ,alternative-first) stack))))))
+                                (push `(,alternative-tape-index ,alternative-first-length ,alternative-first) stack)))
+                            (setq symbol-f-set-index (1+ symbol-f-set-index)))))
                       (setq first-length (+ first-length (length (car symbol-f-set))))
                       (setq first (append first (car symbol-f-set)))))))
                 (setq input-tape-index (1+ input-tape-index)))
