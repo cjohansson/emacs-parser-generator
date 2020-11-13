@@ -404,8 +404,8 @@
                                             (parser--debug (message "sub-rhs-leading-terminals: %s" sub-rhs-leading-terminals))
                                             (when (> (length sub-rhs-leading-terminals) k)
                                               (setq sub-rhs-leading-terminals (butlast sub-rhs-leading-terminals (- (length sub-rhs-leading-terminals) k))))
-                                            (push `(,sub-rhs-leading-terminals ,alternative-all-leading-terminals-p ,(1+ input-tape-index)) stack)))
-                                        (setq sub-terminal-index (1+ sub-terminal-index))))))
+                                            (push `(,sub-rhs-leading-terminals ,alternative-all-leading-terminals-p ,(1+ input-tape-index)) stack))))
+                                        (setq sub-terminal-index (1+ sub-terminal-index)))))
 
                                 (parser--debug (message "Sub-terminal-set: %s" sub-terminal-set))
                                 (when (or

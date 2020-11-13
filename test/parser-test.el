@@ -35,6 +35,12 @@
     (parser--first 'S)))
   (message "Passed first 1 with rudimentary grammar")
 
+  ;; (should
+  ;;  (equal
+  ;;   '((a a))
+  ;;   (parser--first '(S a))))
+  ;; (message "Passed first 1b with rudimentary grammar")
+
   (parser--set-grammar '((S) ("a" "b" "c") ((S ("a" "b" "c"))) S) 2)
   (should
    (equal
@@ -106,10 +112,11 @@
     (parser--first 'S)))
   (message "Passed first 2 with complex grammar")
 
-  (parser--set-grammar '((S A B C) ("a" "b" "c") ((S A B) (A (B "a") e) (B (C "b") C) (C "c" e)) S) 3)
+  (parser--set-grammar '((S A B C) (a b c) ((S A B) (A (B a) e) (B (C b) C) (C c e)) S) 3)
+  (message "FIRST = %s" (parser--first 'S))
   (should
    (equal
-    '(("a") ("a" "b") ("a" "c") ("a" "c" "b") ("b") ("b" "a") ("b" "a" "b") ("b" "a" "c") "c" ("c" "a") ("c" "a" "b") ("c" "a" "c") ("c" "b") ("c" "b" "a") (e))
+    '((a) (a b) (a c) (a c b) (b) (b a) (b a b) (b a c) c (c a) (c a b) (c a c) (c b) (c b a) (e))
     (parser--first 'S)))
   (message "Passed first 3 with complex grammar")
 
