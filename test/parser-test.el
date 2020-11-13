@@ -28,13 +28,11 @@
   "Test `parser--first'."
   (message "Starting tests for (parser--first)")
 
+  (parser--set-grammar '((S) (a) ((S a)) S) 1)
   (should
    (equal
-    '(a)
-    (parser--first
-     1
-     'S
-     '((S a)))))
+    '((a))
+    (parser--first 'S)))
   (message "Passed first 1 with rudimentary grammar")
 
   (should
@@ -295,6 +293,7 @@
 
 (defun parser-test ()
   "Run test."
+  ;; (setq debug-on-error t)
   (parser-test--valid-look-ahead-number-p)
   (parser-test--valid-production-p)
   (parser-test--valid-grammar-p)

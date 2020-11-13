@@ -256,7 +256,6 @@
                     (setq is-valid nil))))
                (t (setq is-valid nil)))
               (setq rhs-index (1+ rhs-index)))))))
-
     is-valid))
 
 (defun parser--valid-sentential-form-p (symbols)
@@ -268,11 +267,19 @@
               is-valid
               (< symbol-index symbols-length))
         (let ((symbol (nth symbol-index symbols)))
-          (unless (or
-                   (parser--valid-e-p symbol)
-                   (parser--valid-non-terminal-p symbol)
-                   (parser--valid-terminal-p symbol))
-            (setq is-valid nil)))))
+          (unless (parser--valid-symbol-p symbol)
+            (setq is-valid nil)))
+        (setq symbol-index (1+ symbol-index))))
+    is-valid))
+
+(defun parser--valid-symbol-p (symbol)
+  "Return whether SYMBOL is valid or not."
+  (let ((is-valid t))
+    (unless (or
+             (parser--valid-e-p symbol)
+             (parser--valid-non-terminal-p symbol)
+             (parser--valid-terminal-p symbol))
+      (setq is-valid nil))
     is-valid))
 
 (defun parser--valid-terminal-p (symbol)
@@ -295,6 +302,8 @@
 ;; p. 358
 (defun parser--f-set (input-tape state stack)
   "A deterministic push-down transducer (DPDT) for building F-sets from INPUT-TAPE, STATE and STACK."
+  (unless (listp input-tape)
+    (setq input-tape (list input-tape)))
   (parser--debug
    (message "(parser--f-set)")
    (message "input-tape: %s" input-tape)
@@ -336,7 +345,7 @@
                  e-first-p
                  (< input-tape-index input-tape-length))
             (parser--debug (message "Disregarding empty first terminal"))
-            (setq leading-terminals ""))
+            (setq leading-terminals nil))
 
           (let ((leading-terminals-count (length leading-terminals)))
             (parser--debug (message "leading-terminals-count: %s" leading-terminals-count))
@@ -419,98 +428,101 @@
                     (setq leading-terminals-count (1+ leading-terminals-count))))))
               (setq input-tape-index (1+ input-tape-index)))
             (when (> leading-terminals-count 0)
+              (unless (listp leading-terminals)
+                (setq leading-terminals (list leading-terminals)))
               (push leading-terminals f-set))))))
     f-set))
 
 ;; Algorithm 5.5, p. 357
 (defun parser--first (β &optional disallow-e-first)
   "For sentential-form Β, in grammar, calculate first k terminals, optionally DISALLOW-E-FIRST."
+  (unless (listp β)
+    (setq β (list β)))
   (unless (parser--valid-sentential-form-p β)
     (error "Invalid sentential form β!"))
-  (let* ((productions (parser--get-grammar-productions))
-         (k parser--look-ahead-number)
-         (i-max (length productions)))
+  (let ((productions (parser--get-grammar-productions))
+        (k parser--look-ahead-number))
+    (let ((i-max (length productions)))
+      ;; Generate F-sets only once per grammar
+      (unless parser--f-sets
+        (let ((f-sets (make-hash-table :test 'equal))
+              (i 0))
+          (while (< i i-max)
+            (parser--debug (message "i = %s" i))
+            (let ((f-set (make-hash-table :test 'equal)))
 
-    ;; Generate F-sets only once per grammar
-    (unless parser--f-sets
-      (let ((f-sets (make-hash-table :test 'equal))
-            (i 0))
-        (while (< i i-max)
-          (parser--debug (message "i = %s" i))
-          (let ((f-set (make-hash-table :test 'equal)))
-
-            ;; Iterate all productions, set F_i
-            (dolist (p productions)
-              (let ((production-lhs (car p))
-                    (production-rhs (cdr p)))
-                (parser--debug
-                 (message "Production-LHS: %s" production-lhs)
-                 (message "Production-RHS: %s" production-rhs))
-
-                ;; Iterate all blocks in RHS
-                (let ((f-p-set))
-                  (dolist (rhs-p production-rhs)
-                    (let ((rhs-string rhs-p))
-                      (let ((rhs-leading-terminals
-                             (parser--f-set rhs-string `(,k ,i ,f-sets ,disallow-e-first) '(("" t 0)))))
-                        (parser--debug
-                         (message "Leading %d terminals at index %s (%s) -> %s = %s" k i production-lhs rhs-string rhs-leading-terminals))
-                        (when rhs-leading-terminals
-                          (when (and
-                                 (listp rhs-leading-terminals)
-                                 (> (length rhs-leading-terminals) 0))
-                            (dolist (rhs-leading-terminals-string rhs-leading-terminals)
-                              (when (and
-                                     (stringp rhs-leading-terminals-string)
-                                     (> (length rhs-leading-terminals-string) 0))
-                                (push rhs-leading-terminals-string f-p-set))))))))
-
-                  ;; Make set distinct
-                  (setq f-p-set (parser--distinct f-p-set))
+              ;; Iterate all productions, set F_i
+              (dolist (p productions)
+                (let ((production-lhs (car p))
+                      (production-rhs (cdr p)))
                   (parser--debug
-                   (message "F_%s_%s(%s) = %s" i k production-lhs f-p-set))
-                  (puthash production-lhs (nreverse f-p-set) f-set))))
-            (puthash i f-set f-sets)
-            (setq i (+ i 1))))
-        (setq parser--f-sets f-sets)))
+                   (message "Production: %s -> %s" production-lhs production-rhs))
 
-    ;; Iterate each symbol in β using a PDA algorithm
-    (let ((state 'parsing)
-          (input-tape β)
-          (input-tape-length (length β))
-          (stack '((0 0 nil)))
-          (first-list nil))
-      (while stack
-        (let ((stack-topmost (pop stack)))
-          (let ((input-tape-index (car stack-topmost))
-                (first-length (car (cdr stack-topmost)))
-                (first (car (cdr (cdr stack-topmost)))))
-            (while (and
-                    (< input-tape-index input-tape-length)
-                    (< first-length k))
-              (let ((symbol (nth input-tape-index input-tape)))
-                (cond
-                 ((parser--valid-terminal-p symbol)
-                  (push symbol first)
-                  (setq first-length (1+ first-length)))
-                 ((parser--valid-non-terminal-p symbol)
-                  (let ((symbol-f-set (sort (gethash symbol (gethash (1- i-max) parser--f-sets)) 'string<)))
-                    (when (> (length symbol-f-set) 0)
-                      ;; Handle this scenario here were a non-terminal can result in different FIRST sets
-                      (let ((symbol-f-set-index 1)
-                            (symbol-f-set-length (length symbol-f-set)))
-                        (while (< symbol-f-set-index symbol-f-set-length)
-                          (let ((symbol-f-set-element (nth symbol-f-set-index symbol-f-set)))
-                            (let ((alternative-first-length (+ first-length (length symbol-f-set-element)))
-                                  (alternative-first (append first symbol-f-set-element))
-                                  (alternative-tape-index (1+ input-tape-index)))
-                              (push `(,alternative-tape-index ,alternative-first-length ,alternative-first) stack))))))
-                    (setq first-length (+ first-length (length (car symbol-f-set))))
-                    (setq first (append first (car symbol-f-set)))))))
-              (setq input-tape-index (1+ input-tape-index)))
-            (when (> first-length 0)
-              (push first first-list)))))
-      first-list)))
+                  ;; Iterate all blocks in RHS
+                  (let ((f-p-set))
+                    (dolist (rhs-p production-rhs)
+                      (let ((rhs-string rhs-p))
+                        (let ((rhs-leading-terminals
+                               (parser--f-set rhs-string `(,k ,i ,f-sets ,disallow-e-first) '(("" t 0)))))
+                          (parser--debug
+                           (message "Leading %d terminals at index %s (%s) -> %s = %s" k i production-lhs rhs-string rhs-leading-terminals))
+                          (when rhs-leading-terminals
+                            (when (and
+                                   (listp rhs-leading-terminals)
+                                   (> (length rhs-leading-terminals) 0))
+                              (dolist (rhs-leading-terminals-element rhs-leading-terminals)
+                                (push rhs-leading-terminals-element f-p-set)))))))
+
+                    ;; Make set distinct
+                    (setq f-p-set (parser--distinct f-p-set))
+                    (parser--debug
+                     (message "F_%s_%s(%s) = %s" i k production-lhs f-p-set))
+                    (puthash production-lhs (nreverse f-p-set) f-set))))
+              (puthash i f-set f-sets)
+              (setq i (+ i 1))))
+          (setq parser--f-sets f-sets)))
+
+      (parser--debug
+       (message "Generated F-sets"))
+
+      ;; Iterate each symbol in β using a PDA algorithm
+      (let ((input-tape β)
+            (input-tape-length (length β))
+            (stack '((0 0 nil)))
+            (first-list nil))
+        (while stack
+          (let ((stack-topmost (pop stack)))
+            (parser--debug
+             (message "stack-topmost: %s" stack-topmost))
+            (let ((input-tape-index (car stack-topmost))
+                  (first-length (car (cdr stack-topmost)))
+                  (first (car (cdr (cdr stack-topmost)))))
+              (while (and
+                      (< input-tape-index input-tape-length)
+                      (< first-length k))
+                (let ((symbol (nth input-tape-index input-tape)))
+                  (cond
+                   ((parser--valid-terminal-p symbol)
+                    (push symbol first)
+                    (setq first-length (1+ first-length)))
+                   ((parser--valid-non-terminal-p symbol)
+                    (let ((symbol-f-set (sort (gethash symbol (gethash (1- i-max) parser--f-sets)) 'string<)))
+                      (when (> (length symbol-f-set) 1)
+                        ;; Handle this scenario here were a non-terminal can result in different FIRST sets
+                        (let ((symbol-f-set-index 1)
+                              (symbol-f-set-length (length symbol-f-set)))
+                          (while (< symbol-f-set-index symbol-f-set-length)
+                            (let ((symbol-f-set-element (nth symbol-f-set-index symbol-f-set)))
+                              (let ((alternative-first-length (+ first-length (length symbol-f-set-element)))
+                                    (alternative-first (append first symbol-f-set-element))
+                                    (alternative-tape-index (1+ input-tape-index)))
+                                (push `(,alternative-tape-index ,alternative-first-length ,alternative-first) stack))))))
+                      (setq first-length (+ first-length (length (car symbol-f-set))))
+                      (setq first (append first (car symbol-f-set)))))))
+                (setq input-tape-index (1+ input-tape-index)))
+              (when (> first-length 0)
+                (push first first-list)))))
+        first-list))))
 
 (defun parser--v-set (y)
   "Calculate valid LRk-sets for the viable-prefix Y in grammar G with look-ahead K."
