@@ -364,7 +364,8 @@
                  ((parser--valid-e-p rhs-element)
                   (setq rhs-type 'EMPTY))
                  ((parser--valid-terminal-p rhs-element)
-                  (setq rhs-type 'TERMINAL)))
+                  (setq rhs-type 'TERMINAL))
+                 (t (error (format "Invalid symbol %s" rhs-element))))
                 (parser--debug (message "rhs-type: %s" rhs-type))
 
                 (cond
