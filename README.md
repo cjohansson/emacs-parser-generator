@@ -38,10 +38,10 @@ We use push down transducer (PDT) based algorithms:
 
 Grammar consists of `N`, `T`, `P` and `S`, where `N` is non-terminals, `T` is terminals, `P` is productions and `S` is start-production. N, T, P consists of lists of one or more strings and symbols. When initializing grammar you also set the number of look-ahead to use, like this:
 
-* N = (S A B C)
-* T = (a b c)
-* P = ((S (A B)) (A (B a) e) (B (C b) C) (C c e))
-* S = S
+* N = `'(S A B C)'`
+* T = `'(a b c)`
+* P = `'((S (A B)) (A (B a) e) (B (C b) C) (C c e))`
+* S = `'S`
 
 ``` emacs-lisp
 (parser--set-grammar '((S A B C) (a b c) ((S (A B)) (A (B a) e) (B (C b) C) (C c e)) S) 2)
