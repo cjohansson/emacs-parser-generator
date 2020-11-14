@@ -36,7 +36,7 @@ We use push down transducer (PDT) based algorithms:
 
 ## Grammar
 
-Grammar consists of `N`, `T`, `P` and `S`, where `N` is non-terminals, `T` is terminals, `P` is productions and `S` is start-production. N, T, P consists of lists of one or more strings and symbols. When initializing grammar you also set the number of look-ahead to use, like this:
+Grammar consists of `N`, `T`, `P` and `S`, where `N` is non-terminals, `T` is terminals, `P` is productions and `S` is start-production. N, T, P consists of lists of one or more strings and symbols, S is the left-hand-side (LHS) of a production in P. When initializing grammar you also set the number of look-ahead to use, like this:
 
 * N = `'(S A B C)`
 * T = `'(a b c)`
@@ -86,6 +86,7 @@ The start symbol is either a string or a symbol and should exists in the list of
 Calculate first `k` terminals of sentential-form `S`, example:
 
 ``` emacs-lisp
+(require 'ert)
 (parser--set-grammar '((S A B C) (a b c) ((S (A B)) (A (B a) e) (B (C b) C) (C c e)) S) 2)
 (should
   (equal
@@ -98,6 +99,7 @@ Calculate first `k` terminals of sentential-form `S`, example:
 Calculate e-free-first `k` terminals of sentential-form `S`, example:
 
 ``` emacs-lisp
+(require 'ert)
 (parser--set-grammar '((S A B C) (a b c) ((S (A B)) (A (B a) e) (B (C b) C) (C c e)) S) 2)
 (should
   (equal
