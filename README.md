@@ -62,13 +62,13 @@ A production consists of a list of at least two elements. The first element is t
 Example, production `S -> A | B` is defined as:
 
 ``` emacs-lisp
-(S A B)
+'(S A B)
 ```
 
 Another example, production `S -> IF "{" EXPRESSION "}" | EXIT` is declared as:
 
 ``` emacs-lisp
-(S (IF "{" EXPRESSION "}") EXIT)
+'(S (IF "{" EXPRESSION "}") EXIT)
 ```
 
 ### Look-ahead number
@@ -78,6 +78,32 @@ Is a simple integer above zero.
 ### Start
 
 The start symbol is either a string or a symbol and should exists in the list of productions as the LHS.
+
+## Functions
+
+### Calculate FIRST(k, S)
+
+Calculate first `k` terminals of sentential-form `S`, example:
+
+``` emacs-lisp
+(parser--set-grammar '((S A B C) (a b c) ((S (A B)) (A (B a) e) (B (C b) C) (C c e)) S) 2)
+(should
+  (equal
+    '((a) (a c) (a b) (c a) (b a) (e) (c) (b) (c b))
+    (parser--first 'S)))
+```
+
+### Calculate E-FREE-FIRST(k, S)
+
+Calculate e-free-first `k` terminals of sentential-form `S`, example:
+
+``` emacs-lisp
+(parser--set-grammar '((S A B C) (a b c) ((S (A B)) (A (B a) e) (B (C b) C) (C c e)) S) 2)
+(should
+  (equal
+    '((c b) (c a))
+    (parser--e-free-first 'S)))
+```
 
 ## Test
 
