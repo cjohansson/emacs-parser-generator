@@ -152,7 +152,7 @@
   (parser--set-look-ahead-number 1)
   (should
    (equal
-    '(("d") ("c"))
+    '(("c") ("d"))
     (parser--first 'S)))
   (message "Passed first 1 with semi-complex grammar")
 
@@ -176,7 +176,7 @@
   (parser--set-look-ahead-number 1)
   (should
    (equal
-    '((a) (a) (c) (e))
+    '((a) (b) (c) (e))
     (parser--first 'S)))
   (message "Passed first 1 with complex grammar")
 
@@ -185,7 +185,7 @@
   (parser--set-look-ahead-number 2)
   (should
    (equal
-    '((a) (a c) (a b) (c a) (b a) (e) (c) (b) (c b))
+    '((a b) (a c) (a) (b a) (b) (c a) (c) (c b) (e))
     (parser--first 'S)))
   (message "Passed first 2 with complex grammar")
 
@@ -193,7 +193,7 @@
   (parser--set-look-ahead-number 3)
   (should
    (equal
-    '((a c b) (a) (a c) (a b) (c a) (c a c) (c a b) (b a) (b a c) (b a b) (c b) (e) (c) (b) (c b a))
+    '((a) (a b) (a c) (a c b) (b a) (b a b) (b a c) (b) (c a) (c a b) (c a c) (c b) (c) (c b a) (e))
     (parser--first 'S)))
   (message "Passed first 3 with complex grammar")
 
@@ -209,7 +209,7 @@
   (parser--set-look-ahead-number 2)
   (should
    (equal
-    '((c b) (c a))
+    '((c a) (c b))
     (parser--e-free-first 'S)))
   (message "Passed empty-free-first 2 with complex grammar")
 

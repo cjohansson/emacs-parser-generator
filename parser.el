@@ -117,13 +117,13 @@
 
 (defun parser--sort-list (a b)
   "Return non-nil if a element in A is greater than a element in B in lexicographic order."
-  (let ((max-index (1- (min (length a) (length b))))
+  (let ((length (min (length a) (length b)))
         (index 0)
         (continue t)
         (response nil))
     (while (and
             continue
-            (< index max-index))
+            (< index length))
       (let ((a-element (nth index a))
             (b-element (nth index b)))
         (if (string-greaterp a-element b-element)
@@ -428,7 +428,7 @@
                                             (when (> (length sub-rhs-leading-terminals) k)
                                               (setq sub-rhs-leading-terminals (butlast sub-rhs-leading-terminals (- (length sub-rhs-leading-terminals) k))))
                                             (push `(,sub-rhs-leading-terminals ,alternative-all-leading-terminals-p ,(1+ input-tape-index)) stack))))
-                                        (setq sub-terminal-index (1+ sub-terminal-index)))))
+                                      (setq sub-terminal-index (1+ sub-terminal-index)))))
 
                                 (parser--debug (message "Sub-terminal-set: %s" sub-terminal-set))
                                 (when (or
@@ -562,22 +562,19 @@
                   (setq input-tape-index (1+ input-tape-index)))
                 (when (> first-length 0)
                   (push first first-list))))))
-        (message "first-list-before-sort: %s" first-list)
         (setq first-list (sort first-list 'parser--sort-list))
-        (message "first-list-after-sort: %s" first-list)
         first-list))))
 
 ;; Definition p. 343, FOLLOW(β) = w, w is the set {w|β=>*aβy and w is in FIRST(y)}
 (defun parser--follow (β)
-  "Calculate follow-set of B."
+  "Calculate follow-set of Β."
   ;; Make sure argument is a list
   (unless (listp β)
     (setq β (list β)))
   (let ((follow-set nil)
         (match-length (length β)))
     ;; Iterate all productions in grammar
-    (let ((productions (parser--get-grammar-productions))
-          (k parser--look-ahead-number))
+    (let ((productions (parser--get-grammar-productions)))
       (dolist (p productions)
         ;; Iterate all RHS of every production
         (let ((production-rhs (cdr p))
@@ -600,19 +597,13 @@
                       (progn
                         (setq match-index (1+ match-index))
                         (when (= match-index match-length)
-                          (parser--debug
-                           (message "found full follow hit: %s" β))
                           (if (= rhs-index (1- rhs-count))
                               ;; If rest of RHS is empty add e in follow-set
                               (push '(e) follow-set)
                             ;; Otherwise add FOLLOW(rest) to follow-set
                             (let ((rest (nthcdr (1+ rhs-index) rhs)))
-                              (parser--debug
-                               (message "rest: %s" rest))
                               (let ((first-set (parser--first rest)))
-                                (parser--debug
-                                 (message "rest-first-set: %s" first-set))
-                                (push first-set follow-set))))
+                                (setq follow-set (append first-set follow-set)))))
                           (setq match-index 0)))
                     (when (> match-index 0)
                       (setq match-index 0))))
