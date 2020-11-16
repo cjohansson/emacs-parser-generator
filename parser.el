@@ -534,7 +534,7 @@
                   (let ((symbol (nth input-tape-index input-tape)))
                     (cond
                      ((parser--valid-terminal-p symbol)
-                      (push symbol first)
+                      (setq first (append first (list symbol)))
                       (setq first-length (1+ first-length)))
                      ((parser--valid-non-terminal-p symbol)
                       (parser--debug

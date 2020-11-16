@@ -70,6 +70,14 @@
     (parser--follow 'A)))
   (message "Passed follow 2 with intermediate grammar")
 
+  (parser--set-grammar '((S A B) (a c d f) ((S (A a)) (A (B c d)) (B (c f) d)) S))
+  (parser--set-look-ahead-number 2)
+  (should
+   (equal
+    '((c d))
+    (parser--follow 'B)))
+  (message "Passed follow 3 with intermediate grammar")
+
   (message "Passed tests for (parser--follow)"))
 
 (defun parser-test--first ()
