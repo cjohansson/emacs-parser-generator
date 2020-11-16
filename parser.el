@@ -565,9 +565,9 @@
         (setq first-list (sort first-list 'parser--sort-list))
         first-list))))
 
-;; Definition p. 343, FOLLOW(β) = w, w is the set {w | S =>* αβγ and w is in FIRST(γ)}
+;; Definition p. 343
 (defun parser--follow (β)
-  "Calculate follow-set of Β."
+  "Calculate follow-set of Β.  FOLLOW(β) = w, w is the set {w | S =>* αβγ and w is in FIRST(γ)}."
   ;; Make sure argument is a list
   (unless (listp β)
     (setq β (list β)))
