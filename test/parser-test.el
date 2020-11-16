@@ -28,84 +28,96 @@
   "Test `parser--first'."
   (message "Starting tests for (parser--first)")
 
-  (parser--set-grammar '((S) (a) ((S a)) S) 1)
+  (parser--set-grammar '((S) (a) ((S a)) S))
+  (parser--set-look-ahead-number 1)
   (should
    (equal
     '((a))
     (parser--first 'S)))
   (message "Passed first 1 with rudimentary grammar")
 
-  (parser--set-grammar '((S) (a) ((S a)) S) 1)
+  (parser--set-grammar '((S) (a) ((S a)) S))
+  (parser--set-look-ahead-number 1)
   (should
    (equal
     '((a))
     (parser--first '(S a))))
   (message "Passed first 1b with rudimentary grammar")
 
-  (parser--set-grammar '((S) (a) ((S a)) S) 2)
+  (parser--set-grammar '((S) (a) ((S a)) S))
+  (parser--set-look-ahead-number 2)
   (should
    (equal
     '((a a))
     (parser--first '(S a))))
   (message "Passed first 1c with rudimentary grammar")
 
-  (parser--set-grammar '((S) ("a" "b" "c") ((S ("a" "b" "c"))) S) 2)
+  (parser--set-grammar '((S) ("a" "b" "c") ((S ("a" "b" "c"))) S))
+  (parser--set-look-ahead-number 2)
   (should
    (equal
     '(("a" "b"))
     (parser--first 'S)))
   (message "Passed first 2 with rudimentary grammar")
 
-  (parser--set-grammar '((S) ("a" b "c") ((S ("a" b "c"))) S) 3)
+  (parser--set-grammar '((S) ("a" b "c") ((S ("a" b "c"))) S))
+  (parser--set-look-ahead-number 3)
   (should
    (equal
     '(("a" b "c"))
     (parser--first 'S)))
   (message "Passed first 3 with rudimentary grammar")
 
-  (parser--set-grammar '((S A) (b) ((S A) (A b)) S) 2)
+  (parser--set-grammar '((S A) (b) ((S A) (A b)) S))
+  (parser--set-look-ahead-number 2)
   (should
    (equal
     '((b))
     (parser--first 'S)))
   (message "Passed first 1 with intermediate grammar")
 
-  (parser--set-grammar '((S A) ("a" "b") ((S A) (A ("b" "a"))) S) 2)
+  (parser--set-grammar '((S A) ("a" "b") ((S A) (A ("b" "a"))) S))
+  (parser--set-look-ahead-number 2)
   (should
    (equal
     '(("b" "a"))
     (parser--first 'S)))
   (message "Passed first 2 with intermediate grammar")
 
-  (parser--set-grammar '((S A) ("a" "b" "c" "d") ((S A) (A ("b" "a" "c" "d"))) S) 3)
+  (parser--set-grammar '((S A) ("a" "b" "c" "d") ((S A) (A ("b" "a" "c" "d"))) S))
+  (parser--set-look-ahead-number 3)
   (should
    (equal
     '(("b" "a" "c"))
     (parser--first 'S)))
   (message "Passed first 3 with intermediate grammar")
 
-  (parser--set-grammar '((S A B) ("c" "d") ((S A) (A B) (B "c" "d")) S) 1)
+  (parser--set-grammar '((S A B) ("c" "d") ((S A) (A B) (B "c" "d")) S))
+  (parser--set-look-ahead-number 1)
   (should
    (equal
     '(("c") ("d"))
     (parser--first 'S)))
   (message "Passed first 1 with semi-complex grammar")
 
-  (parser--set-grammar '((S A B) (a c d f) ((S (A a)) (A B) (B (c f) d)) S) 2)
+  (parser--set-grammar '((S A B) (a c d f) ((S (A a)) (A B) (B (c f) d)) S))
+  (parser--set-look-ahead-number 2)
   (should
    (equal
     '((c f) (d a))
     (parser--first 'S)))
   (message "Passed first 2 with semi-complex grammar")
 
-  (parser--set-grammar '((S A B) ("a" "c" "d" "m") ((S A) (A (B "a" "m")) (B "c" "d")) S) 3)
+  (parser--set-grammar '((S A B) ("a" "c" "d" "m") ((S A) (A (B "a" "m")) (B "c" "d")) S))
+  (parser--set-look-ahead-number 3)
   (should
    (equal
     '(("c" "a" "m") ("d" "a" "m"))
     (parser--first 'S)))
   (message "Passed first 3 with semi-complex grammar")
 
-  (parser--set-grammar '((S A B C) (a b c) ((S A B) (A (B a) e) (B (C b) C) (C c e)) S) 1)
+  (parser--set-grammar '((S A B C) (a b c) ((S A B) (A (B a) e) (B (C b) C) (C c e)) S))
+  (parser--set-look-ahead-number 1)
   (should
    (equal
     '((a) (e) (c) (b) )
@@ -113,14 +125,16 @@
   (message "Passed first 1 with complex grammar")
 
   ;; Example 5.28 p 382
-  (parser--set-grammar '((S A B C) (a b c) ((S (A B)) (A (B a) e) (B (C b) C) (C c e)) S) 2)
+  (parser--set-grammar '((S A B C) (a b c) ((S (A B)) (A (B a) e) (B (C b) C) (C c e)) S))
+  (parser--set-look-ahead-number 2)
   (should
    (equal
     '((a) (a c) (a b) (c a) (b a) (e) (c) (b) (c b))
     (parser--first 'S)))
   (message "Passed first 2 with complex grammar")
 
-  (parser--set-grammar '((S A B C) (a b c) ((S (A B)) (A (B a) e) (B (C b) C) (C c e)) S) 3)
+  (parser--set-grammar '((S A B C) (a b c) ((S (A B)) (A (B a) e) (B (C b) C) (C c e)) S))
+  (parser--set-look-ahead-number 3)
   (should
    (equal
     '((a c b) (a) (a c) (a b) (c a) (c a c) (c a b) (b a) (b a c) (b a b) (c b) (e) (c) (b) (c b a))
@@ -135,7 +149,8 @@
   (message "Starting tests for (parser--e-free-first)")
 
   ;; Example 5.28 p 402
-  (parser--set-grammar '((S A B C) (a b c) ((S (A B)) (A (B a) e) (B (C b) C) (C c e)) S) 2)
+  (parser--set-grammar '((S A B C) (a b c) ((S (A B)) (A (B a) e) (B (C b) C) (C c e)) S))
+  (parser--set-look-ahead-number 2)
   (should
    (equal
     '((c b) (c a))

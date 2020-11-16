@@ -36,7 +36,7 @@ We use push down transducer (PDT) based algorithms:
 
 ## Grammar
 
-Grammar consists of `N`, `T`, `P` and `S`, where `N` is non-terminals, `T` is terminals, `P` is productions and `S` is start-production. N, T, P consists of lists of one or more strings and symbols, S is the left-hand-side (LHS) of a production in P. When initializing grammar you also set the number of look-ahead to use, like this:
+Grammar consists of `N`, `T`, `P` and `S`, where `N` is non-terminals, `T` is terminals, `P` is productions and `S` is start-production. Example:
 
 * N = `'(S A B C)`
 * T = `'(a b c)`
@@ -44,7 +44,7 @@ Grammar consists of `N`, `T`, `P` and `S`, where `N` is non-terminals, `T` is te
 * S = `'S`
 
 ``` emacs-lisp
-(parser--set-grammar '((S A B C) (a b c) ((S (A B)) (A (B a) e) (B (C b) C) (C c e)) S) 2)
+(parser--set-grammar '((S A B C) (a b c) ((S (A B)) (A (B a) e) (B (C b) C) (C c e)) S))
 ```
 
 ### Non-terminals
@@ -54,6 +54,10 @@ A non-terminal is either a symbol or a string so `"A"` and `A` are equally valid
 ### Terminals
 
 A terminal is either a symbol or a string so `"{"` and `A` are equally valid.
+
+### Sentential-form
+
+A list of one or more non-terminals and terminals, example `'(A "A" c ":")`
 
 ### Productions
 
@@ -71,41 +75,55 @@ Another example, production `S -> IF "{" EXPRESSION "}" | EXIT` is declared as:
 '(S (IF "{" EXPRESSION "}") EXIT)
 ```
 
-### Look-ahead number
-
-Is a simple integer above zero.
-
 ### Start
 
-The start symbol is either a string or a symbol and should exists in the list of productions as the LHS.
+The start symbol is the entry-point of the grammar and should be either a string or a symbol and should exists in the list of productions as the LHS.
+
+## Look-ahead number
+
+Is a simple integer above zero. You set it like this: `(parser--set-look-ahead-number 1)` for `1` number look-ahead.
+
+## Syntax-directed-translation (SDT)
+
+*WIP* Where should this be defined?
+
+## Semantic-actions (SA)
+
+*WIP* Where should this be defined?
 
 ## Functions
 
-### Calculate FIRST(k, S)
+### FIRST(S)
 
-Calculate first `k` terminals of sentential-form `S`, example:
+Calculate the first look-ahead number of terminals of the sentential-form `S`, example:
 
 ``` emacs-lisp
 (require 'ert)
-(parser--set-grammar '((S A B C) (a b c) ((S (A B)) (A (B a) e) (B (C b) C) (C c e)) S) 2)
+(parser--set-grammar '((S A B C) (a b c) ((S (A B)) (A (B a) e) (B (C b) C) (C c e)) S))
+(parser--set-look-ahead-number 2)
 (should
   (equal
     '((a) (a c) (a b) (c a) (b a) (e) (c) (b) (c b))
     (parser--first 'S)))
 ```
 
-### Calculate E-FREE-FIRST(k, S)
+### E-FREE-FIRST(S)
 
-Calculate e-free-first `k` terminals of sentential-form `S`, example:
+Calculate the e-free-first look-ahead number of terminals of sentential-form `S`, example:
 
 ``` emacs-lisp
 (require 'ert)
-(parser--set-grammar '((S A B C) (a b c) ((S (A B)) (A (B a) e) (B (C b) C) (C c e)) S) 2)
+(parser--set-grammar '((S A B C) (a b c) ((S (A B)) (A (B a) e) (B (C b) C) (C c e)) S))
+(parser--set-look-ahead-number 2)
 (should
   (equal
     '((c b) (c a))
     (parser--e-free-first 'S)))
 ```
+
+### FOLLOW(S)
+
+*WIP*
 
 ## Test
 

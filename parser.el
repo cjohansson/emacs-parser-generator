@@ -100,14 +100,17 @@
     (dolist (non-terminal non-terminals)
       (puthash non-terminal t parser--table-non-terminal-p))))
 
-(defun parser--set-grammar (G k)
-  "Set grammar G with look-ahead number K."
-  (unless (parser--valid-grammar-p G)
-    (error "Invalid grammar G!"))
+(defun parser--set-look-ahead-number (k)
+  "Set look-ahead number K."
   (unless (parser--valid-look-ahead-number-p k)
     (error "Invalid look-ahead number k!"))
+  (setq parser--look-ahead-number k))
+
+(defun parser--set-grammar (G)
+  "Set grammar G.."
+  (unless (parser--valid-grammar-p G)
+    (error "Invalid grammar G!"))
   (setq parser--grammar G)
-  (setq parser--look-ahead-number k)
   (setq parser--f-sets nil)
   (parser--load-symbols))
 
