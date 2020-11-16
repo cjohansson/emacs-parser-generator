@@ -466,7 +466,7 @@
 
 ;; Algorithm 5.5, p. 357
 (defun parser--first (β &optional disallow-e-first)
-  "For sentential-form Β, in grammar, calculate first k terminals, optionally DISALLOW-E-FIRST."
+  "For sentential-form Β, calculate first terminals, optionally DISALLOW-E-FIRST."
   (unless (listp β)
     (setq β (list β)))
   (unless (parser--valid-sentential-form-p β)
@@ -565,7 +565,7 @@
         (setq first-list (sort first-list 'parser--sort-list))
         first-list))))
 
-;; Definition p. 343
+;; Definition at p. 343
 (defun parser--follow (β)
   "Calculate follow-set of Β.  FOLLOW(β) = w, w is the set {w | S =>* αβγ and w is in FIRST(γ)}."
   ;; Make sure argument is a list
@@ -612,12 +612,43 @@
       (setq follow-set (parser--distinct follow-set)))
     follow-set))
 
-(defun parser--v-set (y)
-  "Calculate valid LRk-sets for the viable-prefix Y in grammar G with look-ahead K."
-  (let ((v-set))
-    (unless (parser--valid-grammar-p G)
-      (error "Invalid grammar G!"))
-    v-set))
+;; Algorithm 5.8, p. 386
+(defun parser--lr-items (γ)
+  "Calculate valid LR-items for the viable prefix Y."
+  (let ((lr-items)
+        (productions (parser--get-grammar-productions))
+        (start (parser--get-grammar-start)))
+    (unless (listp γ)
+      (setq γ (list γ)))
+    (unless (parser--valid-sentential-form-p γ)
+      (error "Invalid sentential form γ!"))
+    (let ((prefix-length (length γ))
+          (stack '((0 '1a))))
+      (while stack
+        (let ((stack-item (pop stack)))
+          (let ((index (nth 0 stack-item))
+                (state (nth 1 stack-item)))
+            (cond
+             ((eq state '1a)
+              ;; TODO 1.a. iterate every production who has the LHS = S, add [S -> . a] to v-set(e)
+              ;; Iterate all productions in grammar
+              (let ()
+                (dolist (p productions)
+                  (let ((production-lhs (car p)))
+                    (when (eq production-lhs start)
+                      )))))
+             ((eq state '1b)
+              ;; TODO 1.b. iterate every item in v-set(e), if [A -> . Bα, u] is an item and B -> β is in P, then foreach x in FIRST(αu) add [B -> . β, x] to v-set(e), provided it is not already there
+              )
+
+             ((eq state '1c)
+              ;; TODO 1.c. repeat b until no more items can be added to v-set(e)
+              )
+             ((eq state '2a))
+             ((eq state '2b))
+             ((eq state '2c))
+             (t (error "Invalid state!")))))))
+    lr-items))
 
 
 (provide 'parser)
