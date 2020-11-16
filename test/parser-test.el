@@ -9,6 +9,32 @@
 (require 'parser)
 (require 'ert)
 
+(defun parser-test--sort-list ()
+  "Test `parser--sort-list'."
+  (message "Starting tests for (parser-test--sort-list)")
+
+  (should
+   (equal
+    '((a b c) (b c d) (c e f))
+    (sort '((a b c) (c e f) (b c d)) 'parser--sort-list)))
+
+  (should
+   (equal
+    '((a b c) (a c c) (c e f))
+    (sort '((a c c) (a b c) (c e f)) 'parser--sort-list)))
+
+  (should
+   (equal
+    '((a b) (a c c) (c e f g h))
+    (sort '((a c c) (a b) (c e f g h)) 'parser--sort-list)))
+
+  (should
+   (equal
+    '((a) (b) (c))
+    (sort '((a) (c) (b)) 'parser--sort-list)))
+
+  (message "Passed  tests for (parser--distinct)"))
+
 (defun parser-test--distinct ()
   "Test `parser--distinct'."
   (message "Starting tests for (parser--distinct)")
@@ -134,7 +160,7 @@
   (parser--set-look-ahead-number 2)
   (should
    (equal
-    '((d a) (c f))
+    '((c f) (d a))
     (parser--first 'S)))
   (message "Passed first 2 with semi-complex grammar")
 
@@ -142,7 +168,7 @@
   (parser--set-look-ahead-number 3)
   (should
    (equal
-    '(("d" "a" "m") ("c" "a" "m"))
+    '(("c" "a" "m") ("d" "a" "m"))
     (parser--first 'S)))
   (message "Passed first 3 with semi-complex grammar")
 
@@ -150,7 +176,7 @@
   (parser--set-look-ahead-number 1)
   (should
    (equal
-    '((e) (c) (b) (a))
+    '((a) (a) (c) (e))
     (parser--first 'S)))
   (message "Passed first 1 with complex grammar")
 
@@ -212,40 +238,40 @@
   (message "Starting tests for (parser--valid-grammar-p)")
 
   (should (equal
-    t
-    (parser--valid-grammar-p '((A B C) ("a" "b" "c") ((A "a")) A))))
+           t
+           (parser--valid-grammar-p '((A B C) ("a" "b" "c") ((A "a")) A))))
 
   (should (equal
-    nil
-    (parser--valid-grammar-p '((A B C) ("a" "b" "c") ((A "a")) (A)))))
+           nil
+           (parser--valid-grammar-p '((A B C) ("a" "b" "c") ((A "a")) (A)))))
 
   (should (equal
-    nil
-    (parser--valid-grammar-p '((A B C) (("a" "b") "c") ((A "a")) A))))
+           nil
+           (parser--valid-grammar-p '((A B C) (("a" "b") "c") ((A "a")) A))))
 
   (should (equal
-    nil
-    (parser--valid-grammar-p '(((A B) C) ("a" "b" "c") ((A "a")) A))))
+           nil
+           (parser--valid-grammar-p '(((A B) C) ("a" "b" "c") ((A "a")) A))))
 
   (should (equal
-    nil
-    (parser--valid-grammar-p '(((A B) C) ("a" "b" "c") ((A)) A))))
+           nil
+           (parser--valid-grammar-p '(((A B) C) ("a" "b" "c") ((A)) A))))
 
   (should (equal
-    nil
-    (parser--valid-grammar-p "A")))
+           nil
+           (parser--valid-grammar-p "A")))
 
   (should (equal
-    nil
-    (parser--valid-grammar-p '(A B C))))
+           nil
+           (parser--valid-grammar-p '(A B C))))
 
   (should (equal
-    nil
-    (parser--valid-grammar-p '((A B)))))
+           nil
+           (parser--valid-grammar-p '((A B)))))
 
   (should (equal
-    nil
-    (parser--valid-grammar-p '((A B C) (a (b c) "c") (A ("a" "b") (a b)) (B b) (C "c")))))
+           nil
+           (parser--valid-grammar-p '((A B C) (a (b c) "c") (A ("a" "b") (a b)) (B b) (C "c")))))
 
   (message "Passed tests for (parser--valid-grammar-p)"))
 
@@ -309,8 +335,9 @@
   (parser-test--valid-look-ahead-number-p)
   (parser-test--valid-production-p)
   (parser-test--valid-grammar-p)
-  (parser-test--distinct)
   (parser-test--valid-sentential-form-p)
+  (parser-test--distinct)
+  (parser-test--sort-list)
   (parser-test--first)
   (parser-test--e-free-first)
   (parser-test--follow)

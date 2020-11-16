@@ -115,6 +115,25 @@
   (setq parser--f-sets nil)
   (parser--load-symbols))
 
+(defun parser--sort-list (a b)
+  "Return non-nil if a element in A is greater than a element in B in lexicographic order."
+  (let ((max-index (1- (min (length a) (length b))))
+        (index 0)
+        (continue t)
+        (response nil))
+    (while (and
+            continue
+            (< index max-index))
+      (let ((a-element (nth index a))
+            (b-element (nth index b)))
+        (if (string-greaterp a-element b-element)
+            (setq continue nil)
+          (when (string-greaterp b-element a-element)
+            (setq response t)
+            (setq continue nil))))
+      (setq index (1+ index)))
+    response))
+
 (defun parser--valid-e-p (symbol)
   "Return whether SYMBOL is the e identifier or not."
   (eq symbol 'e))
@@ -543,6 +562,9 @@
                   (setq input-tape-index (1+ input-tape-index)))
                 (when (> first-length 0)
                   (push first first-list))))))
+        (message "first-list-before-sort: %s" first-list)
+        (setq first-list (sort first-list 'parser--sort-list))
+        (message "first-list-after-sort: %s" first-list)
         first-list))))
 
 ;; Definition p. 343, FOLLOW(β) = w, w is the set {w|β=>*aβy and w is in FIRST(y)}
