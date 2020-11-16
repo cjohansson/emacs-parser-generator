@@ -47,6 +47,10 @@ Grammar consists of `N`, `T`, `P` and `S`, where `N` is non-terminals, `T` is te
 (parser--set-grammar '((S A B C) (a b c) ((S (A B)) (A (B a) e) (B (C b) C) (C c e)) S))
 ```
 
+### e
+
+The symbol `'e` is hard-coded to be the empty symbol. The symbol is allowed in some grammars and not in others.
+
 ### Non-terminals
 
 A non-terminal is either a symbol or a string so `"A"` and `A` are equally valid.
@@ -57,7 +61,7 @@ A terminal is either a symbol or a string so `"{"` and `A` are equally valid.
 
 ### Sentential-form
 
-A list of one or more non-terminals and terminals, example `'(A "A" c ":")`
+A list of one or more non-terminals and terminals, example `'(A "A" c ":")`, the e-symbol is allowed depending on grammar.
 
 ### Productions
 

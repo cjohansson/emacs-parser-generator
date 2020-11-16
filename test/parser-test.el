@@ -24,6 +24,28 @@
     (parser--distinct '("aa" "b" "cc" "c" "b" "a" "aa"))))
   (message "Passed tests for (parser--distinct)"))
 
+(defun parser-test--follow ()
+  "Test `parser--follow'."
+  (message "Starting tests for (parser--follow)")
+
+  (parser--set-grammar '((S A) (b) ((S A) (A b)) S))
+  (parser--set-look-ahead-number 2)
+  (should
+   (equal
+    '((e))
+    (parser--follow 'A)))
+  (message "Passed follow 1 with intermediate grammar")
+
+  (parser--set-grammar '((S A B) (a c d f) ((S (A a)) (A B) (B (c f) d)) S))
+  (parser--set-look-ahead-number 2)
+  (should
+   (equal
+    '((a))
+    (parser--follow 'A)))
+  (message "Passed follow 2 with intermediate grammar")
+
+  (message "Passed tests for (parser--follow)"))
+
 (defun parser-test--first ()
   "Test `parser--first'."
   (message "Starting tests for (parser--first)")
@@ -51,6 +73,14 @@
     '((a a))
     (parser--first '(S a))))
   (message "Passed first 1c with rudimentary grammar")
+
+  (parser--set-grammar '((S) (a) ((S a)) S))
+  (parser--set-look-ahead-number 2)
+  (should
+   (equal
+    '((a))
+    (parser--first '(a))))
+  (message "Passed first 1d with rudimentary grammar")
 
   (parser--set-grammar '((S) ("a" "b" "c") ((S ("a" "b" "c"))) S))
   (parser--set-look-ahead-number 2)
@@ -96,7 +126,7 @@
   (parser--set-look-ahead-number 1)
   (should
    (equal
-    '(("c") ("d"))
+    '(("d") ("c"))
     (parser--first 'S)))
   (message "Passed first 1 with semi-complex grammar")
 
@@ -104,7 +134,7 @@
   (parser--set-look-ahead-number 2)
   (should
    (equal
-    '((c f) (d a))
+    '((d a) (c f))
     (parser--first 'S)))
   (message "Passed first 2 with semi-complex grammar")
 
@@ -112,7 +142,7 @@
   (parser--set-look-ahead-number 3)
   (should
    (equal
-    '(("c" "a" "m") ("d" "a" "m"))
+    '(("d" "a" "m") ("c" "a" "m"))
     (parser--first 'S)))
   (message "Passed first 3 with semi-complex grammar")
 
@@ -120,7 +150,7 @@
   (parser--set-look-ahead-number 1)
   (should
    (equal
-    '((a) (e) (c) (b) )
+    '((e) (c) (b) (a))
     (parser--first 'S)))
   (message "Passed first 1 with complex grammar")
 
@@ -177,7 +207,6 @@
 
 ;;   (message "Passed tests for (parser-test--v-set)"))
 
-;; TODO Re-implement this function
 (defun parser-test--valid-grammar-p ()
   "Test function `parser--valid-grammar-p'."
   (message "Starting tests for (parser--valid-grammar-p)")
@@ -284,6 +313,7 @@
   (parser-test--valid-sentential-form-p)
   (parser-test--first)
   (parser-test--e-free-first)
+  (parser-test--follow)
   ;; (parser-test--v-set)
   )
 
