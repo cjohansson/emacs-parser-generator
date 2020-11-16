@@ -127,7 +127,16 @@ Calculate the e-free-first look-ahead number of terminals of sentential-form `S`
 
 ### FOLLOW(S)
 
-*WIP*
+Calculate the look-ahead number of terminals possibly following S.
+
+``` emacs-lisp
+(parser--set-grammar '((S A B) (a c d f) ((S (A a)) (A B) (B (c f) d)) S))
+(parser--set-look-ahead-number 2)
+(should
+  (equal
+   '((a))
+   (parser--follow 'A)))
+```
 
 ## Test
 
