@@ -104,7 +104,8 @@
   "Set look-ahead number K."
   (unless (parser--valid-look-ahead-number-p k)
     (error "Invalid look-ahead number k!"))
-  (setq parser--look-ahead-number k))
+  (setq parser--look-ahead-number k)
+  (setq parser--f-sets nil))
 
 (defun parser--set-grammar (G)
   "Set grammar G.."
