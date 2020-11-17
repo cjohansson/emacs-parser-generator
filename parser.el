@@ -14,13 +14,17 @@
   nil
   "Whether to print debug messages or not.")
 
-(defvar parser--table-terminal-p
-  nil
-  "Hash-table of non-terminals for quick checking.")
-
 (defvar parser--table-non-terminal-p
   nil
   "Hash-table of terminals for quick checking.")
+
+(defvar parser--table-productions
+  nil
+  "Hash-table of productions for quick retrieving.")
+
+(defvar parser--table-terminal-p
+  nil
+  "Hash-table of non-terminals for quick checking.")
 
 (defvar parser--grammar
   nil
@@ -47,6 +51,10 @@
 ;; Helper Functions
 
 
+(defun parser--clear-cache ()
+  "Clear cache."
+  (setq parser--f-sets nil))
+
 (defun parser--distinct (elements)
   "Return distinct of ELEMENTS."
   (let ((processed (make-hash-table :test 'equal))
@@ -64,6 +72,10 @@
         (setq G parser--grammar)
       (error "No grammar G defined!")))
   (nth 0 G))
+
+(defun parser--get-grammar-rhs (lhs)
+  "Return right hand sides of LHS if there is any."
+  (gethash lhs parser--table-productions))
 
 (defun parser--get-grammar-productions (&optional G)
   "Return productions of grammar G."
@@ -98,21 +110,32 @@
   (let ((non-terminals (parser--get-grammar-non-terminals)))
     (setq parser--table-non-terminal-p (make-hash-table :test 'equal))
     (dolist (non-terminal non-terminals)
-      (puthash non-terminal t parser--table-non-terminal-p))))
+      (puthash non-terminal t parser--table-non-terminal-p)))
+  (let ((productions (parser--get-grammar-productions)))
+    (setq parser--table-productions (make-hash-table :test 'equal))
+    (dolist (p productions)
+      (let ((lhs (car p))
+            (rhs (cdr p)))
+        (dolist (rhs-element rhs)
+          (unless (listp rhs-element)
+            (setq rhs-element (list rhs-element)))
+          (let ((new-value (gethash lhs parser--table-productions)))
+            (setq new-value (append new-value rhs))
+            (puthash lhs new-value parser--table-productions)))))))
 
 (defun parser--set-look-ahead-number (k)
   "Set look-ahead number K."
   (unless (parser--valid-look-ahead-number-p k)
     (error "Invalid look-ahead number k!"))
   (setq parser--look-ahead-number k)
-  (setq parser--f-sets nil))
+  (parser--clear-cache))
 
 (defun parser--set-grammar (G)
   "Set grammar G.."
   (unless (parser--valid-grammar-p G)
     (error "Invalid grammar G!"))
   (setq parser--grammar G)
-  (setq parser--f-sets nil)
+  (parser--clear-cache)
   (parser--load-symbols))
 
 (defun parser--sort-list (a b)
@@ -622,7 +645,8 @@
       (setq γ (list γ)))
     (unless (parser--valid-sentential-form-p γ)
       (error "Invalid sentential form γ!"))
-    (let ((prefix-length (length γ)))
+    (let ((prefix-length (length γ))
+          (lr-item-exists (make-hash-table :test 'equal)))
 
       ;; 1
 
@@ -642,10 +666,51 @@
                     (setq rhs (list rhs)))
 
                   ;; Add [S -> . α] to V(e)
-                  (push `(,production-lhs ,nil ,rhs) lr-items-e))))))
+                  (push `(,production-lhs nil ,rhs e) lr-items-e)
+                  (puthash `(e ,production-lhs nil ,rhs e) t lr-item-exists))))))
 
         ;; b, c
-        ;; TODO 1.b. iterate every item in v-set(e), if [A -> . Bα, u] is an item and B -> β is in P, then foreach x in FIRST(αu) add [B -> . β, x] to v-set(e), provided it is not already there
+        ;; 1.b. iterate every item in v-set(e), if [A -> . Bα, u] is an item and B -> β is in P
+        ;; then foreach x in FIRST(αu) add [B -> . β, x] to v-set(e), provided it is not already there
+        (let ((found-new t))
+
+          ;; Repeat this until no new item is found
+          (while found-new
+            (setq found-new nil)
+
+            ;; Iterate every item in V(e)
+            (dolist (item lr-items-e)
+              (let ((lhs (nth 0 item))
+                    (prefix (nth 1 item))
+                    (rhs (nth 2 item))
+                    (suffix (nth 3 item)))
+
+                ;; Without prefix
+                (unless prefix
+
+                  ;; Check if RHS starts with a non-terminal
+                  (let ((rhs-first (car rhs)))
+                    (when (parser--valid-terminal-p rhs-first)
+                      (let ((rhs-rest (append (cdr rhs) suffix)))
+                        (let ((rhs-first (parser--first rhs-rest)))
+                          (message "FIRST(%s) = %s" rhs-rest rhs-first)
+
+                          ;; For each production with B as LHS
+                          (dolist (p productions)
+                            (let ((sub-lhs (car p)))
+                              (when (eq sub-lhs lhs)
+                                (let ((sub-rhs (cdr p)))
+                                  (unless (listp sub-rhs)
+                                    (setq sub-rhs (list sub-rhs)))
+
+                                  ;; For each x in FIRST(αu) add [B -> . β, x] to v-set(e)
+                                  (dolist (f rhs-first)
+                                    ;; Provided it is not already there
+                                    (unless (gethash `(e ,lhs nil ,sub-rhs ,f) lr-item-exists)
+                                      (push `(,lhs nil ,sub-rhs ,f) lr-items-e)
+                                      (setq found-new t))))))))))))))))
+
+
         ;; TODO 1.c. repeat b until no more items can be added to v-set(e)
         (puthash 'e lr-items-e lr-items))
 
