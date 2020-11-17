@@ -653,16 +653,15 @@
       (let ((lr-items-e)
             (start-productions (parser--get-grammar-rhs start)))
 
-        ;; a
+        ;; (a)
         (dolist (production-rhs start-productions)
           (dolist (rhs production-rhs)
             ;; Add [S -> . α] to V(e)
             (push `(,start nil ,rhs e) lr-items-e)
             (puthash `(e ,start nil ,rhs e) t lr-item-exists)))
 
-        ;; b, c
-        ;; 1.b. iterate every item in v-set(e), if [A -> . Bα, u] is an item and B -> β is in P
-        ;; then foreach x in FIRST(αu) add [B -> . β, x] to v-set(e), provided it is not already there
+        ;; (b) Iterate every item in v-set(e), if [A -> . Bα, u] is an item and B -> β is in P
+        ;; then for each x in FIRST(αu) add [B -> . β, x] to v-set(e), provided it is not already there
         (let ((found-new t))
 
           ;; Repeat this until no new item is found
@@ -681,7 +680,7 @@
 
                   ;; Check if RHS starts with a non-terminal
                   (let ((rhs-first (car rhs)))
-                    (when (parser--valid-terminal-p rhs-first)
+                    (when (parser--valid-non-terminal-p rhs-first)
                       (let ((rhs-rest (append (cdr rhs) suffix)))
                         (let ((rhs-first (parser--first rhs-rest)))
                           (message "FIRST(%s) = %s" rhs-rest rhs-first)
@@ -697,13 +696,23 @@
                                 (unless (gethash `(e ,rhs-first nil ,sub-rhs ,f) lr-item-exists)
                                   (push `(,rhs-first nil ,sub-rhs ,f) lr-items-e)
 
-                                  ;; 1.c. repeat b until no more items can be added to v-set(e)
-                                  (setq found-new t)))))))))))))))
+                                  ;; (c) Repeat (b) until no more items can be added to v-set(e)
+                                  (setq found-new t))))))))))))))
 
-      ;; 2
-      ;; a
-      ;; b
-      ;; c
+        (puthash 'e lr-items-e lr-items))
+
+      ;; 2 Suppose that we have constructed V(X1,X2,...,Xi-1)
+      ;; we construct V(X1,X2,...,Xi) as follows:
+
+      ;; (a) If [A -> a . XiB, u] is in V(X1,...,Xi-1)
+      ;; add [A -> aXi . B, u] to V(X1,...,Xi)
+
+      ;; (b) If [A -> a . Bb, u] has been placed in V(X1,...,Xi)
+      ;; and B -> D is in P
+      ;; then add [B -> . D, x] to V(X1,...,Xi) for each x in FIRST(bu)
+      ;; provided it is not already there
+
+      ;; (c) Repeat step (2b) until no more new items can be added to V(X1,...,Xi)
 
       lr-items)))
 
