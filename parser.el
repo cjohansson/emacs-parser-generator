@@ -73,10 +73,6 @@
       (error "No grammar G defined!")))
   (nth 0 G))
 
-(defun parser--get-grammar-rhs (lhs)
-  "Return right hand sides of LHS if there is any."
-  (gethash lhs parser--table-productions))
-
 (defun parser--get-grammar-productions (&optional G)
   "Return productions of grammar G."
   (unless G
@@ -84,6 +80,10 @@
         (setq G parser--grammar)
       (error "No grammar G defined!")))
   (nth 2 G))
+
+(defun parser--get-grammar-rhs (lhs)
+  "Return right hand sides of LHS if there is any."
+  (gethash lhs parser--table-productions))
 
 (defun parser--get-grammar-start (&optional G)
   "Return start of grammar G."
@@ -639,7 +639,6 @@
 (defun parser--lr-items (γ)
   "Calculate valid LR-items for the viable prefix Γ."
   (let ((lr-items (make-hash-table :test 'equal))
-        (productions (parser--get-grammar-productions))
         (start (parser--get-grammar-start)))
     (unless (listp γ)
       (setq γ (list γ)))
@@ -651,23 +650,15 @@
       ;; 1
 
       ;; Iterate all productions in grammar
-      (let ((lr-items-e))
+      (let ((lr-items-e)
+            (start-productions (parser--get-grammar-rhs start)))
 
         ;; a
-        (dolist (p productions)
-          (let ((production-lhs (car p)))
-            ;; For all productions of the form S -> . α
-            (when (eq production-lhs start)
-              (let ((production-rhs (cdr p)))
-                (dolist (rhs production-rhs)
-
-                  ;; Make sure RHS is a list
-                  (unless (listp rhs)
-                    (setq rhs (list rhs)))
-
-                  ;; Add [S -> . α] to V(e)
-                  (push `(,production-lhs nil ,rhs e) lr-items-e)
-                  (puthash `(e ,production-lhs nil ,rhs e) t lr-item-exists))))))
+        (dolist (production-rhs start-productions)
+          (dolist (rhs production-rhs)
+            ;; Add [S -> . α] to V(e)
+            (push `(,start nil ,rhs e) lr-items-e)
+            (puthash `(e ,start nil ,rhs e) t lr-item-exists)))
 
         ;; b, c
         ;; 1.b. iterate every item in v-set(e), if [A -> . Bα, u] is an item and B -> β is in P
@@ -694,25 +685,20 @@
                       (let ((rhs-rest (append (cdr rhs) suffix)))
                         (let ((rhs-first (parser--first rhs-rest)))
                           (message "FIRST(%s) = %s" rhs-rest rhs-first)
+                          (let ((sub-production (parser--get-grammar-rhs rhs-first)))
 
-                          ;; For each production with B as LHS
-                          (dolist (p productions)
-                            (let ((sub-lhs (car p)))
-                              (when (eq sub-lhs lhs)
-                                (let ((sub-rhs (cdr p)))
-                                  (unless (listp sub-rhs)
-                                    (setq sub-rhs (list sub-rhs)))
+                            ;; For each production with B as LHS
+                            (dolist (sub-rhs sub-production)
 
-                                  ;; For each x in FIRST(αu) add [B -> . β, x] to v-set(e)
-                                  (dolist (f rhs-first)
-                                    ;; Provided it is not already there
-                                    (unless (gethash `(e ,lhs nil ,sub-rhs ,f) lr-item-exists)
-                                      (push `(,lhs nil ,sub-rhs ,f) lr-items-e)
-                                      (setq found-new t))))))))))))))))
+                              ;; For each x in FIRST(αu)
+                              (dolist (f rhs-first)
 
+                                ;; Add [B -> . β, x] to v-set(e), provided it is not already there
+                                (unless (gethash `(e ,rhs-first nil ,sub-rhs ,f) lr-item-exists)
+                                  (push `(,rhs-first nil ,sub-rhs ,f) lr-items-e)
 
-        ;; TODO 1.c. repeat b until no more items can be added to v-set(e)
-        (puthash 'e lr-items-e lr-items))
+                                  ;; 1.c. repeat b until no more items can be added to v-set(e)
+                                  (setq found-new t)))))))))))))))
 
       ;; 2
       ;; a
