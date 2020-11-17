@@ -614,41 +614,47 @@
 
 ;; Algorithm 5.8, p. 386
 (defun parser--lr-items (γ)
-  "Calculate valid LR-items for the viable prefix Y."
-  (let ((lr-items)
+  "Calculate valid LR-items for the viable prefix Γ."
+  (let ((lr-items (make-hash-table :test 'equal))
         (productions (parser--get-grammar-productions))
         (start (parser--get-grammar-start)))
     (unless (listp γ)
       (setq γ (list γ)))
     (unless (parser--valid-sentential-form-p γ)
       (error "Invalid sentential form γ!"))
-    (let ((prefix-length (length γ))
-          (stack '((0 '1a))))
-      (while stack
-        (let ((stack-item (pop stack)))
-          (let ((index (nth 0 stack-item))
-                (state (nth 1 stack-item)))
-            (cond
-             ((eq state '1a)
-              ;; TODO 1.a. iterate every production who has the LHS = S, add [S -> . a] to v-set(e)
-              ;; Iterate all productions in grammar
-              (let ()
-                (dolist (p productions)
-                  (let ((production-lhs (car p)))
-                    (when (eq production-lhs start)
-                      )))))
-             ((eq state '1b)
-              ;; TODO 1.b. iterate every item in v-set(e), if [A -> . Bα, u] is an item and B -> β is in P, then foreach x in FIRST(αu) add [B -> . β, x] to v-set(e), provided it is not already there
-              )
+    (let ((prefix-length (length γ)))
 
-             ((eq state '1c)
-              ;; TODO 1.c. repeat b until no more items can be added to v-set(e)
-              )
-             ((eq state '2a))
-             ((eq state '2b))
-             ((eq state '2c))
-             (t (error "Invalid state!")))))))
-    lr-items))
+      ;; 1
+
+      ;; Iterate all productions in grammar
+      (let ((lr-items-e))
+
+        ;; a
+        (dolist (p productions)
+          (let ((production-lhs (car p)))
+            ;; For all productions of the form S -> . α
+            (when (eq production-lhs start)
+              (let ((production-rhs (cdr p)))
+                (dolist (rhs production-rhs)
+
+                  ;; Make sure RHS is a list
+                  (unless (listp rhs)
+                    (setq rhs (list rhs)))
+
+                  ;; Add [S -> . α] to V(e)
+                  (push `(,production-lhs ,nil ,rhs) lr-items-e))))))
+
+        ;; b, c
+        ;; TODO 1.b. iterate every item in v-set(e), if [A -> . Bα, u] is an item and B -> β is in P, then foreach x in FIRST(αu) add [B -> . β, x] to v-set(e), provided it is not already there
+        ;; TODO 1.c. repeat b until no more items can be added to v-set(e)
+        (puthash 'e lr-items-e lr-items))
+
+      ;; 2
+      ;; a
+      ;; b
+      ;; c
+
+      lr-items)))
 
 
 (provide 'parser)
