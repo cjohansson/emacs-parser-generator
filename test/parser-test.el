@@ -337,15 +337,42 @@
 
   (message "Passed tests  for (parser--valid-production-p)"))
 
+(defun parser-test--get-grammar-rhs ()
+  "Test `parser--get-grammar-rhs'."
+  (message "Started tests  for (parser--get-grammar-rhs)")
+
+  (parser--set-grammar '((S A) ("a" "b") ((S A) (A ("b" "a"))) S))
+  (should (equal
+           '((A))
+           (parser--get-grammar-rhs 'S)))
+  (should (equal
+           '(("b" "a"))
+           (parser--get-grammar-rhs 'A)))
+
+  (parser--set-grammar '((S A B) ("a" "b") ((S A) (S (B)) (B "a") (A "a") (A ("b" "a"))) S))
+  (should (equal
+           '((A) (B))
+           (parser--get-grammar-rhs 'S)))
+  (should (equal
+           '(("a") ("b" "a"))
+           (parser--get-grammar-rhs 'A)))
+
+  (message "Passed tests  for (parser--get-grammar-rhs)"))
+
 (defun parser-test ()
   "Run test."
   ;; (setq debug-on-error t)
+
+  ;; Helpers
   (parser-test--valid-look-ahead-number-p)
   (parser-test--valid-production-p)
   (parser-test--valid-grammar-p)
   (parser-test--valid-sentential-form-p)
   (parser-test--distinct)
   (parser-test--sort-list)
+  (parser-test--get-grammar-rhs)
+
+  ;; Algorithms
   (parser-test--first)
   (parser-test--e-free-first)
   (parser-test--follow)

@@ -116,12 +116,12 @@
     (dolist (p productions)
       (let ((lhs (car p))
             (rhs (cdr p)))
-        (dolist (rhs-element rhs)
-          (unless (listp rhs-element)
-            (setq rhs-element (list rhs-element)))
-          (let ((new-value (gethash lhs parser--table-productions)))
-            (setq new-value (append new-value rhs))
-            (puthash lhs new-value parser--table-productions)))))))
+        (let ((new-value (gethash lhs parser--table-productions)))
+          (dolist (rhs-element rhs)
+            (unless (listp rhs-element)
+              (setq rhs-element (list rhs-element)))
+            (push rhs-element new-value))
+          (puthash lhs (nreverse new-value) parser--table-productions))))))
 
 (defun parser--set-look-ahead-number (k)
   "Set look-ahead number K."
