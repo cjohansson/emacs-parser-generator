@@ -223,23 +223,22 @@
 
   (message "Passed tests for (parser--empty-free-first)"))
 
-;; (defun parser-test--v-set ()
-;;   "Test `parser--v-set'."
-;;   (message "Starting tests for (parser-test--v-set)")
+(defun parser-test--lr-items ()
+  "Test `parser--lr-items'."
+  (message "Starting tests for (parser--lr-items)")
 
-;;   ;; Example 5.29 p 407
-;;   (should
-;;    (equal
-;;     '("ca" "cb")
-;;     (parser--v-set
-;;      'e
-;;      '((S' S)
-;;        (S SaSb)
-;;        (S e))
-;;      'S')))
-;;   (message "Passed empty-free-first 2 with complex grammar")
+  ;; Example 5.29 p 387
+  (parser--set-grammar '((Sp S) (a b) ((Sp S) (S (S a S b)) (S e)) Sp))
+  (parser--set-look-ahead-number 2)
+  (message "Loaded grammar")
+  (should
+   (equal
+    '((Sp (S) nil nil e)
+      (S (S) nil (a S b) a)
+      (S (S) nil (a S b) e))
+    (parser--lr-items 'S)))
 
-;;   (message "Passed tests for (parser-test--v-set)"))
+  (message "Passed tests for (parser--lr-items)"))
 
 (defun parser-test--valid-grammar-p ()
   "Test function `parser--valid-grammar-p'."
@@ -376,8 +375,7 @@
   (parser-test--first)
   (parser-test--e-free-first)
   (parser-test--follow)
-  ;; (parser-test--v-set)
-  )
+  (parser-test--lr-items))
 
 (provide 'parser-test)
 

@@ -653,11 +653,12 @@
             (start-productions (parser--get-grammar-rhs start)))
 
         ;; (a)
-        (dolist (production-rhs start-productions)
-          (dolist (rhs production-rhs)
-            ;; Add [S -> . α] to V(e)
-            (push `(,start nil ,rhs e) lr-items-e)
-            (puthash `(e ,start nil ,rhs e) t lr-item-exists)))
+        (dolist (rhs start-productions)
+          ;; Add [S -> . α] to V(e)
+          (push `(,start nil ,rhs e) lr-items-e)
+          (puthash `(e ,start nil ,rhs e) t lr-item-exists))
+
+        (message "V(e): %s" lr-items-e)
 
         ;; (b) Iterate every item in v-set(e), if [A -> . Bα, u] is an item and B -> β is in P
         ;; then for each x in FIRST(αu) add [B -> . β, x] to v-set(e), provided it is not already there
@@ -672,6 +673,11 @@
               (let ((prefix (nth 1 item))
                     (rhs (nth 2 item))
                     (suffix (nth 3 item)))
+
+                (message "item: %s" item)
+                (message "prefix: %s" prefix)
+                (message "rhs: %s" rhs)
+                (message "suffix: %s" suffix)
 
                 ;; Without prefix
                 (unless prefix
@@ -697,7 +703,6 @@
 
                                   ;; (c) Repeat (b) until no more items can be added to v-set(e)
                                   (setq found-new t))))))))))))))
-
         (puthash 'e lr-items-e lr-items))
 
       ;; 2 Suppose that we have constructed V(X1,X2,...,Xi-1) we construct V(X1,X2,...,Xi) as follows:
@@ -706,6 +711,9 @@
         (dolist (prefix γ)
           (let ((lr-new-item))
             (setq prefix-acc (append prefix-acc prefix))
+            (unless (listp prefix-acc)
+              (setq prefix-acc (list prefix-acc)))
+            (message "prefix-acc: %s" prefix-acc)
 
             (dolist (lr-item prefix-previous)
               (let ((lr-item-lhs (nth 0 lr-item))
@@ -747,13 +755,15 @@
                                 ;; then add [B -> . D, x] to V(X1,...,Xi) for each x in FIRST(bu)
                                 ;; provided it is not already there
                                 (unless (gethash `(,prefix-acc ,lr-item-suffix-first nil ,sub-rhs ,f) lr-item-exists)
+                                  (setq added-new t)
                                   (puthash `(,prefix-acc ,lr-item-suffix-first nil ,sub-rhs ,f) t lr-item-exists)
                                   (push `(,lr-item-suffix-first nil ,sub-rhs ,f) lr-new-item))))))))))))
 
+            (message "V%s = %s" prefix-acc lr-new-item)
             (setq prefix-previous prefix-acc)
             (puthash prefix-acc lr-new-item lr-items))))
 
-      lr-items)))
+      (gethash γ lr-items))))
 
 
 (provide 'parser)
