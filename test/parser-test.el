@@ -230,13 +230,35 @@
   ;; Example 5.29 p 387
   (parser--set-grammar '((Sp S) (a b) ((Sp S) (S (S a S b)) (S e)) Sp))
   (parser--set-look-ahead-number 1)
-  (message "Loaded grammar")
+
   (should
    (equal
     '((Sp (S) nil (e))
       (S (S) (a S b) (e))
       (S (S) (a S b) (a)))
     (parser--lr-items 'S)))
+  (message "Passed V(S)")
+
+  (should
+   (equal
+    '((S (S a) (S b) (e))
+      (S (S a) (S b) (a))
+      (S nil (S a S b) (a))
+      (S nil (S a S b) (b))
+      (S nil nil (a))
+      (S nil nil (b)))
+    (parser--lr-items '(S a))))
+  (message "Passed V(Sa)")
+
+  (should
+   (equal
+    '((Sp nil (S) (e))
+      (S nil (S a S b) (e))
+      (S nil (S a S b) (a))
+      (S nil nil (e))
+      (S nil nil (a)))
+    (parser--lr-items 'e)))
+  (message "Passed V(e)")
 
   (message "Passed tests for (parser--lr-items)"))
 
