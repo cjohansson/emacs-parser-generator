@@ -586,11 +586,6 @@
                 (when (> first-length 0)
                   (push first first-list))))))
         (setq first-list (sort first-list 'parser--sort-list))
-        (when (and
-               (not first-list)
-               (= (length β) 1)
-               (eq (car β) 'e))
-          (setq first-list '((e))))
         first-list))))
 
 ;; Definition at p. 343
@@ -685,13 +680,21 @@
                     (when (parser--valid-non-terminal-p rhs-first)
                       (let ((rhs-rest (append (cdr rhs) suffix)))
                         (let ((rhs-rest-first (parser--first rhs-rest)))
+                          (parser--debug
+                           (message "rhs-rest-first: %s" rhs-rest-first))
+                          (unless rhs-rest-first
+                            (setq rhs-rest-first (list nil)))
                           (let ((sub-production (parser--get-grammar-rhs rhs-first)))
 
                             ;; For each production with B as LHS
                             (dolist (sub-rhs sub-production)
+                              (parser--debug
+                               (message "sub-rhs: %s" sub-rhs))
 
                               ;; For each x in FIRST(αu)
                               (dolist (f rhs-rest-first)
+                                (parser--debug
+                                 (message "f: %s" f))
 
                                 ;; Add [B -> . β, x] to v-set(e), provided it is not already there
                                 (unless (gethash `(e ,rhs-first nil ,sub-rhs ,f) lr-item-exists)
@@ -740,6 +743,8 @@
                       (when (parser--valid-non-terminal-p lr-item-suffix-first)
 
                         (let ((lr-item-suffix-rest-first (parser--first lr-item-suffix-rest)))
+                          (unless lr-item-suffix-rest-first
+                            (setq lr-item-suffix-rest-first (list nil)))
                           (let ((sub-production (parser--get-grammar-rhs lr-item-suffix-first)))
 
                             ;; For each production with B as LHS
