@@ -586,6 +586,11 @@
                 (when (> first-length 0)
                   (push first first-list))))))
         (setq first-list (sort first-list 'parser--sort-list))
+        (when (and
+               (not first-list)
+               (= (length β) 1)
+               (eq (car β) 'e))
+          (setq first-list '((e))))
         first-list))))
 
 ;; Definition at p. 343
@@ -655,8 +660,8 @@
         ;; (a)
         (dolist (rhs start-productions)
           ;; Add [S -> . α] to V(e)
-          (push `(,start nil ,rhs e) lr-items-e)
-          (puthash `(e ,start nil ,rhs e) t lr-item-exists))
+          (push `(,start nil ,rhs (e)) lr-items-e)
+          (puthash `(e ,start nil ,rhs (e)) t lr-item-exists))
 
         (message "V(e): %s" lr-items-e)
 
@@ -685,25 +690,30 @@
                   ;; Check if RHS starts with a non-terminal
                   (let ((rhs-first (car rhs)))
                     (when (parser--valid-non-terminal-p rhs-first)
+                      (message "rhs-first: %s" rhs-first)
                       (let ((rhs-rest (append (cdr rhs) suffix)))
-                        (let ((rhs-first (parser--first rhs-rest)))
-                          (message "1b FIRST(%s) = %s" rhs-rest rhs-first)
+                        (message "rhs-rest: %s" rhs-rest)
+                        (let ((rhs-rest-first (parser--first rhs-rest)))
+                          (message "1b FIRST(%s) = %s" rhs-rest rhs-rest-first)
                           (let ((sub-production (parser--get-grammar-rhs rhs-first)))
 
                             ;; For each production with B as LHS
                             (dolist (sub-rhs sub-production)
 
                               ;; For each x in FIRST(αu)
-                              (dolist (f rhs-first)
+                              (dolist (f rhs-rest-first)
 
                                 ;; Add [B -> . β, x] to v-set(e), provided it is not already there
+                                (message "f: %s" f)
                                 (unless (gethash `(e ,rhs-first nil ,sub-rhs ,f) lr-item-exists)
+                                  (message "new-item: %s" `(,rhs-first nil ,sub-rhs ,f))
                                   (puthash `(e ,rhs-first nil ,sub-rhs ,f) t lr-item-exists)
                                   (push `(,rhs-first nil ,sub-rhs ,f) lr-items-e)
 
                                   ;; (c) Repeat (b) until no more items can be added to v-set(e)
                                   (setq found-new t))))))))))))))
-        (puthash 'e lr-items-e lr-items))
+        (puthash 'e lr-items-e lr-items)
+        (message "V(e) = %s" lr-items-e))
 
       ;; 2 Suppose that we have constructed V(X1,X2,...,Xi-1) we construct V(X1,X2,...,Xi) as follows:
       (let ((prefix-acc)
