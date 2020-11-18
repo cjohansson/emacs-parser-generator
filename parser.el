@@ -701,18 +701,30 @@
 
         (puthash 'e lr-items-e lr-items))
 
-      ;; 2 Suppose that we have constructed V(X1,X2,...,Xi-1)
+      ;; TODO 2 Suppose that we have constructed V(X1,X2,...,Xi-1)
       ;; we construct V(X1,X2,...,Xi) as follows:
+      (let ((prefix-acc)
+            (prefix-new)
+            (prefix-previous (gethash 'e lr-items)))
+        (dolist (prefix γ)
+          (setq prefix-acc (append prefix-acc prefix))
 
-      ;; (a) If [A -> a . XiB, u] is in V(X1,...,Xi-1)
-      ;; add [A -> aXi . B, u] to V(X1,...,Xi)
+          (dolist (lr-item prefix-previous)
+            ;; TODO (a) If [A -> a . XiB, u] is in V(X1,...,Xi-1)
+            ;; add [A -> aXi . B, u] to V(X1,...,Xi)
+            )
 
-      ;; (b) If [A -> a . Bb, u] has been placed in V(X1,...,Xi)
-      ;; and B -> D is in P
-      ;; then add [B -> . D, x] to V(X1,...,Xi) for each x in FIRST(bu)
-      ;; provided it is not already there
+          ;; TODO (c) Repeat step (2b) until no more new items can be added to V(X1,...,Xi)
+          (let ((added-new t))
+            (while added-new
+              (setq added-new nil)
+              (dolist (lr-item prefix-new)
+                ;; TODO (b) If [A -> a . Bb, u] has been placed in V(X1,...,Xi)
+                ;; and B -> D is in P then add [B -> . D, x] to V(X1,...,Xi) for each x in FIRST(bu)
+                ;; provided it is not already there
+                )))
 
-      ;; (c) Repeat step (2b) until no more new items can be added to V(X1,...,Xi)
+          (setq prefix-previous prefix-acc)))
 
       lr-items)))
 
