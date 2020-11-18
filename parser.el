@@ -644,8 +644,7 @@
       (setq γ (list γ)))
     (unless (parser--valid-sentential-form-p γ)
       (error "Invalid sentential form γ!"))
-    (let ((prefix-length (length γ))
-          (lr-item-exists (make-hash-table :test 'equal)))
+    (let ((lr-item-exists (make-hash-table :test 'equal)))
 
       ;; 1
 
@@ -670,8 +669,7 @@
 
             ;; Iterate every item in V(e)
             (dolist (item lr-items-e)
-              (let ((lhs (nth 0 item))
-                    (prefix (nth 1 item))
+              (let ((prefix (nth 1 item))
                     (rhs (nth 2 item))
                     (suffix (nth 3 item)))
 
@@ -683,7 +681,7 @@
                     (when (parser--valid-non-terminal-p rhs-first)
                       (let ((rhs-rest (append (cdr rhs) suffix)))
                         (let ((rhs-first (parser--first rhs-rest)))
-                          (message "FIRST(%s) = %s" rhs-rest rhs-first)
+                          (message "1b FIRST(%s) = %s" rhs-rest rhs-first)
                           (let ((sub-production (parser--get-grammar-rhs rhs-first)))
 
                             ;; For each production with B as LHS
@@ -694,6 +692,7 @@
 
                                 ;; Add [B -> . β, x] to v-set(e), provided it is not already there
                                 (unless (gethash `(e ,rhs-first nil ,sub-rhs ,f) lr-item-exists)
+                                  (puthash `(e ,rhs-first nil ,sub-rhs ,f) t lr-item-exists)
                                   (push `(,rhs-first nil ,sub-rhs ,f) lr-items-e)
 
                                   ;; (c) Repeat (b) until no more items can be added to v-set(e)
@@ -722,15 +721,34 @@
                     ;; Add [A -> aXi . B, u] to V(X1,...,Xi)
                     (push `(,lr-item-lhs ,(append lr-item-prefix prefix) ,lr-item-suffix-rest ,lr-item-look-ahead) lr-new-item)))))
 
-            ;; TODO (c) Repeat step (2b) until no more new items can be added to V(X1,...,Xi)
+            ;; (c) Repeat step (2b) until no more new items can be added to V(X1,...,Xi)
             (let ((added-new t))
               (while added-new
                 (setq added-new nil)
                 (dolist (lr-item lr-new-item)
-                  ;; TODO (b) If [A -> a . Bb, u] has been placed in V(X1,...,Xi)
-                  ;; and B -> D is in P then add [B -> . D, x] to V(X1,...,Xi) for each x in FIRST(bu)
-                  ;; provided it is not already there
-                  )))
+                  (let ((lr-item-suffix (nth 2 lr-item)))
+                    (let ((lr-item-suffix-first (car lr-item-suffix))
+                          (lr-item-suffix-rest (cdr lr-item-suffix)))
+
+                      ;; (b) If [A -> a . Bb, u] has been placed in V(X1,...,Xi)
+                      ;; and B -> D is in P
+                      (when (parser--valid-non-terminal-p lr-item-suffix-first)
+
+                        (let ((lr-item-suffix-rest-first (parser--first lr-item-suffix-rest)))
+                          (message "2b FIRST(%s) = %s" lr-item-suffix-first lr-item-suffix-rest-first)
+                          (let ((sub-production (parser--get-grammar-rhs lr-item-suffix-first)))
+
+                            ;; For each production with B as LHS
+                            (dolist (sub-rhs sub-production)
+
+                              ;; For each x in FIRST(αu)
+                              (dolist (f lr-item-suffix-rest-first)
+
+                                ;; then add [B -> . D, x] to V(X1,...,Xi) for each x in FIRST(bu)
+                                ;; provided it is not already there
+                                (unless (gethash `(,prefix-acc ,lr-item-suffix-first nil ,sub-rhs ,f) lr-item-exists)
+                                  (puthash `(,prefix-acc ,lr-item-suffix-first nil ,sub-rhs ,f) t lr-item-exists)
+                                  (push `(,lr-item-suffix-first nil ,sub-rhs ,f) lr-new-item))))))))))))
 
             (setq prefix-previous prefix-acc)
             (puthash prefix-acc lr-new-item lr-items))))
