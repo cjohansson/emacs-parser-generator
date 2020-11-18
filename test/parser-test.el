@@ -233,9 +233,9 @@
   (message "Loaded grammar")
   (should
    (equal
-    '((Sp (S) nil nil e)
-      (S (S) nil (a S b) a)
-      (S (S) nil (a S b) e))
+    '((Sp (S) nil (e))
+      (S (S) (a S b) (e))
+      (S (S) (a S b) (a)))
     (parser--lr-items 'S)))
 
   (message "Passed tests for (parser--lr-items)"))

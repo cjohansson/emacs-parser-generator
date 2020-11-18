@@ -663,8 +663,6 @@
           (push `(,start nil ,rhs (e)) lr-items-e)
           (puthash `(e ,start nil ,rhs (e)) t lr-item-exists))
 
-        (message "V(e): %s" lr-items-e)
-
         ;; (b) Iterate every item in v-set(e), if [A -> . Bα, u] is an item and B -> β is in P
         ;; then for each x in FIRST(αu) add [B -> . β, x] to v-set(e), provided it is not already there
         (let ((found-new t))
@@ -679,22 +677,14 @@
                     (rhs (nth 2 item))
                     (suffix (nth 3 item)))
 
-                (message "item: %s" item)
-                (message "prefix: %s" prefix)
-                (message "rhs: %s" rhs)
-                (message "suffix: %s" suffix)
-
                 ;; Without prefix
                 (unless prefix
 
                   ;; Check if RHS starts with a non-terminal
                   (let ((rhs-first (car rhs)))
                     (when (parser--valid-non-terminal-p rhs-first)
-                      (message "rhs-first: %s" rhs-first)
                       (let ((rhs-rest (append (cdr rhs) suffix)))
-                        (message "rhs-rest: %s" rhs-rest)
                         (let ((rhs-rest-first (parser--first rhs-rest)))
-                          (message "1b FIRST(%s) = %s" rhs-rest rhs-rest-first)
                           (let ((sub-production (parser--get-grammar-rhs rhs-first)))
 
                             ;; For each production with B as LHS
@@ -704,16 +694,13 @@
                               (dolist (f rhs-rest-first)
 
                                 ;; Add [B -> . β, x] to v-set(e), provided it is not already there
-                                (message "f: %s" f)
                                 (unless (gethash `(e ,rhs-first nil ,sub-rhs ,f) lr-item-exists)
-                                  (message "new-item: %s" `(,rhs-first nil ,sub-rhs ,f))
                                   (puthash `(e ,rhs-first nil ,sub-rhs ,f) t lr-item-exists)
                                   (push `(,rhs-first nil ,sub-rhs ,f) lr-items-e)
 
                                   ;; (c) Repeat (b) until no more items can be added to v-set(e)
                                   (setq found-new t))))))))))))))
-        (puthash 'e lr-items-e lr-items)
-        (message "V(e) = %s" lr-items-e))
+        (puthash 'e lr-items-e lr-items))
 
       ;; 2 Suppose that we have constructed V(X1,X2,...,Xi-1) we construct V(X1,X2,...,Xi) as follows:
       (let ((prefix-acc)
@@ -723,7 +710,6 @@
             (setq prefix-acc (append prefix-acc prefix))
             (unless (listp prefix-acc)
               (setq prefix-acc (list prefix-acc)))
-            (message "prefix-acc: %s" prefix-acc)
 
             (dolist (lr-item prefix-previous)
               (let ((lr-item-lhs (nth 0 lr-item))
@@ -737,7 +723,8 @@
                   (when (eq lr-item-suffix-first prefix)
 
                     ;; Add [A -> aXi . B, u] to V(X1,...,Xi)
-                    (push `(,lr-item-lhs ,(append lr-item-prefix prefix) ,lr-item-suffix-rest ,lr-item-look-ahead) lr-new-item)))))
+                    (let ((combined-prefix (append lr-item-prefix (list prefix))))
+                      (push `(,lr-item-lhs ,combined-prefix ,lr-item-suffix-rest ,lr-item-look-ahead) lr-new-item))))))
 
             ;; (c) Repeat step (2b) until no more new items can be added to V(X1,...,Xi)
             (let ((added-new t))
@@ -753,7 +740,6 @@
                       (when (parser--valid-non-terminal-p lr-item-suffix-first)
 
                         (let ((lr-item-suffix-rest-first (parser--first lr-item-suffix-rest)))
-                          (message "2b FIRST(%s) = %s" lr-item-suffix-first lr-item-suffix-rest-first)
                           (let ((sub-production (parser--get-grammar-rhs lr-item-suffix-first)))
 
                             ;; For each production with B as LHS
@@ -769,7 +755,6 @@
                                   (puthash `(,prefix-acc ,lr-item-suffix-first nil ,sub-rhs ,f) t lr-item-exists)
                                   (push `(,lr-item-suffix-first nil ,sub-rhs ,f) lr-new-item))))))))))))
 
-            (message "V%s = %s" prefix-acc lr-new-item)
             (setq prefix-previous prefix-acc)
             (puthash prefix-acc lr-new-item lr-items))))
 
