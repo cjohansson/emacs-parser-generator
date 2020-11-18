@@ -229,7 +229,7 @@
 
   ;; Example 5.29 p 387
   (parser--set-grammar '((Sp S) (a b) ((Sp S) (S (S a S b)) (S e)) Sp))
-  (parser--set-look-ahead-number 2)
+  (parser--set-look-ahead-number 1)
   (message "Loaded grammar")
   (should
    (equal
