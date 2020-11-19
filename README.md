@@ -130,12 +130,43 @@ Calculate the e-free-first look-ahead number of terminals of sentential-form `S`
 Calculate the look-ahead number of terminals possibly following S.
 
 ``` emacs-lisp
+(require 'ert)
 (parser--set-grammar '((S A B) (a c d f) ((S (A a)) (A B) (B (c f) d)) S))
 (parser--set-look-ahead-number 2)
 (should
   (equal
    '((a))
    (parser--follow 'A)))
+```
+
+### LR(k) items - V(S)
+
+Calculate the set of LR(k) items valid for any viable prefix S.
+
+``` emacs-lisp
+(require 'ert)
+(parser--set-grammar '((Sp S) (a b) ((Sp S) (S (S a S b)) (S e)) Sp))
+(parser--set-look-ahead-number 1)
+(should
+  (equal
+    '((S nil nil (a))
+    (S nil (S a S b) (a))
+    (S nil nil (e))
+    (S nil (S a S b) (e))
+    (Sp nil (S) (e)))
+    (parser--lr-items 'e)))
+```
+
+``` emacs-lisp
+(require 'ert)
+(parser--set-grammar '((Sp S) (a b) ((Sp S) (S (S a S b)) (S e)) Sp))
+(parser--set-look-ahead-number 1)
+(should
+  (equal
+    '((Sp (S) nil (e))
+      (S (S) (a S b) (e))
+      (S (S) (a S b) (a)))
+    (parser--lr-items 'S)))
 ```
 
 ## Test
