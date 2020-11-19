@@ -726,11 +726,10 @@
               (prefix-previous (gethash '(e) lr-items)))
           (dolist (prefix γ)
             (let ((lr-new-item))
-              (setq prefix-acc (append prefix-acc prefix))
-              (unless (listp prefix-acc)
-                (setq prefix-acc (list prefix-acc)))
+              (setq prefix-acc (append prefix-acc (list prefix)))
 
               (parser--debug
+               (message "prefix: %s" prefix)
                (message "prefix-acc: %s" prefix-acc)
                (message "prefix-previous: %s" prefix-previous))
 
@@ -782,7 +781,7 @@
 
               (setq prefix-previous lr-new-item)
               (parser--debug
-               (message "V(%s) = %s" prefix-acc lr-new-item))
+               (message "V%s = %s" prefix-acc lr-new-item))
               (puthash prefix-acc lr-new-item lr-items)))))
 
       (parser--debug

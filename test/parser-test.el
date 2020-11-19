@@ -251,12 +251,12 @@
 
   (should
    (equal
-    '((S (S a) (S b) (e))
-      (S (S a) (S b) (a))
-      (S nil (S a S b) (a))
-      (S nil (S a S b) (b))
-      (S nil nil (a))
-      (S nil nil (b)))
+    '((S nil (e) (a))
+    (S nil (S a S b) (a))
+    (S nil (e) (b))
+    (S nil (S a S b) (b))
+    (S (S a) (S b) (a))
+    (S (S a) (S b) (e)))
     (parser--lr-items '(S a))))
   (message "Passed V(Sa)")
 
