@@ -11,7 +11,7 @@
 
 
 (defvar parser--debug
-  t
+  nil
   "Whether to print debug messages or not.")
 
 (defvar parser--table-non-terminal-p
@@ -677,6 +677,8 @@
 
                   ;; Check if RHS starts with a non-terminal
                   (let ((rhs-first (car rhs)))
+                    (parser--debug
+                     (message "rhs-first: %s" rhs-first))
                     (when (parser--valid-non-terminal-p rhs-first)
                       (let ((rhs-rest (append (cdr rhs) suffix)))
                         (let ((rhs-rest-first (parser--first rhs-rest)))
@@ -685,9 +687,18 @@
                           (unless rhs-rest-first
                             (setq rhs-rest-first '((e))))
                           (let ((sub-production (parser--get-grammar-rhs rhs-first)))
+                            (parser--debug
+                               (message "sub-production: %s" sub-production))
 
                             ;; For each production with B as LHS
                             (dolist (sub-rhs sub-production)
+
+                              ;; Set follow to nil if it's the e-identifier
+                              (when (and
+                                     (= (length sub-rhs) 1)
+                                     (eq (car sub-rhs) 'e))
+                                (setq sub-rhs nil))
+
                               (parser--debug
                                (message "sub-rhs: %s" sub-rhs))
 
@@ -707,11 +718,10 @@
          (message "V(e) = %s" lr-items-e))
         (puthash '(e) lr-items-e lr-items))
 
-      ;; Do step 2 only if prefix is not the e identifier
+      ;; 2 Suppose that we have constructed V(X1,X2,...,Xi-1) we construct V(X1,X2,...,Xi) as follows:
       (unless (and
                (= (length γ) 1)
                (eq (car γ) 'e))
-        ;; 2 Suppose that we have constructed V(X1,X2,...,Xi-1) we construct V(X1,X2,...,Xi) as follows:
         (let ((prefix-acc)
               (prefix-previous (gethash '(e) lr-items)))
           (dolist (prefix γ)
@@ -776,7 +786,7 @@
               (puthash prefix-acc lr-new-item lr-items)))))
 
       (parser--debug
-         (message "γ: %s" γ))
+       (message "γ: %s" γ))
       (gethash γ lr-items))))
 
 
