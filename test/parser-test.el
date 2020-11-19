@@ -231,6 +231,18 @@
   (parser--set-grammar '((Sp S) (a b) ((Sp S) (S (S a S b)) (S e)) Sp))
   (parser--set-look-ahead-number 1)
 
+  '((S (e) nil (e)) (S (e) nil (a)))
+
+  (should
+   (equal
+    '((Sp nil (S) (e))
+      (S nil (S a S b) (e))
+      (S nil (S a S b) (a))
+      (S nil nil (e))
+      (S nil nil (a)))
+    (parser--lr-items 'e)))
+  (message "Passed V(e)")
+
   (should
    (equal
     '((Sp (S) nil (e))
@@ -249,16 +261,6 @@
       (S nil nil (b)))
     (parser--lr-items '(S a))))
   (message "Passed V(Sa)")
-
-  (should
-   (equal
-    '((Sp nil (S) (e))
-      (S nil (S a S b) (e))
-      (S nil (S a S b) (a))
-      (S nil nil (e))
-      (S nil nil (a)))
-    (parser--lr-items 'e)))
-  (message "Passed V(e)")
 
   (message "Passed tests for (parser--lr-items)"))
 

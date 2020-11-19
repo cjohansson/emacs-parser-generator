@@ -11,7 +11,7 @@
 
 
 (defvar parser--debug
-  nil
+  t
   "Whether to print debug messages or not.")
 
 (defvar parser--table-non-terminal-p
@@ -683,7 +683,7 @@
                           (parser--debug
                            (message "rhs-rest-first: %s" rhs-rest-first))
                           (unless rhs-rest-first
-                            (setq rhs-rest-first (list nil)))
+                            (setq rhs-rest-first '((e))))
                           (let ((sub-production (parser--get-grammar-rhs rhs-first)))
 
                             ;; For each production with B as LHS
@@ -703,66 +703,80 @@
 
                                   ;; (c) Repeat (b) until no more items can be added to v-set(e)
                                   (setq found-new t))))))))))))))
-        (puthash 'e lr-items-e lr-items))
+        (parser--debug
+         (message "V(e) = %s" lr-items-e))
+        (puthash '(e) lr-items-e lr-items))
 
-      ;; 2 Suppose that we have constructed V(X1,X2,...,Xi-1) we construct V(X1,X2,...,Xi) as follows:
-      (let ((prefix-acc)
-            (prefix-previous (gethash 'e lr-items)))
-        (dolist (prefix γ)
-          (let ((lr-new-item))
-            (setq prefix-acc (append prefix-acc prefix))
-            (unless (listp prefix-acc)
-              (setq prefix-acc (list prefix-acc)))
+      ;; Do step 2 only if prefix is not the e identifier
+      (unless (and
+               (= (length γ) 1)
+               (eq (car γ) 'e))
+        ;; 2 Suppose that we have constructed V(X1,X2,...,Xi-1) we construct V(X1,X2,...,Xi) as follows:
+        (let ((prefix-acc)
+              (prefix-previous (gethash '(e) lr-items)))
+          (dolist (prefix γ)
+            (let ((lr-new-item))
+              (setq prefix-acc (append prefix-acc prefix))
+              (unless (listp prefix-acc)
+                (setq prefix-acc (list prefix-acc)))
 
-            (dolist (lr-item prefix-previous)
-              (let ((lr-item-lhs (nth 0 lr-item))
-                    (lr-item-prefix (nth 1 lr-item))
-                    (lr-item-suffix (nth 2 lr-item))
-                    (lr-item-look-ahead (nth 3 lr-item)))
-                (let ((lr-item-suffix-first (car lr-item-suffix))
-                      (lr-item-suffix-rest (cdr lr-item-suffix)))
+              (parser--debug
+               (message "prefix-acc: %s" prefix-acc)
+               (message "prefix-previous: %s" prefix-previous))
 
-                  ;; (a) If [A -> a . XiB, u] is in V(X1,...,Xi-1)
-                  (when (eq lr-item-suffix-first prefix)
+              (dolist (lr-item prefix-previous)
+                (let ((lr-item-lhs (nth 0 lr-item))
+                      (lr-item-prefix (nth 1 lr-item))
+                      (lr-item-suffix (nth 2 lr-item))
+                      (lr-item-look-ahead (nth 3 lr-item)))
+                  (let ((lr-item-suffix-first (car lr-item-suffix))
+                        (lr-item-suffix-rest (cdr lr-item-suffix)))
 
-                    ;; Add [A -> aXi . B, u] to V(X1,...,Xi)
-                    (let ((combined-prefix (append lr-item-prefix (list prefix))))
-                      (push `(,lr-item-lhs ,combined-prefix ,lr-item-suffix-rest ,lr-item-look-ahead) lr-new-item))))))
+                    ;; (a) If [A -> a . XiB, u] is in V(X1,...,Xi-1)
+                    (when (eq lr-item-suffix-first prefix)
 
-            ;; (c) Repeat step (2b) until no more new items can be added to V(X1,...,Xi)
-            (let ((added-new t))
-              (while added-new
-                (setq added-new nil)
-                (dolist (lr-item lr-new-item)
-                  (let ((lr-item-suffix (nth 2 lr-item)))
-                    (let ((lr-item-suffix-first (car lr-item-suffix))
-                          (lr-item-suffix-rest (cdr lr-item-suffix)))
+                      ;; Add [A -> aXi . B, u] to V(X1,...,Xi)
+                      (let ((combined-prefix (append lr-item-prefix (list prefix))))
+                        (push `(,lr-item-lhs ,combined-prefix ,lr-item-suffix-rest ,lr-item-look-ahead) lr-new-item))))))
 
-                      ;; (b) If [A -> a . Bb, u] has been placed in V(X1,...,Xi)
-                      ;; and B -> D is in P
-                      (when (parser--valid-non-terminal-p lr-item-suffix-first)
+              ;; (c) Repeat step (2b) until no more new items can be added to V(X1,...,Xi)
+              (let ((added-new t))
+                (while added-new
+                  (setq added-new nil)
+                  (dolist (lr-item lr-new-item)
+                    (let ((lr-item-suffix (nth 2 lr-item)))
+                      (let ((lr-item-suffix-first (car lr-item-suffix))
+                            (lr-item-suffix-rest (cdr lr-item-suffix)))
 
-                        (let ((lr-item-suffix-rest-first (parser--first lr-item-suffix-rest)))
-                          (unless lr-item-suffix-rest-first
-                            (setq lr-item-suffix-rest-first (list nil)))
-                          (let ((sub-production (parser--get-grammar-rhs lr-item-suffix-first)))
+                        ;; (b) If [A -> a . Bb, u] has been placed in V(X1,...,Xi)
+                        ;; and B -> D is in P
+                        (when (parser--valid-non-terminal-p lr-item-suffix-first)
 
-                            ;; For each production with B as LHS
-                            (dolist (sub-rhs sub-production)
+                          (let ((lr-item-suffix-rest-first (parser--first lr-item-suffix-rest)))
+                            (unless lr-item-suffix-rest-first
+                              (setq lr-item-suffix-rest-first (list nil)))
+                            (let ((sub-production (parser--get-grammar-rhs lr-item-suffix-first)))
 
-                              ;; For each x in FIRST(αu)
-                              (dolist (f lr-item-suffix-rest-first)
+                              ;; For each production with B as LHS
+                              (dolist (sub-rhs sub-production)
 
-                                ;; then add [B -> . D, x] to V(X1,...,Xi) for each x in FIRST(bu)
-                                ;; provided it is not already there
-                                (unless (gethash `(,prefix-acc ,lr-item-suffix-first nil ,sub-rhs ,f) lr-item-exists)
-                                  (setq added-new t)
-                                  (puthash `(,prefix-acc ,lr-item-suffix-first nil ,sub-rhs ,f) t lr-item-exists)
-                                  (push `(,lr-item-suffix-first nil ,sub-rhs ,f) lr-new-item))))))))))))
+                                ;; For each x in FIRST(αu)
+                                (dolist (f lr-item-suffix-rest-first)
 
-            (setq prefix-previous prefix-acc)
-            (puthash prefix-acc lr-new-item lr-items))))
+                                  ;; then add [B -> . D, x] to V(X1,...,Xi) for each x in FIRST(bu)
+                                  ;; provided it is not already there
+                                  (unless (gethash `(,prefix-acc ,lr-item-suffix-first nil ,sub-rhs ,f) lr-item-exists)
+                                    (setq added-new t)
+                                    (puthash `(,prefix-acc ,lr-item-suffix-first nil ,sub-rhs ,f) t lr-item-exists)
+                                    (push `(,lr-item-suffix-first nil ,sub-rhs ,f) lr-new-item))))))))))))
 
+              (setq prefix-previous lr-new-item)
+              (parser--debug
+               (message "V(%s) = %s" prefix-acc lr-new-item))
+              (puthash prefix-acc lr-new-item lr-items)))))
+
+      (parser--debug
+         (message "γ: %s" γ))
       (gethash γ lr-items))))
 
 
