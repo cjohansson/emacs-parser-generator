@@ -149,11 +149,11 @@ Calculate the set of LR(k) items valid for any viable prefix S.
 (parser--set-look-ahead-number 1)
 (should
   (equal
-    '((S nil nil (a))
-    (S nil (S a S b) (a))
-    (S nil nil (e))
-    (S nil (S a S b) (e))
-    (Sp nil (S) (e)))
+    '((S nil (S a S b) (a))
+      (S nil (S a S b) (e))
+      (S nil nil (a))
+      (S nil nil (e))
+      (Sp nil (S) (e)))
     (parser--lr-items-for-prefix 'e)))
 ```
 
@@ -163,9 +163,9 @@ Calculate the set of LR(k) items valid for any viable prefix S.
 (parser--set-look-ahead-number 1)
 (should
   (equal
-    '((Sp (S) nil (e))
+    '((S (S) (a S b) (a))
       (S (S) (a S b) (e))
-      (S (S) (a S b) (a)))
+      (Sp (S) nil (e)))
     (parser--lr-items-for-prefix 'S)))
 ```
 

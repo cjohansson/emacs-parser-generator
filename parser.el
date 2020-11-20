@@ -149,6 +149,14 @@
             (< index length))
       (let ((a-element (nth index a))
             (b-element (nth index b)))
+        (while (and
+                a-element
+                (listp a-element))
+          (setq a-element (car a-element)))
+        (while (and
+                b-element
+                (listp b-element))
+          (setq b-element (car b-element)))
         (if (string-greaterp a-element b-element)
             (setq continue nil)
           (when (string-greaterp b-element a-element)
@@ -688,7 +696,7 @@
                             (setq rhs-rest-first '((e))))
                           (let ((sub-production (parser--get-grammar-rhs rhs-first)))
                             (parser--debug
-                               (message "sub-production: %s" sub-production))
+                             (message "sub-production: %s" sub-production))
 
                             ;; For each production with B as LHS
                             (dolist (sub-rhs sub-production)
@@ -786,7 +794,7 @@
 
       (parser--debug
        (message "γ: %s" γ))
-      (gethash γ lr-items))))
+      (sort (gethash γ lr-items) 'parser--sort-list))))
 
 
 (provide 'parser)

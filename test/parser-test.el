@@ -233,30 +233,30 @@
 
   (should
    (equal
-    '((S nil nil (a))
-    (S nil (S a S b) (a))
-    (S nil nil (e))
-    (S nil (S a S b) (e))
-    (Sp nil (S) (e)))
+    '((S nil (S a S b) (a))
+      (S nil (S a S b) (e))
+      (S nil nil (a))
+      (S nil nil (e))
+      (Sp nil (S) (e)))
     (parser--lr-items-for-prefix 'e)))
   (message "Passed V(e)")
 
   (should
    (equal
-    '((Sp (S) nil (e))
+    '((S (S) (a S b) (a))
       (S (S) (a S b) (e))
-      (S (S) (a S b) (a)))
+      (Sp (S) nil (e)))
     (parser--lr-items-for-prefix 'S)))
   (message "Passed V(S)")
 
   (should
    (equal
-    '((S nil (e) (a))
-    (S nil (S a S b) (a))
-    (S nil (e) (b))
-    (S nil (S a S b) (b))
-    (S (S a) (S b) (a))
-    (S (S a) (S b) (e)))
+    '((S (S a) (S b) (a))
+      (S (S a) (S b) (e))
+      (S nil (S a S b) (a))
+      (S nil (S a S b) (b))
+      (S nil (e) (a))
+      (S nil (e) (b)))
     (parser--lr-items-for-prefix '(S a))))
   (message "Passed V(Sa)")
 
