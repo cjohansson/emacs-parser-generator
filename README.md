@@ -139,7 +139,7 @@ Calculate the look-ahead number of terminals possibly following S.
    (parser--follow 'A)))
 ```
 
-### LR(k) items - V(S)
+### LR(k) items for prefix - V(S)
 
 Calculate the set of LR(k) items valid for any viable prefix S.
 
@@ -154,7 +154,7 @@ Calculate the set of LR(k) items valid for any viable prefix S.
     (S nil nil (e))
     (S nil (S a S b) (e))
     (Sp nil (S) (e)))
-    (parser--lr-items 'e)))
+    (parser--lr-items-for-prefix 'e)))
 ```
 
 ``` emacs-lisp
@@ -166,7 +166,7 @@ Calculate the set of LR(k) items valid for any viable prefix S.
     '((Sp (S) nil (e))
       (S (S) (a S b) (e))
       (S (S) (a S b) (a)))
-    (parser--lr-items 'S)))
+    (parser--lr-items-for-prefix 'S)))
 ```
 
 ## Test

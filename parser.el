@@ -636,7 +636,7 @@
     follow-set))
 
 ;; Algorithm 5.8, p. 386
-(defun parser--lr-items (γ)
+(defun parser--lr-items-for-prefix (γ)
   "Calculate valid LR-items for the viable prefix Γ."
   (let ((lr-items (make-hash-table :test 'equal))
         (start (parser--get-grammar-start)))

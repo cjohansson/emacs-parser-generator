@@ -223,9 +223,9 @@
 
   (message "Passed tests for (parser--empty-free-first)"))
 
-(defun parser-test--lr-items ()
-  "Test `parser--lr-items'."
-  (message "Starting tests for (parser--lr-items)")
+(defun parser-test--lr-items-for-prefix ()
+  "Test `parser--lr-items-for-prefix'."
+  (message "Starting tests for (parser--lr-items-for-prefix)")
 
   ;; Example 5.29 p 387
   (parser--set-grammar '((Sp S) (a b) ((Sp S) (S (S a S b)) (S e)) Sp))
@@ -238,7 +238,7 @@
     (S nil nil (e))
     (S nil (S a S b) (e))
     (Sp nil (S) (e)))
-    (parser--lr-items 'e)))
+    (parser--lr-items-for-prefix 'e)))
   (message "Passed V(e)")
 
   (should
@@ -246,7 +246,7 @@
     '((Sp (S) nil (e))
       (S (S) (a S b) (e))
       (S (S) (a S b) (a)))
-    (parser--lr-items 'S)))
+    (parser--lr-items-for-prefix 'S)))
   (message "Passed V(S)")
 
   (should
@@ -257,10 +257,10 @@
     (S nil (S a S b) (b))
     (S (S a) (S b) (a))
     (S (S a) (S b) (e)))
-    (parser--lr-items '(S a))))
+    (parser--lr-items-for-prefix '(S a))))
   (message "Passed V(Sa)")
 
-  (message "Passed tests for (parser--lr-items)"))
+  (message "Passed tests for (parser--lr-items-for-prefix)"))
 
 (defun parser-test--valid-grammar-p ()
   "Test function `parser--valid-grammar-p'."
@@ -397,7 +397,7 @@
   (parser-test--first)
   (parser-test--e-free-first)
   (parser-test--follow)
-  (parser-test--lr-items))
+  (parser-test--lr-items-for-prefix))
 
 (provide 'parser-test)
 
