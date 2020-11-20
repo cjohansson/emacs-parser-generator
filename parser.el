@@ -643,6 +643,13 @@
       (setq follow-set (parser--distinct follow-set)))
     follow-set))
 
+;; Algorithm 5.9, p. 389
+(defun parser-test--lr-items-for-grammar ()
+  "Calculate set of valid LR(k) items for grammar."
+  (let ((lr-items))
+    ;; TODO Implement this
+    lr-items))
+
 ;; Algorithm 5.8, p. 386
 (defun parser--lr-items-for-prefix (γ)
   "Calculate valid LR-items for the viable prefix Γ."

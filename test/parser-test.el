@@ -223,6 +223,14 @@
 
   (message "Passed tests for (parser--empty-free-first)"))
 
+(defun parser-test--lr-items-for-grammar ()
+  "Test `parser--lr-items-for-grammar'."
+  (message "Starting tests for (parser--lr-items-for-grammar)")
+
+  ;; TODO Do tests here
+
+  (message "Passed tests for (parser--lr-items-for-grammar)"))
+
 (defun parser-test--lr-items-for-prefix ()
   "Test `parser--lr-items-for-prefix'."
   (message "Starting tests for (parser--lr-items-for-prefix)")
@@ -397,7 +405,8 @@
   (parser-test--first)
   (parser-test--e-free-first)
   (parser-test--follow)
-  (parser-test--lr-items-for-prefix))
+  (parser-test--lr-items-for-prefix)
+  (parser-test--lr-items-for-grammar))
 
 (provide 'parser-test)
 
