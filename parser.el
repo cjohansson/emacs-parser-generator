@@ -646,9 +646,28 @@
 ;; Algorithm 5.9, p. 389
 (defun parser-test--lr-items-for-grammar ()
   "Calculate set of valid LR(k) items for grammar."
-  (let ((lr-items))
+  (let ((S)
+        (marked-sets (make-hash-table :test 'equal))
+        (symbols (append (parser--get-grammar-non-terminals) (parser--get-grammar-terminals))))
+    (let ((e-set (parser--lr-items-for-prefix 'e)))
+      ;; TODO (1) Place V(e) in S. The set V(e) is initially unmarked.
+      )
+    (let ((found-unmarked t))
+      (while found-unmarked
+        (setq found-unmarked t)
+        ;; TODO (2) If a set of items a in S is unmarked, mark a by computing
+        ;; for each X in N u E, GOTO (a, X). (Algorithm 5.8 can be used here.)
+        ;; If a' = GOTO(a, X) is nonempty and is not already in S,
+        ;; then add a' to S as an unmarked set of items
+
+        ;; TODO (3) Repeat step (2) until all sets of items in S are marked.
+        ))
+
+    ;; Place V(e) in S
+    
+    
     ;; TODO Implement this
-    lr-items))
+    S))
 
 ;; Algorithm 5.8, p. 386
 (defun parser--lr-items-for-prefix (γ)
