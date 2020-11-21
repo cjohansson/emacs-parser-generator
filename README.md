@@ -15,24 +15,24 @@ We use a regular-language based lexical analyzer that can be implemented by a fi
 
 We use push down transducer (PDT) based algorithms:
 
-# With Backtracking
-## The Bottom-Up Parsing Algorithm
-## The Top-Down Parsing Algorithm
-## The Cocke-Younger-Kasami Algorithm
-## The Parsing Method of Earley
-# Without Backtracking
-## LL(k)
-## Deterministic Shift-Reduce Parsing
-## LR(k)
-## Deterministic Right Parser for LR(k) Grammars
-## Formal Shift-Reduce Parsing Algorithms
-## Simple Precedence Grammars
-## Extended Precedence Grammars
-## Weak Precedence Grammars
-## Bounded-Right-Context Grammars
-## Mixed Strategy Precedence Grammars
-## Operator Precedence Grammars
-## Floyd-Evans Production Language
+### With Backtracking
+#### The Bottom-Up Parsing Algorithm
+#### The Top-Down Parsing Algorithm
+#### The Cocke-Younger-Kasami Algorithm
+#### The Parsing Method of Earley
+### Without Backtracking
+#### LL(k)
+#### Deterministic Shift-Reduce Parsing
+#### LR(k)
+#### Deterministic Right Parser for LR(k) Grammars
+#### Formal Shift-Reduce Parsing Algorithms
+#### Simple Precedence Grammars
+#### Extended Precedence Grammars
+#### Weak Precedence Grammars
+#### Bounded-Right-Context Grammars
+#### Mixed Strategy Precedence Grammars
+#### Operator Precedence Grammars
+#### Floyd-Evans Production Language
 
 ## Grammar
 
@@ -83,15 +83,15 @@ Another example, production `S -> IF "{" EXPRESSION "}" | EXIT` is declared as:
 
 The start symbol is the entry-point of the grammar and should be either a string or a symbol and should exists in the list of productions as the LHS.
 
-## Look-ahead number
+### Look-ahead number
 
 Is a simple integer above zero. You set it like this: `(parser--set-look-ahead-number 1)` for `1` number look-ahead.
 
-## Syntax-directed-translation (SDT)
+### Syntax-directed-translation (SDT)
 
 *WIP* Where should this be defined?
 
-## Semantic-actions (SA)
+### Semantic-actions (SA)
 
 *WIP* Where should this be defined?
 
