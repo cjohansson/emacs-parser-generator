@@ -669,6 +669,7 @@
     ;; TODO Implement this
     S))
 
+;; TODO Cache results in this function
 ;; Algorithm 5.8, p. 386
 (defun parser--lr-items-for-prefix (γ)
   "Calculate valid LR-items for the viable prefix Γ."
