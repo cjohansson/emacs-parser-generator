@@ -49,7 +49,7 @@ Grammar consists of `N`, `T`, `P` and `S`, where `N` is non-terminals, `T` is te
 
 ### e
 
-The symbol `'e` is hard-coded to be the empty symbol. The symbol is allowed in some grammars and not in others.
+The symbol defined in variable `parser--e-identifier`, with default-value: 'e`, symbolizes the e symbol. The symbol is allowed in some grammars and not in others.
 
 ### Non-terminals
 

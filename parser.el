@@ -14,6 +14,22 @@
   nil
   "Whether to print debug messages or not.")
 
+(defvar parser--e-identifier
+  'e
+  "The identifier used for e-symbol.  Default value 'e.")
+
+(defvar parser--grammar
+  nil
+  "Current grammar used in parser.")
+
+(defvar parser--f-sets
+  nil
+  "Generated F-sets for grammar.")
+
+(defvar parser--look-ahead-number
+  nil
+  "Current look-ahead number used.")
+
 (defvar parser--table-non-terminal-p
   nil
   "Hash-table of terminals for quick checking.")
@@ -25,18 +41,6 @@
 (defvar parser--table-terminal-p
   nil
   "Hash-table of non-terminals for quick checking.")
-
-(defvar parser--grammar
-  nil
-  "Current grammar used in parser.")
-
-(defvar parser--look-ahead-number
-  nil
-  "Current look-ahead number used.")
-
-(defvar parser--f-sets
-  nil
-  "Generated F-sets for grammar.")
 
 
 ;; Macros
@@ -167,7 +171,7 @@
 
 (defun parser--valid-e-p (symbol)
   "Return whether SYMBOL is the e identifier or not."
-  (eq symbol 'e))
+  (eq symbol parser--e-identifier))
 
 (defun parser--valid-grammar-p (G)
   "Return if grammar G is valid or not.  Grammar should contain list with 4 elements: non-terminals (N), terminals (T), productions (P), start (S) where N, T and P are lists containing symbols and/or strings and S is a symbol or string."
@@ -649,7 +653,7 @@
   (let ((S)
         (marked-sets (make-hash-table :test 'equal))
         (symbols (append (parser--get-grammar-non-terminals) (parser--get-grammar-terminals))))
-    (let ((e-set (parser--lr-items-for-prefix 'e)))
+    (let ((e-set (parser--lr-items-for-prefix parser--e-identifier)))
       ;; TODO (1) Place V(e) in S. The set V(e) is initially unmarked.
       )
     (let ((found-unmarked t))
@@ -731,7 +735,7 @@
                               ;; Set follow to nil if it's the e-identifier
                               (when (and
                                      (= (length sub-rhs) 1)
-                                     (eq (car sub-rhs) 'e))
+                                     (parser--valid-e-p (car sub-rhs)))
                                 (setq sub-rhs nil))
 
                               (parser--debug
@@ -756,7 +760,7 @@
       ;; 2 Suppose that we have constructed V(X1,X2,...,Xi-1) we construct V(X1,X2,...,Xi) as follows:
       (unless (and
                (= (length γ) 1)
-               (eq (car γ) 'e))
+               (parser--valid-e-p (car γ)))
         (let ((prefix-acc)
               (prefix-previous (gethash '(e) lr-items)))
           (dolist (prefix γ)
