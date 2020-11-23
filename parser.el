@@ -634,7 +634,7 @@
                         (when (= match-index match-length)
                           (if (= rhs-index (1- rhs-count))
                               ;; If rest of RHS is empty add e in follow-set
-                              (push '(e) follow-set)
+                              (push `(,parser--e-identifier) follow-set)
                             ;; Otherwise add FOLLOW(rest) to follow-set
                             (let ((rest (nthcdr (1+ rhs-index) rhs)))
                               (let ((first-set (parser--first rest)))
@@ -695,7 +695,7 @@
         (dolist (rhs start-productions)
           ;; Add [S -> . α] to V(e)
           (push `(,start nil ,rhs (e)) lr-items-e)
-          (puthash `(e ,start nil ,rhs (e)) t lr-item-exists))
+          (puthash `(,parser--e-identifier ,start nil ,rhs (,parser--e-identifier)) t lr-item-exists))
 
         ;; (b) Iterate every item in v-set(e), if [A -> . Bα, u] is an item and B -> β is in P
         ;; then for each x in FIRST(αu) add [B -> . β, x] to v-set(e), provided it is not already there
@@ -724,7 +724,7 @@
                           (parser--debug
                            (message "rhs-rest-first: %s" rhs-rest-first))
                           (unless rhs-rest-first
-                            (setq rhs-rest-first '((e))))
+                            (setq rhs-rest-first `((,parser--e-identifier))))
                           (let ((sub-production (parser--get-grammar-rhs rhs-first)))
                             (parser--debug
                              (message "sub-production: %s" sub-production))
@@ -746,23 +746,23 @@
                                 (parser--debug
                                  (message "f: %s" f))
 
-                                ;; Add [B -> . β, x] to v-set(e), provided it is not already there
+                                ;; Add [B -> . β, x] to V(e), provided it is not already there
                                 (unless (gethash `(e ,rhs-first nil ,sub-rhs ,f) lr-item-exists)
                                   (puthash `(e ,rhs-first nil ,sub-rhs ,f) t lr-item-exists)
                                   (push `(,rhs-first nil ,sub-rhs ,f) lr-items-e)
 
-                                  ;; (c) Repeat (b) until no more items can be added to v-set(e)
+                                  ;; (c) Repeat (b) until no more items can be added to V(e)
                                   (setq found-new t))))))))))))))
         (parser--debug
          (message "V(e) = %s" lr-items-e))
-        (puthash '(e) lr-items-e lr-items))
+        (puthash `(,parser--e-identifier) lr-items-e lr-items))
 
       ;; 2 Suppose that we have constructed V(X1,X2,...,Xi-1) we construct V(X1,X2,...,Xi) as follows:
       (unless (and
                (= (length γ) 1)
                (parser--valid-e-p (car γ)))
         (let ((prefix-acc)
-              (prefix-previous (gethash '(e) lr-items)))
+              (prefix-previous (gethash `(,parser--e-identifier) lr-items)))
           (dolist (prefix γ)
             (let ((lr-new-item))
               (setq prefix-acc (append prefix-acc (list prefix)))
