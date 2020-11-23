@@ -659,23 +659,25 @@
         (marked-sets (make-hash-table :test 'equal))
         (symbols (append (parser--get-grammar-non-terminals) (parser--get-grammar-terminals))))
     (let ((e-set (parser--lr-items-for-prefix parser--e-identifier)))
-      ;; TODO (1) Place V(e) in S. The set V(e) is initially unmarked.
-      )
+      ;;(1) Place V(e) in S. The set V(e) is initially unmarked.
+      (push `(,e-set nil) S))
     (let ((found-unmarked t))
+
+      ;; (3) Repeat step (2) until all sets of items in S are marked.
       (while found-unmarked
-        (setq found-unmarked t)
-        ;; TODO (2) If a set of items a in S is unmarked, mark a by computing
-        ;; for each X in N u E, GOTO (a, X). (Algorithm 5.8 can be used here.)
-        ;; If a' = GOTO(a, X) is nonempty and is not already in S,
-        ;; then add a' to S as an unmarked set of items
+        (setq found-unmarked nil)
+        (dolist (set S)
+          ;; (2) If a set of items a in S is unmarked
+          (unless (car (cdr set))
+            ;; TODO (2) Mark a by computing for each X in N u E, GOTO (a, X). (Algorithm 5.8 can be used here.)
+            ;; If a' = GOTO(a, X) is nonempty and is not already in S,
+            ;; then add a' to S as an unmarked set of items
+            (dolist (symbol symbols)
+              
+              )
 
-        ;; TODO (3) Repeat step (2) until all sets of items in S are marked.
-        ))
+            (setq found-unmarked t)))))
 
-    ;; Place V(e) in S
-    
-    
-    ;; TODO Implement this
     S))
 
 ;; Algorithm 5.8, p. 386
