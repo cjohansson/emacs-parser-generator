@@ -227,7 +227,19 @@
   "Test `parser--lr-items-for-grammar'."
   (message "Starting tests for (parser--lr-items-for-grammar)")
 
-  ;; TODO Do tests here
+  ;; Example 5.30, p. 389
+  (parser--set-grammar '((Sp S) (a b) ((Sp S) (S (S a S b)) (S e)) Sp))
+  (parser--set-look-ahead-number 1)
+
+  (should
+   (equal
+    '((S nil (S a S b) (a))
+      (S nil (S a S b) (e))
+      (S nil nil (a))
+      (S nil nil (e))
+      (Sp nil (S) (e)))
+    (parser--lr-items-for-grammar)))
+  (message "Passed LR-items for example 5.30")
 
   (message "Passed tests for (parser--lr-items-for-grammar)"))
 

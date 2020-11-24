@@ -653,32 +653,58 @@
     follow-set))
 
 ;; Algorithm 5.9, p. 389
-(defun parser-test--lr-items-for-grammar ()
+(defun parser--lr-items-for-grammar ()
   "Calculate set of valid LR(k) items for grammar."
-  (let ((S)
-        (marked-sets (make-hash-table :test 'equal))
+  (let ((prefixes)
+        (marked-prefixes (make-hash-table :test 'equal))
+        (lr-items)
         (symbols (append (parser--get-grammar-non-terminals) (parser--get-grammar-terminals))))
+
     (let ((e-set (parser--lr-items-for-prefix parser--e-identifier)))
       ;;(1) Place V(e) in S. The set V(e) is initially unmarked.
-      (push `(,e-set nil) S))
-    (let ((found-unmarked t))
+      (push e-set lr-items)
+      (push `(,parser--e-identifier) prefixes))
 
-      ;; (3) Repeat step (2) until all sets of items in S are marked.
-      (while found-unmarked
-        (setq found-unmarked nil)
-        (dolist (set S)
-          ;; (2) If a set of items a in S is unmarked
-          (unless (car (cdr set))
-            ;; TODO (2) Mark a by computing for each X in N u E, GOTO (a, X). (Algorithm 5.8 can be used here.)
-            ;; If a' = GOTO(a, X) is nonempty and is not already in S,
-            ;; then add a' to S as an unmarked set of items
-            (dolist (symbol symbols)
-              
-              )
+    ;; (3) Repeat step (2) until all sets of items in S are marked.
+    (let ((prefix))
 
-            (setq found-unmarked t)))))
+      ;; (2) If a set of items a in S is unmarked
+      (while prefixes
 
-    S))
+        ;; (2) Mark a by computing for each X in N u E, GOTO (a, X). (Algorithm 5.8 can be used here.)
+        (setq prefix (pop prefixes))
+
+        ;; e-identifier is converted to nil prefix
+        (when (and
+               (= (length prefix) 1)
+               (parser--valid-e-p (car prefix)))
+          (setq prefix nil))
+
+        (message "prefix: %s" prefix)
+
+        (puthash prefix t marked-prefixes)
+
+        ;; V(X1,...,Xi) = GOTO(V(X1,...,Xi-1), Xi)
+        (dolist (symbol symbols)
+          (let ((alternative-prefix (append prefix (list symbol))))
+            (message "alternative-prefix: %s" alternative-prefix)
+
+            ;; and is not already in S
+            (unless (gethash alternative-prefix marked-prefixes)
+              (let ((prefix-lr-items (parser--lr-items-for-prefix alternative-prefix)))
+
+                (message "V%s = %s" alternative-prefix prefix-lr-items)
+
+                ;; If a' = GOTO(a, X) is nonempty
+                (when prefix-lr-items
+
+                  (message "Added to stack.")
+
+                  ;; then add a' to S as an unmarked set of items
+                  (push alternative-prefix prefixes)
+                  (push prefix-lr-items lr-items))))))))
+
+    lr-items))
 
 ;; Algorithm 5.8, p. 386
 (defun parser--lr-items-for-prefix (γ)
