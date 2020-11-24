@@ -653,8 +653,8 @@
     follow-set))
 
 ;; Algorithm 5.9, p. 389
-(defun parser--lr-items-for-grammar ()
-  "Calculate set of valid LR(k) items for grammar."
+(defun parser--lr-items-for-grammar (length)
+  "Calculate set of valid LR(k) items for grammar with LENGTH."
   (let ((prefixes)
         (marked-prefixes (make-hash-table :test 'equal))
         (lr-items)
@@ -662,14 +662,16 @@
 
     (let ((e-set (parser--lr-items-for-prefix parser--e-identifier)))
       ;;(1) Place V(e) in S. The set V(e) is initially unmarked.
-      (push e-set lr-items)
+      (setq lr-items (append lr-items e-set))
       (push `(,parser--e-identifier) prefixes))
 
     ;; (3) Repeat step (2) until all sets of items in S are marked.
     (let ((prefix))
 
       ;; (2) If a set of items a in S is unmarked
-      (while prefixes
+      (while (and prefixes
+                  (> length 0))
+        (setq length (1- length))
 
         ;; (2) Mark a by computing for each X in N u E, GOTO (a, X). (Algorithm 5.8 can be used here.)
         (setq prefix (pop prefixes))
@@ -698,11 +700,11 @@
                 ;; If a' = GOTO(a, X) is nonempty
                 (when prefix-lr-items
 
-                  (message "Added to stack.")
+                  (message "viable-prefix: %s" alternative-prefix)
 
                   ;; then add a' to S as an unmarked set of items
                   (push alternative-prefix prefixes)
-                  (push prefix-lr-items lr-items))))))))
+                  (setq lr-items (append lr-items prefix-lr-items)))))))))
 
     lr-items))
 

@@ -238,7 +238,7 @@
       (S nil nil (a))
       (S nil nil (e))
       (Sp nil (S) (e)))
-    (parser--lr-items-for-grammar)))
+    (parser--lr-items-for-grammar 8)))
   (message "Passed LR-items for example 5.30")
 
   (message "Passed tests for (parser--lr-items-for-grammar)"))
