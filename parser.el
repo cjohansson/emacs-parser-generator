@@ -652,6 +652,7 @@
       (setq follow-set (parser--distinct follow-set)))
     follow-set))
 
+;; TODO Don't check for distincts prefixes but LR-items
 ;; Algorithm 5.9, p. 389
 (defun parser--lr-items-for-grammar ()
   "Calculate set of valid LR(k) items for grammar."

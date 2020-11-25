@@ -304,6 +304,41 @@
     (parser--lr-items-for-prefix '(S b))))
   (message "Passed V(Sb)")
 
+  ;; a3 p. 390
+  (should
+   (equal
+    '((S (S) (a S b) (a))
+      (S (S) (a S b) (b))
+      (S (S a S) (b) (a))
+      (S (S a S) (b) (e)))
+    (parser--lr-items-for-prefix '(S a S))))
+  (message "Passed V(SaS)")
+
+  (should
+   (equal
+    nil
+    (parser--lr-items-for-prefix '(S a a))))
+  (message "Passed V(Saa)")
+
+  (should
+   (equal
+    nil
+    (parser--lr-items-for-prefix '(S a b))))
+  (message "Passed V(Sab)")
+
+  ;; a4 p. 390
+  (should
+   (equal
+    '((S (S a) (S b) (a))
+      (S (S a) (S b) (e))
+      (S nil (S a S b) (a))
+      (S nil (S a S b) (b))
+      (S nil nil (a))
+      (S nil nil (e)))
+    (parser--lr-items-for-prefix '(S a S b))))
+  (message "Passed V(SaSb)")
+
+
   (message "Passed tests for (parser--lr-items-for-prefix)"))
 
 (defun parser-test--valid-grammar-p ()
