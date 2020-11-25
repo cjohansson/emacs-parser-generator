@@ -238,7 +238,7 @@
       (S nil nil (a))
       (S nil nil (e))
       (Sp nil (S) (e)))
-    (parser--lr-items-for-grammar 8)))
+    (parser--lr-items-for-grammar)))
   (message "Passed LR-items for example 5.30")
 
   (message "Passed tests for (parser--lr-items-for-grammar)"))
@@ -271,14 +271,38 @@
 
   (should
    (equal
+    nil
+    (parser--lr-items-for-prefix 'a)))
+  (message "Passed V(a)")
+
+  (should
+   (equal
+    nil
+    (parser--lr-items-for-prefix 'b)))
+  (message "Passed V(b)")
+
+  (should
+   (equal
     '((S (S a) (S b) (a))
       (S (S a) (S b) (e))
       (S nil (S a S b) (a))
       (S nil (S a S b) (b))
-      (S nil (e) (a))
-      (S nil (e) (b)))
+      (S nil nil (a))
+      (S nil nil (b)))
     (parser--lr-items-for-prefix '(S a))))
   (message "Passed V(Sa)")
+
+  (should
+   (equal
+    nil
+    (parser--lr-items-for-prefix '(S S))))
+  (message "Passed V(SS)")
+
+  (should
+   (equal
+    nil
+    (parser--lr-items-for-prefix '(S b))))
+  (message "Passed V(Sb)")
 
   (message "Passed tests for (parser--lr-items-for-prefix)"))
 
@@ -418,7 +442,8 @@
   (parser-test--e-free-first)
   (parser-test--follow)
   (parser-test--lr-items-for-prefix)
-  (parser-test--lr-items-for-grammar))
+  ;; (parser-test--lr-items-for-grammar)
+  )
 
 (provide 'parser-test)
 

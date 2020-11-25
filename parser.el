@@ -653,8 +653,8 @@
     follow-set))
 
 ;; Algorithm 5.9, p. 389
-(defun parser--lr-items-for-grammar (length)
-  "Calculate set of valid LR(k) items for grammar with LENGTH."
+(defun parser--lr-items-for-grammar ()
+  "Calculate set of valid LR(k) items for grammar."
   (let ((prefixes)
         (marked-prefixes (make-hash-table :test 'equal))
         (lr-items)
@@ -666,12 +666,14 @@
       (push `(,parser--e-identifier) prefixes))
 
     ;; (3) Repeat step (2) until all sets of items in S are marked.
-    (let ((prefix))
+    (let ((prefix)
+          (i-left 100))
 
       ;; (2) If a set of items a in S is unmarked
-      (while (and prefixes
-                  (> length 0))
-        (setq length (1- length))
+      (while (and
+              prefixes
+              (> i-left 0))
+        (setq i-left (1- i-left))
 
         ;; (2) Mark a by computing for each X in N u E, GOTO (a, X). (Algorithm 5.8 can be used here.)
         (setq prefix (pop prefixes))
@@ -682,14 +684,14 @@
                (parser--valid-e-p (car prefix)))
           (setq prefix nil))
 
-        (message "prefix: %s" prefix)
+        ;; (message "prefix: %s" prefix)
 
         (puthash prefix t marked-prefixes)
 
         ;; V(X1,...,Xi) = GOTO(V(X1,...,Xi-1), Xi)
         (dolist (symbol symbols)
           (let ((alternative-prefix (append prefix (list symbol))))
-            (message "alternative-prefix: %s" alternative-prefix)
+            ;; (message "alternative-prefix: %s" alternative-prefix)
 
             ;; and is not already in S
             (unless (gethash alternative-prefix marked-prefixes)
@@ -697,14 +699,33 @@
 
                 (message "V%s = %s" alternative-prefix prefix-lr-items)
 
-                ;; If a' = GOTO(a, X) is nonempty
+                
                 (when prefix-lr-items
 
-                  (message "viable-prefix: %s" alternative-prefix)
+                  ;; Note that GOTO(a, X) will always be empty if all items in a
+                  ;; have the dot at the right end of the production
 
-                  ;; then add a' to S as an unmarked set of items
-                  (push alternative-prefix prefixes)
-                  (setq lr-items (append lr-items prefix-lr-items)))))))))
+                  (let ((dot-at-right-end t)
+                        (production-i 0)
+                        (production-length (length prefix-lr-items)))
+                    (while (and
+                            (< production-i production-length)
+                            dot-at-right-end)
+                      (let ((production-item (nth production-i prefix-lr-items)))
+
+                        ;; When suffix is not nil dot is at the right end
+                        (when (nth 2 production-item)
+                          (setq dot-at-right-end nil)))
+
+                      (setq production-i (1+ production-i)))
+
+                    (unless dot-at-right-end
+                      ;; If a' = GOTO(a, X) is nonempty
+                      (message "viable-prefix: %s" alternative-prefix)
+
+                      ;; then add a' to S as an unmarked set of items
+                      (push alternative-prefix prefixes)
+                      (setq lr-items (append lr-items prefix-lr-items)))))))))))
 
     lr-items))
 
@@ -834,6 +855,8 @@
 
                           ;; Add [A -> aXi . B, u] to V(X1,...,Xi)
                           (let ((combined-prefix (append lr-item-prefix (list prefix))))
+                            (parser--debug
+                             (message "lr-new-item-1: %s" `(,lr-item-lhs ,combined-prefix ,lr-item-suffix-rest ,lr-item-look-ahead)))
                             (push `(,lr-item-lhs ,combined-prefix ,lr-item-suffix-rest ,lr-item-look-ahead) lr-new-item))))))
 
                   ;; (c) Repeat step (2b) until no more new items can be added to V(X1,...,Xi)
@@ -857,6 +880,12 @@
                                   ;; For each production with B as LHS
                                   (dolist (sub-rhs sub-production)
 
+                                    ;; Transform e-productions into nil
+                                    (when (and
+                                           (= (length sub-rhs) 1)
+                                           (parser--valid-e-p (car sub-rhs)))
+                                      (setq sub-rhs nil))
+
                                     ;; For each x in FIRST(αu)
                                     (dolist (f lr-item-suffix-rest-first)
 
@@ -864,6 +893,8 @@
                                       ;; provided it is not already there
                                       (unless (gethash `(,prefix-acc ,lr-item-suffix-first nil ,sub-rhs ,f) lr-item-exists)
                                         (setq added-new t)
+                                        (parser--debug
+                                         (message "lr-new-item-2: %s" `(,lr-item-suffix-first nil ,sub-rhs ,f)))
                                         (puthash `(,prefix-acc ,lr-item-suffix-first nil ,sub-rhs ,f) t lr-item-exists)
                                         (push `(,lr-item-suffix-first nil ,sub-rhs ,f) lr-new-item))))))))))))
 
