@@ -662,7 +662,7 @@
 
     (let ((e-set (parser--lr-items-for-prefix parser--e-identifier)))
       ;;(1) Place V(e) in S. The set V(e) is initially unmarked.
-      (setq unmarked-lr-items (append unmarked-lr-items e-set)))
+      (setq unmarked-lr-items e-set))
 
     ;; (2) If a set of items a in S is unmarked
     ;; (3) Repeat step (2) until all sets of items in S are marked.
@@ -672,30 +672,30 @@
         ;; (2) Mark a
         (setq lr-item (pop unmarked-lr-items))
         (puthash lr-item t marked-lr-items)
-        (setq lr-items (append lr-items lr-item))
-
-        (message "lr-item: %s" lr-item)
+        (push lr-item lr-items)
+        ;; (message "lr-item: %s" lr-item)
 
         ;; (2) By computing for each X in N u E, GOTO (a, X). (Algorithm 5.8 can be used here.)
         ;; V(X1,...,Xi) = GOTO(V(X1,...,Xi-1), Xi)
         (dolist (symbol symbols)
-          (message "symbol: %s" symbol)
+          ;; (message "symbol: %s" symbol)
 
           (let ((prefix-lr-items (parser--lr-items-for-goto (list lr-item) symbol)))
 
-            (message "GOTO(%s, %s) = %s" lr-item symbol prefix-lr-items)
+            (parser--debug
+             (message "GOTO(%s, %s) = %s" lr-item symbol prefix-lr-items))
             ;; If a' = GOTO(a, X) is nonempty
             (when prefix-lr-items
               (dolist (prefix-lr-item prefix-lr-items)
+                ;; (message "prefix-lr-item: %s" prefix-lr-item)
 
                 ;; and is not already in S
                 (unless (gethash prefix-lr-item marked-lr-items)
-
                   ;; Note that GOTO(a, X) will always be empty if all items in a
                   ;; have the dot at the right end of the production
-
+                  
                   ;; then add a' to S as an unmarked set of items
-                  (push unmarked-lr-items prefix-lr-item))))))))
+                  (push prefix-lr-item unmarked-lr-items))))))))
 
     lr-items))
 
