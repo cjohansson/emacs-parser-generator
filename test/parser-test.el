@@ -231,6 +231,8 @@
   (parser--set-grammar '((Sp S) (a b) ((Sp S) (S (S a S b)) (S e)) Sp))
   (parser--set-look-ahead-number 1)
 
+  (message "LR-items for grammar: %s" (parser--lr-items-for-grammar))
+
   (should
    (equal
     '((S nil (S a S b) (a))
@@ -325,19 +327,6 @@
     nil
     (parser--lr-items-for-prefix '(S a b))))
   (message "Passed V(Sab)")
-
-  ;; a4 p. 390
-  (should
-   (equal
-    '((S (S a) (S b) (a))
-      (S (S a) (S b) (e))
-      (S nil (S a S b) (a))
-      (S nil (S a S b) (b))
-      (S nil nil (a))
-      (S nil nil (e)))
-    (parser--lr-items-for-prefix '(S a S b))))
-  (message "Passed V(SaSb)")
-
 
   (message "Passed tests for (parser--lr-items-for-prefix)"))
 
@@ -477,8 +466,7 @@
   (parser-test--e-free-first)
   (parser-test--follow)
   (parser-test--lr-items-for-prefix)
-  ;; (parser-test--lr-items-for-grammar)
-  )
+  (parser-test--lr-items-for-grammar))
 
 (provide 'parser-test)
 
