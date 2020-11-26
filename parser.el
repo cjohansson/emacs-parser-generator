@@ -672,7 +672,8 @@
       (let ((e-set (parser--lr-items-for-prefix parser--e-identifier)))
         (dolist (e-item e-set)
           ;;(1) Place V(e) in S. The set V(e) is initially unmarked.
-          (push `(,lr-item-new-index ,e-item) unmarked-lr-items)))
+          (push `(,lr-item-new-index ,e-item) unmarked-lr-items))
+        (setq lr-item-new-index (1+ lr-item-new-index)))
 
       ;; (2) If a set of items a in S is unmarked
       ;; (3) Repeat step (2) until all sets of items in S are marked.
@@ -700,10 +701,12 @@
 
             (let ((prefix-lr-items (parser--lr-items-for-goto (list lr-item) symbol)))
 
-              (parser--debug
-               (message "GOTO(%s, %s) = %s" lr-item symbol prefix-lr-items))
               ;; If a' = GOTO(a, X) is nonempty
               (when prefix-lr-items
+
+                (parser--debug
+                 (message "GOTO(%s, %s) = %s" lr-item symbol prefix-lr-items))
+
                 (dolist (prefix-lr-item prefix-lr-items)
                   ;; (message "prefix-lr-item: %s" prefix-lr-item)
 
