@@ -30,10 +30,6 @@
   nil
   "Current look-ahead number used.")
 
-(defvar parser--table-lr-items-for-prefix
-  nil
-  "Hash-table for LR-items for prefixes.")
-
 (defvar parser--table-non-terminal-p
   nil
   "Hash-table of terminals for quick checking.")
