@@ -61,8 +61,7 @@
 
 (defun parser--clear-cache ()
   "Clear cache."
-  (setq parser--f-sets nil)
-  (setq parser--table-lr-items-for-prefix nil))
+  (setq parser--f-sets nil))
 
 (defun parser--distinct (elements)
   "Return distinct of ELEMENTS."
@@ -708,122 +707,103 @@
     (unless (parser--valid-sentential-form-p γ)
       (error "Invalid sentential form γ!"))
 
-    ;; Initialize variable if not set previously
-    (unless parser--table-lr-items-for-prefix
-      (setq parser--table-lr-items-for-prefix (make-hash-table :test 'equal)))
-
     (let ((lr-item-exists (make-hash-table :test 'equal)))
 
       ;; 1
 
-      ;; Only generate LR-items for e-identifier if it has not been done before
-      (unless (gethash `(,parser--e-identifier) parser--table-lr-items-for-prefix)
+      ;; Iterate all productions in grammar
+      (let ((lr-items-e)
+            (start-productions (parser--get-grammar-rhs start)))
 
-        ;; Iterate all productions in grammar
-        (let ((lr-items-e)
-              (start-productions (parser--get-grammar-rhs start)))
+        ;; (a)
+        (dolist (rhs start-productions)
+          ;; Add [S -> . α] to V(e)
+          (push `(,start nil ,rhs (e)) lr-items-e)
+          (puthash `(,parser--e-identifier ,start nil ,rhs (,parser--e-identifier)) t lr-item-exists))
 
-          ;; (a)
-          (dolist (rhs start-productions)
-            ;; Add [S -> . α] to V(e)
-            (push `(,start nil ,rhs (e)) lr-items-e)
-            (puthash `(,parser--e-identifier ,start nil ,rhs (,parser--e-identifier)) t lr-item-exists))
+        ;; (b) Iterate every item in v-set(e), if [A -> . Bα, u] is an item and B -> β is in P
+        ;; then for each x in FIRST(αu) add [B -> . β, x] to v-set(e), provided it is not already there
+        (let ((found-new t))
 
-          ;; (b) Iterate every item in v-set(e), if [A -> . Bα, u] is an item and B -> β is in P
-          ;; then for each x in FIRST(αu) add [B -> . β, x] to v-set(e), provided it is not already there
-          (let ((found-new t))
+          ;; Repeat this until no new item is found
+          (while found-new
+            (setq found-new nil)
 
-            ;; Repeat this until no new item is found
-            (while found-new
-              (setq found-new nil)
+            ;; Iterate every item in V(e)
+            (dolist (item lr-items-e)
+              (let ((prefix (nth 1 item))
+                    (rhs (nth 2 item))
+                    (suffix (nth 3 item)))
 
-              ;; Iterate every item in V(e)
-              (dolist (item lr-items-e)
-                (let ((prefix (nth 1 item))
-                      (rhs (nth 2 item))
-                      (suffix (nth 3 item)))
+                ;; Without prefix
+                (unless prefix
 
-                  ;; Without prefix
-                  (unless prefix
-
-                    ;; Check if RHS starts with a non-terminal
-                    (let ((rhs-first (car rhs)))
-                      (parser--debug
-                       (message "rhs-first: %s" rhs-first))
-                      (when (parser--valid-non-terminal-p rhs-first)
-                        (let ((rhs-rest (append (cdr rhs) suffix)))
-                          (let ((rhs-rest-first (parser--first rhs-rest)))
+                  ;; Check if RHS starts with a non-terminal
+                  (let ((rhs-first (car rhs)))
+                    (parser--debug
+                     (message "rhs-first: %s" rhs-first))
+                    (when (parser--valid-non-terminal-p rhs-first)
+                      (let ((rhs-rest (append (cdr rhs) suffix)))
+                        (let ((rhs-rest-first (parser--first rhs-rest)))
+                          (parser--debug
+                           (message "rhs-rest-first: %s" rhs-rest-first))
+                          (unless rhs-rest-first
+                            (setq rhs-rest-first `((,parser--e-identifier))))
+                          (let ((sub-production (parser--get-grammar-rhs rhs-first)))
                             (parser--debug
-                             (message "rhs-rest-first: %s" rhs-rest-first))
-                            (unless rhs-rest-first
-                              (setq rhs-rest-first `((,parser--e-identifier))))
-                            (let ((sub-production (parser--get-grammar-rhs rhs-first)))
+                             (message "sub-production: %s" sub-production))
+
+                            ;; For each production with B as LHS
+                            (dolist (sub-rhs sub-production)
+
+                              ;; Set follow to nil if it's the e-identifier
+                              (when (and
+                                     (= (length sub-rhs) 1)
+                                     (parser--valid-e-p (car sub-rhs)))
+                                (setq sub-rhs nil))
+
                               (parser--debug
-                               (message "sub-production: %s" sub-production))
+                               (message "sub-rhs: %s" sub-rhs))
 
-                              ;; For each production with B as LHS
-                              (dolist (sub-rhs sub-production)
-
-                                ;; Set follow to nil if it's the e-identifier
-                                (when (and
-                                       (= (length sub-rhs) 1)
-                                       (parser--valid-e-p (car sub-rhs)))
-                                  (setq sub-rhs nil))
-
+                              ;; For each x in FIRST(αu)
+                              (dolist (f rhs-rest-first)
                                 (parser--debug
-                                 (message "sub-rhs: %s" sub-rhs))
+                                 (message "f: %s" f))
 
-                                ;; For each x in FIRST(αu)
-                                (dolist (f rhs-rest-first)
-                                  (parser--debug
-                                   (message "f: %s" f))
+                                ;; Add [B -> . β, x] to V(e), provided it is not already there
+                                (unless (gethash `(e ,rhs-first nil ,sub-rhs ,f) lr-item-exists)
+                                  (puthash `(e ,rhs-first nil ,sub-rhs ,f) t lr-item-exists)
+                                  (push `(,rhs-first nil ,sub-rhs ,f) lr-items-e)
 
-                                  ;; Add [B -> . β, x] to V(e), provided it is not already there
-                                  (unless (gethash `(e ,rhs-first nil ,sub-rhs ,f) lr-item-exists)
-                                    (puthash `(e ,rhs-first nil ,sub-rhs ,f) t lr-item-exists)
-                                    (push `(,rhs-first nil ,sub-rhs ,f) lr-items-e)
+                                  ;; (c) Repeat (b) until no more items can be added to V(e)
+                                  (setq found-new t))))))))))))))
 
-                                    ;; (c) Repeat (b) until no more items can be added to V(e)
-                                    (setq found-new t))))))))))))))
+        (parser--debug
+         (message "V(e) = %s" lr-items-e))
 
-          (parser--debug
-           (message "V(e) = %s" lr-items-e))
-
-          (setq lr-items-e (sort lr-items-e 'parser--sort-list))
-          (puthash `(,parser--e-identifier) lr-items-e parser--table-lr-items-for-prefix)))
-
-      ;; Only generate LR-items for prefix if it has not been done before
-      (unless (gethash γ parser--table-lr-items-for-prefix)
+        (setq lr-items-e (sort lr-items-e 'parser--sort-list))
 
         ;; 2 Suppose that we have constructed V(X1,X2,...,Xi-1) we construct V(X1,X2,...,Xi) as follows:
         ;; Only do this step if prefix is not the e-identifier
-        (unless (and
-                 (= (length γ) 1)
-                 (parser--valid-e-p (car γ)))
-          (let ((prefix-acc)
-                (prefix-previous (gethash `(,parser--e-identifier) parser--table-lr-items-for-prefix)))
+        (let ((prefix-acc)
+              (prefix-previous lr-items-e))
+          (unless (and
+                   (= (length γ) 1)
+                   (parser--valid-e-p (car γ)))
             (dolist (prefix γ)
               (let ((lr-new-item))
-                (setq prefix-acc (append prefix-acc (list prefix)))
+                (setq lr-new-item (parser--lr-items-for-goto prefix-previous prefix))
 
-                (if (gethash prefix-acc parser--table-lr-items-for-prefix)
-                    (setq prefix-previous (gethash prefix-acc parser--table-lr-items-for-prefix))
-                  (setq lr-new-item (parser--lr-items-for-goto prefix-previous prefix))
+                (parser--debug
+                 (message "prefix: %s" prefix)
+                 (message "prefix-previous: %s" prefix-previous)
+                 (message "lr-new-item: %s" lr-new-item))
 
-                  (parser--debug
-                   (message "prefix: %s" prefix)
-                   (message "prefix-acc: %s" prefix-acc)
-                   (message "prefix-previous: %s" prefix-previous)
-                   (message "lr-new-item: %s" lr-new-item))
+                (setq prefix-previous lr-new-item))))
 
-                  (setq prefix-previous lr-new-item)
-                  (parser--debug
-                   (message "V%s = %s" prefix-acc lr-new-item))
-                  (puthash prefix-acc lr-new-item parser--table-lr-items-for-prefix)))))))
-
-      (parser--debug
-       (message "γ: %s" γ))
-      (gethash γ parser--table-lr-items-for-prefix))))
+          (parser--debug
+           (message "γ: %s" γ))
+          prefix-previous)))))
 
 (defun parser--lr-items-for-goto (previous-lr-item x)
   "Calculate LR-items for GOTO(PREVIOUS-LR-ITEM, X)."
