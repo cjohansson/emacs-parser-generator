@@ -697,7 +697,7 @@
                   ;; then add a' to S as an unmarked set of items
                   (push prefix-lr-item unmarked-lr-items))))))))
 
-    lr-items))
+    (sort lr-items 'parser--sort-list)))
 
 ;; Algorithm 5.8, p. 386
 (defun parser--lr-items-for-prefix (γ)
