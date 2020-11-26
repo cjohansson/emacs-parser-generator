@@ -26,9 +26,17 @@
   nil
   "Generated F-sets for grammar.")
 
+(defvar parser--goto-table
+  nil
+  "GOTO-table for grammar.")
+
 (defvar parser--look-ahead-number
   nil
   "Current look-ahead number used.")
+
+(defvar parser--table-lr-items
+  nil
+  "Hash-table for distinct LR-items in grammar.")
 
 (defvar parser--table-non-terminal-p
   nil
@@ -57,7 +65,9 @@
 
 (defun parser--clear-cache ()
   "Clear cache."
-  (setq parser--f-sets nil))
+  (setq parser--f-sets nil)
+  (setq parser--goto-table nil)
+  (setq parser--table-lr-items nil))
 
 (defun parser--distinct (elements)
   "Return distinct of ELEMENTS."
@@ -650,49 +660,69 @@
 ;; Algorithm 5.9, p. 389
 (defun parser--lr-items-for-grammar ()
   "Calculate set of valid LR(k) items for grammar."
-  (let ((lr-items)
-        (unmarked-lr-items)
-        (marked-lr-items (make-hash-table :test 'equal))
-        (symbols (append (parser--get-grammar-non-terminals) (parser--get-grammar-terminals))))
+  (unless parser--goto-table
+    (setq parser--goto-table nil)
+    (setq parser--table-lr-items (make-hash-table :test 'equal))
+    (let ((lr-item-new-index 0)
+          (goto-table)
+          (unmarked-lr-items)
+          (marked-lr-items (make-hash-table :test 'equal))
+          (symbols (append (parser--get-grammar-non-terminals) (parser--get-grammar-terminals))))
 
-    (let ((e-set (parser--lr-items-for-prefix parser--e-identifier)))
-      ;;(1) Place V(e) in S. The set V(e) is initially unmarked.
-      (setq unmarked-lr-items e-set))
+      (let ((e-set (parser--lr-items-for-prefix parser--e-identifier)))
+        (dolist (e-item e-set)
+          ;;(1) Place V(e) in S. The set V(e) is initially unmarked.
+          (push `(,lr-item-new-index ,e-item) unmarked-lr-items)))
 
-    ;; (2) If a set of items a in S is unmarked
-    ;; (3) Repeat step (2) until all sets of items in S are marked.
-    (let ((lr-item))
-      (while unmarked-lr-items
+      ;; (2) If a set of items a in S is unmarked
+      ;; (3) Repeat step (2) until all sets of items in S are marked.
+      (let ((popped-item)
+            (lr-item-index)
+            (lr-item)
+            (goto-table-table))
+        (while unmarked-lr-items
 
-        ;; (2) Mark a
-        (setq lr-item (pop unmarked-lr-items))
-        (puthash lr-item t marked-lr-items)
-        (push lr-item lr-items)
-        ;; (message "lr-item: %s" lr-item)
+          ;; (2) Mark a
+          (setq popped-item (pop unmarked-lr-items))
+          (setq lr-item-index (car popped-item))
+          (setq lr-item (car (cdr popped-item)))
+          (message "lr-item-index: %s" lr-item-index)
+          (message "lr-item: %s" lr-item)
+          (message "popped-item: %s" popped-item)
+          (puthash lr-item lr-item-index marked-lr-items)
+          (puthash lr-item-index lr-item parser--table-lr-items)
+          (setq goto-table-table nil)
 
-        ;; (2) By computing for each X in N u E, GOTO (a, X). (Algorithm 5.8 can be used here.)
-        ;; V(X1,...,Xi) = GOTO(V(X1,...,Xi-1), Xi)
-        (dolist (symbol symbols)
-          ;; (message "symbol: %s" symbol)
+          ;; (2) By computing for each X in N u E, GOTO (a, X). (Algorithm 5.8 can be used here.)
+          ;; V(X1,...,Xi) = GOTO(V(X1,...,Xi-1), Xi)
+          (dolist (symbol symbols)
+            ;; (message "symbol: %s" symbol)
 
-          (let ((prefix-lr-items (parser--lr-items-for-goto (list lr-item) symbol)))
+            (let ((prefix-lr-items (parser--lr-items-for-goto (list lr-item) symbol)))
 
-            (parser--debug
-             (message "GOTO(%s, %s) = %s" lr-item symbol prefix-lr-items))
-            ;; If a' = GOTO(a, X) is nonempty
-            (when prefix-lr-items
-              (dolist (prefix-lr-item prefix-lr-items)
-                ;; (message "prefix-lr-item: %s" prefix-lr-item)
+              (parser--debug
+               (message "GOTO(%s, %s) = %s" lr-item symbol prefix-lr-items))
+              ;; If a' = GOTO(a, X) is nonempty
+              (when prefix-lr-items
+                (dolist (prefix-lr-item prefix-lr-items)
+                  ;; (message "prefix-lr-item: %s" prefix-lr-item)
 
-                ;; and is not already in S
-                (unless (gethash prefix-lr-item marked-lr-items)
-                  ;; Note that GOTO(a, X) will always be empty if all items in a
-                  ;; have the dot at the right end of the production
-                  
-                  ;; then add a' to S as an unmarked set of items
-                  (push prefix-lr-item unmarked-lr-items))))))))
+                  ;; and is not already in S
+                  (let ((goto (gethash prefix-lr-item marked-lr-items)))
+                    (if goto
+                        (push `(,symbol ,goto) goto-table-table)
 
-    (sort lr-items 'parser--sort-list)))
+                      ;; Note that GOTO(a, X) will always be empty if all items in a
+                      ;; have the dot at the right end of the production
+                      ;; then add a' to S as an unmarked set of items
+                      (push `(,symbol ,lr-item-new-index) goto-table-table)
+                      (push `(,lr-item-new-index ,prefix-lr-item) unmarked-lr-items)
+                      (setq lr-item-new-index (1+ lr-item-new-index))))))))
+
+          (push `(,lr-item-index ,goto-table-table) goto-table)))
+      (setq parser--goto-table (nreverse goto-table))))
+
+  parser--goto-table)
 
 ;; Algorithm 5.8, p. 386
 (defun parser--lr-items-for-prefix (γ)
@@ -781,8 +811,7 @@
 
         ;; 2 Suppose that we have constructed V(X1,X2,...,Xi-1) we construct V(X1,X2,...,Xi) as follows:
         ;; Only do this step if prefix is not the e-identifier
-        (let ((prefix-acc)
-              (prefix-previous lr-items-e))
+        (let ((prefix-previous lr-items-e))
           (unless (and
                    (= (length γ) 1)
                    (parser--valid-e-p (car γ)))
