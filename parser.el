@@ -115,6 +115,19 @@
       (error "No grammar G defined!")))
   (nth 1 G))
 
+(defun parser--hash-to-list (hash-table &optional un-sorted)
+  "Return a list that represent the HASH-TABLE.  Each element is a list: (list key value), optionally UN-SORTED."
+  (let (result)
+    (if (hash-table-p hash-table)
+        (progn
+          (maphash
+           (lambda (k v) (push (list k v) result))
+           hash-table)
+          (if un-sorted
+              (nreverse result)
+            (sort (nreverse result) (lambda (a b) (< (car a) (car b))))))
+      nil)))
+
 (defun parser--load-symbols ()
   "Load terminals and non-terminals in grammar."
   (let ((terminals (parser--get-grammar-terminals)))
@@ -687,9 +700,10 @@
           (setq popped-item (pop unmarked-lr-items))
           (setq lr-item-index (car popped-item))
           (setq lr-item (car (cdr popped-item)))
-          (message "lr-item-index: %s" lr-item-index)
-          (message "lr-item: %s" lr-item)
-          (message "popped-item: %s" popped-item)
+          (parser--debug
+           (message "lr-item-index: %s" lr-item-index)
+           (message "lr-item: %s" lr-item)
+           (message "popped-item: %s" popped-item))
           (puthash lr-item lr-item-index marked-lr-items)
           (puthash lr-item-index lr-item parser--table-lr-items)
           (setq goto-table-table nil)
@@ -725,7 +739,7 @@
           (push `(,lr-item-index ,goto-table-table) goto-table)))
       (setq parser--goto-table (nreverse goto-table))))
 
-  parser--goto-table)
+  parser--table-lr-items)
 
 ;; Algorithm 5.8, p. 386
 (defun parser--lr-items-for-prefix (γ)
