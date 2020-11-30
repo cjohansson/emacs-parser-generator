@@ -764,6 +764,7 @@
                     (setq lr-item-set-new-index (1+ lr-item-set-new-index)))))))
 
           (setq iteration (1+ iteration))
+          (setq goto-table-table (sort goto-table-table 'parser--sort-list))
           (push `(,lr-item-set-index ,goto-table-table) goto-table)))
       (setq parser--goto-table (sort goto-table 'parser--sort-list))))
 
