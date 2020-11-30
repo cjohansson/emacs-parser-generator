@@ -709,12 +709,8 @@
       (let ((popped-item)
             (lr-item-set-index)
             (lr-items)
-            (goto-table-table)
-            (iteration 1)
-            (max-iterations 100))
-        (while (and
-                unmarked-lr-item-sets
-                (< iteration max-iterations))
+            (goto-table-table))
+        (while unmarked-lr-item-sets
 
           (setq popped-item (pop unmarked-lr-item-sets))
           (setq lr-item-set-index (car popped-item))
@@ -763,7 +759,6 @@
                     (push `(,lr-item-set-new-index ,prefix-lr-items) unmarked-lr-item-sets)
                     (setq lr-item-set-new-index (1+ lr-item-set-new-index)))))))
 
-          (setq iteration (1+ iteration))
           (setq goto-table-table (sort goto-table-table 'parser--sort-list))
           (push `(,lr-item-set-index ,goto-table-table) goto-table)))
       (setq parser--goto-table (sort goto-table 'parser--sort-list))))
