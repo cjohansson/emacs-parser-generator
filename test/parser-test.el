@@ -223,41 +223,46 @@
 
   (message "Passed tests for (parser--empty-free-first)"))
 
-(defun parser-test--lr-items-for-grammar ()
-  "Test `parser--lr-items-for-grammar'."
-  (message "Starting tests for (parser--lr-items-for-grammar)")
+(defun parser-test--generate-tables-for-lr ()
+  "Test `parser--generate-tables-for-lr'."
+  (message "Starting tests for (parser--generate-tables-for-lr)")
 
   ;; Example 5.30, p. 389
   (parser--set-grammar '((Sp S) (a b) ((Sp S) (S (S a S b)) (S e)) Sp))
   (parser--set-look-ahead-number 1)
 
-  ;; (message "GOTO-table: %s" (parser--lr-items-for-grammar))
-  ;; (message "LR-items: %s" (parser--hash-to-list (parser--lr-items-for-grammar)))
+  (parser--generate-tables-for-lr)
+
+  ;; (message "GOTO-table: %s" parser--goto-table)
+  ;; (message "LR-items: %s" (parser--hash-to-list parser--table-lr-items))
 
   (should
    (equal
-    '((0 (S nil (S a S b) (a)))
-      (1 (Sp (S) nil (e)))
-      (2 (S (S) (a S b) (e)))
-      (3 (S (S a) (S b) (e)))
-      (4 (S nil (S a S b) (a)))
-      (5 (S nil (S a S b) (b)))
-      (6 (S nil nil (b)))
-      (7 (S (S) (a S b) (b)))
-      (8 (S (S a) (S b) (b)))
-      (9 (S nil (S a S b) (a)))
-      (10 (S (S) (a S b) (a)))
-      (11 (S (S a) (S b) (a)))
-      (12 (S (S a S) (b) (a)))
-      (13 (S (S a S b) nil (a)))
-      (14 (S (S a S) (b) (b)))
-      (15 (S (S a S b) nil (b)))
-      (16 (S (S a S) (b) (e)))
-      (17 (S (S a S b) nil (e))))
-    (parser--hash-to-list (parser--lr-items-for-grammar))))
+    '((0 ((S 1)))
+      (1 ((a 2)))
+      (2 ((S 3)))
+      (3 ((b 5) (a 4)))
+      (4 ((S 6)))
+      (5 nil)
+      (6 ((b 7) (a 4)))
+      (7 nil))
+    parser--goto-table))
+
+  (should
+   (equal
+    '((0 ((S nil (S a S b) (a)) (S nil (S a S b) (e)) (S nil nil (a)) (S nil nil (e)) (Sp nil (S) (e))))
+      (1 ((S (S) (a S b) (a)) (S (S) (a S b) (e)) (Sp (S) nil (e))))
+      (2 ((S (S a) (S b) (a)) (S (S a) (S b) (e)) (S nil (S a S b) (a)) (S nil (S a S b) (b)) (S nil nil (a)) (S nil nil (b))))
+      (3 ((S (S) (a S b) (a)) (S (S) (a S b) (b)) (S (S a S) (b) (a)) (S (S a S) (b) (e))))
+      (4 ((S (S a) (S b) (a)) (S (S a) (S b) (b)) (S nil (S a S b) (a)) (S nil (S a S b) (b)) (S nil nil (a)) (S nil nil (b))))
+      (5 ((S (S a S b) nil (a)) (S (S a S b) nil (e))))
+      (6 ((S (S) (a S b) (a)) (S (S) (a S b) (b)) (S (S a S) (b) (a)) (S (S a S) (b) (b))))
+      (7 ((S (S a S b) nil (a)) (S (S a S b) nil (b)))))
+    (parser--hash-to-list parser--table-lr-items)))
+
   (message "Passed LR-items for example 5.30")
 
-  (message "Passed tests for (parser--lr-items-for-grammar)"))
+  (message "Passed tests for (parser--generate-tables-for-lr)"))
 
 (defun parser-test--lr-items-for-prefix ()
   "Test `parser--lr-items-for-prefix'."
@@ -480,7 +485,7 @@
   (parser-test--e-free-first)
   (parser-test--follow)
   (parser-test--lr-items-for-prefix)
-  (parser-test--lr-items-for-grammar))
+  (parser-test--generate-tables-for-lr))
 
 (provide 'parser-test)
 

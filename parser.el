@@ -184,11 +184,26 @@
                 b-element
                 (listp b-element))
           (setq b-element (car b-element)))
-        (if (string-greaterp a-element b-element)
-            (setq continue nil)
-          (when (string-greaterp b-element a-element)
-            (setq response t)
-            (setq continue nil))))
+        (when (and
+               (or
+                (stringp a-element)
+                (symbolp a-element))
+               (or
+                (stringp b-element)
+                (symbolp b-element)))
+          (if (string-greaterp a-element b-element)
+              (setq continue nil)
+            (when (string-greaterp b-element a-element)
+              (setq response t)
+              (setq continue nil))))
+        (when (and
+               (numberp a-element)
+               (numberp b-element))
+          (if (> a-element b-element)
+              (setq continue nil)
+            (when (> b-element a-element)
+              (setq response t)
+              (setq continue nil)))))
       (setq index (1+ index)))
     response))
 
@@ -671,75 +686,88 @@
     follow-set))
 
 ;; Algorithm 5.9, p. 389
-(defun parser--lr-items-for-grammar ()
-  "Calculate set of valid LR(k) items for grammar."
-  (unless parser--goto-table
+(defun parser--generate-tables-for-lr ()
+  "Calculate set of valid LR(k) items for grammar and a GOTO-table."
+  (unless (or
+           parser--goto-table
+           parser--table-lr-items)
     (setq parser--goto-table nil)
     (setq parser--table-lr-items (make-hash-table :test 'equal))
-    (let ((lr-item-new-index 0)
+    (let ((lr-item-set-new-index 0)
           (goto-table)
-          (unmarked-lr-items)
-          (marked-lr-items (make-hash-table :test 'equal))
+          (unmarked-lr-item-sets)
+          (marked-lr-item-sets (make-hash-table :test 'equal))
           (symbols (append (parser--get-grammar-non-terminals) (parser--get-grammar-terminals))))
 
       (let ((e-set (parser--lr-items-for-prefix parser--e-identifier)))
-        (dolist (e-item e-set)
-          ;;(1) Place V(e) in S. The set V(e) is initially unmarked.
-          (push `(,lr-item-new-index ,e-item) unmarked-lr-items))
-        (setq lr-item-new-index (1+ lr-item-new-index)))
+        ;;(1) Place V(e) in S. The set V(e) is initially unmarked.
+        (push `(,lr-item-set-new-index ,e-set) unmarked-lr-item-sets)
+        (setq lr-item-set-new-index (1+ lr-item-set-new-index)))
 
       ;; (2) If a set of items a in S is unmarked
       ;; (3) Repeat step (2) until all sets of items in S are marked.
       (let ((popped-item)
-            (lr-item-index)
-            (lr-item)
-            (goto-table-table))
-        (while unmarked-lr-items
+            (lr-item-set-index)
+            (lr-items)
+            (goto-table-table)
+            (iteration 1)
+            (max-iterations 100))
+        (while (and
+                unmarked-lr-item-sets
+                (< iteration max-iterations))
+
+          (setq popped-item (pop unmarked-lr-item-sets))
+          (setq lr-item-set-index (car popped-item))
+          (setq lr-items (car (cdr popped-item)))
+          (parser--debug
+           (message "lr-item-set-index: %s" lr-item-set-index)
+           (message "lr-items: %s" lr-items)
+           (message "popped-item: %s" popped-item))
 
           ;; (2) Mark a
-          (setq popped-item (pop unmarked-lr-items))
-          (setq lr-item-index (car popped-item))
-          (setq lr-item (car (cdr popped-item)))
-          (parser--debug
-           (message "lr-item-index: %s" lr-item-index)
-           (message "lr-item: %s" lr-item)
-           (message "popped-item: %s" popped-item))
-          (puthash lr-item lr-item-index marked-lr-items)
-          (puthash lr-item-index lr-item parser--table-lr-items)
+          (puthash lr-items lr-item-set-index marked-lr-item-sets)
+
+          (puthash lr-item-set-index lr-items parser--table-lr-items)
           (setq goto-table-table nil)
 
           ;; (2) By computing for each X in N u E, GOTO (a, X). (Algorithm 5.8 can be used here.)
           ;; V(X1,...,Xi) = GOTO(V(X1,...,Xi-1), Xi)
           (dolist (symbol symbols)
-            ;; (message "symbol: %s" symbol)
+            (parser--debug
+             (message "symbol: %s" symbol))
 
-            (let ((prefix-lr-items (parser--lr-items-for-goto (list lr-item) symbol)))
+            (let ((prefix-lr-items (parser--lr-items-for-goto lr-items symbol)))
 
               ;; If a' = GOTO(a, X) is nonempty
               (when prefix-lr-items
 
                 (parser--debug
-                 (message "GOTO(%s, %s) = %s" lr-item symbol prefix-lr-items))
+                 (message "GOTO(%s, %s) = %s" lr-items symbol prefix-lr-items))
 
-                (dolist (prefix-lr-item prefix-lr-items)
-                  ;; (message "prefix-lr-item: %s" prefix-lr-item)
+                ;; and is not already in S
+                (let ((goto (gethash prefix-lr-items marked-lr-item-sets)))
+                  (if goto
+                      (progn
+                        (parser--debug
+                         (message "Set already exists in: %s" goto))
+                        (push `(,symbol ,goto) goto-table-table))
 
-                  ;; and is not already in S
-                  (let ((goto (gethash prefix-lr-item marked-lr-items)))
-                    (if goto
-                        (push `(,symbol ,goto) goto-table-table)
+                    (parser--debug
+                     (message "Set is new"))
 
-                      ;; Note that GOTO(a, X) will always be empty if all items in a
-                      ;; have the dot at the right end of the production
-                      ;; then add a' to S as an unmarked set of items
-                      (push `(,symbol ,lr-item-new-index) goto-table-table)
-                      (push `(,lr-item-new-index ,prefix-lr-item) unmarked-lr-items)
-                      (setq lr-item-new-index (1+ lr-item-new-index))))))))
+                    ;; Note that GOTO(a, X) will always be empty if all items in a
+                    ;; have the dot at the right end of the production
 
-          (push `(,lr-item-index ,goto-table-table) goto-table)))
-      (setq parser--goto-table (nreverse goto-table))))
+                    ;; then add a' to S as an unmarked set of items
+                    (push `(,symbol ,lr-item-set-new-index) goto-table-table)
+                    (push `(,lr-item-set-new-index ,prefix-lr-items) unmarked-lr-item-sets)
+                    (setq lr-item-set-new-index (1+ lr-item-set-new-index)))))))
 
-  parser--table-lr-items)
+          (setq iteration (1+ iteration))
+          (push `(,lr-item-set-index ,goto-table-table) goto-table)))
+      (setq parser--goto-table (sort goto-table 'parser--sort-list))))
+
+  t)
 
 ;; Algorithm 5.8, p. 386
 (defun parser--lr-items-for-prefix (γ)
