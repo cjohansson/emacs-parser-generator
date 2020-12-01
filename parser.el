@@ -128,6 +128,19 @@
             (sort (nreverse result) (lambda (a b) (< (car a) (car b))))))
       nil)))
 
+(defun parser--hash-values-to-list (hash-table &optional un-sorted)
+  "Return a list that represent the HASH-TABLE.  Each element is a list: (list key value), optionally UN-SORTED."
+  (let (result)
+    (if (hash-table-p hash-table)
+        (progn
+          (maphash
+           (lambda (_k v) (push v result))
+           hash-table)
+          (if un-sorted
+              (nreverse result)
+            (sort (nreverse result) (lambda (a b) (< (car a) (car b))))))
+      nil)))
+
 (defun parser--load-symbols ()
   "Load terminals and non-terminals in grammar."
   (let ((terminals (parser--get-grammar-terminals)))
@@ -764,6 +777,85 @@
       (setq parser--goto-table (sort goto-table 'parser--sort-list))))
 
   t)
+
+;; Algorithm 5.10, p. 391
+(defun parser--lr-items-valid-p (lr-item-sets)
+  "Return whether the set collection LR-ITEM-SETS is valid or not."
+  (parser--debug
+   (message "lr-item-sets: %s" lr-item-sets))
+  (let ((valid-p t)
+        (set-index 0)
+        (set)
+        (sets-length (length lr-item-sets))
+        (set-length 0)
+        (a)
+        (a-look-ahead)
+        (a-follow)
+        (a-index 0)
+        (b)
+        (b-suffix)
+        (b-follow)
+        (b-suffix-follow)
+        (b-suffix-follow-eff)
+        (b-index 0))
+
+    ;; Iterate each set
+    (while (and
+            valid-p
+            (< set-index sets-length))
+      (setq set (nth set-index lr-item-sets))
+      (parser--debug
+       (message "set: %s" set))
+
+      ;; Iterate each set
+      (setq a-index 0)
+      (setq b-index 0)
+      (setq set-length (length set))
+      (while (and
+              valid-p
+              (< a-index set-length))
+        (setq a (nth a-index set))
+        (setq a-look-ahead (nth 2 a))
+
+        (parser--debug
+         (message "a: %s" a)
+         (message "a-look-ahead: %s" a-look-ahead))
+
+        ;; The only sets of LR items which need to be tested are those that contain a dot at the right end of a production
+        (unless a-look-ahead
+          (setq a-follow (nth 3 a))
+
+          (parser--debug
+           (message "a-follow: %s" a-follow))
+
+          ;; Iterate each set again
+          (while (and
+                  valid-p
+                  (< b-index set-length))
+            (unless (= a-index b-index)
+              (setq b (nth b-index set))
+              (setq b-suffix (nth 2 b))
+              (setq b-follow (nth 3 b))
+              (setq b-suffix-follow (append b-suffix b-follow))
+              (setq b-suffix-follow-eff (parser--e-free-first b-suffix-follow))
+
+              (parser--debug
+               (message "b: %s" b)
+               (message "b-suffix: %s" b-suffix)
+               (message "b-follow: %s" b-follow)
+               (message "b-suffix-follow: %s" b-suffix-follow)
+               (message "b-suffix-follow-eff: %s" b-suffix-follow-eff))
+
+              (dolist (b-suffix-follow-eff-item b-suffix-follow-eff)
+                (when (equal a-look-ahead b-suffix-follow-eff-item)
+                  (parser--debug
+                   (message "Inconsistent grammar!"))
+                  (setq valid-p nil))))
+            (setq b-index (1+ b-index))))
+        (setq a-index (1+ a-index)))
+      (setq set-index (1+ set-index)))
+
+    valid-p))
 
 ;; Algorithm 5.8, p. 386
 (defun parser--lr-items-for-prefix (γ)

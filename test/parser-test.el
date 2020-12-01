@@ -467,6 +467,22 @@
 
   (message "Passed tests  for (parser--get-grammar-rhs)"))
 
+(defun parser-test--lr-items-valid-p ()
+  "Test `parser--lr-items-valid-p'."
+  (message "Started tests for (parser--lr-items-valid-p)")
+
+  (parser--set-grammar '((Sp S) (a b) ((Sp S) (S (S a S b)) (S e)) Sp))
+  (parser--set-look-ahead-number 1)
+  (parser--generate-tables-for-lr)
+  (should
+   (equal
+    t
+    (parser--lr-items-valid-p (parser--hash-values-to-list parser--table-lr-items t))))
+
+  ;; TODO Figure out a grammar here that should be inconsistent
+
+  (message "Passed tests for (parser--lr-items-valid-p)"))
+
 (defun parser-test ()
   "Run test."
   ;; (setq debug-on-error t)
@@ -485,7 +501,8 @@
   (parser-test--e-free-first)
   (parser-test--follow)
   (parser-test--lr-items-for-prefix)
-  (parser-test--generate-tables-for-lr))
+  (parser-test--generate-tables-for-lr)
+  (parser-test--lr-items-valid-p))
 
 (provide 'parser-test)
 
