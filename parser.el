@@ -774,8 +774,11 @@
 
           (setq goto-table-table (sort goto-table-table 'parser--sort-list))
           (push `(,lr-item-set-index ,goto-table-table) goto-table)))
-      (setq parser--goto-table (sort goto-table 'parser--sort-list))))
-
+      (setq parser--goto-table (sort goto-table 'parser--sort-list)))
+    (unless
+        (parser--lr-items-valid-p
+         (parser--hash-values-to-list parser--table-lr-items t))
+      (error "Inconsistent grammar!")))
   t)
 
 ;; Algorithm 5.10, p. 391
@@ -847,9 +850,9 @@
                (message "b-suffix-follow-eff: %s" b-suffix-follow-eff))
 
               (dolist (b-suffix-follow-eff-item b-suffix-follow-eff)
-                (when (equal a-look-ahead b-suffix-follow-eff-item)
+                (when (equal a-follow b-suffix-follow-eff-item)
                   (parser--debug
-                   (message "Inconsistent grammar!"))
+                   (message "Inconsistent grammar! %s conflicts with %s" a b))
                   (setq valid-p nil))))
             (setq b-index (1+ b-index))))
         (setq a-index (1+ a-index)))
