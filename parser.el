@@ -1031,6 +1031,12 @@
     (setq lr-new-item (sort lr-new-item 'parser--sort-list))
     lr-new-item))
 
+;; Algorithm 5.11, p. 393
+(defun parser--generate-action-tables-for-lr-grammar ()
+  "Generate action-tables for lr-grammar."
+  ;; TODO This
+  t)
+
 
 (provide 'parser)
 
