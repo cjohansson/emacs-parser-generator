@@ -223,47 +223,6 @@
 
   (message "Passed tests for (parser--empty-free-first)"))
 
-(defun parser-test--generate-tables-for-lr ()
-  "Test `parser--generate-tables-for-lr'."
-  (message "Starting tests for (parser--generate-tables-for-lr)")
-
-  ;; Example 5.30, p. 389
-  (parser--set-grammar '((Sp S) (a b) ((Sp S) (S (S a S b)) (S e)) Sp))
-  (parser--set-look-ahead-number 1)
-
-  (parser--generate-tables-for-lr)
-
-  ;; (message "GOTO-table: %s" parser--goto-table)
-  ;; (message "LR-items: %s" (parser--hash-to-list parser--table-lr-items))
-
-  (should
-   (equal
-    '((0 ((S 1)))
-      (1 ((a 2)))
-      (2 ((S 3)))
-      (3 ((a 4) (b 5)))
-      (4 ((S 6)))
-      (5 nil)
-      (6 ((a 4) (b 7)))
-      (7 nil))
-    parser--goto-table))
-
-  (should
-   (equal
-    '((0 ((S nil (S a S b) (a)) (S nil (S a S b) (e)) (S nil nil (a)) (S nil nil (e)) (Sp nil (S) (e))))
-      (1 ((S (S) (a S b) (a)) (S (S) (a S b) (e)) (Sp (S) nil (e))))
-      (2 ((S (S a) (S b) (a)) (S (S a) (S b) (e)) (S nil (S a S b) (a)) (S nil (S a S b) (b)) (S nil nil (a)) (S nil nil (b))))
-      (3 ((S (S) (a S b) (a)) (S (S) (a S b) (b)) (S (S a S) (b) (a)) (S (S a S) (b) (e))))
-      (4 ((S (S a) (S b) (a)) (S (S a) (S b) (b)) (S nil (S a S b) (a)) (S nil (S a S b) (b)) (S nil nil (a)) (S nil nil (b))))
-      (5 ((S (S a S b) nil (a)) (S (S a S b) nil (e))))
-      (6 ((S (S) (a S b) (a)) (S (S) (a S b) (b)) (S (S a S) (b) (a)) (S (S a S) (b) (b))))
-      (7 ((S (S a S b) nil (a)) (S (S a S b) nil (b)))))
-    (parser--hash-to-list parser--table-lr-items)))
-
-  (message "Passed LR-items for example 5.30")
-
-  (message "Passed tests for (parser--generate-tables-for-lr)"))
-
 (defun parser-test--valid-grammar-p ()
   "Test function `parser--valid-grammar-p'."
   (message "Starting tests for (parser--valid-grammar-p)")

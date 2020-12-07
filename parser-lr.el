@@ -12,14 +12,27 @@
 
 ;;; Variables:
 
+(defvar parser-lr--action-tables
+  nil
+  "Action-tables for grammar.")
 
 (defvar parser-lr--goto-tables
   nil
-  "GOTO-tables for grammar.")
+  "Goto-tables for grammar.")
 
 (defvar parser-lr--items
   nil
   "Hash-table for distinct LR-items in grammar.")
+
+
+;; Functions
+
+
+(defun parser-lr--reset ()
+  "Reset variables."
+  (setq parser-lr--action-tables nil)
+  (setq parser-lr--goto-tables nil)
+  (setq parser-lr--items nil))
 
 
 ;; Main Algorithms
@@ -30,8 +43,8 @@
   (unless (or
            parser-lr--goto-tables
            parser-lr--items)
-    (setq parser--goto-table nil)
-    (setq parser--table-lr-items (make-hash-table :test 'equal))
+    (setq parser-lr--goto-tables nil)
+    (setq parser-lr--items (make-hash-table :test 'equal))
     (let ((lr-item-set-new-index 0)
           (goto-table)
           (unmarked-lr-item-sets)
@@ -62,7 +75,7 @@
           ;; (2) Mark a
           (puthash lr-items lr-item-set-index marked-lr-item-sets)
 
-          (puthash lr-item-set-index lr-items parser--table-lr-items)
+          (puthash lr-item-set-index lr-items parser-lr--items)
           (setq goto-table-table nil)
 
           ;; (2) By computing for each X in N u E, GOTO (a, X). (Algorithm 5.8 can be used here.)
@@ -100,10 +113,10 @@
 
           (setq goto-table-table (sort goto-table-table 'parser--sort-list))
           (push `(,lr-item-set-index ,goto-table-table) goto-table)))
-      (setq parser--goto-table (sort goto-table 'parser--sort-list)))
+      (setq parser-lr--goto-tables (sort goto-table 'parser--sort-list)))
     (unless
         (parser-lr--items-valid-p
-         (parser--hash-values-to-list parser--table-lr-items t))
+         (parser--hash-values-to-list parser-lr--items t))
       (error "Inconsistent grammar!")))
   t)
 

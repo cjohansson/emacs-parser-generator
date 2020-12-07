@@ -14,13 +14,14 @@
   (message "Starting tests for (parser-lr--generate-goto-tables)")
 
   ;; Example 5.30, p. 389
+  (parser-lr--reset)
   (parser--set-grammar '((Sp S) (a b) ((Sp S) (S (S a S b)) (S e)) Sp))
   (parser--set-look-ahead-number 1)
 
   (parser-lr--generate-goto-tables)
 
-  ;; (message "GOTO-table: %s" parser--goto-table)
-  ;; (message "LR-items: %s" (parser--hash-to-list parser--table-lr-items))
+  ;; (message "GOTO-table: %s" parser-lr--goto-tables)
+  ;; (message "LR-items: %s" (parser--hash-to-list parser-lr--items))
 
   (should
    (equal
@@ -32,7 +33,7 @@
       (5 nil)
       (6 ((a 4) (b 7)))
       (7 nil))
-    parser--goto-table))
+    parser-lr--goto-tables))
 
   (should
    (equal
@@ -44,7 +45,7 @@
       (5 ((S (S a S b) nil (a)) (S (S a S b) nil (e))))
       (6 ((S (S) (a S b) (a)) (S (S) (a S b) (b)) (S (S a S) (b) (a)) (S (S a S) (b) (b))))
       (7 ((S (S a S b) nil (a)) (S (S a S b) nil (b)))))
-    (parser--hash-to-list parser--table-lr-items)))
+    (parser--hash-to-list parser-lr--items)))
 
   (message "Passed LR-items for example 5.30")
 
@@ -55,6 +56,7 @@
   (message "Starting tests for (parser-lr--items-for-prefix)")
 
   ;; Example 5.29 p 387
+  (parser-lr--reset)
   (parser--set-grammar '((Sp S) (a b) ((Sp S) (S (S a S b)) (S e)) Sp))
   (parser--set-look-ahead-number 1)
 
@@ -139,13 +141,14 @@
   "Test `parser-lr--items-valid-p'."
   (message "Started tests for (parser-lr--items-valid-p)")
 
+  (parser-lr--reset)
   (parser--set-grammar '((Sp S) (a b) ((Sp S) (S (S a S b)) (S e)) Sp))
   (parser--set-look-ahead-number 1)
   (parser-lr--generate-goto-tables)
   (should
    (equal
     t
-    (parser-lr--items-valid-p (parser--hash-values-to-list parser--table-lr-items t))))
+    (parser-lr--items-valid-p (parser--hash-values-to-list parser-lr--items t))))
 
   (message "Passed first")
 
