@@ -1,4 +1,4 @@
-;;; parser-test.el --- Tests for parser -*- lexical-binding: t -*-
+;;; parser-test.el --- Tests for Parser -*- lexical-binding: t -*-
 
 
 ;;; Commentary:
@@ -264,91 +264,6 @@
 
   (message "Passed tests for (parser--generate-tables-for-lr)"))
 
-(defun parser-test--lr-items-for-prefix ()
-  "Test `parser--lr-items-for-prefix'."
-  (message "Starting tests for (parser--lr-items-for-prefix)")
-
-  ;; Example 5.29 p 387
-  (parser--set-grammar '((Sp S) (a b) ((Sp S) (S (S a S b)) (S e)) Sp))
-  (parser--set-look-ahead-number 1)
-
-  (should
-   (equal
-    '((S nil (S a S b) (a))
-      (S nil (S a S b) (e))
-      (S nil nil (a))
-      (S nil nil (e))
-      (Sp nil (S) (e)))
-    (parser--lr-items-for-prefix 'e)))
-  (message "Passed V(e)")
-
-  (should
-   (equal
-    '((S (S) (a S b) (a))
-      (S (S) (a S b) (e))
-      (Sp (S) nil (e)))
-    (parser--lr-items-for-prefix 'S)))
-  (message "Passed V(S)")
-
-  (should
-   (equal
-    nil
-    (parser--lr-items-for-prefix 'a)))
-  (message "Passed V(a)")
-
-  (should
-   (equal
-    nil
-    (parser--lr-items-for-prefix 'b)))
-  (message "Passed V(b)")
-
-  (should
-   (equal
-    '((S (S a) (S b) (a))
-      (S (S a) (S b) (e))
-      (S nil (S a S b) (a))
-      (S nil (S a S b) (b))
-      (S nil nil (a))
-      (S nil nil (b)))
-    (parser--lr-items-for-prefix '(S a))))
-  (message "Passed V(Sa)")
-
-  (should
-   (equal
-    nil
-    (parser--lr-items-for-prefix '(S S))))
-  (message "Passed V(SS)")
-
-  (should
-   (equal
-    nil
-    (parser--lr-items-for-prefix '(S b))))
-  (message "Passed V(Sb)")
-
-  ;; a3 p. 390
-  (should
-   (equal
-    '((S (S) (a S b) (a))
-      (S (S) (a S b) (b))
-      (S (S a S) (b) (a))
-      (S (S a S) (b) (e)))
-    (parser--lr-items-for-prefix '(S a S))))
-  (message "Passed V(SaS)")
-
-  (should
-   (equal
-    nil
-    (parser--lr-items-for-prefix '(S a a))))
-  (message "Passed V(Saa)")
-
-  (should
-   (equal
-    nil
-    (parser--lr-items-for-prefix '(S a b))))
-  (message "Passed V(Sab)")
-
-  (message "Passed tests for (parser--lr-items-for-prefix)"))
-
 (defun parser-test--valid-grammar-p ()
   "Test function `parser--valid-grammar-p'."
   (message "Starting tests for (parser--valid-grammar-p)")
@@ -467,28 +382,6 @@
 
   (message "Passed tests  for (parser--get-grammar-rhs)"))
 
-(defun parser-test--lr-items-valid-p ()
-  "Test `parser--lr-items-valid-p'."
-  (message "Started tests for (parser--lr-items-valid-p)")
-
-  (parser--set-grammar '((Sp S) (a b) ((Sp S) (S (S a S b)) (S e)) Sp))
-  (parser--set-look-ahead-number 1)
-  (parser--generate-tables-for-lr)
-  (should
-   (equal
-    t
-    (parser--lr-items-valid-p (parser--hash-values-to-list parser--table-lr-items t))))
-
-  (message "Passed first")
-
-  (should
-   (equal
-    nil
-    (parser--lr-items-valid-p
-     '(((S nil (S a S b) (a)) (S nil (S a S b) (e)) (S nil nil (a)) (S nil nil (e)) (Sp nil (S) (e))) ((S (S) (a S b) (a)) (S (S) (a S b) (e)) (Sp (S) nil (e))) ((S (S a) (S b) (a)) (S (S a) (S b) (e)) (S nil (S a S b) (a)) (S nil (S a S b) (b)) (S nil nil (a)) (S nil nil (b))) ((S (S) (a S b) (a)) (S (S) (a S b) (b)) (S (S a S) (b) (a)) (S (S a S) (b) (e))) ((S (S a S b) nil (a)) (S (S a S b) (a) (a)) (S (S a S b) nil (e))) ((S (S a) (S b) (a)) (S (S a) (S b) (b)) (S nil (S a S b) (a)) (S nil (S a S b) (b)) (S nil nil (a)) (S nil nil (b))) ((S (S) (a S b) (a)) (S (S) (a S b) (b)) (S (S a S) (b) (a)) (S (S a S) (b) (b))) ((S (S a S b) nil (a)) (S (S a S b) nil (b)))))))
-
-  (message "Passed tests for (parser--lr-items-valid-p)"))
-
 (defun parser-test ()
   "Run test."
   ;; (setq debug-on-error t)
@@ -505,10 +398,7 @@
   ;; Algorithms
   (parser-test--first)
   (parser-test--e-free-first)
-  (parser-test--follow)
-  (parser-test--lr-items-for-prefix)
-  (parser-test--generate-tables-for-lr)
-  (parser-test--lr-items-valid-p))
+  (parser-test--follow))
 
 (provide 'parser-test)
 

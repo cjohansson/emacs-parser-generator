@@ -15,6 +15,13 @@ clean:
 compile:
 	$(EMACS_CMD) -f batch-byte-compile $(EL)
 
-.PHONY: tests
-tests:
+.PHONY: test
+test:
 	$(EMACS_CMD) -l test/parser-test.el -f "parser-test"
+
+.PHONY: test-lr
+test-lr:
+	$(EMACS_CMD) -l test/parser-lr-test.el -f "parser-lr-test"
+
+.PHONY: tests
+tests: test test-lr
