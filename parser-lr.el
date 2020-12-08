@@ -25,7 +25,7 @@
   "Hash-table for distinct LR-items in grammar.")
 
 
-;; Functions
+;; Helper Functions
 
 
 (defun parser-lr--reset ()
@@ -36,6 +36,26 @@
 
 
 ;; Main Algorithms
+
+
+;; Algorithm 5.11, p. 393
+(defun parser-lr--generate-action-tables ()
+  "Generate action-tables for lr-grammar."
+  (unless parser-lr--action-tables
+    (let ((action-tables nil)
+          (terminals (parser--get-grammar-terminals)))
+      (dolist (goto-table parser-lr--goto-tables)
+        ;; (message "goto-table: %s" goto-table)
+        (let ((goto-index (car goto-table))
+              (gotos (car (cdr goto-table))))
+          (let ((lr-items (gethash goto-index parser-lr--items)))
+            (dolist (lr-item lr-items)
+              ;; TODO (a) f(u) = shift if [A -> B . C, v] is in a, C != e and u is in EFF(Cv)
+              ;; TODO (b) f(u) = reduce i if [A -> B ., u] is in a and A -> B is product i in P, i > 1
+              ;; TODO (c) f(e) = accept if [S' -> S ., e] is in a
+              ;; TODO (d) f(u) = error otherwise
+              ))))
+      (setq parser-lr--action-table action-tables))))
 
 ;; Algorithm 5.9, p. 389
 (defun parser-lr--generate-goto-tables ()
@@ -117,8 +137,7 @@
     (unless
         (parser-lr--items-valid-p
          (parser--hash-values-to-list parser-lr--items t))
-      (error "Inconsistent grammar!")))
-  t)
+      (error "Inconsistent grammar!"))))
 
 ;; Algorithm 5.10, p. 391
 (defun parser-lr--items-valid-p (lr-item-sets)
@@ -369,12 +388,6 @@
 
     (setq lr-new-item (sort lr-new-item 'parser--sort-list))
     lr-new-item))
-
-;; Algorithm 5.11, p. 393
-(defun parser-lr--generate-action-tables ()
-  "Generate action-tables for lr-grammar."
-  ;; TODO This
-  t)
 
 
 (provide 'parser-lr)

@@ -9,6 +9,32 @@
 (require 'parser-lr)
 (require 'ert)
 
+(defun parser-lr-test--generate-action-tables ()
+  "Test `parser-lr--generate-action-tables'."
+  (message "Starting tests for (parser-lr--generate-action-tables)")
+
+  ;; Example 5.32 p. 393
+  (parser-lr--reset)
+  (parser--set-grammar '((Sp S) (a b) ((Sp S) (S (S a S b)) (S e)) Sp))
+  (parser--set-look-ahead-number 1)
+  (parser-lr--generate-goto-tables)
+  (parser-lr--generate-action-tables)
+
+  ;; Fig. 5.9 p. 374
+  (should
+   (equal
+    '((0 ((a reduce 2) (e reduce 2)))
+      (1 ((a shift) (e accept)))
+      (2 ((a reduce 2) (b reduce 2)))
+      (3 ((a shift) (b shift)))
+      (4 ((a reduce 2) (b reduce 2)))
+      (5 ((a reduce 1) (e reduce 1)))
+      (6 ((a shift) (b shift)))
+      (7 ((a reduce 1) (b reduce 1))))
+      parser-lr--action-tables))
+
+  (message "Ended tests for (parser-lr--generate-action-tables)"))
+
 (defun parser-lr-test--generate-goto-tables ()
   "Test `parser-lr--generate-goto-tables'."
   (message "Starting tests for (parser-lr--generate-goto-tables)")
@@ -165,8 +191,9 @@
   ;; (setq debug-on-error t)
 
   (parser-lr-test--items-for-prefix)
+  (parser-lr-test--items-valid-p)
   (parser-lr-test--generate-goto-tables)
-  (parser-lr-test--items-valid-p))
+  (parser-lr-test--generate-action-tables))
 
 (provide 'parser-lr-test)
 
