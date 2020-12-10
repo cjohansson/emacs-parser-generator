@@ -50,7 +50,8 @@
               (gotos (car (cdr goto-table))))
           (let ((lr-items (gethash goto-index parser-lr--items)))
             (dolist (lr-item lr-items)
-              ;; TODO (a) f(u) = shift if [A -> B . C, v] is in a, C != e and u is in EFF(Cv)
+              ;; TODO Iterate all possible 
+              ;; TODO (a) f(u) = shift if [A -> B . C, v] is in LR-items, C != e and u is in EFF(Cv)
               ;; TODO (b) f(u) = reduce i if [A -> B ., u] is in a and A -> B is product i in P, i > 1
               ;; TODO (c) f(e) = accept if [S' -> S ., e] is in a
               ;; TODO (d) f(u) = error otherwise

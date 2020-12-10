@@ -9,6 +9,40 @@
 (require 'parser)
 (require 'ert)
 
+(defun parser-test--get-possible-look-aheads ()
+  "Test `parser--get-possible-look-aheads'."
+  (message "Starting tests for (parser--get-possible-look-aheads)")
+
+  (parser--set-grammar '((S A) ("a" "b") ((S A) (A ("b" "a"))) S))
+  (parser--set-look-ahead-number 1)
+
+  (should
+   (equal
+    '(("a") ("b"))
+    (parser--get-possible-look-aheads)))
+  (message "Passed ((a) (b))")
+
+  (should
+   (equal
+    '(("a") ("b") (e))
+    (parser--get-possible-look-aheads t)))
+  (message "Passed ((a) (b) (e))")
+
+  (parser--set-look-ahead-number 2)
+
+  (should
+   (equal
+    '((a a) (a b) (b a) (b b))
+    (parser--get-possible-look-aheads)))
+  (message "Passed ((a a) (a b) (b a) (b b))")
+
+  (should
+   (equal
+    '((a a) (a b) (a e) (b a) (b b) (b e))
+    (parser--get-possible-look-aheads t)))
+
+  (message "Passed tests for (parser--get-possible-look-aheads)"))
+
 (defun parser-test--sort-list ()
   "Test `parser--sort-list'."
   (message "Starting tests for (parser-test--sort-list)")
@@ -353,6 +387,7 @@
   (parser-test--distinct)
   (parser-test--sort-list)
   (parser-test--get-grammar-rhs)
+  (parser-test--get-possible-look-aheads)
 
   ;; Algorithms
   (parser-test--first)

@@ -105,6 +105,82 @@
       (error "No grammar G defined!")))
   (nth 1 G))
 
+(defun parser--get-possible-look-aheads (&optional include-e)
+  "Return all possible look-ahead set which optionally INCLUDE-E."
+  (let ((terminals (parser--get-grammar-terminals))
+        (look-aheads)
+        (k parser--look-ahead-number)
+        (stack '((0 0 nil)))
+        (marked-paths (make-hash-table :test 'equal))
+        (added-look-aheads (make-hash-table :test 'equal)))
+    (let ((terminals-max-index (1- (length terminals)))
+          (terminal-index)
+          (look-ahead-length)
+          (look-ahead))
+      (while stack
+        (message "stack 1: %s" stack)
+        (let ((item (pop stack)))
+          (setq terminal-index (nth 0 item))
+          (setq look-ahead-length (nth 1 item))
+          (setq look-ahead (nth 2 item))
+
+          (message "Popped")
+          (message "item: %s" item)
+          (message "look-ahead-length: %s" look-ahead-length)
+          (message "look-ahead: %s" look-ahead)
+
+          (while (and
+                  (< look-ahead-length k)
+                  (<= terminal-index terminals-max-index))
+            (message "stack 2: %s" stack)
+            (let ((potential-look-ahead look-ahead)
+                  (next-terminal (nth terminal-index terminals)))
+              (push next-terminal potential-look-ahead)
+              (unless (gethash (format "%s" potential-look-ahead) marked-paths)
+                (message "potential-look-ahead: %s gethash: %s" potential-look-ahead (gethash potential-look-ahead marked-paths))
+                (puthash (format "%s" potential-look-ahead) t marked-paths)
+
+                (let ((stack-item (list terminal-index look-ahead-length look-ahead)))
+                  (push stack-item stack)
+                  (message "Added old path to stack: %s %s" stack-item stack))
+
+                (setq look-ahead-length (1+ look-ahead-length))
+                (setq look-ahead potential-look-ahead)
+
+                (message "Added-terminal: %s" next-terminal)
+                (message "look-ahead-length: %s" look-ahead-length)
+                (message "look-ahead: %s" look-ahead)
+                (message "Stack 3: %s" stack)))
+            (setq terminal-index (1+ terminal-index)))
+
+          (message "Stack 5: %s" stack)
+          (let ((look-ahead-to-add))
+            (if look-ahead
+                (progn
+
+                  (when (= look-ahead-length k)
+                    (setq look-ahead-to-add (reverse look-ahead)))
+
+                  (when (and
+                         include-e
+                         (= look-ahead-length (1- k)))
+                    (push parser--e-identifier look-aheads)
+                    (setq look-ahead-to-add (reverse look-ahead))))
+
+              (when (and
+                     include-e
+                     (= k 1))
+                (setq look-ahead-to-add `(,parser--e-identifier))))
+
+            (message "look-ahead-to-add: %s" look-ahead-to-add)
+            (when (and look-ahead-to-add
+                       (not (gethash look-ahead-to-add added-look-aheads)))
+              (puthash look-ahead-to-add t added-look-aheads)
+              (push look-ahead-to-add look-aheads))))
+        (message "Stack 4: %s" stack)))
+
+    (sort look-aheads 'parser--sort-list)))
+
 (defun parser--hash-to-list (hash-table &optional un-sorted)
   "Return a list that represent the HASH-TABLE.  Each element is a list: (list key value), optionally UN-SORTED."
   (let (result)
