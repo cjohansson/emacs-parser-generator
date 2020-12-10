@@ -118,42 +118,27 @@
           (look-ahead-length)
           (look-ahead))
       (while stack
-        (message "stack 1: %s" stack)
         (let ((item (pop stack)))
           (setq terminal-index (nth 0 item))
           (setq look-ahead-length (nth 1 item))
           (setq look-ahead (nth 2 item))
 
-          (message "Popped")
-          (message "item: %s" item)
-          (message "look-ahead-length: %s" look-ahead-length)
-          (message "look-ahead: %s" look-ahead)
-
           (while (and
                   (< look-ahead-length k)
                   (<= terminal-index terminals-max-index))
-            (message "stack 2: %s" stack)
             (let ((potential-look-ahead look-ahead)
                   (next-terminal (nth terminal-index terminals)))
               (push next-terminal potential-look-ahead)
-              (unless (gethash (format "%s" potential-look-ahead) marked-paths)
-                (message "potential-look-ahead: %s gethash: %s" potential-look-ahead (gethash potential-look-ahead marked-paths))
-                (puthash (format "%s" potential-look-ahead) t marked-paths)
+              (if (gethash potential-look-ahead marked-paths)
+                  (setq terminal-index (1+ terminal-index))
+                (puthash potential-look-ahead t marked-paths)
 
-                (let ((stack-item (list terminal-index look-ahead-length look-ahead)))
-                  (push stack-item stack)
-                  (message "Added old path to stack: %s %s" stack-item stack))
+                (push `(,terminal-index ,look-ahead-length,look-ahead) stack)
 
                 (setq look-ahead-length (1+ look-ahead-length))
                 (setq look-ahead potential-look-ahead)
+                (setq terminal-index 0))))
 
-                (message "Added-terminal: %s" next-terminal)
-                (message "look-ahead-length: %s" look-ahead-length)
-                (message "look-ahead: %s" look-ahead)
-                (message "Stack 3: %s" stack)))
-            (setq terminal-index (1+ terminal-index)))
-
-          (message "Stack 5: %s" stack)
           (let ((look-ahead-to-add))
             (if look-ahead
                 (progn
@@ -164,7 +149,7 @@
                   (when (and
                          include-e
                          (= look-ahead-length (1- k)))
-                    (push parser--e-identifier look-aheads)
+                    (push parser--e-identifier look-ahead)
                     (setq look-ahead-to-add (reverse look-ahead))))
 
               (when (and
@@ -172,12 +157,10 @@
                      (= k 1))
                 (setq look-ahead-to-add `(,parser--e-identifier))))
 
-            (message "look-ahead-to-add: %s" look-ahead-to-add)
             (when (and look-ahead-to-add
                        (not (gethash look-ahead-to-add added-look-aheads)))
               (puthash look-ahead-to-add t added-look-aheads)
-              (push look-ahead-to-add look-aheads))))
-        (message "Stack 4: %s" stack)))
+              (push look-ahead-to-add look-aheads))))))
 
     (sort look-aheads 'parser--sort-list)))
 

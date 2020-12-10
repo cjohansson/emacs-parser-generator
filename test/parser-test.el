@@ -32,13 +32,13 @@
 
   (should
    (equal
-    '((a a) (a b) (b a) (b b))
+    '(("a" "a") ("a" "b") ("b" "a") ("b" "b"))
     (parser--get-possible-look-aheads)))
   (message "Passed ((a a) (a b) (b a) (b b))")
 
   (should
    (equal
-    '((a a) (a b) (a e) (b a) (b b) (b e))
+    '(("a" "a") ("a" "b") ("a" e) ("b" "a") ("b" "b") ("b" e))
     (parser--get-possible-look-aheads t)))
 
   (message "Passed tests for (parser--get-possible-look-aheads)"))
