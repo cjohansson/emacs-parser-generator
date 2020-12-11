@@ -72,10 +72,11 @@
                           ;; (message "C: %s" C)
                           ;; (message "v: %s" v)
                           (let ((Cv (append C v)))
-                            ;; (message "Cv: %s" Cv)
+                            (message "Cv: %s" Cv)
                             (when Cv
                               (let ((eff (parser--e-free-first Cv)))
-                                ;; (message "eff: %s" eff)
+                                (message "eff: %s" eff)
+                                ;; TODO This is not returning expected values
                                 (when eff
                                   ;; Go through eff-items and see if any item is a valid look-ahead of grammar
                                   ;; in that case save in action table a shift action here
