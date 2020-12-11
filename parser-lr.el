@@ -42,19 +42,73 @@
 (defun parser-lr--generate-action-tables ()
   "Generate action-tables for lr-grammar."
   (unless parser-lr--action-tables
-    (let ((action-tables nil))
+    (let ((action-tables nil)
+          (states '(shift reduce accept error)))
       (dolist (goto-table parser-lr--goto-tables)
         ;; (message "goto-table: %s" goto-table)
         (let ((goto-index (car goto-table))
-              (gotos (car (cdr goto-table))))
+              (gotos (car (cdr goto-table)))
+              (found-action nil))
           (let ((lr-items (gethash goto-index parser-lr--items)))
-            (dolist (lr-item lr-items)
-              ;; TODO Iterate all possible 
-              ;; TODO (a) f(u) = shift if [A -> B . C, v] is in LR-items, C != e and u is in EFF(Cv)
-              ;; TODO (b) f(u) = reduce i if [A -> B ., u] is in a and A -> B is product i in P, i > 1
-              ;; TODO (c) f(e) = accept if [S' -> S ., e] is in a
-              ;; TODO (d) f(u) = error otherwise
-              ))))
+            (let ((lr-items-length (length lr-items)))
+              ;; TODO Where u is in (T U e)*k
+              (dolist (state states)
+                (let ((state-in-progress t)
+                      (lr-item)
+                      (lr-item-index 0))
+                  (while (and
+                          state-in-progress
+                          (< lr-item-index lr-items-lengths))
+                    (setq lr-item (nth lr-item-index lr-items))
+                    (message "lr-item: %s" lr-item)
+                    (cond
+
+                     ((eq state 'shift)
+                      ;; TODO (a) f(u) = shift if [A -> B . C, v] is in LR-items, C != e and u is in EFF(Cv)
+                      (when (nth 2 lr-item)
+                        (let ((C (nth 2 lr-item))
+                              (v nth 3 lr-item))
+                          (message "C: %s" C)
+                          (message "v: %s" v)
+                          (let ((Cv (append C v)))
+                            (message "Cv: %s" Cv)
+                            (when Cv
+                              (let ((eff (parser--e-free-first Cv)))
+                                (message "eff: %s" eff)
+                                (when eff
+                                  ;; TODO Go through eff-items and see if any item is a valid look-ahead of grammar
+                                  ;; in that case save in action table a shift action here
+                                  (setq found-action t)
+                                  (setq state-in-progress nil))))))))
+
+                     ((eq state 'reduce)
+                      ;; (b) f(u) = reduce i if [A -> B ., u] is in a and A -> B is production i in P, i > 1
+                      (unless (nth 2 lr-item)
+                        (let ((u (nth 3 lr-item)))
+                          (when (parser--valid-look-ahead-p u)
+                            ;; TODO Determine production number
+                            ;; save reduction action in action table
+                            (setq found-action t)
+                            (setq state-in-progress nil)))))
+
+                     ((eq state 'accept)
+                      ;; TODO (c) f(e) = accept if [S' -> S ., e] is in a
+                      (when (and
+                             (not (nth 2 lr-item))
+                             (eq (nth 3 lr-item) `(,parser--e-identifier)))
+                        ;; TODO Save in action table accept action for e
+                        (setq found-action t)
+                        (setq state-in-progress nil)))
+
+                     ((eq state 'error)
+                      (if found-action
+                          (setq state-in-progress nil)
+                        ;; TODO Save error action here?
+                        ;; TODO (d) f(u) = error otherwise
+                        ))
+
+                     )
+                    (setq lr-item-index (1+ lr-item-index)))))))))
       (setq parser-lr--action-table action-tables))))
 
 ;; Algorithm 5.9, p. 389
