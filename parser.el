@@ -41,9 +41,13 @@
   nil
   "Hash-table of terminals for quick checking.")
 
-(defvar parser--table-productions
+(defvar parser--table-productions-rhs
   nil
-  "Hash-table of productions for quick retrieving.")
+  "Hash-table of productions RHS indexed by LHS for quick retrieving.")
+
+(defvar parser--table-productions-number
+  nil
+  "Hash-table indexed by production and value is production-number.")
 
 (defvar parser--table-terminal-p
   nil
@@ -141,6 +145,12 @@
       (error "No grammar G defined!")))
   (nth 0 G))
 
+(defun parser--get-grammar-production-number (production)
+  "If PRODUCTION exist, return it's number."
+  (unless parser--table-productions-number
+    (error "Table for production numbers is undefined!"))
+  (gethash production parser--table-productions-number))
+
 (defun parser--get-grammar-productions (&optional G)
   "Return productions of grammar G."
   (unless G
@@ -151,9 +161,9 @@
 
 (defun parser--get-grammar-rhs (lhs)
   "Return right hand sides of LHS if there is any."
-  (unless parser--table-productions
-    (error "Table for productions is undefined!"))
-  (gethash lhs parser--table-productions))
+  (unless parser--table-productions-rhs
+    (error "Table for productions RHS indexed by LHS is undefined!"))
+  (gethash lhs parser--table-productions-rhs))
 
 (defun parser--get-grammar-start (&optional G)
   "Return start of grammar G."
@@ -210,16 +220,31 @@
       (puthash non-terminal t parser--table-non-terminal-p)))
 
   (let ((productions (parser--get-grammar-productions)))
-    (setq parser--table-productions (make-hash-table :test 'equal))
+    (setq parser--table-productions-rhs (make-hash-table :test 'equal))
     (dolist (p productions)
       (let ((lhs (car p))
             (rhs (cdr p)))
-        (let ((new-value (gethash lhs parser--table-productions)))
+        (let ((new-value (gethash lhs parser--table-productions-rhs)))
           (dolist (rhs-element rhs)
             (unless (listp rhs-element)
               (setq rhs-element (list rhs-element)))
             (push rhs-element new-value))
-          (puthash lhs (nreverse new-value) parser--table-productions)))))
+          (puthash lhs (nreverse new-value) parser--table-productions-rhs))))
+
+    (setq parser--table-productions-number (make-hash-table :test 'equal))
+    (let ((production-index 1))
+      (dolist (p productions)
+        (let ((lhs (car p))
+              (rhs (cdr p))
+              (production))
+          (dolist (rhs-element rhs)
+            (unless (listp rhs-element)
+              (setq rhs-element (list rhs-element)))
+            (setq production (list lhs rhs-element))
+            (parser--debug
+             (message "Production %s: %s" production-index production))
+            (puthash production production-index parser--table-productions-number)
+            (setq production-index (1+ production-index)))))))
 
   (let ((look-aheads (parser--get-grammar-look-aheads)))
     (setq parser--table-look-aheads-p (make-hash-table :test 'equal))
