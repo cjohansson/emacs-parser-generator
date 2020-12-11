@@ -14,9 +14,11 @@
   (message "Starting tests for (parser-lr--generate-action-tables)")
 
   ;; Example 5.32 p. 393
-  (parser-lr--reset)
   (parser--set-grammar '((Sp S) (a b) ((Sp S) (S (S a S b)) (S e)) Sp))
   (parser--set-look-ahead-number 1)
+  (parser--process-grammar)
+
+  (parser-lr--reset)
   (parser-lr--generate-goto-tables)
   (parser-lr--generate-action-tables)
 
@@ -40,10 +42,11 @@
   (message "Starting tests for (parser-lr--generate-goto-tables)")
 
   ;; Example 5.30, p. 389
-  (parser-lr--reset)
   (parser--set-grammar '((Sp S) (a b) ((Sp S) (S (S a S b)) (S e)) Sp))
   (parser--set-look-ahead-number 1)
+  (parser--process-grammar)
 
+  (parser-lr--reset)
   (parser-lr--generate-goto-tables)
 
   ;; (message "GOTO-table: %s" parser-lr--goto-tables)
@@ -82,9 +85,11 @@
   (message "Starting tests for (parser-lr--items-for-prefix)")
 
   ;; Example 5.29 p 387
-  (parser-lr--reset)
   (parser--set-grammar '((Sp S) (a b) ((Sp S) (S (S a S b)) (S e)) Sp))
   (parser--set-look-ahead-number 1)
+  (parser--process-grammar)
+
+  (parser-lr--reset)
 
   (should
    (equal
@@ -167,9 +172,11 @@
   "Test `parser-lr--items-valid-p'."
   (message "Started tests for (parser-lr--items-valid-p)")
 
-  (parser-lr--reset)
   (parser--set-grammar '((Sp S) (a b) ((Sp S) (S (S a S b)) (S e)) Sp))
   (parser--set-look-ahead-number 1)
+  (parser--process-grammar)
+
+  (parser-lr--reset)
   (parser-lr--generate-goto-tables)
   (should
    (equal

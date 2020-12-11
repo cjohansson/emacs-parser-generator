@@ -9,6 +9,9 @@
 
 ;;; Variables:
 
+(defvar parser--allow-e-productions
+  nil
+  "Flag whether e-productions is allowed or not.")
 
 (defvar parser--debug
   nil
@@ -29,6 +32,10 @@
 (defvar parser--look-ahead-number
   nil
   "Current look-ahead number used.")
+
+(defvar parser--table-look-aheads-p
+  nil
+  "Hash-table of look-aheads for quick checking.")
 
 (defvar parser--table-non-terminal-p
   nil
@@ -69,44 +76,10 @@
         (push element new-elements)))
     (nreverse new-elements)))
 
-(defun parser--get-grammar-non-terminals (&optional G)
-  "Return non-terminals of grammar G."
-  (unless G
-    (if parser--grammar
-        (setq G parser--grammar)
-      (error "No grammar G defined!")))
-  (nth 0 G))
-
-(defun parser--get-grammar-productions (&optional G)
-  "Return productions of grammar G."
-  (unless G
-    (if parser--grammar
-        (setq G parser--grammar)
-      (error "No grammar G defined!")))
-  (nth 2 G))
-
-(defun parser--get-grammar-rhs (lhs)
-  "Return right hand sides of LHS if there is any."
-  (gethash lhs parser--table-productions))
-
-(defun parser--get-grammar-start (&optional G)
-  "Return start of grammar G."
-  (unless G
-    (if parser--grammar
-        (setq G parser--grammar)
-      (error "No grammar G defined!")))
-  (nth 3 G))
-
-(defun parser--get-grammar-terminals (&optional G)
-  "Return terminals of grammar G."
-  (unless G
-    (if parser--grammar
-        (setq G parser--grammar)
-      (error "No grammar G defined!")))
-  (nth 1 G))
-
-(defun parser--get-possible-look-aheads (&optional include-e)
-  "Return all possible look-ahead set which optionally INCLUDE-E."
+(defun parser--get-grammar-look-aheads ()
+  "Return all possible look-ahead set."
+  (unless parser--look-ahead-number
+    (error "No look-ahead number defined!"))
   (let ((terminals (parser--get-grammar-terminals))
         (look-aheads)
         (k parser--look-ahead-number)
@@ -146,15 +119,11 @@
                   (when (= look-ahead-length k)
                     (setq look-ahead-to-add (reverse look-ahead)))
 
-                  (when (and
-                         include-e
-                         (= look-ahead-length (1- k)))
+                  (when (= look-ahead-length (1- k))
                     (push parser--e-identifier look-ahead)
                     (setq look-ahead-to-add (reverse look-ahead))))
 
-              (when (and
-                     include-e
-                     (= k 1))
+              (when (= k 1)
                 (setq look-ahead-to-add `(,parser--e-identifier))))
 
             (when (and look-ahead-to-add
@@ -163,6 +132,44 @@
               (push look-ahead-to-add look-aheads))))))
 
     (sort look-aheads 'parser--sort-list)))
+
+(defun parser--get-grammar-non-terminals (&optional G)
+  "Return non-terminals of grammar G."
+  (unless G
+    (if parser--grammar
+        (setq G parser--grammar)
+      (error "No grammar G defined!")))
+  (nth 0 G))
+
+(defun parser--get-grammar-productions (&optional G)
+  "Return productions of grammar G."
+  (unless G
+    (if parser--grammar
+        (setq G parser--grammar)
+      (error "No grammar G defined!")))
+  (nth 2 G))
+
+(defun parser--get-grammar-rhs (lhs)
+  "Return right hand sides of LHS if there is any."
+  (unless parser--table-productions
+    (error "Table for productions is undefined!"))
+  (gethash lhs parser--table-productions))
+
+(defun parser--get-grammar-start (&optional G)
+  "Return start of grammar G."
+  (unless G
+    (if parser--grammar
+        (setq G parser--grammar)
+      (error "No grammar G defined!")))
+  (nth 3 G))
+
+(defun parser--get-grammar-terminals (&optional G)
+  "Return terminals of grammar G."
+  (unless G
+    (if parser--grammar
+        (setq G parser--grammar)
+      (error "No grammar G defined!")))
+  (nth 1 G))
 
 (defun parser--hash-to-list (hash-table &optional un-sorted)
   "Return a list that represent the HASH-TABLE.  Each element is a list: (list key value), optionally UN-SORTED."
@@ -196,10 +203,12 @@
     (setq parser--table-terminal-p (make-hash-table :test 'equal))
     (dolist (terminal terminals)
       (puthash terminal t parser--table-terminal-p)))
+
   (let ((non-terminals (parser--get-grammar-non-terminals)))
     (setq parser--table-non-terminal-p (make-hash-table :test 'equal))
     (dolist (non-terminal non-terminals)
       (puthash non-terminal t parser--table-non-terminal-p)))
+
   (let ((productions (parser--get-grammar-productions)))
     (setq parser--table-productions (make-hash-table :test 'equal))
     (dolist (p productions)
@@ -210,20 +219,31 @@
             (unless (listp rhs-element)
               (setq rhs-element (list rhs-element)))
             (push rhs-element new-value))
-          (puthash lhs (nreverse new-value) parser--table-productions))))))
+          (puthash lhs (nreverse new-value) parser--table-productions)))))
+
+  (let ((look-aheads (parser--get-grammar-look-aheads)))
+    (setq parser--table-look-aheads-p (make-hash-table :test 'equal))
+    (dolist (look-ahead look-aheads)
+      (puthash look-ahead t parser--table-look-aheads-p))))
 
 (defun parser--set-look-ahead-number (k)
   "Set look-ahead number K."
   (unless (parser--valid-look-ahead-number-p k)
     (error "Invalid look-ahead number k!"))
-  (setq parser--look-ahead-number k)
-  (parser--clear-cache))
+  (setq parser--look-ahead-number k))
+
+(defun parser--set-allow-e-productions (flag)
+  "Set FLAG whether e-productions is allowed or not."
+  (setq parser--allow-e-productions flag))
 
 (defun parser--set-grammar (G)
   "Set grammar G.."
   (unless (parser--valid-grammar-p G)
     (error "Invalid grammar G!"))
-  (setq parser--grammar G)
+  (setq parser--grammar G))
+
+(defun parser--process-grammar ()
+  "Process grammar."
   (parser--clear-cache)
   (parser--load-symbols))
 
@@ -342,6 +362,14 @@
           (setq valid-p nil))))
     valid-p))
 
+(defun parser--valid-look-ahead-p (symbol)
+  "Return whether SYMBOL is a look-ahead in grammar or not."
+  (unless parser--table-look-aheads-p
+    (error "Table for look-aheads is undefined!"))
+  (unless (listp symbol)
+    (setq symbol (list symbol)))
+  (gethash symbol parser--table-look-aheads-p))
+
 (defun parser--valid-look-ahead-number-p (k)
   "Return if look-ahead number K is valid or not."
   (and
@@ -352,9 +380,7 @@
   "Return whether SYMBOL is a non-terminal in grammar or not."
   (unless parser--table-non-terminal-p
     (error "Table for non-terminals is undefined!"))
-  (if (gethash symbol parser--table-non-terminal-p)
-      t
-    nil))
+  (gethash symbol parser--table-non-terminal-p))
 
 (defun parser--valid-production-p (production)
   "Return whether PRODUCTION is valid or not."
@@ -444,9 +470,7 @@
   "Return whether SYMBOL is a terminal in grammar or not."
   (unless parser--table-terminal-p
     (error "Table for terminals is undefined!"))
-  (if (gethash symbol parser--table-terminal-p)
-      t
-    nil))
+  (gethash symbol parser--table-terminal-p))
 
 
 ;; Main Algorithms

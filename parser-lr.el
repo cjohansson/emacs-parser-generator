@@ -42,8 +42,7 @@
 (defun parser-lr--generate-action-tables ()
   "Generate action-tables for lr-grammar."
   (unless parser-lr--action-tables
-    (let ((action-tables nil)
-          (terminals (parser--get-grammar-terminals)))
+    (let ((action-tables nil))
       (dolist (goto-table parser-lr--goto-tables)
         ;; (message "goto-table: %s" goto-table)
         (let ((goto-index (car goto-table))
