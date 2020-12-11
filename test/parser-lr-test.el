@@ -25,14 +25,14 @@
   ;; Fig. 5.9 p. 374
   (should
    (equal
-    '((0 ((a reduce 2) (e reduce 2)))
-      (1 ((a shift) (e accept)))
-      (2 ((a reduce 2) (b reduce 2)))
-      (3 ((a shift) (b shift)))
-      (4 ((a reduce 2) (b reduce 2)))
-      (5 ((a reduce 1) (e reduce 1)))
-      (6 ((a shift) (b shift)))
-      (7 ((a reduce 1) (b reduce 1))))
+    '((0 (((a) reduce 2) ((e) reduce 2)))
+      (1 (((a) shift) ((e) accept)))
+      (2 (((a) reduce 2) ((b) reduce 2)))
+      (3 (((a) shift) ((b) shift)))
+      (4 (((a) reduce 2) ((b) reduce 2)))
+      (5 (((a) reduce 1) ((e) reduce 1)))
+      (6 (((a) shift) ((b) shift)))
+      (7 (((a) reduce 1) ((b) reduce 1))))
       parser-lr--action-tables))
 
   (message "Ended tests for (parser-lr--generate-action-tables)"))
