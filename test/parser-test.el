@@ -313,6 +313,14 @@
     (parser--e-free-first 'S)))
   (message "Passed empty-free-first 2 with complex grammar")
 
+  (parser--set-look-ahead-number 1)
+  (parser--process-grammar)
+  (should
+   (equal
+    '((c))
+    (parser--e-free-first '(S b a))))
+  (message "Passed empty-free-first 1 with complex grammar")
+
   (message "Passed tests for (parser--empty-free-first)"))
 
 (defun parser-test--valid-grammar-p ()

@@ -269,7 +269,9 @@
          (message "a-look-ahead: %s" a-look-ahead))
 
         ;; The only sets of LR items which need to be tested are those that contain a dot at the right end of a production
-        (unless a-look-ahead
+        (when (and
+               (nth 1 a)
+               (not a-look-ahead))
           (setq a-follow (nth 3 a))
 
           (parser--debug

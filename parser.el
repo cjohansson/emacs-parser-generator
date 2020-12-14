@@ -29,6 +29,10 @@
   nil
   "Generated F-sets for grammar.")
 
+(defvar parser--f-free-sets
+  nil
+  "Generated e-free F-sets for grammar.")
+
 (defvar parser--look-ahead-number
   nil
   "Current look-ahead number used.")
@@ -68,7 +72,8 @@
 
 (defun parser--clear-cache ()
   "Clear cache."
-  (setq parser--f-sets nil))
+  (setq parser--f-sets nil)
+  (setq parser--f-free-sets nil))
 
 (defun parser--distinct (elements)
   "Return distinct of ELEMENTS."
@@ -658,8 +663,13 @@
   (let ((productions (parser--get-grammar-productions))
         (k parser--look-ahead-number))
     (let ((i-max (length productions)))
+
       ;; Generate F-sets only once per grammar
-      (unless parser--f-sets
+      (unless (or
+               (and (not disallow-e-first)
+                    parser--f-sets)
+               (and disallow-e-first
+                    parser--f-free-sets))
         (let ((f-sets (make-hash-table :test 'equal))
               (i 0))
           (while (< i i-max)
@@ -695,6 +705,8 @@
                     (puthash production-lhs (nreverse f-p-set) f-set))))
               (puthash i f-set f-sets)
               (setq i (+ i 1))))
+          (if disallow-e-first
+              (setq parser--f-free-sets f-sets))
           (setq parser--f-sets f-sets)))
 
       (parser--debug
@@ -723,7 +735,10 @@
                      ((parser--valid-non-terminal-p symbol)
                       (parser--debug
                        (message "non-terminal symbol: %s" symbol))
-                      (let ((symbol-f-set (gethash symbol (gethash (1- i-max) parser--f-sets))))
+                      (let ((symbol-f-set))
+                        (if disallow-e-first
+                            (setq symbol-f-set (gethash symbol (gethash (1- i-max) parser--f-free-sets)))
+                          (setq symbol-f-set (gethash symbol (gethash (1- i-max) parser--f-sets))))
                         (parser--debug
                          (message "symbol-f-set: %s" symbol-f-set))
                         (when (> (length symbol-f-set) 1)
