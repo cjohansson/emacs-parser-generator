@@ -43,7 +43,8 @@
   "Generate action-tables for lr-grammar."
   (unless parser-lr--action-tables
     (let ((action-tables)
-          (states '(shift reduce accept error)))
+          (states '(shift reduce accept error))
+          (added-actions (make-hash-table :test 'equal)))
       (dolist (goto-table parser-lr--goto-tables)
         ;; (message "goto-table: %s" goto-table)
         (let ((goto-index (car goto-table))
@@ -54,12 +55,9 @@
             (let ((lr-items-length (length lr-items)))
               ;; Where u is in (T U e)*k
               (dolist (state states)
-                (let ((state-in-progress t)
-                      (lr-item)
+                (let ((lr-item)
                       (lr-item-index 0))
-                  (while (and
-                          state-in-progress
-                          (< lr-item-index lr-items-length))
+                  (while (< lr-item-index lr-items-length)
                     (setq lr-item (nth lr-item-index lr-items))
                     ;; (message "lr-item: %s" lr-item)
                     (cond
@@ -72,11 +70,10 @@
                           ;; (message "C: %s" C)
                           ;; (message "v: %s" v)
                           (let ((Cv (append C v)))
-                            (message "Cv: %s" Cv)
+                            ;; (message "Cv: %s" Cv)
                             (when Cv
                               (let ((eff (parser--e-free-first Cv)))
-                                (message "eff: %s" eff)
-                                ;; TODO This is not returning expected values
+                                ;; (message "eff: %s" eff)
                                 (when eff
                                   ;; Go through eff-items and see if any item is a valid look-ahead of grammar
                                   ;; in that case save in action table a shift action here
@@ -91,14 +88,16 @@
                                       ;; (message "eff-item: %s" eff-item)
                                       (when (parser--valid-look-ahead-p eff-item)
                                         ;; (message "eff-item is a valid look-ahead of grammar")
-                                        (setq searching-match nil))
+                                        (let ((hash-key (format "%s-%s-%s" goto-index state eff-item)))
+                                          (unless (gethash hash-key added-actions)
+                                            (puthash hash-key t added-actions)
+                                            (setq searching-match nil))))
                                       (setq eff-index (1+ eff-index)))
 
                                     (unless searching-match
-                                      (message "%s x %s -> 'shift" goto-index eff-item)
+                                      ;; (message "%s x %s -> 'shift" goto-index eff-item)
                                       (push (list eff-item 'shift) action-table)
-                                      (setq found-action t)
-                                      (setq state-in-progress nil))))))))))
+                                      (setq found-action t))))))))))
 
                      ((eq state 'reduce)
                       ;; (b) f(u) = reduce i if [A -> B ., u] is in a and A -> B is production i in P, i > 1
@@ -107,15 +106,17 @@
                              (not (nth 2 lr-item)))
                         (let ((u (nth 3 lr-item)))
                           (when (parser--valid-look-ahead-p u)
-                            (let ((production (list (nth 0 lr-item) (append (nth 1 lr-item) (nth 2 lr-item)))))
-                              (let ((production-number (parser--get-grammar-production-number production)))
-                                (unless production-number
-                                  (error "Expecting production number for %s from LR-item %s!" production lr-item))
-                                ;; save reduction action in action table
-                                (message "%s x %s -> 'reduce %s" goto-index u production-number)
-                                (push (list u 'reduce production-number) action-table)
-                                (setq found-action t)
-                                (setq state-in-progress nil)))))))
+                            (let ((hash-key (format "%s-%s-%s" goto-index state u)))
+                              (unless (gethash hash-key added-actions)
+                                (puthash hash-key t added-actions)
+                                (let ((production (list (nth 0 lr-item) (append (nth 1 lr-item) (nth 2 lr-item)))))
+                                  (let ((production-number (parser--get-grammar-production-number production)))
+                                    (unless production-number
+                                      (error "Expecting production number for %s from LR-item %s!" production lr-item))
+                                    ;; save reduction action in action table
+                                    ;; (message "%s x %s -> 'reduce %s" goto-index u production-number)
+                                    (push (list u 'reduce production-number) action-table)
+                                    (setq found-action t)))))))))
 
                      ((eq state 'accept)
                       ;; TODO (c) f(e) = accept if [S' -> S ., e] is in a
@@ -123,14 +124,15 @@
                              (nth 1 lr-item)
                              (not (nth 2 lr-item))
                              (eq (nth 3 lr-item) `(,parser--e-identifier)))
-                        ;; TODO Save in action table accept action for e
-                        (push (list (parser--e-identifier) 'accept) action-table)
-                        (setq found-action t)
-                        (setq state-in-progress nil)))
+                        (let ((hash-key (format "%s-%s-%s" goto-index state parser--e-identifier)))
+                          (unless (gethash hash-key added-actions)
+                            (puthash hash-key t added-actions)
+                            ;; TODO Save in action table accept action for e
+                            (push (list (parser--e-identifier) 'accept) action-table)
+                            (setq found-action t)))))
 
                      ((eq state 'error)
-                      (if found-action
-                          (setq state-in-progress nil)
+                      (unless found-action
                         (message "%s -> 'error" lr-item)
                         ;; TODO Save error action here?
                         ;; TODO (d) f(u) = error otherwise
@@ -140,7 +142,7 @@
                     (setq lr-item-index (1+ lr-item-index)))))))
           (message "%s actions %s" goto-index action-table)
           (when action-table
-            (push (list goto-index action-table) action-tables))))
+            (push (list goto-index (sort action-table 'parser--sort-list)) action-tables))))
       (setq parser-lr--action-tables (sort (nreverse action-tables) 'parser--sort-list)))))
 
 ;; Algorithm 5.9, p. 389
