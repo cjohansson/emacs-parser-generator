@@ -56,8 +56,11 @@
               ;; Where u is in (T U e)*k
               (dolist (state states)
                 (let ((lr-item)
-                      (lr-item-index 0))
-                  (while (< lr-item-index lr-items-length)
+                      (lr-item-index 0)
+                      (continue-loop t))
+                  (while (and
+                          (< lr-item-index lr-items-length)
+                          continue-loop)
                     (setq lr-item (nth lr-item-index lr-items))
                     ;; (message "lr-item: %s" lr-item)
                     (cond
@@ -102,6 +105,7 @@
                      ((eq state 'reduce)
                       ;; (b) f(u) = reduce i if [A -> B ., u] is in a and A -> B is production i in P, i > 1
                       (when (and
+                             (nth 0 lr-item)
                              (nth 1 lr-item)
                              (not (nth 2 lr-item)))
                         (let ((u (nth 3 lr-item)))
@@ -129,14 +133,16 @@
                             (puthash hash-key t added-actions)
                             ;; TODO Save in action table accept action for e
                             (push (list (parser--e-identifier) 'accept) action-table)
-                            (setq found-action t)))))
+                            (setq found-action t)
+                            (setq continue-loop nil)))))
 
                      ((eq state 'error)
                       (unless found-action
                         (message "%s -> 'error" lr-item)
                         ;; TODO Save error action here?
                         ;; TODO (d) f(u) = error otherwise
-                        ))
+                        )
+                      (setq continue-loop nil))
 
                      )
                     (setq lr-item-index (1+ lr-item-index)))))))
