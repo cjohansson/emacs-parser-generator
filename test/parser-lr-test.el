@@ -22,6 +22,30 @@
   (parser-lr--generate-goto-tables)
   (parser-lr--generate-action-tables)
 
+  (should
+   (equal
+    '((0 ((S 1)))
+      (1 ((a 2)))
+      (2 ((S 3)))
+      (3 ((a 4) (b 5)))
+      (4 ((S 6)))
+      (5 nil)
+      (6 ((a 4) (b 7)))
+      (7 nil))
+    parser-lr--goto-tables))
+
+  (should
+   (equal
+    '((0 ((S nil (S a S b) (a)) (S nil (S a S b) (e)) (S nil nil (a)) (S nil nil (e)) (Sp nil (S) (e))))
+      (1 ((S (S) (a S b) (a)) (S (S) (a S b) (e)) (Sp (S) nil (e))))
+      (2 ((S (S a) (S b) (a)) (S (S a) (S b) (e)) (S nil (S a S b) (a)) (S nil (S a S b) (b)) (S nil nil (a)) (S nil nil (b))))
+      (3 ((S (S) (a S b) (a)) (S (S) (a S b) (b)) (S (S a S) (b) (a)) (S (S a S) (b) (e))))
+      (4 ((S (S a) (S b) (a)) (S (S a) (S b) (b)) (S nil (S a S b) (a)) (S nil (S a S b) (b)) (S nil nil (a)) (S nil nil (b))))
+      (5 ((S (S a S b) nil (a)) (S (S a S b) nil (e))))
+      (6 ((S (S) (a S b) (a)) (S (S) (a S b) (b)) (S (S a S) (b) (a)) (S (S a S) (b) (b))))
+      (7 ((S (S a S b) nil (a)) (S (S a S b) nil (b)))))
+    (parser--hash-to-list parser-lr--items)))
+
   ;; Fig. 5.9 p. 374
   (should
    (equal

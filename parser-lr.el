@@ -76,7 +76,8 @@
                             ;; (message "Cv: %s" Cv)
                             (when Cv
                               (let ((eff (parser--e-free-first Cv)))
-                                ;; (message "eff: %s" eff)
+                                ;; TODO This does not return correct
+                                (message "EFF%s: %s" Cv eff)
                                 (when eff
                                   ;; Go through eff-items and see if any item is a valid look-ahead of grammar
                                   ;; in that case save in action table a shift action here
@@ -106,14 +107,18 @@
                       ;; (b) f(u) = reduce i if [A -> B ., u] is in a and A -> B is production i in P, i > 1
                       (when (and
                              (nth 0 lr-item)
-                             (nth 1 lr-item)
                              (not (nth 2 lr-item)))
-                        (let ((u (nth 3 lr-item)))
+                        (let ((A (nth 0 lr-item))
+                              (B (nth 1 lr-item))
+                              (u (nth 3 lr-item)))
+                          (unless B
+                            (setq B (list parser--e-identifier)))
                           (when (parser--valid-look-ahead-p u)
                             (let ((hash-key (format "%s-%s-%s" goto-index state u)))
                               (unless (gethash hash-key added-actions)
                                 (puthash hash-key t added-actions)
-                                (let ((production (list (nth 0 lr-item) (append (nth 1 lr-item) (nth 2 lr-item)))))
+                                (let ((production (list A B)))
+                                  ;; (message "production: %s" production)
                                   (let ((production-number (parser--get-grammar-production-number production)))
                                     (unless production-number
                                       (error "Expecting production number for %s from LR-item %s!" production lr-item))

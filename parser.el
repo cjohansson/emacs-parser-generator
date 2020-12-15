@@ -237,7 +237,7 @@
           (puthash lhs (nreverse new-value) parser--table-productions-rhs))))
 
     (setq parser--table-productions-number (make-hash-table :test 'equal))
-    (let ((production-index 1))
+    (let ((production-index 0))
       (dolist (p productions)
         (let ((lhs (car p))
               (rhs (cdr p))
