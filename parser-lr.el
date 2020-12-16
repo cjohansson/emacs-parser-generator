@@ -471,6 +471,46 @@
     (setq lr-new-item (sort lr-new-item 'parser--sort-list))
     lr-new-item))
 
+;; Algorithm 5.7, p. 375
+(defun parser-lr--parse (input-tape &optional input-tape-index stack)
+  "Perform a LR-parse of INPUT-TAPE optionally at INPUT-TAPE-INDEX with STACK."
+  (unless input-tape-index
+    (setq input-tape-index 0))
+  (let ((input-tape-length (length input-tape))
+        (right-parse)
+        (goto-tables (parser-lr--generate-goto-tables)))
+    (let ((action-tables (parser-lr--generate-action-tables)))
+
+      ;; TODO (1) The lookahead string u, consisting of the next k input symbols, is determined.
+
+      ;; TODO (2) The parsing action f of the table on top of the pushdown list is applied to the lookahead string u.
+
+      ;;    TODO (a) If f(u) = shift, then the next input symbol, say a
+      ;;    is removed from the input and shifted onto the pushdown list.
+      ;;    The goto function g of the table on top of the pushdown list
+      ;;    is applied to a to determine the new table to be placed on
+      ;;    top of the pushdown list. We then return to step(1). If
+      ;;    there is no next input symbol or g(a) is undefined, halt
+      ;;    and declare error.
+
+      ;;    TODO (b) If f(u) = reduce i and production i is A -> a,
+      ;;    then 2|a| symbols are removed from the top of the pushdown
+      ;;    list, and production number i is placed in the output
+      ;;    buffer. A new table T' is then exposed as the top table
+      ;;    of the pushdown list, and the goto function of T' is applied
+      ;;    to A to determine the next table to be placed on top of the
+      ;;    pushdown list. We place A and this new table on top of the
+      ;;    the pushdown list and return to step (1)
+
+      ;;    TODO (c) If f(u) = error, we halt parsing (and, in practice
+      ;;    transfer to an error recovery routine).
+
+      ;;    TODO (d) If f(u) = accept, we halt and declare the string
+      ;;    in the output buffer to be the right parse of the original
+      ;;    input string.
+      
+      )
+    right-parse))
 
 (provide 'parser-lr)
 

@@ -217,6 +217,20 @@
 
   (message "Passed tests for (parser-lr--items-valid-p)"))
 
+(defun parser-lr-test--parse ()
+  "Test `parser-lr--parse'."
+  (message "Passed tests for (parser-lr--parse)")
+
+  (parser--set-grammar '((Sp S) (a b) ((Sp S) (S (S a S b)) (S e)) Sp))
+  (parser--set-look-ahead-number 1)
+  (parser--process-grammar)
+  (should
+   (equal
+    '(2 2 2 1 1)
+    (parser-lr--parse "aabb")))
+
+  (message "Passed tests for (parser-lr--parse)"))
+
 (defun parser-lr-test ()
   "Run test."
   ;; (setq debug-on-error t)
@@ -224,7 +238,8 @@
   (parser-lr-test--items-for-prefix)
   (parser-lr-test--items-valid-p)
   (parser-lr-test--generate-goto-tables)
-  (parser-lr-test--generate-action-tables))
+  (parser-lr-test--generate-action-tables)
+  (parser-lr-test--parse))
 
 (provide 'parser-lr-test)
 
