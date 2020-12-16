@@ -529,6 +529,7 @@
         (f-sets (nth 2 state))
         (disallow-e-first (nth 3 state)))
     (parser--debug
+     (message "disallow-e-first: %s" disallow-e-first)
      (message "input-tape-length: %s" input-tape-length)
      (message "k: %s" k)
      (message "i: %s" i))
@@ -539,7 +540,7 @@
         (let ((leading-terminals (nth 0 stack-symbol))
               (all-leading-terminals-p (nth 1 stack-symbol))
               (input-tape-index (nth 2 stack-symbol))
-              (e-first-p nil))
+              (e-first-p))
           (parser--debug
            (message "leading-terminals: %s" leading-terminals)
            (message "all-leading-terminals-p: %s" all-leading-terminals-p)
@@ -629,7 +630,8 @@
                                     (setq leading-terminals (butlast leading-terminals (- leading-terminals-count k)))
                                     (setq leading-terminals-count k)))))
                           (parser--debug
-                           (message "Found no subsets for %s %s" rhs-element (1- i)))))
+                           (message "Found no subsets for %s %s" rhs-element (1- i)))
+                          (setq all-leading-terminals-p nil)))
                     (setq all-leading-terminals-p nil)))
 
                  ((equal rhs-type 'EMPTY)
@@ -725,15 +727,20 @@
                (message "stack-topmost: %s" stack-topmost))
               (let ((input-tape-index (car stack-topmost))
                     (first-length (car (cdr stack-topmost)))
-                    (first (car (cdr (cdr stack-topmost)))))
+                    (first (car (cdr (cdr stack-topmost))))
+                    (keep-looking t))
                 (while (and
+                        keep-looking
                         (< input-tape-index input-tape-length)
                         (< first-length k))
                   (let ((symbol (nth input-tape-index input-tape)))
+                    (parser--debug
+                     (message "symbol index: %s from %s is: %s" input-tape-index input-tape symbol))
                     (cond
                      ((parser--valid-terminal-p symbol)
                       (setq first (append first (list symbol)))
                       (setq first-length (1+ first-length)))
+
                      ((parser--valid-non-terminal-p symbol)
                       (parser--debug
                        (message "non-terminal symbol: %s" symbol))
@@ -743,26 +750,36 @@
                           (setq symbol-f-set (gethash symbol (gethash (1- i-max) parser--f-sets))))
                         (parser--debug
                          (message "symbol-f-set: %s" symbol-f-set))
-                        (when (> (length symbol-f-set) 1)
+                        (if (not symbol-f-set)
+                            (progn
+                              (parser--debug
+                               (message "empty symbol-f-set, so stop looking"))
+                              (setq keep-looking nil))
+
                           ;; Handle this scenario here were a non-terminal can result in different FIRST sets
-                          (let ((symbol-f-set-index 1)
-                                (symbol-f-set-length (length symbol-f-set)))
-                            (while (< symbol-f-set-index symbol-f-set-length)
-                              (let ((symbol-f-set-element (nth symbol-f-set-index symbol-f-set)))
-                                (let ((alternative-first-length (+ first-length (length symbol-f-set-element)))
-                                      (alternative-first (append first symbol-f-set-element))
-                                      (alternative-tape-index (1+ input-tape-index)))
-                                  (parser--debug
-                                   (message "alternative-first: %s" alternative-first))
-                                  (push `(,alternative-tape-index ,alternative-first-length ,alternative-first) stack)))
-                              (setq symbol-f-set-index (1+ symbol-f-set-index)))))
-                        (parser--debug
-                         (message "main-symbol-f-set: %s" (car symbol-f-set)))
-                        (setq first-length (+ first-length (length (car symbol-f-set))))
-                        (setq first (append first (car symbol-f-set)))))))
+                          (when (> (length symbol-f-set) 1)
+                            (let ((symbol-f-set-index 1)
+                                  (symbol-f-set-length (length symbol-f-set)))
+                              (while (< symbol-f-set-index symbol-f-set-length)
+                                (let ((symbol-f-set-element (nth symbol-f-set-index symbol-f-set)))
+                                  (let ((alternative-first-length (+ first-length (length symbol-f-set-element)))
+                                        (alternative-first (append first symbol-f-set-element))
+                                        (alternative-tape-index (1+ input-tape-index)))
+                                    (parser--debug
+                                     (message "alternative-first: %s" alternative-first))
+                                    (push `(,alternative-tape-index ,alternative-first-length ,alternative-first) stack)))
+                                (setq symbol-f-set-index (1+ symbol-f-set-index)))))
+
+                          (parser--debug
+                           (message "main-symbol-f-set: %s" (car symbol-f-set)))
+                          (setq first-length (+ first-length (length (car symbol-f-set))))
+                          (setq first (append first (car symbol-f-set))))))))
                   (setq input-tape-index (1+ input-tape-index)))
                 (when (> first-length 0)
+                  (parser--debug
+                   (message "push to first-list: %s to %s" first first-list))
                   (push first first-list))))))
+
         (setq first-list (sort first-list 'parser--sort-list))
         first-list))))
 
