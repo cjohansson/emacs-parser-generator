@@ -665,11 +665,13 @@
     (let ((i-max (length productions)))
 
       ;; Generate F-sets only once per grammar
-      (unless (or
-               (and (not disallow-e-first)
-                    parser--f-sets)
-               (and disallow-e-first
-                    parser--f-free-sets))
+      (when (or
+             (and
+              (not disallow-e-first)
+              (not parser--f-sets))
+             (and
+              disallow-e-first
+              (not parser--f-free-sets)))
         (let ((f-sets (make-hash-table :test 'equal))
               (i 0))
           (while (< i i-max)
@@ -706,8 +708,8 @@
               (puthash i f-set f-sets)
               (setq i (+ i 1))))
           (if disallow-e-first
-              (setq parser--f-free-sets f-sets))
-          (setq parser--f-sets f-sets)))
+              (setq parser--f-free-sets f-sets)
+            (setq parser--f-sets f-sets))))
 
       (parser--debug
        (message "Generated F-sets"))
