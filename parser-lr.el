@@ -46,7 +46,6 @@
           (states '(shift reduce error))
           (added-actions (make-hash-table :test 'equal)))
       (dolist (goto-table parser-lr--goto-tables)
-        ;; (message "goto-table: %s" goto-table)
         (let ((goto-index (car goto-table))
               (gotos (car (cdr goto-table)))
               (found-action nil)
@@ -62,7 +61,6 @@
                           (< lr-item-index lr-items-length)
                           continue-loop)
                     (setq lr-item (nth lr-item-index lr-items))
-                    ;; (message "lr-item: %s" lr-item)
                     (cond
 
                      ((eq state 'shift)
@@ -70,13 +68,9 @@
                       (when (nth 2 lr-item)
                         (let ((C (nth 2 lr-item))
                               (v (nth 3 lr-item)))
-                          ;; (message "C: %s" C)
-                          ;; (message "v: %s" v)
                           (let ((Cv (append C v)))
-                            ;; (message "Cv: %s" Cv)
                             (when Cv
                               (let ((eff (parser--e-free-first Cv)))
-                                ;; (message "EFF%s: %s" Cv eff)
                                 (when eff
                                   ;; Go through eff-items and see if any item is a valid look-ahead of grammar
                                   ;; in that case save in action table a shift action here
@@ -88,9 +82,7 @@
                                             searching-match
                                             (< eff-index eff-length))
                                       (setq eff-item (nth eff-index eff))
-                                      ;; (message "eff-item: %s" eff-item)
                                       (when (parser--valid-look-ahead-p eff-item)
-                                        ;; (message "eff-item is a valid look-ahead of grammar")
                                         (let ((hash-key (format "%s-%s-%s" goto-index state eff-item)))
                                           (unless (gethash hash-key added-actions)
                                             (puthash hash-key t added-actions)
@@ -98,7 +90,6 @@
                                       (setq eff-index (1+ eff-index)))
 
                                     (unless searching-match
-                                      ;; (message "%s x %s -> 'shift" goto-index eff-item)
                                       (push (list eff-item 'shift) action-table)
                                       (setq found-action t))))))))))
 
@@ -117,7 +108,6 @@
                               (unless (gethash hash-key added-actions)
                                 (puthash hash-key t added-actions)
                                 (let ((production (list A B)))
-                                  ;; (message "production: %s" production)
                                   (let ((production-number (parser--get-grammar-production-number production)))
                                     (unless production-number
                                       (error "Expecting production number for %s from LR-item %s!" production lr-item))
@@ -133,7 +123,6 @@
                                           (setq found-action t))
 
                                       ;; save reduction action in action table
-                                      ;; (message "%s x %s -> 'reduce %s" goto-index u production-number)
                                       (push (list u 'reduce production-number) action-table)
                                       (setq found-action t))))))))))
 
