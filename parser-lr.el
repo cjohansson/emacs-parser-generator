@@ -66,7 +66,7 @@
                     (cond
 
                      ((eq state 'shift)
-                      ;; TODO (a) f(u) = shift if [A -> B . C, v] is in LR-items, C != e and u is in EFF(Cv)
+                      ;; (a) f(u) = shift if [A -> B . C, v] is in LR-items, C != e and u is in EFF(Cv)
                       (when (nth 2 lr-item)
                         (let ((C (nth 2 lr-item))
                               (v (nth 3 lr-item)))
@@ -139,13 +139,8 @@
 
                      ((eq state 'error)
                       (unless found-action
-                        (message "%s -> 'error" lr-item)
-                        ;; TODO Save error action here?
-                        ;; TODO (d) f(u) = error otherwise
-                        )
-                      (setq continue-loop nil))
-
-                     )
+                        (error (format "Failed to find any action in set %s" lr-items)))
+                      (setq continue-loop nil)))
                     (setq lr-item-index (1+ lr-item-index)))))))
           (parser--debug
            (message "%s actions %s" goto-index action-table))
