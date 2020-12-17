@@ -517,11 +517,8 @@
 
           (let ((table-index (car pushdown-list)))
             (message "table-index: %s" table-index)
-            (let ((action-table (car (cdr (nth table-index action-tables))))
-                  (goto-table (car (cdr (nth table-index goto-tables)))))
-
+            (let ((action-table (car (cdr (nth table-index action-tables)))))
               (message "action-table: %s" action-table)
-              (message "goto-table: %s" goto-table)
 
               (let ((action-match nil)
                     (action-table-length (length action-table))
@@ -571,7 +568,7 @@
                     ))
 
                  ((eq (car action-match) 'reduce)
-                  ;; TODO (b) If f(u) = reduce i and production i is A -> a,
+                  ;; (b) If f(u) = reduce i and production i is A -> a,
                   ;; then 2|a| symbols are removed from the top of the pushdown
                   ;; list, and production number i is placed in the output
                   ;; buffer. A new table T' is then exposed as the top table
@@ -580,11 +577,54 @@
                   ;; pushdown list. We place A and this new table on top of the
                   ;; the pushdown list and return to step (1)
 
-                  (let ((production-index (car (cdr action-match))))
+                  (let ((production-number (car (cdr action-match))))
+                    (let ((production (parser--get-grammar-production-by-number production-number)))
+                      (let ((production-lhs (car production))
+                            (production-rhs (car (cdr production))))
+                        (message "production: %s, lhs: %s rhs: %s" production production-lhs production-rhs)
+                        (unless (equal production-rhs (list parser--e-identifier))
+                          (let ((pop-items (* 2 (length (cdr production))))
+                                (popped-items 0))
+                            (message "Should pop %s items" pop-items)
+                            (while (< popped-items pop-items)
+                              (pop pushdown-list)
+                              (setq popped-items (1+ popped-items)))))
+                        (message "pushdown-list: %s" pushdown-list)
+                        (push production-number output)
 
-                    ;; TODO Load production by index here
+                        (let ((new-table-index (car pushdown-list)))
+                          (message "new-table-index: %s" new-table-index)
+                          (let ((goto-table (car (cdr (nth new-table-index goto-tables)))))
+                            (message "goto-table: %s" goto-table)
+                            (let ((goto-table-length (length goto-table))
+                                  (goto-index 0)
+                                  (searching-match t)
+                                  (next-index))
 
-                    ))
+                              (while (and
+                                      searching-match
+                                      (< goto-index goto-table-length))
+                                (let ((goto-item (nth goto-index goto-table)))
+                                  (let ((goto-item-look-ahead (car goto-item))
+                                        (goto-item-next-index (car (cdr goto-item))))
+                                    (message "goto-item-look-ahead: %s" goto-item-look-ahead)
+                                    (message "goto-item-next-index: %s" goto-item-next-index)
+
+                                    (when (equal goto-item-look-ahead production-lhs)
+                                      (setq next-index goto-item-next-index)
+                                      (setq searching-match nil))))
+
+                                (setq goto-index (1+ goto-index)))
+
+                              (unless next-index
+                                (error (format
+                                        "Found no goto-item for %s in index %s"
+                                        production-lhs
+                                        table-index)))
+
+                              (push production-lhs pushdown-list)
+                              (push next-index pushdown-list)
+                              (message "Performed reduction, new pushdownlist: %s" pushdown-list))))))))
 
                  ((eq action-match '(accept))
                   ;;    (d) If f(u) = accept, we halt and declare the string
@@ -594,7 +634,7 @@
                   (setq accept t))
 
                  )))))))
-    output))
+    (nreverse output)))
 
 (provide 'parser-lr)
 
