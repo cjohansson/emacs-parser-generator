@@ -53,6 +53,10 @@
   nil
   "Hash-table indexed by production and value is production-number.")
 
+(defvar parser--table-productions-number-reverse
+  nil
+  "Hash-table indexed by production-number and value is production.")
+
 (defvar parser--table-terminal-p
   nil
   "Hash-table of non-terminals for quick checking.")
@@ -153,8 +157,14 @@
 (defun parser--get-grammar-production-number (production)
   "If PRODUCTION exist, return it's number."
   (unless parser--table-productions-number
-    (error "Table for production numbers is undefined!"))
+    (error "Table for production-numbers is undefined!"))
   (gethash production parser--table-productions-number))
+
+(defun parser--get-grammar-production-by-number (production-number)
+  "If PRODUCTION-NUMBER exist, return it's production."
+  (unless parser--table-productions-number-reverse
+    (error "Table for reverse production-numbers is undefined!"))
+  (gethash production-number parser--table-productions-number-reverse))
 
 (defun parser--get-grammar-productions (&optional G)
   "Return productions of grammar G."
@@ -237,6 +247,7 @@
           (puthash lhs (nreverse new-value) parser--table-productions-rhs))))
 
     (setq parser--table-productions-number (make-hash-table :test 'equal))
+    (setq parser--table-productions-number-reverse (make-hash-table :test 'equal))
     (let ((production-index 0))
       (dolist (p productions)
         (let ((lhs (car p))
@@ -249,6 +260,7 @@
             (parser--debug
              (message "Production %s: %s" production-index production))
             (puthash production production-index parser--table-productions-number)
+            (puthash production-index production parser--table-productions-number-reverse)
             (setq production-index (1+ production-index)))))))
 
   (let ((look-aheads (parser--get-grammar-look-aheads)))
