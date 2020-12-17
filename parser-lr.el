@@ -474,6 +474,7 @@
     lr-new-item))
 
 ;; Algorithm 5.7, p. 375
+;; TODO Add support for lex-analyzer
 ;; TODO Add support for SDT
 ;; TODO Add support for semantic-actions
 (defun parser-lr--parse (input-tape &optional input-tape-index pushdown-list)
@@ -483,34 +484,34 @@
   (unless pushdown-list
     (push 0 pushdown-list))
 
-  (let ((input-tape-length (length input-tape))
-        (right-parse)
-        (goto-tables (parser-lr--generate-goto-tables))
-        (no-error t))
+  (let ((accept nil)
+        (input-tape-length (length input-tape))
+        (output)
+        (goto-tables (parser-lr--generate-goto-tables)))
     (let ((action-tables (parser-lr--generate-action-tables)))
       (while (and
-              no-error
+              (not accept)
               (< input-tape-index input-tape-length))
 
 
         ;; (1) The lookahead string u, consisting of the next k input symbols, is determined.
-        (let ((look-ahead-string)
-              (look-ahead-string-length 0))
+        (let ((look-ahead)
+              (look-ahead-length 0))
 
           (while (and
                   (< input-tape-index input-tape-length)
-                  (< look-ahead-string-length parser--look-ahead-number))
-            (push (pop input-tape) look-ahead-string)
-            (setq look-ahead-string-length (1+ look-ahead-string-length))
+                  (< look-ahead-length parser--look-ahead-number))
+            (push (pop input-tape) look-ahead)
+            (setq look-ahead-length (1+ look-ahead-length))
             (setq input-tape-index (1+ input-tape-index)))
 
           ;; If we reached end of input-tape and look-ahead is too small, append e-identifiers
-          (while (< look-ahead-string-length parser--look-ahead-number)
-            (push parser--e-identifier look-ahead-string)
-            (setq look-ahead-string-length (1+ look-ahead-string-length)))
+          (while (< look-ahead-length parser--look-ahead-number)
+            (push parser--e-identifier look-ahead)
+            (setq look-ahead-length (1+ look-ahead-length)))
 
-          (setq look-ahead-string (nreverse look-ahead-string))
-          (message "Look-ahead-string: %s" look-ahead-string)
+          (setq look-ahead (nreverse look-ahead))
+          (message "look-ahead: %s" look-ahead)
 
           (let ((table-index (car pushdown-list)))
             (message "table-index: %s" table-index)
@@ -520,36 +521,72 @@
               (message "action-table: %s" action-table)
               (message "goto-table: %s" goto-table)
 
-              ;; TODO (2) The parsing action f of the table on top of the pushdown list is applied to the lookahead string u.
+              (let ((action-match nil)
+                    (action-table-length (length action-table))
+                    (action-index 0)
+                    (possible-look-aheads))
 
-              ;;    TODO (a) If f(u) = shift, then the next input symbol, say a
-              ;;    is removed from the input and shifted onto the pushdown list.
-              ;;    The goto function g of the table on top of the pushdown list
-              ;;    is applied to a to determine the new table to be placed on
-              ;;    top of the pushdown list. We then return to step(1). If
-              ;;    there is no next input symbol or g(a) is undefined, halt
-              ;;    and declare error.
+                ;; (2) The parsing action f of the table on top of the pushdown list is applied to the lookahead string u.
+                (while (and
+                        (not action-match)
+                        (< action-index action-table-length))
+                  (let ((action (nth action-index action-table)))
+                    (let ((action-look-ahead (car action)))
+                      (message "action-look-ahead: %s" action-look-ahead)
+                      (push action-look-ahead possible-look-aheads)
+                      (when (equal action-look-ahead look-ahead)
+                        (setq action-match (cdr action))
+                        (message "action-match: %s" action-match))))
+                  (setq action-index (1+ action-index)))
 
-              ;;    TODO (b) If f(u) = reduce i and production i is A -> a,
-              ;;    then 2|a| symbols are removed from the top of the pushdown
-              ;;    list, and production number i is placed in the output
-              ;;    buffer. A new table T' is then exposed as the top table
-              ;;    of the pushdown list, and the goto function of T' is applied
-              ;;    to A to determine the next table to be placed on top of the
-              ;;    pushdown list. We place A and this new table on top of the
-              ;;    the pushdown list and return to step (1)
+                (unless action-match
+                  ;; (c) If f(u) = error, we halt parsing (and, in practice
+                  ;; transfer to an error recovery routine).
 
-              ;;    TODO (c) If f(u) = error, we halt parsing (and, in practice
-              ;;    transfer to an error recovery routine).
+                  (error (format
+                          "Invalid syntax! Expected one of %s found %s at input-tape-index %s"
+                          possible-look-aheads
+                          look-ahead
+                          input-tape-index)))
 
-              ;;    TODO (d) If f(u) = accept, we halt and declare the string
-              ;;    in the output buffer to be the right parse of the original
-              ;;    input string.
+                (cond
 
-              ))
+                 ((eq action-match '(shift))
+                  (let ((a (car look-ahead)))
+                  ;;    TODO (a) If f(u) = shift, then the next input symbol, say a
+                  ;;    is removed from the input and shifted onto the pushdown list.
+                  ;;    The goto function g of the table on top of the pushdown list
+                  ;;    is applied to a to determine the new table to be placed on
+                  ;;    top of the pushdown list. We then return to step(1). If
+                  ;;    there is no next input symbol or g(a) is undefined, halt
+                  ;;    and declare error.
 
-          )))
-    right-parse))
+                    (push a pushdown-list)
+
+
+                  ))
+
+                 ((eq (car action-match) 'reduce)
+                  ;;    TODO (b) If f(u) = reduce i and production i is A -> a,
+                  ;;    then 2|a| symbols are removed from the top of the pushdown
+                  ;;    list, and production number i is placed in the output
+                  ;;    buffer. A new table T' is then exposed as the top table
+                  ;;    of the pushdown list, and the goto function of T' is applied
+                  ;;    to A to determine the next table to be placed on top of the
+                  ;;    pushdown list. We place A and this new table on top of the
+                  ;;    the pushdown list and return to step (1)
+
+                  )
+
+                 ((eq action-match '(accept))
+                  ;;    (d) If f(u) = accept, we halt and declare the string
+                  ;;    in the output buffer to be the right parse of the original
+                  ;;    input string.
+
+                  (setq accept t))
+
+                 )))))))
+    output))
 
 (provide 'parser-lr)
 
