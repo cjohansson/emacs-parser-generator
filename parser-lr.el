@@ -479,6 +479,7 @@
 ;; TODO Add support for semantic-actions
 ;; TODO Create hash-tables of parse-state -> action-table, parse-state -> goto-table
 ;; TODO Create hash-table of production-number -> production
+;; TODO Consider case with 2 character look-ahead
 (defun parser-lr--parse (input-tape &optional input-tape-index pushdown-list)
   "Perform a LR-parse of INPUT-TAPE optionally at INPUT-TAPE-INDEX with PUSHDOWN-LIST."
   (unless input-tape-index
