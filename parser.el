@@ -33,6 +33,10 @@
   nil
   "Generated e-free F-sets for grammar.")
 
+(defvar parser--lex-analyzer-function
+  nil
+  "Function used as lex-analyzer.")
+
 (defvar parser--look-ahead-number
   nil
   "Current look-ahead number used.")
@@ -288,6 +292,20 @@
   "Process grammar."
   (parser--clear-cache)
   (parser--load-symbols))
+
+(defun parser--load-next-look-ahead ()
+  "Load next look-ahead number of tokens via lex-analyzer."
+  (unless parser--lex-analyzer-function
+    (error "Missing lex-analyzer function!"))
+  (let ((left parser--look-ahead-number)
+        (look-ahead))
+    (while (> left 0)
+      (let ((token (funcall parser--lex-analyzer-function)))
+        (if token
+            (push token look-ahead)
+          (push parser--e-identifier look-ahead)))
+      (setq left (1- left)))
+    look-ahead))
 
 (defun parser--sort-list (a b)
   "Return non-nil if a element in A is greater than a element in B in lexicographic order."

@@ -504,153 +504,155 @@
   (let ((accept nil)
         (input-tape-length (length input-tape))
         (output))
-      (while (and
-              (not accept)
-              (<= input-tape-index input-tape-length))
+    (while (and
+            (not accept)
+            (<= input-tape-index input-tape-length))
 
-        ;; (1) The lookahead string u, consisting of the next k input symbols, is determined.
-        (let ((look-ahead)
-              (look-ahead-length 0)
-              (look-ahead-input-tape-index input-tape-index))
+      ;; (1) The lookahead string u, consisting of the next k input symbols, is determined.
+      (let ((look-ahead)
+            (look-ahead-length 0)
+            (look-ahead-input-tape-index input-tape-index))
 
-          (while (and
-                  (< look-ahead-input-tape-index input-tape-length)
-                  (< look-ahead-length parser--look-ahead-number))
-            (push (nth look-ahead-input-tape-index input-tape) look-ahead)
-            (setq look-ahead-length (1+ look-ahead-length))
-            (setq look-ahead-input-tape-index (1+ look-ahead-input-tape-index)))
+        (while (and
+                (< look-ahead-input-tape-index input-tape-length)
+                (< look-ahead-length parser--look-ahead-number))
+          (push (nth look-ahead-input-tape-index input-tape) look-ahead)
+          (setq look-ahead-length (1+ look-ahead-length))
+          (setq look-ahead-input-tape-index (1+ look-ahead-input-tape-index)))
 
-          ;; If we reached end of input-tape and look-ahead is too small, append e-identifiers
-          (while (< look-ahead-length parser--look-ahead-number)
-            (push parser--e-identifier look-ahead)
-            (setq look-ahead-length (1+ look-ahead-length)))
+        ;; If we reached end of input-tape and look-ahead is too small, append e-identifiers
+        (while (< look-ahead-length parser--look-ahead-number)
+          (push parser--e-identifier look-ahead)
+          (setq look-ahead-length (1+ look-ahead-length)))
 
-          (setq look-ahead (nreverse look-ahead))
+        (setq look-ahead (nreverse look-ahead))
 
-          (let ((table-index (car pushdown-list)))
-            (let ((action-table (gethash table-index parser-lr--action-tables)))
+        (let ((table-index (car pushdown-list)))
+          (let ((action-table (gethash table-index parser-lr--action-tables)))
 
-              (let ((action-match nil)
-                    (action-table-length (length action-table))
-                    (action-index 0)
-                    (possible-look-aheads))
+            (let ((action-match nil)
+                  (action-table-length (length action-table))
+                  (action-index 0)
+                  (possible-look-aheads))
 
-                ;; (2) The parsing action f of the table on top of the pushdown list is applied to the lookahead string u.
-                (while (and
-                        (not action-match)
-                        (< action-index action-table-length))
-                  (let ((action (nth action-index action-table)))
-                    (let ((action-look-ahead (car action)))
-                      (push action-look-ahead possible-look-aheads)
-                      (when (equal action-look-ahead look-ahead)
-                        (setq action-match (cdr action)))))
-                  (setq action-index (1+ action-index)))
+              ;; (2) The parsing action f of the table on top of the pushdown list is applied to the lookahead string u.
+              (while (and
+                      (not action-match)
+                      (< action-index action-table-length))
+                (let ((action (nth action-index action-table)))
+                  (let ((action-look-ahead (car action)))
+                    (push action-look-ahead possible-look-aheads)
+                    (when (equal action-look-ahead look-ahead)
+                      (setq action-match (cdr action)))))
+                (setq action-index (1+ action-index)))
 
-                (unless action-match
-                  ;; (c) If f(u) = error, we halt parsing (and, in practice
-                  ;; transfer to an error recovery routine).
+              (unless action-match
+                ;; (c) If f(u) = error, we halt parsing (and, in practice
+                ;; transfer to an error recovery routine).
 
-                  (error (format
-                          "Invalid syntax! Expected one of %s found %s at input-tape-index %s"
-                          possible-look-aheads
-                          look-ahead
-                          input-tape-index)))
+                (error (format
+                        "Invalid syntax! Expected one of %s found %s at input-tape-index %s"
+                        possible-look-aheads
+                        look-ahead
+                        input-tape-index)))
 
-                (cond
+              (cond
 
-                 ((equal action-match '(shift))
-                  ;; (a) If f(u) = shift, then the next input symbol, say a
-                  ;; is removed from the input and shifted onto the pushdown list.
-                  ;; The goto function g of the table on top of the pushdown list
-                  ;; is applied to a to determine the new table to be placed on
-                  ;; top of the pushdown list. We then return to step(1). If
-                  ;; there is no next input symbol or g(a) is undefined, halt
-                  ;; and declare error.
+               ((equal action-match '(shift))
+                ;; (a) If f(u) = shift, then the next input symbol, say a
+                ;; is removed from the input and shifted onto the pushdown list.
+                ;; The goto function g of the table on top of the pushdown list
+                ;; is applied to a to determine the new table to be placed on
+                ;; top of the pushdown list. We then return to step(1). If
+                ;; there is no next input symbol or g(a) is undefined, halt
+                ;; and declare error.
 
-                  (let ((a (nth input-tape-index input-tape)))
-                    (let ((goto-table (gethash table-index parser-lr--goto-tables)))
-                      (let ((goto-table-length (length goto-table))
-                            (goto-index 0)
-                            (searching-match t)
-                            (next-index))
+                (let ((a (car look-ahead)))
+                  (let ((goto-table (gethash table-index parser-lr--goto-tables)))
+                    (let ((goto-table-length (length goto-table))
+                          (goto-index 0)
+                          (searching-match t)
+                          (next-index))
 
-                        (while (and
-                                searching-match
-                                (< goto-index goto-table-length))
-                          (let ((goto-item (nth goto-index goto-table)))
-                            (let ((goto-item-look-ahead (car goto-item))
-                                  (goto-item-next-index (car (cdr goto-item))))
+                      (while (and
+                              searching-match
+                              (< goto-index goto-table-length))
+                        (let ((goto-item (nth goto-index goto-table)))
+                          (let ((goto-item-look-ahead (car goto-item))
+                                (goto-item-next-index (car (cdr goto-item))))
 
-                              (when (equal goto-item-look-ahead a)
-                                (setq next-index goto-item-next-index)
-                                (setq searching-match nil))))
+                            (when (equal goto-item-look-ahead a)
+                              (setq next-index goto-item-next-index)
+                              (setq searching-match nil))))
 
-                          (setq goto-index (1+ goto-index)))
+                        (setq goto-index (1+ goto-index)))
 
-                        (unless next-index
-                          (error (format
-                                  "In shift, found no goto-item for %s in index %s"
-                                  a
-                                  table-index)))
+                      (unless next-index
+                        (error (format
+                                "In shift, found no goto-item for %s in index %s"
+                                a
+                                table-index)))
 
-                        (push a pushdown-list)
-                        (push next-index pushdown-list)
-                        (setq input-tape-index (1+ input-tape-index))))))
+                      (push a pushdown-list)
+                      (push next-index pushdown-list)
+                      (setq input-tape-index (1+ input-tape-index))))))
 
-                 ((equal (car action-match) 'reduce)
-                  ;; (b) If f(u) = reduce i and production i is A -> a,
-                  ;; then 2|a| symbols are removed from the top of the pushdown
-                  ;; list, and production number i is placed in the output
-                  ;; buffer. A new table T' is then exposed as the top table
-                  ;; of the pushdown list, and the goto function of T' is applied
-                  ;; to A to determine the next table to be placed on top of the
-                  ;; pushdown list. We place A and this new table on top of the
-                  ;; the pushdown list and return to step (1)
+               ((equal (car action-match) 'reduce)
+                ;; (b) If f(u) = reduce i and production i is A -> a,
+                ;; then 2|a| symbols are removed from the top of the pushdown
+                ;; list, and production number i is placed in the output
+                ;; buffer. A new table T' is then exposed as the top table
+                ;; of the pushdown list, and the goto function of T' is applied
+                ;; to A to determine the next table to be placed on top of the
+                ;; pushdown list. We place A and this new table on top of the
+                ;; the pushdown list and return to step (1)
 
-                  (let ((production-number (car (cdr action-match))))
-                    (let ((production (parser--get-grammar-production-by-number production-number)))
-                      (let ((production-lhs (car production))
-                            (production-rhs (car (cdr production))))
-                        (unless (equal production-rhs (list parser--e-identifier))
-                          (let ((pop-items (* 2 (length production-rhs)))
-                                (popped-items 0))
-                            (while (< popped-items pop-items)
-                              (pop pushdown-list)
-                              (setq popped-items (1+ popped-items)))))
-                        (push production-number output)
+                (let ((production-number (car (cdr action-match))))
+                  (let ((production (parser--get-grammar-production-by-number production-number)))
+                    (let ((production-lhs (car production))
+                          (production-rhs (car (cdr production))))
+                      (unless (equal production-rhs (list parser--e-identifier))
+                        (let ((pop-items (* 2 (length production-rhs)))
+                              (popped-items 0))
+                          (while (< popped-items pop-items)
+                            (pop pushdown-list)
+                            (setq popped-items (1+ popped-items)))))
+                      (push production-number output)
 
-                        (let ((new-table-index (car pushdown-list)))
-                          (let ((goto-table (gethash new-table-index parser-lr--goto-tables)))
-                            (let ((goto-table-length (length goto-table))
-                                  (goto-index 0)
-                                  (searching-match t)
-                                  (next-index))
+                      (let ((new-table-index (car pushdown-list)))
+                        (let ((goto-table (gethash new-table-index parser-lr--goto-tables)))
+                          (let ((goto-table-length (length goto-table))
+                                (goto-index 0)
+                                (searching-match t)
+                                (next-index))
 
-                              (while (and
-                                      searching-match
-                                      (< goto-index goto-table-length))
-                                (let ((goto-item (nth goto-index goto-table)))
-                                  (let ((goto-item-look-ahead (car goto-item))
-                                        (goto-item-next-index (car (cdr goto-item))))
+                            (while (and
+                                    searching-match
+                                    (< goto-index goto-table-length))
+                              (let ((goto-item (nth goto-index goto-table)))
+                                (let ((goto-item-look-ahead (car goto-item))
+                                      (goto-item-next-index (car (cdr goto-item))))
 
-                                    (when (equal goto-item-look-ahead production-lhs)
-                                      (setq next-index goto-item-next-index)
-                                      (setq searching-match nil))))
+                                  (when (equal goto-item-look-ahead production-lhs)
+                                    (setq next-index goto-item-next-index)
+                                    (setq searching-match nil))))
 
-                                (setq goto-index (1+ goto-index)))
+                              (setq goto-index (1+ goto-index)))
 
-                              (when next-index
-                                (push production-lhs pushdown-list)
-                                (push next-index pushdown-list)))))))))
+                            (when next-index
+                              (push production-lhs pushdown-list)
+                              (push next-index pushdown-list)))))))))
 
-                 ((equal action-match '(accept))
-                  ;;    (d) If f(u) = accept, we halt and declare the string
-                  ;;    in the output buffer to be the right parse of the original
-                  ;;    input string.
+               ((equal action-match '(accept))
+                ;;    (d) If f(u) = accept, we halt and declare the string
+                ;;    in the output buffer to be the right parse of the original
+                ;;    input string.
 
-                  (setq accept t))
+                (setq accept t))
 
-                 (t (error (format "Invalid action-match: %s!" action-match)))))))))
+               (t (error (format "Invalid action-match: %s!" action-match)))))))))
+    (unless accept
+      (error "Parsed entire string without getting accepting!"))
     (nreverse output)))
 
 (provide 'parser-lr)
