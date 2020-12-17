@@ -16,23 +16,23 @@ We use a regular-language based lexical analyzer that can be implemented by a fi
 We use push down transducer (PDT) based algorithms:
 
 ### With Backtracking
-#### The Bottom-Up Parsing Algorithm
-#### The Top-Down Parsing Algorithm
-#### The Cocke-Younger-Kasami Algorithm
-#### The Parsing Method of Earley
+* The Bottom-Up Parsing Algorithm WIP
+* The Top-Down Parsing Algorithm WIP
+* The Cocke-Younger-Kasami Algorithm WIP
+* The Parsing Method of Earley WIP
+
 ### Without Backtracking
-#### LL(k)
-#### Deterministic Shift-Reduce Parsing
-#### LR(k)
-#### [Deterministic Right Parser for LR(k) Grammars](docs/Deterministic Right Parser for LRk Grammars.md)
-#### Formal Shift-Reduce Parsing Algorithms
-#### Simple Precedence Grammars
-#### Extended Precedence Grammars
-#### Weak Precedence Grammars
-#### Bounded-Right-Context Grammars
-#### Mixed Strategy Precedence Grammars
-#### Operator Precedence Grammars
-#### Floyd-Evans Production Language
+* LL(k) WIP
+* Deterministic Shift-Reduce Parsing WIP
+* [LR(k)](docs/Deterministic Right Parser for LRk Grammars.md)
+* Formal Shift-Reduce Parsing Algorithms WIP
+* Simple Precedence Grammars WIP
+* Extended Precedence Grammars WIP
+*Weak Precedence Grammars WIP
+* Bounded-Right-Context Grammars WIP
+* Mixed Strategy Precedence Grammars WIP
+* Operator Precedence Grammars WIP
+* Floyd-Evans Production Language WIP
 
 ## Grammar
 
