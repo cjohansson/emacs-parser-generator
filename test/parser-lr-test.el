@@ -32,7 +32,7 @@
       (5 nil)
       (6 ((a 4) (b 7)))
       (7 nil))
-    parser-lr--goto-tables))
+    (parser--hash-to-list parser-lr--goto-tables)))
 
   (should
    (equal
@@ -57,7 +57,7 @@
       (5 (((a) reduce 1) ((e) reduce 1)))
       (6 (((a) shift) ((b) shift)))
       (7 (((a) reduce 1) ((b) reduce 1))))
-      parser-lr--action-tables))
+      (parser--hash-to-list parser-lr--action-tables)))
 
   (message "Ended tests for (parser-lr--generate-action-tables)"))
 
@@ -86,7 +86,7 @@
       (5 nil)
       (6 ((a 4) (b 7)))
       (7 nil))
-    parser-lr--goto-tables))
+    (parser--hash-to-list parser-lr--goto-tables)))
 
   (should
    (equal
@@ -219,7 +219,7 @@
 
 (defun parser-lr-test--parse ()
   "Test `parser-lr--parse'."
-  (message "Passed tests for (parser-lr--parse)")
+  (message "Started tests for (parser-lr--parse)")
 
   (parser--set-grammar '((Sp S) (a b) ((Sp S) (S (S a S b)) (S e)) Sp))
   (parser--set-look-ahead-number 1)

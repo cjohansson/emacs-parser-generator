@@ -44,8 +44,9 @@
   (unless parser-lr--action-tables
     (let ((action-tables)
           (states '(shift reduce error))
-          (added-actions (make-hash-table :test 'equal)))
-      (dolist (goto-table parser-lr--goto-tables)
+          (added-actions (make-hash-table :test 'equal))
+          (goto-tables (parser--hash-to-list parser-lr--goto-tables)))
+      (dolist (goto-table goto-tables)
         (let ((goto-index (car goto-table))
               (gotos (car (cdr goto-table)))
               (found-action nil)
@@ -135,8 +136,13 @@
            (message "%s actions %s" goto-index action-table))
           (when action-table
             (push (list goto-index (sort action-table 'parser--sort-list)) action-tables))))
-      (setq parser-lr--action-tables (sort (nreverse action-tables) 'parser--sort-list))))
-  parser-lr--action-tables)
+      (setq action-tables (nreverse action-tables))
+      (setq parser-lr--action-tables (make-hash-table :test 'equal))
+      (let ((table-length (length action-tables))
+            (table-index 0))
+        (while (< table-index table-length)
+          (puthash table-index (car (cdr (nth table-index action-tables))) parser-lr--action-tables)
+          (setq table-index (1+ table-index)))))))
 
 ;; Algorithm 5.9, p. 389
 (defun parser-lr--generate-goto-tables ()
@@ -214,12 +220,18 @@
 
           (setq goto-table-table (sort goto-table-table 'parser--sort-list))
           (push `(,lr-item-set-index ,goto-table-table) goto-table)))
-      (setq parser-lr--goto-tables (sort goto-table 'parser--sort-list)))
+
+      (setq goto-table (sort goto-table 'parser--sort-list))
+      (setq parser-lr--goto-tables (make-hash-table :test 'equal))
+      (let ((table-length (length goto-table))
+            (table-index 0))
+        (while (< table-index table-length)
+          (puthash table-index (car (cdr (nth table-index goto-table))) parser-lr--goto-tables)
+          (setq table-index (1+ table-index)))))
     (unless
         (parser-lr--items-valid-p
          (parser--hash-values-to-list parser-lr--items t)) ;; TODO Should not use this debug function
-      (error "Inconsistent grammar!")))
-  parser-lr--goto-tables)
+      (error "Inconsistent grammar!"))))
 
 ;; Algorithm 5.10, p. 391
 (defun parser-lr--items-valid-p (lr-item-sets)
@@ -477,8 +489,6 @@
 ;; TODO Add support for lex-analyzer
 ;; TODO Add support for SDT
 ;; TODO Add support for semantic-actions
-;; TODO Create hash-tables of parse-state -> action-table, parse-state -> goto-table
-;; TODO Create hash-table of production-number -> production
 ;; TODO Consider case with 2 character look-ahead
 (defun parser-lr--parse (input-tape &optional input-tape-index pushdown-list)
   "Perform a LR-parse of INPUT-TAPE optionally at INPUT-TAPE-INDEX with PUSHDOWN-LIST."
@@ -487,11 +497,13 @@
   (unless pushdown-list
     (push 0 pushdown-list))
 
+  ;; Make sure tables exists
+  (parser-lr--generate-goto-tables)
+  (parser-lr--generate-action-tables)
+
   (let ((accept nil)
         (input-tape-length (length input-tape))
-        (output)
-        (goto-tables (parser-lr--generate-goto-tables)))
-    (let ((action-tables (parser-lr--generate-action-tables)))
+        (output))
       (while (and
               (not accept)
               (<= input-tape-index input-tape-length))
@@ -516,7 +528,7 @@
           (setq look-ahead (nreverse look-ahead))
 
           (let ((table-index (car pushdown-list)))
-            (let ((action-table (car (cdr (nth table-index action-tables)))))
+            (let ((action-table (gethash table-index parser-lr--action-tables)))
 
               (let ((action-match nil)
                     (action-table-length (length action-table))
@@ -556,7 +568,7 @@
                   ;; and declare error.
 
                   (let ((a (nth input-tape-index input-tape)))
-                    (let ((goto-table (car (cdr (nth table-index goto-tables)))))
+                    (let ((goto-table (gethash table-index parser-lr--goto-tables)))
                       (let ((goto-table-length (length goto-table))
                             (goto-index 0)
                             (searching-match t)
@@ -608,7 +620,7 @@
                         (push production-number output)
 
                         (let ((new-table-index (car pushdown-list)))
-                          (let ((goto-table (car (cdr (nth new-table-index goto-tables)))))
+                          (let ((goto-table (gethash new-table-index parser-lr--goto-tables)))
                             (let ((goto-table-length (length goto-table))
                                   (goto-index 0)
                                   (searching-match t)
@@ -638,7 +650,7 @@
 
                   (setq accept t))
 
-                 (t (error (format "Invalid action-match: %s!" action-match))))))))))
+                 (t (error (format "Invalid action-match: %s!" action-match)))))))))
     (nreverse output)))
 
 (provide 'parser-lr)
