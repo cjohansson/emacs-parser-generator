@@ -227,7 +227,7 @@
   (should
    (equal
     '(2 2 2 1 1)
-    (parser-lr--parse "aabb")))
+    (parser-lr--parse '(a a b b))))
 
   (message "Passed tests for (parser-lr--parse)"))
 

@@ -135,7 +135,8 @@
            (message "%s actions %s" goto-index action-table))
           (when action-table
             (push (list goto-index (sort action-table 'parser--sort-list)) action-tables))))
-      (setq parser-lr--action-tables (sort (nreverse action-tables) 'parser--sort-list)))))
+      (setq parser-lr--action-tables (sort (nreverse action-tables) 'parser--sort-list))))
+  parser-lr--action-tables)
 
 ;; Algorithm 5.9, p. 389
 (defun parser-lr--generate-goto-tables ()
@@ -216,8 +217,9 @@
       (setq parser-lr--goto-tables (sort goto-table 'parser--sort-list)))
     (unless
         (parser-lr--items-valid-p
-         (parser--hash-values-to-list parser-lr--items t))
-      (error "Inconsistent grammar!"))))
+         (parser--hash-values-to-list parser-lr--items t)) ;; TODO Should not use this debug function
+      (error "Inconsistent grammar!")))
+  parser-lr--goto-tables)
 
 ;; Algorithm 5.10, p. 391
 (defun parser-lr--items-valid-p (lr-item-sets)
@@ -472,44 +474,81 @@
     lr-new-item))
 
 ;; Algorithm 5.7, p. 375
-(defun parser-lr--parse (input-tape &optional input-tape-index stack)
-  "Perform a LR-parse of INPUT-TAPE optionally at INPUT-TAPE-INDEX with STACK."
+;; TODO Add support for SDT
+;; TODO Add support for semantic-actions
+(defun parser-lr--parse (input-tape &optional input-tape-index pushdown-list)
+  "Perform a LR-parse of INPUT-TAPE optionally at INPUT-TAPE-INDEX with PUSHDOWN-LIST."
   (unless input-tape-index
     (setq input-tape-index 0))
+  (unless pushdown-list
+    (push 0 pushdown-list))
+
   (let ((input-tape-length (length input-tape))
         (right-parse)
-        (goto-tables (parser-lr--generate-goto-tables)))
+        (goto-tables (parser-lr--generate-goto-tables))
+        (no-error t))
     (let ((action-tables (parser-lr--generate-action-tables)))
+      (while (and
+              no-error
+              (< input-tape-index input-tape-length))
 
-      ;; TODO (1) The lookahead string u, consisting of the next k input symbols, is determined.
 
-      ;; TODO (2) The parsing action f of the table on top of the pushdown list is applied to the lookahead string u.
+        ;; (1) The lookahead string u, consisting of the next k input symbols, is determined.
+        (let ((look-ahead-string)
+              (look-ahead-string-length 0))
 
-      ;;    TODO (a) If f(u) = shift, then the next input symbol, say a
-      ;;    is removed from the input and shifted onto the pushdown list.
-      ;;    The goto function g of the table on top of the pushdown list
-      ;;    is applied to a to determine the new table to be placed on
-      ;;    top of the pushdown list. We then return to step(1). If
-      ;;    there is no next input symbol or g(a) is undefined, halt
-      ;;    and declare error.
+          (while (and
+                  (< input-tape-index input-tape-length)
+                  (< look-ahead-string-length parser--look-ahead-number))
+            (push (pop input-tape) look-ahead-string)
+            (setq look-ahead-string-length (1+ look-ahead-string-length))
+            (setq input-tape-index (1+ input-tape-index)))
 
-      ;;    TODO (b) If f(u) = reduce i and production i is A -> a,
-      ;;    then 2|a| symbols are removed from the top of the pushdown
-      ;;    list, and production number i is placed in the output
-      ;;    buffer. A new table T' is then exposed as the top table
-      ;;    of the pushdown list, and the goto function of T' is applied
-      ;;    to A to determine the next table to be placed on top of the
-      ;;    pushdown list. We place A and this new table on top of the
-      ;;    the pushdown list and return to step (1)
+          ;; If we reached end of input-tape and look-ahead is too small, append e-identifiers
+          (while (< look-ahead-string-length parser--look-ahead-number)
+            (push parser--e-identifier look-ahead-string)
+            (setq look-ahead-string-length (1+ look-ahead-string-length)))
 
-      ;;    TODO (c) If f(u) = error, we halt parsing (and, in practice
-      ;;    transfer to an error recovery routine).
+          (setq look-ahead-string (nreverse look-ahead-string))
+          (message "Look-ahead-string: %s" look-ahead-string)
 
-      ;;    TODO (d) If f(u) = accept, we halt and declare the string
-      ;;    in the output buffer to be the right parse of the original
-      ;;    input string.
-      
-      )
+          (let ((table-index (car pushdown-list)))
+            (message "table-index: %s" table-index)
+            (let ((action-table (car (cdr (nth table-index action-tables))))
+                  (goto-table (car (cdr (nth table-index goto-tables)))))
+
+              (message "action-table: %s" action-table)
+              (message "goto-table: %s" goto-table)
+
+              ;; TODO (2) The parsing action f of the table on top of the pushdown list is applied to the lookahead string u.
+
+              ;;    TODO (a) If f(u) = shift, then the next input symbol, say a
+              ;;    is removed from the input and shifted onto the pushdown list.
+              ;;    The goto function g of the table on top of the pushdown list
+              ;;    is applied to a to determine the new table to be placed on
+              ;;    top of the pushdown list. We then return to step(1). If
+              ;;    there is no next input symbol or g(a) is undefined, halt
+              ;;    and declare error.
+
+              ;;    TODO (b) If f(u) = reduce i and production i is A -> a,
+              ;;    then 2|a| symbols are removed from the top of the pushdown
+              ;;    list, and production number i is placed in the output
+              ;;    buffer. A new table T' is then exposed as the top table
+              ;;    of the pushdown list, and the goto function of T' is applied
+              ;;    to A to determine the next table to be placed on top of the
+              ;;    pushdown list. We place A and this new table on top of the
+              ;;    the pushdown list and return to step (1)
+
+              ;;    TODO (c) If f(u) = error, we halt parsing (and, in practice
+              ;;    transfer to an error recovery routine).
+
+              ;;    TODO (d) If f(u) = accept, we halt and declare the string
+              ;;    in the output buffer to be the right parse of the original
+              ;;    input string.
+
+              ))
+
+          )))
     right-parse))
 
 (provide 'parser-lr)
