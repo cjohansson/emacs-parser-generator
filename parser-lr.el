@@ -493,7 +493,7 @@
     (let ((action-tables (parser-lr--generate-action-tables)))
       (while (and
               (not accept)
-              (< input-tape-index input-tape-length))
+              (<= input-tape-index input-tape-length))
 
         ;; (1) The lookahead string u, consisting of the next k input symbols, is determined.
         (let ((look-ahead)
@@ -513,12 +513,9 @@
             (setq look-ahead-length (1+ look-ahead-length)))
 
           (setq look-ahead (nreverse look-ahead))
-          (message "look-ahead: %s" look-ahead)
 
           (let ((table-index (car pushdown-list)))
-            (message "table-index: %s" table-index)
             (let ((action-table (car (cdr (nth table-index action-tables)))))
-              (message "action-table: %s" action-table)
 
               (let ((action-match nil)
                     (action-table-length (length action-table))
@@ -531,11 +528,9 @@
                         (< action-index action-table-length))
                   (let ((action (nth action-index action-table)))
                     (let ((action-look-ahead (car action)))
-                      (message "action-look-ahead: %s" action-look-ahead)
                       (push action-look-ahead possible-look-aheads)
                       (when (equal action-look-ahead look-ahead)
-                        (setq action-match (cdr action))
-                        (message "action-match: %s" action-match))))
+                        (setq action-match (cdr action)))))
                   (setq action-index (1+ action-index)))
 
                 (unless action-match
@@ -551,7 +546,7 @@
                 (cond
 
                  ((equal action-match '(shift))
-                  ;; TODO (a) If f(u) = shift, then the next input symbol, say a
+                  ;; (a) If f(u) = shift, then the next input symbol, say a
                   ;; is removed from the input and shifted onto the pushdown list.
                   ;; The goto function g of the table on top of the pushdown list
                   ;; is applied to a to determine the new table to be placed on
@@ -560,9 +555,7 @@
                   ;; and declare error.
 
                   (let ((a (nth input-tape-index input-tape)))
-                    (message "a: %s" a)
                     (let ((goto-table (car (cdr (nth table-index goto-tables)))))
-                      (message "goto-table: %s" goto-table)
                       (let ((goto-table-length (length goto-table))
                             (goto-index 0)
                             (searching-match t)
@@ -574,8 +567,6 @@
                           (let ((goto-item (nth goto-index goto-table)))
                             (let ((goto-item-look-ahead (car goto-item))
                                   (goto-item-next-index (car (cdr goto-item))))
-                              (message "goto-item-look-ahead: %s" goto-item-look-ahead)
-                              (message "goto-item-next-index: %s" goto-item-next-index)
 
                               (when (equal goto-item-look-ahead a)
                                 (setq next-index goto-item-next-index)
@@ -591,9 +582,7 @@
 
                         (push a pushdown-list)
                         (push next-index pushdown-list)
-                        (setq input-tape-index (1+ input-tape-index))
-                        (message "Performed shift, new pushdown-list: %s" pushdown-list)
-                        (message "new-input-tape-index: %s" input-tape-index)))))
+                        (setq input-tape-index (1+ input-tape-index))))))
 
                  ((equal (car action-match) 'reduce)
                   ;; (b) If f(u) = reduce i and production i is A -> a,
@@ -609,22 +598,16 @@
                     (let ((production (parser--get-grammar-production-by-number production-number)))
                       (let ((production-lhs (car production))
                             (production-rhs (car (cdr production))))
-                        (message "production: %s, lhs: %s rhs: %s" production production-lhs production-rhs)
                         (unless (equal production-rhs (list parser--e-identifier))
-                          (let ((pop-items (* 2 (length (cdr production))))
+                          (let ((pop-items (* 2 (length production-rhs)))
                                 (popped-items 0))
-                            (message "Should pop %s items" pop-items)
                             (while (< popped-items pop-items)
                               (pop pushdown-list)
                               (setq popped-items (1+ popped-items)))))
-                        (message "pushdown-list: %s" pushdown-list)
                         (push production-number output)
-                        (message "new-output: %s" output)
 
                         (let ((new-table-index (car pushdown-list)))
-                          (message "new-table-index: %s" new-table-index)
                           (let ((goto-table (car (cdr (nth new-table-index goto-tables)))))
-                            (message "goto-table: %s" goto-table)
                             (let ((goto-table-length (length goto-table))
                                   (goto-index 0)
                                   (searching-match t)
@@ -636,8 +619,6 @@
                                 (let ((goto-item (nth goto-index goto-table)))
                                   (let ((goto-item-look-ahead (car goto-item))
                                         (goto-item-next-index (car (cdr goto-item))))
-                                    (message "goto-item-look-ahead: %s" goto-item-look-ahead)
-                                    (message "goto-item-next-index: %s" goto-item-next-index)
 
                                     (when (equal goto-item-look-ahead production-lhs)
                                       (setq next-index goto-item-next-index)
@@ -647,8 +628,7 @@
 
                               (when next-index
                                 (push production-lhs pushdown-list)
-                                (push next-index pushdown-list)
-                                (message "Performed reduction, new pushdown-list: %s" pushdown-list)))))))))
+                                (push next-index pushdown-list)))))))))
 
                  ((equal action-match '(accept))
                   ;;    (d) If f(u) = accept, we halt and declare the string
@@ -657,9 +637,7 @@
 
                   (setq accept t))
 
-                 (t (error (format "Invalid action-match: %s!" action-match)))
-
-                 )))))))
+                 (t (error (format "Invalid action-match: %s!" action-match))))))))))
     (nreverse output)))
 
 (provide 'parser-lr)
