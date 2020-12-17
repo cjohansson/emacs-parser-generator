@@ -477,6 +477,8 @@
 ;; TODO Add support for lex-analyzer
 ;; TODO Add support for SDT
 ;; TODO Add support for semantic-actions
+;; TODO Create hash-tables of parse-state -> action-table, parse-state -> goto-table
+;; TODO Create hash-table of production-number -> production
 (defun parser-lr--parse (input-tape &optional input-tape-index pushdown-list)
   "Perform a LR-parse of INPUT-TAPE optionally at INPUT-TAPE-INDEX with PUSHDOWN-LIST."
   (unless input-tape-index
@@ -552,31 +554,37 @@
                 (cond
 
                  ((eq action-match '(shift))
+                  ;; TODO (a) If f(u) = shift, then the next input symbol, say a
+                  ;; is removed from the input and shifted onto the pushdown list.
+                  ;; The goto function g of the table on top of the pushdown list
+                  ;; is applied to a to determine the new table to be placed on
+                  ;; top of the pushdown list. We then return to step(1). If
+                  ;; there is no next input symbol or g(a) is undefined, halt
+                  ;; and declare error.
+
+                  ;; TODO Get next look-ahead here
+
                   (let ((a (car look-ahead)))
-                  ;;    TODO (a) If f(u) = shift, then the next input symbol, say a
-                  ;;    is removed from the input and shifted onto the pushdown list.
-                  ;;    The goto function g of the table on top of the pushdown list
-                  ;;    is applied to a to determine the new table to be placed on
-                  ;;    top of the pushdown list. We then return to step(1). If
-                  ;;    there is no next input symbol or g(a) is undefined, halt
-                  ;;    and declare error.
 
                     (push a pushdown-list)
 
-
-                  ))
+                    ))
 
                  ((eq (car action-match) 'reduce)
-                  ;;    TODO (b) If f(u) = reduce i and production i is A -> a,
-                  ;;    then 2|a| symbols are removed from the top of the pushdown
-                  ;;    list, and production number i is placed in the output
-                  ;;    buffer. A new table T' is then exposed as the top table
-                  ;;    of the pushdown list, and the goto function of T' is applied
-                  ;;    to A to determine the next table to be placed on top of the
-                  ;;    pushdown list. We place A and this new table on top of the
-                  ;;    the pushdown list and return to step (1)
+                  ;; TODO (b) If f(u) = reduce i and production i is A -> a,
+                  ;; then 2|a| symbols are removed from the top of the pushdown
+                  ;; list, and production number i is placed in the output
+                  ;; buffer. A new table T' is then exposed as the top table
+                  ;; of the pushdown list, and the goto function of T' is applied
+                  ;; to A to determine the next table to be placed on top of the
+                  ;; pushdown list. We place A and this new table on top of the
+                  ;; the pushdown list and return to step (1)
 
-                  )
+                  (let ((production-index (car (cdr action-match))))
+
+                    ;; TODO Load production by index here
+
+                    ))
 
                  ((eq action-match '(accept))
                   ;;    (d) If f(u) = accept, we halt and declare the string
