@@ -103,6 +103,43 @@
 
   (message "Passed LR-items for example 5.30")
 
+  ;; Example 5.30, p. 389 but with terminals as strings
+  (parser-generator--set-grammar '((Sp S) ("a" "b") ((Sp S) (S (S "a" S "b")) (S e)) Sp))
+  (parser-generator--set-look-ahead-number 1)
+  (parser-generator--process-grammar)
+
+  (parser-generator-lr--reset)
+  (parser-generator-lr--generate-goto-tables)
+
+  ;; (message "GOTO-table: %s" (parser-generator--hash-to-list parser-generator-lr--goto-tables))
+  ;; (message "LR-items: %s" (parser-generator--hash-to-list parser-generator-lr--items))
+
+  (should
+   (equal
+    '((0 ((S 1)))
+      (1 (("a" 2)))
+      (2 ((S 3)))
+      (3 (("a" 4) ("b" 5)))
+      (4 ((S 6)))
+      (5 nil)
+      (6 (("a" 4) ("b" 7)))
+      (7 nil))
+    (parser-generator--hash-to-list parser-generator-lr--goto-tables)))
+
+  (should
+   (equal
+    '((0 ((S nil (S "a" S "b") ("a")) (S nil (S "a" S "b") (e)) (S nil nil ("a")) (S nil nil (e)) (Sp nil (S) (e))))
+      (1 ((S (S) ("a" S "b") ("a")) (S (S) ("a" S "b") (e)) (Sp (S) nil (e))))
+      (2 ((S (S "a") (S "b") ("a")) (S (S "a") (S "b") (e)) (S nil (S "a" S "b") ("a")) (S nil (S "a" S "b") ("b")) (S nil nil ("a")) (S nil nil ("b"))))
+      (3 ((S (S) ("a" S "b") ("a")) (S (S) ("a" S "b") ("b")) (S (S "a" S) ("b") ("a")) (S (S "a" S) ("b") (e))))
+      (4 ((S (S "a") (S "b") ("a")) (S (S "a") (S "b") ("b")) (S nil (S "a" S "b") ("a")) (S nil (S "a" S "b") ("b")) (S nil nil ("a")) (S nil nil ("b"))))
+      (5 ((S (S "a" S "b") nil ("a")) (S (S "a" S "b") nil (e))))
+      (6 ((S (S) ("a" S "b") ("a")) (S (S) ("a" S "b") ("b")) (S (S "a" S) ("b") ("a")) (S (S "a" S) ("b") ("b"))))
+      (7 ((S (S "a" S "b") nil ("a")) (S (S "a" S "b") nil ("b")))))
+    (parser-generator--hash-to-list parser-generator-lr--items)))
+
+  (message "Passed LR-items for example 5.30 but with tokens as strings")
+
   (message "Passed tests for (parser-r--generate-goto-tables)"))
 
 (defun parser-generator-lr-test--items-for-prefix ()
@@ -263,8 +300,48 @@
   (should-error
    (parser-generator-lr--parse))
 
+  ;; Test with terminals as strings here
 
-  ;; TODO Test with terminals as strings here
+  (parser-generator--set-grammar '((Sp S) ("a" "b") ((Sp S) (S (S "a" S "b")) (S e)) Sp))
+  (parser-generator--set-look-ahead-number 1)
+  (parser-generator--process-grammar)
+  (parser-generator-lr--reset)
+
+  (setq
+   parser-generator-lex-analyzer--function
+   (lambda (index length)
+     (let* ((string '(("a" 1 . 2) ("a" 2 . 3) ("b" 3 . 4) ("b" 4 . 5)))
+            (string-length (length string))
+            (max-index (+ index length))
+            (tokens))
+       (while (and
+               (< index string-length)
+               (< index max-index))
+         (push (nth index string) tokens)
+         (setq index (1+ index)))
+       (nreverse tokens))))
+
+  (should
+   (equal
+    '(2 2 2 1 1)
+    (parser-generator-lr--parse)))
+
+  (setq
+   parser-generator-lex-analyzer--function
+   (lambda (index length)
+     (let* ((string '(("a" 1 . 2) ("a" 2 . 3) ("b" 3 . 4) ("b" 4 . 5) ("b" 5 . 6)))
+            (string-length (length string))
+            (max-index (+ index length))
+            (tokens))
+       (while (and
+               (< index string-length)
+               (< index max-index))
+         (push (nth index string) tokens)
+         (setq index (1+ index)))
+       (nreverse tokens))))
+
+  (should-error
+   (parser-generator-lr--parse))
 
   (message "Passed tests for (parser-generator-lr--parse)"))
 

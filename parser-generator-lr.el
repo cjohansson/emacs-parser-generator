@@ -436,7 +436,7 @@
               (lr-item-suffix-rest (cdr lr-item-suffix)))
 
           ;; (a) If [A -> a . XiB, u] is in V(X1,...,Xi-1)
-          (when (eq lr-item-suffix-first x)
+          (when (equal lr-item-suffix-first x)
 
             ;; Add [A -> aXi . B, u] to V(X1,...,Xi)
             (let ((combined-prefix (append lr-item-prefix (list x))))
@@ -581,7 +581,8 @@
                     (let ((goto-table-length (length goto-table))
                           (goto-index 0)
                           (searching-match t)
-                          (next-index))
+                          (next-index)
+                          (possible-look-aheads))
 
                       (while (and
                               searching-match
@@ -589,6 +590,7 @@
                         (let ((goto-item (nth goto-index goto-table)))
                           (let ((goto-item-look-ahead (car goto-item))
                                 (goto-item-next-index (car (cdr goto-item))))
+                            (push goto-item-look-ahead possible-look-aheads)
 
                             (when (equal goto-item-look-ahead a)
                               (setq next-index goto-item-next-index)
@@ -598,9 +600,10 @@
 
                       (unless next-index
                         (error (format
-                                "In shift, found no goto-item for %s in index %s"
+                                "In shift, found no goto-item for %s in index %s, expected one of %s"
                                 a
-                                table-index)))
+                                table-index
+                                possible-look-aheads)))
 
                       (push a pushdown-list)
                       (push next-index pushdown-list)
