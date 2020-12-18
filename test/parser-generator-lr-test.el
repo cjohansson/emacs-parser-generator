@@ -229,6 +229,9 @@
     '(2 2 2 1 1)
     (parser-generator-lr--parse '(a a b b))))
 
+  (should-error
+   (parser-generator-lr--parse '(a a b b b)))
+
   (message "Passed tests for (parser-generator-lr--parse)"))
 
 (defun parser-generator-lr-test ()

@@ -554,7 +554,10 @@
                         "Invalid syntax! Expected one of %s found %s at input-tape-index %s"
                         possible-look-aheads
                         look-ahead
-                        input-tape-index)))
+                        input-tape-index)
+                       possible-look-aheads
+                       look-ahead
+                       input-tape-index))
 
               (cond
 
