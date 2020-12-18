@@ -16,11 +16,9 @@ Example with grammar with production: S -> SaSb and S is non-terminal and a, b a
 * B, C is parts of the production RHS, if the dot is the left B is nil and C is the entire RHS. If the dot is at the right then B is the production RHS and C is nil, otherwise B and C contains parts of the RHS
 * L is the terminal look-ahead
 
-### LR items for prefix (S)
+## LR items for prefix (S)
 
 Calculate the set of LR items valid for any viable prefix S.
-
-### Functions
 
 ``` emacs-lisp
 (require 'ert)
@@ -52,6 +50,52 @@ Calculate the set of LR items valid for any viable prefix S.
       (S (S) (a S b) (e))
       (Sp (S) nil (e)))
     (parser--lr-items-for-prefix 'S)))
+```
+
+## Parse
+
+Perform a right-parse of input-stream.
+
+```emacs-lisp
+(require 'ert)
+
+(parser-generator--set-grammar '((Sp S) (a b) ((Sp S) (S (S a S b)) (S e)) Sp))
+(parser-generator--set-look-ahead-number 1)
+(parser-generator--process-grammar)
+(setq
+   parser-generator-lex-analyzer--function
+   (lambda (index length)
+     (let* ((string '(a a b b b))
+            (string-length (length string))
+            (max-index (+ index length))
+            (tokens))
+       (while (and
+               (< index string-length)
+               (< index max-index))
+         (push (nth index string) tokens)
+         (setq index (1+ index)))
+       (nreverse tokens))))
+(should
+   (equal
+    '(2 2 2 1 1)
+    (parser-generator-lr--parse)))
+    
+
+(setq
+   parser-generator-lex-analyzer--function
+   (lambda (index length)
+     (let* ((string '(a a b b b))
+            (string-length (length string))
+            (max-index (+ index length))
+            (tokens))
+       (while (and
+               (< index string-length)
+               (< index max-index))
+         (push (nth index string) tokens)
+         (setq index (1+ index)))
+       (nreverse tokens))))
+(should-error
+    (parser-generator-lr--parse))
 ```
 
 [Back to start](../../../)
