@@ -13,7 +13,7 @@ We use push down transducer (PDT) based algorithms.
 
 * LL(k) *WIP*
 * Deterministic Shift-Reduce Parsing *WIP*
-* [LR(k)](docs/Deterministic-Right-Parser-for-LRk-Grammars.md)
+* [LR(k)](Deterministic-Right-Parser-for-LRk-Grammars.md)
 * Formal Shift-Reduce Parsing Algorithms *WIP*
 * Simple Precedence Grammars *WIP*
 * Extended Precedence Grammars *WIP*
