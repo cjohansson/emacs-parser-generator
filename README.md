@@ -46,12 +46,12 @@ Grammar consists of `N`, `T`, `P` and `S`, where `N` is non-terminals, `T` is te
 * S = `'S`
 
 ``` emacs-lisp
-(parser--set-grammar '((S A B C) (a b c) ((S (A B)) (A (B a) e) (B (C b) C) (C c e)) S))
+(parser-generator--set-grammar '((S A B C) (a b c) ((S (A B)) (A (B a) e) (B (C b) C) (C c e)) S))
 ```
 
 ### e
 
-The symbol defined in variable `parser--e-identifier`, with default-value: 'e`, symbolizes the e symbol. The symbol is allowed in some grammars and not in others.
+The symbol defined in variable `parser-generator--e-identifier`, with default-value: 'e`, symbolizes the e symbol. The symbol is allowed in some grammars and not in others.
 
 ### Non-terminals
 
@@ -87,7 +87,7 @@ The start symbol is the entry-point of the grammar and should be either a string
 
 ### Look-ahead number
 
-Is a simple integer above zero. You set it like this: `(parser--set-look-ahead-number 1)` for `1` number look-ahead.
+Is a simple integer above zero. You set it like this: `(parser-generator--set-look-ahead-number 1)` for `1` number look-ahead.
 
 ### Syntax-directed-translation (SDT)
 
@@ -106,14 +106,14 @@ Calculate the first look-ahead number of terminals of the sentential-form `S`, e
 ``` emacs-lisp
 (require 'ert)
 
-(parser--set-grammar '((S A B C) (a b c) ((S (A B)) (A (B a) e) (B (C b) C) (C c e)) S))
-(parser--set-look-ahead-number 2)
-(parser--process-grammar)
+(parser-generator--set-grammar '((S A B C) (a b c) ((S (A B)) (A (B a) e) (B (C b) C) (C c e)) S))
+(parser-generator--set-look-ahead-number 2)
+(parser-generator--process-grammar)
 
 (should
   (equal
     '((a) (a c) (a b) (c a) (b a) (e) (c) (b) (c b))
-    (parser--first 'S)))
+    (parser-generator--first 'S)))
 ```
 
 ### E-FREE-FIRST(S)
@@ -123,14 +123,14 @@ Calculate the e-free-first look-ahead number of terminals of sentential-form `S`
 ``` emacs-lisp
 (require 'ert)
 
-(parser--set-grammar '((S A B C) (a b c) ((S (A B)) (A (B a) e) (B (C b) C) (C c e)) S))
-(parser--set-look-ahead-number 2)
-(parser--process-grammar)
+(parser-generator--set-grammar '((S A B C) (a b c) ((S (A B)) (A (B a) e) (B (C b) C) (C c e)) S))
+(parser-generator--set-look-ahead-number 2)
+(parser-generator--process-grammar)
 
 (should
   (equal
     '((c b) (c a))
-    (parser--e-free-first 'S)))
+    (parser-generator--e-free-first 'S)))
 ```
 
 ### FOLLOW(S)
@@ -140,14 +140,14 @@ Calculate the look-ahead number of terminals possibly following S.
 ``` emacs-lisp
 (require 'ert)
 
-(parser--set-grammar '((S A B) (a c d f) ((S (A a)) (A B) (B (c f) d)) S))
-(parser--set-look-ahead-number 2)
-(parser--process-grammar)
+(parser-generator--set-grammar '((S A B) (a c d f) ((S (A a)) (A B) (B (c f) d)) S))
+(parser-generator--set-look-ahead-number 2)
+(parser-generator--process-grammar)
 
 (should
   (equal
    '((a))
-   (parser--follow 'A)))
+   (parser-generator--follow 'A)))
 ```
 
 ## Test

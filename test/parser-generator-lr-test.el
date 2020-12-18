@@ -1,4 +1,4 @@
-;;; parser-lr-test.el --- Tests for LR(k) Parser -*- lexical-binding: t -*-
+;;; parser-generator-lr-test.el --- Tests for LR(k) Parser Generator -*- lexical-binding: t -*-
 
 
 ;;; Commentary:
@@ -6,21 +6,21 @@
 
 ;;; Code:
 
-(require 'parser-lr)
+(require 'parser-generator-lr)
 (require 'ert)
 
-(defun parser-lr-test--generate-action-tables ()
-  "Test `parser-lr--generate-action-tables'."
-  (message "Starting tests for (parser-lr--generate-action-tables)")
+(defun parser-generator-lr-test--generate-action-tables ()
+  "Test `parser-generator-lr--generate-action-tables'."
+  (message "Starting tests for (parser-generator-lr--generate-action-tables)")
 
   ;; Example 5.32 p. 393
-  (parser--set-grammar '((Sp S) (a b) ((Sp S) (S (S a S b)) (S e)) Sp))
-  (parser--set-look-ahead-number 1)
-  (parser--process-grammar)
+  (parser-generator--set-grammar '((Sp S) (a b) ((Sp S) (S (S a S b)) (S e)) Sp))
+  (parser-generator--set-look-ahead-number 1)
+  (parser-generator--process-grammar)
 
-  (parser-lr--reset)
-  (parser-lr--generate-goto-tables)
-  (parser-lr--generate-action-tables)
+  (parser-generator-lr--reset)
+  (parser-generator-lr--generate-goto-tables)
+  (parser-generator-lr--generate-action-tables)
 
   (should
    (equal
@@ -32,7 +32,7 @@
       (5 nil)
       (6 ((a 4) (b 7)))
       (7 nil))
-    (parser--hash-to-list parser-lr--goto-tables)))
+    (parser-generator--hash-to-list parser-generator-lr--goto-tables)))
 
   (should
    (equal
@@ -44,7 +44,7 @@
       (5 ((S (S a S b) nil (a)) (S (S a S b) nil (e))))
       (6 ((S (S) (a S b) (a)) (S (S) (a S b) (b)) (S (S a S) (b) (a)) (S (S a S) (b) (b))))
       (7 ((S (S a S b) nil (a)) (S (S a S b) nil (b)))))
-    (parser--hash-to-list parser-lr--items)))
+    (parser-generator--hash-to-list parser-generator-lr--items)))
 
   ;; Fig. 5.9 p. 374
   (should
@@ -57,24 +57,24 @@
       (5 (((a) reduce 1) ((e) reduce 1)))
       (6 (((a) shift) ((b) shift)))
       (7 (((a) reduce 1) ((b) reduce 1))))
-      (parser--hash-to-list parser-lr--action-tables)))
+      (parser-generator--hash-to-list parser-generator-lr--action-tables)))
 
-  (message "Ended tests for (parser-lr--generate-action-tables)"))
+  (message "Ended tests for (parser-generator-lr--generate-action-tables)"))
 
-(defun parser-lr-test--generate-goto-tables ()
-  "Test `parser-lr--generate-goto-tables'."
-  (message "Starting tests for (parser-lr--generate-goto-tables)")
+(defun parser-generator-lr-test--generate-goto-tables ()
+  "Test `parser-generator-lr--generate-goto-tables'."
+  (message "Starting tests for (parser-generator-lr--generate-goto-tables)")
 
   ;; Example 5.30, p. 389
-  (parser--set-grammar '((Sp S) (a b) ((Sp S) (S (S a S b)) (S e)) Sp))
-  (parser--set-look-ahead-number 1)
-  (parser--process-grammar)
+  (parser-generator--set-grammar '((Sp S) (a b) ((Sp S) (S (S a S b)) (S e)) Sp))
+  (parser-generator--set-look-ahead-number 1)
+  (parser-generator--process-grammar)
 
-  (parser-lr--reset)
-  (parser-lr--generate-goto-tables)
+  (parser-generator-lr--reset)
+  (parser-generator-lr--generate-goto-tables)
 
-  ;; (message "GOTO-table: %s" parser-lr--goto-tables)
-  ;; (message "LR-items: %s" (parser--hash-to-list parser-lr--items))
+  ;; (message "GOTO-table: %s" parser-generator-lr--goto-tables)
+  ;; (message "LR-items: %s" (parser-generator--hash-to-list parser-generator-lr--items))
 
   (should
    (equal
@@ -86,7 +86,7 @@
       (5 nil)
       (6 ((a 4) (b 7)))
       (7 nil))
-    (parser--hash-to-list parser-lr--goto-tables)))
+    (parser-generator--hash-to-list parser-generator-lr--goto-tables)))
 
   (should
    (equal
@@ -98,22 +98,22 @@
       (5 ((S (S a S b) nil (a)) (S (S a S b) nil (e))))
       (6 ((S (S) (a S b) (a)) (S (S) (a S b) (b)) (S (S a S) (b) (a)) (S (S a S) (b) (b))))
       (7 ((S (S a S b) nil (a)) (S (S a S b) nil (b)))))
-    (parser--hash-to-list parser-lr--items)))
+    (parser-generator--hash-to-list parser-generator-lr--items)))
 
   (message "Passed LR-items for example 5.30")
 
   (message "Passed tests for (parser-r--generate-goto-tables)"))
 
-(defun parser-lr-test--items-for-prefix ()
-  "Test `parser-lr--items-for-prefix'."
-  (message "Starting tests for (parser-lr--items-for-prefix)")
+(defun parser-generator-lr-test--items-for-prefix ()
+  "Test `parser-generator-lr--items-for-prefix'."
+  (message "Starting tests for (parser-generator-lr--items-for-prefix)")
 
   ;; Example 5.29 p 387
-  (parser--set-grammar '((Sp S) (a b) ((Sp S) (S (S a S b)) (S e)) Sp))
-  (parser--set-look-ahead-number 1)
-  (parser--process-grammar)
+  (parser-generator--set-grammar '((Sp S) (a b) ((Sp S) (S (S a S b)) (S e)) Sp))
+  (parser-generator--set-look-ahead-number 1)
+  (parser-generator--process-grammar)
 
-  (parser-lr--reset)
+  (parser-generator-lr--reset)
 
   (should
    (equal
@@ -122,7 +122,7 @@
       (S nil nil (a))
       (S nil nil (e))
       (Sp nil (S) (e)))
-    (parser-lr--items-for-prefix 'e)))
+    (parser-generator-lr--items-for-prefix 'e)))
   (message "Passed V(e)")
 
   (should
@@ -130,19 +130,19 @@
     '((S (S) (a S b) (a))
       (S (S) (a S b) (e))
       (Sp (S) nil (e)))
-    (parser-lr--items-for-prefix 'S)))
+    (parser-generator-lr--items-for-prefix 'S)))
   (message "Passed V(S)")
 
   (should
    (equal
     nil
-    (parser-lr--items-for-prefix 'a)))
+    (parser-generator-lr--items-for-prefix 'a)))
   (message "Passed V(a)")
 
   (should
    (equal
     nil
-    (parser-lr--items-for-prefix 'b)))
+    (parser-generator-lr--items-for-prefix 'b)))
   (message "Passed V(b)")
 
   (should
@@ -153,19 +153,19 @@
       (S nil (S a S b) (b))
       (S nil nil (a))
       (S nil nil (b)))
-    (parser-lr--items-for-prefix '(S a))))
+    (parser-generator-lr--items-for-prefix '(S a))))
   (message "Passed V(Sa)")
 
   (should
    (equal
     nil
-    (parser-lr--items-for-prefix '(S S))))
+    (parser-generator-lr--items-for-prefix '(S S))))
   (message "Passed V(SS)")
 
   (should
    (equal
     nil
-    (parser-lr--items-for-prefix '(S b))))
+    (parser-generator-lr--items-for-prefix '(S b))))
   (message "Passed V(Sb)")
 
   ;; a3 p. 390
@@ -175,72 +175,72 @@
       (S (S) (a S b) (b))
       (S (S a S) (b) (a))
       (S (S a S) (b) (e)))
-    (parser-lr--items-for-prefix '(S a S))))
+    (parser-generator-lr--items-for-prefix '(S a S))))
   (message "Passed V(SaS)")
 
   (should
    (equal
     nil
-    (parser-lr--items-for-prefix '(S a a))))
+    (parser-generator-lr--items-for-prefix '(S a a))))
   (message "Passed V(Saa)")
 
   (should
    (equal
     nil
-    (parser-lr--items-for-prefix '(S a b))))
+    (parser-generator-lr--items-for-prefix '(S a b))))
   (message "Passed V(Sab)")
 
-  (message "Passed tests for (parser-lr--items-for-prefix)"))
+  (message "Passed tests for (parser-generator-lr--items-for-prefix)"))
 
-(defun parser-lr-test--items-valid-p ()
-  "Test `parser-lr--items-valid-p'."
-  (message "Started tests for (parser-lr--items-valid-p)")
+(defun parser-generator-lr-test--items-valid-p ()
+  "Test `parser-generator-lr--items-valid-p'."
+  (message "Started tests for (parser-generator-lr--items-valid-p)")
 
-  (parser--set-grammar '((Sp S) (a b) ((Sp S) (S (S a S b)) (S e)) Sp))
-  (parser--set-look-ahead-number 1)
-  (parser--process-grammar)
+  (parser-generator--set-grammar '((Sp S) (a b) ((Sp S) (S (S a S b)) (S e)) Sp))
+  (parser-generator--set-look-ahead-number 1)
+  (parser-generator--process-grammar)
 
-  (parser-lr--reset)
-  (parser-lr--generate-goto-tables)
+  (parser-generator-lr--reset)
+  (parser-generator-lr--generate-goto-tables)
   (should
    (equal
     t
-    (parser-lr--items-valid-p (parser--hash-values-to-list parser-lr--items t))))
+    (parser-generator-lr--items-valid-p (parser-generator--hash-values-to-list parser-generator-lr--items t))))
 
   (message "Passed first")
 
   (should
    (equal
     nil
-    (parser-lr--items-valid-p
+    (parser-generator-lr--items-valid-p
      '(((S nil (S a S b) (a)) (S nil (S a S b) (e)) (S nil nil (a)) (S nil nil (e)) (Sp nil (S) (e))) ((S (S) (a S b) (a)) (S (S) (a S b) (e)) (Sp (S) nil (e))) ((S (S a) (S b) (a)) (S (S a) (S b) (e)) (S nil (S a S b) (a)) (S nil (S a S b) (b)) (S nil nil (a)) (S nil nil (b))) ((S (S) (a S b) (a)) (S (S) (a S b) (b)) (S (S a S) (b) (a)) (S (S a S) (b) (e))) ((S (S a S b) nil (a)) (S (S a S b) (a) (a)) (S (S a S b) nil (e))) ((S (S a) (S b) (a)) (S (S a) (S b) (b)) (S nil (S a S b) (a)) (S nil (S a S b) (b)) (S nil nil (a)) (S nil nil (b))) ((S (S) (a S b) (a)) (S (S) (a S b) (b)) (S (S a S) (b) (a)) (S (S a S) (b) (b))) ((S (S a S b) nil (a)) (S (S a S b) nil (b)))))))
 
-  (message "Passed tests for (parser-lr--items-valid-p)"))
+  (message "Passed tests for (parser-generator-lr--items-valid-p)"))
 
-(defun parser-lr-test--parse ()
-  "Test `parser-lr--parse'."
-  (message "Started tests for (parser-lr--parse)")
+(defun parser-generator-lr-test--parse ()
+  "Test `parser-generator-lr--parse'."
+  (message "Started tests for (parser-generator-lr--parse)")
 
-  (parser--set-grammar '((Sp S) (a b) ((Sp S) (S (S a S b)) (S e)) Sp))
-  (parser--set-look-ahead-number 1)
-  (parser--process-grammar)
+  (parser-generator--set-grammar '((Sp S) (a b) ((Sp S) (S (S a S b)) (S e)) Sp))
+  (parser-generator--set-look-ahead-number 1)
+  (parser-generator--process-grammar)
   (should
    (equal
     '(2 2 2 1 1)
-    (parser-lr--parse '(a a b b))))
+    (parser-generator-lr--parse '(a a b b))))
 
-  (message "Passed tests for (parser-lr--parse)"))
+  (message "Passed tests for (parser-generator-lr--parse)"))
 
-(defun parser-lr-test ()
+(defun parser-generator-lr-test ()
   "Run test."
   ;; (setq debug-on-error t)
 
-  (parser-lr-test--items-for-prefix)
-  (parser-lr-test--items-valid-p)
-  (parser-lr-test--generate-goto-tables)
-  (parser-lr-test--generate-action-tables)
-  (parser-lr-test--parse))
+  (parser-generator-lr-test--items-for-prefix)
+  (parser-generator-lr-test--items-valid-p)
+  (parser-generator-lr-test--generate-goto-tables)
+  (parser-generator-lr-test--generate-action-tables)
+  (parser-generator-lr-test--parse))
 
-(provide 'parser-lr-test)
+(provide 'parser-generator-lr-test)
 
-;;; parser-lr-test.el ends here
+;;; parser-generator-lr-test.el ends here
