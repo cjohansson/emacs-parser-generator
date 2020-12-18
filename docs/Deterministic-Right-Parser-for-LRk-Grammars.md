@@ -62,10 +62,11 @@ Perform a right-parse of input-stream.
 (parser-generator--set-grammar '((Sp S) (a b) ((Sp S) (S (S a S b)) (S e)) Sp))
 (parser-generator--set-look-ahead-number 1)
 (parser-generator--process-grammar)
+
 (setq
    parser-generator-lex-analyzer--function
    (lambda (index length)
-     (let* ((string '(a a b b b))
+     (let* ((string '((a 1 . 2) (a 2 . 3) (b 3 . 4) (b 4 . 5) (b 5 . 6)))
             (string-length (length string))
             (max-index (+ index length))
             (tokens))
