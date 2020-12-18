@@ -514,7 +514,8 @@
 
       ;; (1) The lookahead string u, consisting of the next k input symbols, is determined.
       (let ((look-ahead (parser-generator-lex-analyzer--peek-next-look-ahead))
-            (look-ahead-length 0))
+            (look-ahead-length 0)
+            (look-ahead-full))
 
         (setq look-ahead-length (length look-ahead))
 
@@ -523,7 +524,14 @@
           (push parser-generator--e-identifier look-ahead)
           (setq look-ahead-length (1+ look-ahead-length)))
 
-        (setq look-ahead (nreverse look-ahead))
+        ;; Save token stream indexes in separate variable if needed later
+        (setq look-ahead-full (nreverse look-ahead))
+
+        (setq look-ahead nil)
+        (dolist (look-ahead-item look-ahead-full)
+          (if (listp look-ahead-item)
+              (push (car look-ahead-item) look-ahead)
+            (push look-ahead-item look-ahead)))
 
         (let ((table-index (car pushdown-list)))
           (let ((action-table (gethash table-index parser-generator-lr--action-tables)))

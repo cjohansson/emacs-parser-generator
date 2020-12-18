@@ -225,11 +225,12 @@
   (parser-generator--set-grammar '((Sp S) (a b) ((Sp S) (S (S a S b)) (S e)) Sp))
   (parser-generator--set-look-ahead-number 1)
   (parser-generator--process-grammar)
+  (parser-generator-lr--reset)
 
   (setq
    parser-generator-lex-analyzer--function
    (lambda (index length)
-     (let* ((string '(a a b b))
+     (let* ((string '((a 1 . 2) (a 2 . 3) (b 3 . 4) (b 4 . 5)))
             (string-length (length string))
             (max-index (+ index length))
             (tokens))
@@ -248,7 +249,7 @@
   (setq
    parser-generator-lex-analyzer--function
    (lambda (index length)
-     (let* ((string '(a a b b b))
+     (let* ((string '((a 1 . 2) (a 2 . 3) (b 3 . 4) (b 4 . 5) (b 5 . 6)))
             (string-length (length string))
             (max-index (+ index length))
             (tokens))
@@ -261,6 +262,9 @@
 
   (should-error
    (parser-generator-lr--parse))
+
+
+  ;; TODO Test with terminals as strings here
 
   (message "Passed tests for (parser-generator-lr--parse)"))
 

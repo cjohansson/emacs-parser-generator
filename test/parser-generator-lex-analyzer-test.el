@@ -23,7 +23,7 @@
   (setq
    parser-generator-lex-analyzer--function
    (lambda (index length)
-     (let* ((string '(a b c d))
+     (let* ((string '(("a" 1 . 2) ("b" 2 . 3) ("c" 3 . 4) ("d" 4 . 5)))
             (string-length (length string))
             (max-index (+ index length))
             (tokens))
@@ -42,19 +42,19 @@
   (setq parser-generator--look-ahead-number 1)
   (should
    (equal
-    '(a)
+    '(("a" 1 . 2))
     (parser-generator-lex-analyzer--peek-next-look-ahead)))
 
   (setq parser-generator--look-ahead-number 2)
   (should
    (equal
-    '(a b)
+    '(("a" 1 . 2) ("b" 2 . 3))
     (parser-generator-lex-analyzer--peek-next-look-ahead)))
 
   (setq parser-generator--look-ahead-number 10)
   (should
    (equal
-    '(a b c d)
+    '(("a" 1 . 2) ("b" 2 . 3) ("c" 3 . 4) ("d" 4 . 5))
     (parser-generator-lex-analyzer--peek-next-look-ahead)))
 
   (message "Ended tests for (parser-generator-lex-analyzer--peek-next-look-ahead)"))
@@ -72,7 +72,7 @@
   (setq
    parser-generator-lex-analyzer--function
    (lambda (index length)
-     (let* ((string '(a b))
+     (let* ((string '(("a" 1 . 2) ("b" 2 . 3)))
             (string-length (length string))
             (max-index (+ index length))
             (tokens))
@@ -88,11 +88,11 @@
 
   (should
    (equal
-    '(a)
+    '("a" 1 . 2)
     (parser-generator-lex-analyzer--pop-token)))
   (should
    (equal
-    '(b)
+    '("b" 2 . 3)
     (parser-generator-lex-analyzer--pop-token)))
   (should
    (equal

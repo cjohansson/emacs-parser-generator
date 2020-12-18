@@ -48,10 +48,10 @@
     (error "Missing lex-analyzer index!"))
   (unless parser-generator-lex-analyzer--function
     (error "Missing lex-analyzer function!"))
-  (let ((token (funcall
+  (let ((token (car (funcall
                 parser-generator-lex-analyzer--function
                 parser-generator-lex-analyzer--index
-                1)))
+                1))))
     (setq parser-generator-lex-analyzer--index
           (1+ parser-generator-lex-analyzer--index))
     token))
