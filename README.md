@@ -9,7 +9,7 @@ This is just started, so most stuff are *WIP*.
 
 ## Lexical Analysis
 
-We use a regular-language based lexical analyzer that can be implemented by a finite-state-machine (FSM). Set lexical analysis function by setting variable `parser-generator-lex-analyzer--function`. Optionally set reset function by setting variable `parser-generator-lex-analyzer--reset-function`. The lexical analysis is indexed on variable `parser-generator-lex-analyzer--index`. All parsers expect a list of tokens as response from lexical-analysis.
+We use a regular-language based lexical analyzer that can be implemented by a finite-state-machine (FSM). Read more [here](docs/Lexical-Analysis.md).
 
 ### Peek next look-ahead
 
