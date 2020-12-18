@@ -6,6 +6,7 @@
 
 ;;; Code:
 
+
 (require 'parser-generator-lr)
 (require 'ert)
 
@@ -243,6 +244,7 @@
   (parser-generator-lr-test--generate-goto-tables)
   (parser-generator-lr-test--generate-action-tables)
   (parser-generator-lr-test--parse))
+
 
 (provide 'parser-generator-lr-test)
 

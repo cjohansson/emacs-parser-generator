@@ -6,6 +6,7 @@
 
 ;;; Code:
 
+
 (require 'parser-generator)
 (require 'ert)
 
@@ -537,6 +538,7 @@
   (parser-generator-test--first)
   (parser-generator-test--e-free-first)
   (parser-generator-test--follow))
+
 
 (provide 'parser-generator-test)
 

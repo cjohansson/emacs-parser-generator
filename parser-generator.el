@@ -9,6 +9,7 @@
 
 ;;; Variables:
 
+
 (defvar parser-generator--allow-e-productions
   nil
   "Flag whether e-productions is allowed or not.")
@@ -32,10 +33,6 @@
 (defvar parser-generator--f-free-sets
   nil
   "Generated e-free F-sets for grammar.")
-
-(defvar parser-generator--lex-analyzer-function
-  nil
-  "Function used as lex-analyzer.")
 
 (defvar parser-generator--look-ahead-number
   nil
@@ -292,20 +289,6 @@
   "Process grammar."
   (parser-generator--clear-cache)
   (parser-generator--load-symbols))
-
-(defun parser-generator--load-next-look-ahead ()
-  "Load next look-ahead number of tokens via lex-analyzer."
-  (unless parser-generator--lex-analyzer-function
-    (error "Missing lex-analyzer function!"))
-  (let ((left parser-generator--look-ahead-number)
-        (look-ahead))
-    (while (> left 0)
-      (let ((token (funcall parser-generator--lex-analyzer-function)))
-        (if token
-            (push token look-ahead)
-          (push parser-generator--e-identifier look-ahead)))
-      (setq left (1- left)))
-    look-ahead))
 
 (defun parser-generator--sort-list (a b)
   "Return non-nil if a element in A is greater than a element in B in lexicographic order."
@@ -859,6 +842,7 @@
     (when (> (length follow-set) 0)
       (setq follow-set (parser-generator--distinct follow-set)))
     follow-set))
+
 
 (provide 'parser-generator)
 
