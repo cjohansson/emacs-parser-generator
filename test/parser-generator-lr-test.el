@@ -225,13 +225,42 @@
   (parser-generator--set-grammar '((Sp S) (a b) ((Sp S) (S (S a S b)) (S e)) Sp))
   (parser-generator--set-look-ahead-number 1)
   (parser-generator--process-grammar)
+
+  (setq
+   parser-generator-lex-analyzer--function
+   (lambda (index length)
+     (let* ((string '(a a b b))
+            (string-length (length string))
+            (max-index (+ index length))
+            (tokens))
+       (while (and
+               (< index string-length)
+               (< index max-index))
+         (push (nth index string) tokens)
+         (setq index (1+ index)))
+       (nreverse tokens))))
+
   (should
    (equal
     '(2 2 2 1 1)
-    (parser-generator-lr--parse '(a a b b))))
+    (parser-generator-lr--parse)))
+
+  (setq
+   parser-generator-lex-analyzer--function
+   (lambda (index length)
+     (let* ((string '(a a b b b))
+            (string-length (length string))
+            (max-index (+ index length))
+            (tokens))
+       (while (and
+               (< index string-length)
+               (< index max-index))
+         (push (nth index string) tokens)
+         (setq index (1+ index)))
+       (nreverse tokens))))
 
   (should-error
-   (parser-generator-lr--parse '(a a b b b)))
+   (parser-generator-lr--parse))
 
   (message "Passed tests for (parser-generator-lr--parse)"))
 

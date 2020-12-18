@@ -8,7 +8,7 @@
 
 
 (require 'parser-generator)
-
+(require 'parser-generator-lex-analyzer)
 
 ;;; Variables:
 
@@ -490,35 +490,32 @@
 ;; TODO Add support for SDT
 ;; TODO Add support for semantic-actions
 ;; TODO Consider case with 2 character look-ahead
-(defun parser-generator-lr--parse (input-tape &optional input-tape-index pushdown-list)
-  "Perform a LR-parse of INPUT-TAPE optionally at INPUT-TAPE-INDEX with PUSHDOWN-LIST."
+(defun parser-generator-lr--parse (&optional input-tape-index pushdown-list output)
+  "Perform a LR-parse via lex-analyzer, optionally at INPUT-TAPE-INDEX with PUSHDOWN-LIST and OUTPUT."
   (unless input-tape-index
     (setq input-tape-index 0))
   (unless pushdown-list
     (push 0 pushdown-list))
 
+  (if (and
+       input-tape-index
+       (> input-tape-index 0))
+      (setq parser-generator-lex-analyzer--index input-tape-index)
+    (parser-generator-lex-analyzer--reset))
+
   ;; Make sure tables exists
   (parser-generator-lr--generate-goto-tables)
   (parser-generator-lr--generate-action-tables)
 
-  (let ((accept nil)
-        (input-tape-length (length input-tape))
-        (output))
+  (let ((accept))
     (while (and
-            (not accept)
-            (<= input-tape-index input-tape-length))
+            (not accept))
 
       ;; (1) The lookahead string u, consisting of the next k input symbols, is determined.
-      (let ((look-ahead)
-            (look-ahead-length 0)
-            (look-ahead-input-tape-index input-tape-index))
+      (let ((look-ahead (parser-generator-lex-analyzer--peek-next-look-ahead))
+            (look-ahead-length 0))
 
-        (while (and
-                (< look-ahead-input-tape-index input-tape-length)
-                (< look-ahead-length parser-generator--look-ahead-number))
-          (push (nth look-ahead-input-tape-index input-tape) look-ahead)
-          (setq look-ahead-length (1+ look-ahead-length))
-          (setq look-ahead-input-tape-index (1+ look-ahead-input-tape-index)))
+        (setq look-ahead-length (length look-ahead))
 
         ;; If we reached end of input-tape and look-ahead is too small, append e-identifiers
         (while (< look-ahead-length parser-generator--look-ahead-number)
@@ -551,13 +548,13 @@
                 ;; transfer to an error recovery routine).
 
                 (error (format
-                        "Invalid syntax! Expected one of %s found %s at input-tape-index %s"
+                        "Invalid syntax! Expected one of %s found %s at index %s"
                         possible-look-aheads
                         look-ahead
-                        input-tape-index)
+                        parser-generator-lex-analyzer--index)
                        possible-look-aheads
                        look-ahead
-                       input-tape-index))
+                       parser-generator-lex-analyzer--index))
 
               (cond
 
@@ -598,7 +595,7 @@
 
                       (push a pushdown-list)
                       (push next-index pushdown-list)
-                      (setq input-tape-index (1+ input-tape-index))))))
+                      (parser-generator-lex-analyzer--pop-token)))))
 
                ((equal (car action-match) 'reduce)
                 ;; (b) If f(u) = reduce i and production i is A -> a,
@@ -655,7 +652,7 @@
 
                (t (error (format "Invalid action-match: %s!" action-match)))))))))
     (unless accept
-      (error "Parsed entire string without getting accepting!"))
+      (error "Parsed entire string without getting accepting! Output: %s" (nreverse output)))
     (nreverse output)))
 
 (provide 'parser-generator-lr)
