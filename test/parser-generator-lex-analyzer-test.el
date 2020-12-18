@@ -20,7 +20,19 @@
 
   (should-error
    (parser-generator-lex-analyzer--peek-next-look-ahead))
-  (setq parser-generator-lex-analyzer--function (lambda (index length) (substring "abcdefghijklmnopqrstuvxz" index (+ index length))))
+  (setq
+   parser-generator-lex-analyzer--function
+   (lambda (index length)
+     (let* ((string '(a b c d))
+            (string-length (length string))
+            (max-index (+ index length))
+            (tokens))
+       (while (and
+               (< index string-length)
+               (< index max-index))
+         (push (nth index string) tokens)
+         (setq index (1+ index)))
+       (nreverse tokens))))
   (should-error
    (parser-generator-lex-analyzer--peek-next-look-ahead))
   (parser-generator-lex-analyzer--reset)
@@ -30,7 +42,19 @@
   (setq parser-generator--look-ahead-number 1)
   (should
    (equal
-    "a"
+    '(a)
+    (parser-generator-lex-analyzer--peek-next-look-ahead)))
+
+  (setq parser-generator--look-ahead-number 2)
+  (should
+   (equal
+    '(a b)
+    (parser-generator-lex-analyzer--peek-next-look-ahead)))
+
+  (setq parser-generator--look-ahead-number 10)
+  (should
+   (equal
+    '(a b c d)
     (parser-generator-lex-analyzer--peek-next-look-ahead)))
 
   (message "Ended tests for (parser-generator-lex-analyzer--peek-next-look-ahead)"))
@@ -48,23 +72,27 @@
   (setq
    parser-generator-lex-analyzer--function
    (lambda (index length)
-     (let* ((string "ab")
-            (string-length (length string)))
-       (when (> string-length index)
-         (if (>= string-length (+ index length))
-             (substring string index (+ index length))
-           (substring string index (1- string-length)))))))
+     (let* ((string '(a b))
+            (string-length (length string))
+            (max-index (+ index length))
+            (tokens))
+       (while (and
+               (< index string-length)
+               (< index max-index))
+         (push (nth index string) tokens)
+         (setq index (1+ index)))
+       (nreverse tokens))))
   (should-error
    (parser-generator-lex-analyzer--pop-token))
   (parser-generator-lex-analyzer--reset)
 
   (should
    (equal
-    "a"
+    '(a)
     (parser-generator-lex-analyzer--pop-token)))
   (should
    (equal
-    "b"
+    '(b)
     (parser-generator-lex-analyzer--pop-token)))
   (should
    (equal
