@@ -487,12 +487,11 @@
     lr-new-item))
 
 ;; Algorithm 5.7, p. 375
-;; TODO Add support for lex-analyzer
-;; TODO Add support for SDT
-;; TODO Add support for semantic-actions
+;; TODO Test incremental usage of this function
+;; TODO Add support for Syntax-directed-translations and semantic-actions
 ;; TODO Consider case with 2 character look-ahead
-(defun parser-generator-lr--parse (&optional input-tape-index pushdown-list output)
-  "Perform a LR-parse via lex-analyzer, optionally at INPUT-TAPE-INDEX with PUSHDOWN-LIST and OUTPUT."
+(defun parser-generator-lr--parse (&optional input-tape-index pushdown-list output translation)
+  "Perform a LR-parse via lex-analyzer, optionally at INPUT-TAPE-INDEX with PUSHDOWN-LIST, OUTPUT and TRANSLATION."
   (unless input-tape-index
     (setq input-tape-index 0))
   (unless pushdown-list
@@ -568,7 +567,8 @@
                 ;; there is no next input symbol or g(a) is undefined, halt
                 ;; and declare error.
 
-                (let ((a (car look-ahead)))
+                (let ((a (car look-ahead))
+                      (a-full (car look-ahead-full)))
                   (let ((goto-table (gethash table-index parser-generator-lr--goto-tables)))
                     (let ((goto-table-length (length goto-table))
                           (goto-index 0)
@@ -597,7 +597,7 @@
                                 table-index
                                 possible-look-aheads)))
 
-                      (push a pushdown-list)
+                      (push a-full pushdown-list)
                       (push next-index pushdown-list)
                       (parser-generator-lex-analyzer--pop-token)))))
 
@@ -657,7 +657,7 @@
                (t (error (format "Invalid action-match: %s!" action-match)))))))))
     (unless accept
       (error "Parsed entire string without getting accepting! Output: %s" (nreverse output)))
-    (nreverse output)))
+    (list (nreverse output) translation)))
 
 (provide 'parser-generator-lr)
 

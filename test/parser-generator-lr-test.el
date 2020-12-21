@@ -280,7 +280,7 @@
 
   (should
    (equal
-    '(2 2 2 1 1)
+    '((2 2 2 1 1) nil)
     (parser-generator-lr--parse)))
 
   (setq
@@ -323,7 +323,7 @@
 
   (should
    (equal
-    '(2 2 2 1 1)
+    '((2 2 2 1 1) nil)
     (parser-generator-lr--parse)))
 
   (setq
