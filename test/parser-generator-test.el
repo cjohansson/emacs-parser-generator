@@ -377,6 +377,14 @@
            t
            (parser-generator--valid-grammar-p '((A B C) ("a" "b" "c") ((A "a" (lambda(a) (message "Was here: %s" a)))) A))))
 
+  (should (equal
+           t
+           (parser-generator--valid-grammar-p '((A B C) ("a" "b" "c") ((A "a" (lambda(a) (message "Was here: %s" a)) "b")) A))))
+
+  (should (equal
+           t
+           (parser-generator--valid-grammar-p '((A B C) ("a" "b" "c") ((A ("a" (lambda(a) (message "Was here: %s" a))))) A))))
+
   (message "Passed tests for (parser-generator--valid-grammar-p)"))
 
 (defun parser-generator-test--valid-look-ahead-number-p ()
@@ -413,7 +421,20 @@
   "Test `parser-generator--valid-sentential-form-p'."
   (message "Starting tests  for (parser-generator--valid-sentential-form-p)")
 
-  ;; TODO Add tests for this
+  (parser-generator-set-grammar '((S A B) ("a" "b") ((S A) (A ("b" "a")) (B "b" (lambda(b) (message "Was here: %s" b)))) S))
+  (parser-generator-process-grammar)
+
+  (should
+   (equal
+    nil
+    (parser-generator--valid-sentential-form-p
+     '(B "b" (lambda(b) (message "Was here: %s" b))))))
+
+  (should
+   (equal
+    t
+    (parser-generator--valid-sentential-form-p
+     '(B "b"))))
 
   (message "Passed tests for (parser-generator--valid-sentential-form-p)"))
 

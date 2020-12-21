@@ -319,6 +319,32 @@
 
   (message "Passed test with terminals as string, invalid syntax")
 
+  ;; TODO Test translation with terminals as strings here
+
+  (parser-generator-set-grammar '((Sp S) ("a" "b") ((Sp S) (S (S "a" S "b" (lambda(args) (nreverse args)))) (S e)) Sp))
+  (parser-generator-set-look-ahead-number 1)
+  (parser-generator-process-grammar)
+  (parser-generator-lr-generate-parser-tables)
+
+  (setq
+   parser-generator-lex-analyzer--function
+   (lambda (index)
+     (let* ((string '(("a" 1 . 2) ("a" 2 . 3) ("b" 3 . 4) ("b" 4 . 5)))
+            (string-length (length string))
+            (max-index (1+ index))
+            (tokens))
+       (while (and
+               (< index string-length)
+               (< index max-index))
+         (push (nth index string) tokens)
+         (setq index (1+ index)))
+       (nreverse tokens))))
+
+  (should
+   (equal
+    '((2 2 2 1 1) nil)
+    (parser-generator-lr--parse)))
+
   (message "Passed tests for (parser-generator-lr--parse)"))
 
 (defun parser-generator-lr-test ()

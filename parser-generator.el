@@ -245,7 +245,8 @@
     (dolist (non-terminal non-terminals)
       (puthash non-terminal t parser-generator--table-non-terminal-p)))
 
-  (let ((productions (parser-generator--get-grammar-productions)))
+  (let ((productions (parser-generator--get-grammar-productions))
+        (purified-production))
     (setq parser-generator--table-productions-rhs (make-hash-table :test 'equal))
     (dolist (p productions)
       (let ((lhs (car p))
@@ -254,7 +255,11 @@
           (dolist (rhs-element rhs)
             (unless (listp rhs-element)
               (setq rhs-element (list rhs-element)))
-            (push rhs-element new-value))
+            (let ((new-rhs))
+              (dolist (rhs-sub-element rhs-element)
+                (unless (functionp rhs-sub-element)
+                  (push rhs-sub-element new-rhs)))
+              (push (nreverse new-rhs) new-value)))
           (puthash lhs (nreverse new-value) parser-generator--table-productions-rhs))))
 
     (setq parser-generator--table-productions-number (make-hash-table :test 'equal))
@@ -309,7 +314,7 @@
 (defun parser-generator-set-grammar (G)
   "Set grammar G.."
   (unless (parser-generator--valid-grammar-p G)
-    (error "Invalid grammar G!"))
+    (error "Invalid grammar G! %s" G))
   (setq parser-generator--grammar G))
 
 (defun parser-generator-process-grammar ()
@@ -721,7 +726,7 @@
   (unless (listp β)
     (setq β (list β)))
   (unless (parser-generator--valid-sentential-form-p β)
-    (error "Invalid sentential form β!"))
+    (error "Invalid sentential form β! %s" β))
   (let ((productions (parser-generator--get-grammar-productions))
         (k parser-generator--look-ahead-number))
     (let ((i-max (length productions)))
