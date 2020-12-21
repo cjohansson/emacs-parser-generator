@@ -22,217 +22,205 @@
   nil
   "Goto-tables for grammar.")
 
-(defvar parser-generator-lr--items
-  nil
-  "Hash-table for distinct LR-items in grammar.")
-
-
-;; Helper Functions
-
-
-(defun parser-generator-lr--reset ()
-  "Reset variables."
-  (setq parser-generator-lr--action-tables nil)
-  (setq parser-generator-lr--goto-tables nil)
-  (setq parser-generator-lr--items nil))
-
 
 ;; Main Algorithms
 
+(defun parser-generator-lr-generate-parser-tables ()
+  "Generate parsing tables for grammar."
+  (let ((table-lr-items (parser-generator-lr--generate-goto-tables)))
+    (parser-generator-lr--generate-action-tables table-lr-items)
+    table-lr-items))
+
 
 ;; Algorithm 5.11, p. 393
-(defun parser-generator-lr--generate-action-tables ()
-  "Generate action-tables for lr-grammar."
-  (unless parser-generator-lr--action-tables
-    (let ((action-tables)
-          (states '(shift reduce error))
-          (added-actions (make-hash-table :test 'equal))
-          (goto-tables (parser-generator--hash-to-list parser-generator-lr--goto-tables)))
-      (dolist (goto-table goto-tables)
-        (let ((goto-index (car goto-table))
-              (found-action nil)
-              (action-table))
-          (let ((lr-items (gethash goto-index parser-generator-lr--items)))
-            (let ((lr-items-length (length lr-items)))
-              ;; Where u is in (T U e)*k
-              (dolist (state states)
-                (let ((lr-item)
-                      (lr-item-index 0)
-                      (continue-loop t))
-                  (while (and
-                          (< lr-item-index lr-items-length)
-                          continue-loop)
-                    (setq lr-item (nth lr-item-index lr-items))
-                    (cond
+(defun parser-generator-lr--generate-action-tables (table-lr-items)
+  "Generate action-tables for lr-grammar based on TABLE-LR-ITEMS."
+  (let ((action-tables)
+        (states '(shift reduce error))
+        (added-actions (make-hash-table :test 'equal))
+        (goto-tables (parser-generator--hash-to-list parser-generator-lr--goto-tables)))
+    (dolist (goto-table goto-tables)
+      (let ((goto-index (car goto-table))
+            (found-action nil)
+            (action-table))
+        (let ((lr-items (gethash goto-index table-lr-items)))
+          (let ((lr-items-length (length lr-items)))
+            ;; Where u is in (T U e)*k
+            (dolist (state states)
+              (let ((lr-item)
+                    (lr-item-index 0)
+                    (continue-loop t))
+                (while (and
+                        (< lr-item-index lr-items-length)
+                        continue-loop)
+                  (setq lr-item (nth lr-item-index lr-items))
+                  (cond
 
-                     ((eq state 'shift)
-                      ;; (a) f(u) = shift if [A -> B . C, v] is in LR-items, C != e and u is in EFF(Cv)
-                      (when (nth 2 lr-item)
-                        (let ((C (nth 2 lr-item))
-                              (v (nth 3 lr-item)))
-                          (let ((Cv (append C v)))
-                            (when Cv
-                              (let ((eff (parser-generator--e-free-first Cv)))
-                                (when eff
-                                  ;; Go through eff-items and see if any item is a valid look-ahead of grammar
-                                  ;; in that case save in action table a shift action here
-                                  (let ((eff-index 0)
-                                        (eff-item)
-                                        (eff-length (length eff))
-                                        (searching-match t))
-                                    (while (and
-                                            searching-match
-                                            (< eff-index eff-length))
-                                      (setq eff-item (nth eff-index eff))
-                                      (when (parser-generator--valid-look-ahead-p eff-item)
-                                        (let ((hash-key (format "%s-%s-%s" goto-index state eff-item)))
-                                          (unless (gethash hash-key added-actions)
-                                            (puthash hash-key t added-actions)
-                                            (setq searching-match nil))))
-                                      (setq eff-index (1+ eff-index)))
+                   ((eq state 'shift)
+                    ;; (a) f(u) = shift if [A -> B . C, v] is in LR-items, C != e and u is in EFF(Cv)
+                    (when (nth 2 lr-item)
+                      (let ((C (nth 2 lr-item))
+                            (v (nth 3 lr-item)))
+                        (let ((Cv (append C v)))
+                          (when Cv
+                            (let ((eff (parser-generator--e-free-first Cv)))
+                              (when eff
+                                ;; Go through eff-items and see if any item is a valid look-ahead of grammar
+                                ;; in that case save in action table a shift action here
+                                (let ((eff-index 0)
+                                      (eff-item)
+                                      (eff-length (length eff))
+                                      (searching-match t))
+                                  (while (and
+                                          searching-match
+                                          (< eff-index eff-length))
+                                    (setq eff-item (nth eff-index eff))
+                                    (when (parser-generator--valid-look-ahead-p eff-item)
+                                      (let ((hash-key (format "%s-%s-%s" goto-index state eff-item)))
+                                        (unless (gethash hash-key added-actions)
+                                          (puthash hash-key t added-actions)
+                                          (setq searching-match nil))))
+                                    (setq eff-index (1+ eff-index)))
 
-                                    (unless searching-match
-                                      (push (list eff-item 'shift) action-table)
-                                      (setq found-action t))))))))))
+                                  (unless searching-match
+                                    (push (list eff-item 'shift) action-table)
+                                    (setq found-action t))))))))))
 
-                     ((eq state 'reduce)
-                      ;; (b) f(u) = reduce i if [A -> B ., u] is in a and A -> B is production i in P, i > 1
-                      (when (and
-                             (nth 0 lr-item)
-                             (not (nth 2 lr-item)))
-                        (let ((A (nth 0 lr-item))
-                              (B (nth 1 lr-item))
-                              (u (nth 3 lr-item)))
-                          (unless B
-                            (setq B (list parser-generator--e-identifier)))
-                          (when (parser-generator--valid-look-ahead-p u)
-                            (let ((hash-key (format "%s-%s-%s" goto-index state u)))
-                              (unless (gethash hash-key added-actions)
-                                (puthash hash-key t added-actions)
-                                (let ((production (list A B)))
-                                  (let ((production-number (parser-generator--get-grammar-production-number production)))
-                                    (unless production-number
-                                      (error "Expecting production number for %s from LR-item %s!" production lr-item))
+                   ((eq state 'reduce)
+                    ;; (b) f(u) = reduce i if [A -> B ., u] is in a and A -> B is production i in P, i > 1
+                    (when (and
+                           (nth 0 lr-item)
+                           (not (nth 2 lr-item)))
+                      (let ((A (nth 0 lr-item))
+                            (B (nth 1 lr-item))
+                            (u (nth 3 lr-item)))
+                        (unless B
+                          (setq B (list parser-generator--e-identifier)))
+                        (when (parser-generator--valid-look-ahead-p u)
+                          (let ((hash-key (format "%s-%s-%s" goto-index state u)))
+                            (unless (gethash hash-key added-actions)
+                              (puthash hash-key t added-actions)
+                              (let ((production (list A B)))
+                                (let ((production-number (parser-generator--get-grammar-production-number production)))
+                                  (unless production-number
+                                    (error "Expecting production number for %s from LR-item %s!" production lr-item))
 
-                                    (if (and
-                                         (= production-number 0)
-                                         (= (length u) 1)
-                                         (parser-generator--valid-e-p (car u)))
-                                        (progn
-                                          ;; Reduction by first production
-                                          ;; of empty look-ahead means grammar has been accepted
-                                          (push (list u 'accept) action-table)
-                                          (setq found-action t))
+                                  (if (and
+                                       (= production-number 0)
+                                       (= (length u) 1)
+                                       (parser-generator--valid-e-p (car u)))
+                                      (progn
+                                        ;; Reduction by first production
+                                        ;; of empty look-ahead means grammar has been accepted
+                                        (push (list u 'accept) action-table)
+                                        (setq found-action t))
 
-                                      ;; save reduction action in action table
-                                      (push (list u 'reduce production-number) action-table)
-                                      (setq found-action t))))))))))
+                                    ;; save reduction action in action table
+                                    (push (list u 'reduce production-number) action-table)
+                                    (setq found-action t))))))))))
 
-                     ((eq state 'error)
-                      (unless found-action
-                        (error (format "Failed to find any action in set %s" lr-items)))
-                      (setq continue-loop nil)))
-                    (setq lr-item-index (1+ lr-item-index)))))))
-          (parser-generator--debug
-           (message "%s actions %s" goto-index action-table))
-          (when action-table
-            (push (list goto-index (sort action-table 'parser-generator--sort-list)) action-tables))))
-      (setq action-tables (nreverse action-tables))
-      (setq parser-generator-lr--action-tables (make-hash-table :test 'equal))
-      (let ((table-length (length action-tables))
-            (table-index 0))
-        (while (< table-index table-length)
-          (puthash table-index (car (cdr (nth table-index action-tables))) parser-generator-lr--action-tables)
-          (setq table-index (1+ table-index)))))))
+                   ((eq state 'error)
+                    (unless found-action
+                      (error (format "Failed to find any action in set %s" lr-items)))
+                    (setq continue-loop nil)))
+                  (setq lr-item-index (1+ lr-item-index)))))))
+        (parser-generator--debug
+         (message "%s actions %s" goto-index action-table))
+        (when action-table
+          (push (list goto-index (sort action-table 'parser-generator--sort-list)) action-tables))))
+    (setq action-tables (nreverse action-tables))
+    (setq parser-generator-lr--action-tables (make-hash-table :test 'equal))
+    (let ((table-length (length action-tables))
+          (table-index 0))
+      (while (< table-index table-length)
+        (puthash table-index (car (cdr (nth table-index action-tables))) parser-generator-lr--action-tables)
+        (setq table-index (1+ table-index))))))
 
 ;; Algorithm 5.9, p. 389
 (defun parser-generator-lr--generate-goto-tables ()
   "Calculate set of valid LR(k) items for grammar and a GOTO-table."
-  (unless (or
-           parser-generator-lr--goto-tables
-           parser-generator-lr--items)
-    (setq parser-generator-lr--goto-tables nil)
-    (setq parser-generator-lr--items (make-hash-table :test 'equal))
-    (let ((lr-item-set-new-index 0)
-          (goto-table)
-          (unmarked-lr-item-sets)
-          (marked-lr-item-sets (make-hash-table :test 'equal))
-          (symbols (append (parser-generator--get-grammar-non-terminals) (parser-generator--get-grammar-terminals))))
+  (let ((lr-item-set-new-index 0)
+        (goto-table)
+        (unmarked-lr-item-sets)
+        (marked-lr-item-sets (make-hash-table :test 'equal))
+        (symbols (append (parser-generator--get-grammar-non-terminals) (parser-generator--get-grammar-terminals)))
+        (table-lr-items (make-hash-table :test 'equal)))
 
-      (let ((e-set (parser-generator-lr--items-for-prefix parser-generator--e-identifier)))
-        ;;(1) Place V(e) in S. The set V(e) is initially unmarked.
-        (push `(,lr-item-set-new-index ,e-set) unmarked-lr-item-sets)
-        (setq lr-item-set-new-index (1+ lr-item-set-new-index)))
+    (let ((e-set (parser-generator-lr--items-for-prefix parser-generator--e-identifier)))
+      ;;(1) Place V(e) in S. The set V(e) is initially unmarked.
+      (push `(,lr-item-set-new-index ,e-set) unmarked-lr-item-sets)
+      (setq lr-item-set-new-index (1+ lr-item-set-new-index)))
 
-      ;; (2) If a set of items a in S is unmarked
-      ;; (3) Repeat step (2) until all sets of items in S are marked.
-      (let ((popped-item)
-            (lr-item-set-index)
-            (lr-items)
-            (goto-table-table))
-        (while unmarked-lr-item-sets
+    ;; (2) If a set of items a in S is unmarked
+    ;; (3) Repeat step (2) until all sets of items in S are marked.
+    (let ((popped-item)
+          (lr-item-set-index)
+          (lr-items)
+          (goto-table-table))
+      (while unmarked-lr-item-sets
 
-          (setq popped-item (pop unmarked-lr-item-sets))
-          (setq lr-item-set-index (car popped-item))
-          (setq lr-items (car (cdr popped-item)))
+        (setq popped-item (pop unmarked-lr-item-sets))
+        (setq lr-item-set-index (car popped-item))
+        (setq lr-items (car (cdr popped-item)))
+        (parser-generator--debug
+         (message "lr-item-set-index: %s" lr-item-set-index)
+         (message "lr-items: %s" lr-items)
+         (message "popped-item: %s" popped-item))
+
+        ;; (2) Mark a
+        (puthash lr-items lr-item-set-index marked-lr-item-sets)
+
+        (puthash lr-item-set-index lr-items table-lr-items)
+        (setq goto-table-table nil)
+
+        ;; (2) By computing for each X in N u E, GOTO (a, X). (Algorithm 5.8 can be used here.)
+        ;; V(X1,...,Xi) = GOTO(V(X1,...,Xi-1), Xi)
+        (dolist (symbol symbols)
           (parser-generator--debug
-           (message "lr-item-set-index: %s" lr-item-set-index)
-           (message "lr-items: %s" lr-items)
-           (message "popped-item: %s" popped-item))
+           (message "symbol: %s" symbol))
 
-          ;; (2) Mark a
-          (puthash lr-items lr-item-set-index marked-lr-item-sets)
+          (let ((prefix-lr-items (parser-generator-lr--items-for-goto lr-items symbol)))
 
-          (puthash lr-item-set-index lr-items parser-generator-lr--items)
-          (setq goto-table-table nil)
+            ;; If a' = GOTO(a, X) is nonempty
+            (when prefix-lr-items
 
-          ;; (2) By computing for each X in N u E, GOTO (a, X). (Algorithm 5.8 can be used here.)
-          ;; V(X1,...,Xi) = GOTO(V(X1,...,Xi-1), Xi)
-          (dolist (symbol symbols)
-            (parser-generator--debug
-             (message "symbol: %s" symbol))
+              (parser-generator--debug
+               (message "GOTO(%s, %s) = %s" lr-items symbol prefix-lr-items))
 
-            (let ((prefix-lr-items (parser-generator-lr--items-for-goto lr-items symbol)))
+              ;; and is not already in S
+              (let ((goto (gethash prefix-lr-items marked-lr-item-sets)))
+                (if goto
+                    (progn
+                      (parser-generator--debug
+                       (message "Set already exists in: %s" goto))
+                      (push `(,symbol ,goto) goto-table-table))
 
-              ;; If a' = GOTO(a, X) is nonempty
-              (when prefix-lr-items
+                  (parser-generator--debug
+                   (message "Set is new"))
 
-                (parser-generator--debug
-                 (message "GOTO(%s, %s) = %s" lr-items symbol prefix-lr-items))
+                  ;; Note that GOTO(a, X) will always be empty if all items in a
+                  ;; have the dot at the right end of the production
 
-                ;; and is not already in S
-                (let ((goto (gethash prefix-lr-items marked-lr-item-sets)))
-                  (if goto
-                      (progn
-                        (parser-generator--debug
-                         (message "Set already exists in: %s" goto))
-                        (push `(,symbol ,goto) goto-table-table))
+                  ;; then add a' to S as an unmarked set of items
+                  (push `(,symbol ,lr-item-set-new-index) goto-table-table)
+                  (push `(,lr-item-set-new-index ,prefix-lr-items) unmarked-lr-item-sets)
+                  (setq lr-item-set-new-index (1+ lr-item-set-new-index)))))))
 
-                    (parser-generator--debug
-                     (message "Set is new"))
+        (setq goto-table-table (sort goto-table-table 'parser-generator--sort-list))
+        (push `(,lr-item-set-index ,goto-table-table) goto-table)))
 
-                    ;; Note that GOTO(a, X) will always be empty if all items in a
-                    ;; have the dot at the right end of the production
-
-                    ;; then add a' to S as an unmarked set of items
-                    (push `(,symbol ,lr-item-set-new-index) goto-table-table)
-                    (push `(,lr-item-set-new-index ,prefix-lr-items) unmarked-lr-item-sets)
-                    (setq lr-item-set-new-index (1+ lr-item-set-new-index)))))))
-
-          (setq goto-table-table (sort goto-table-table 'parser-generator--sort-list))
-          (push `(,lr-item-set-index ,goto-table-table) goto-table)))
-
-      (setq goto-table (sort goto-table 'parser-generator--sort-list))
-      (setq parser-generator-lr--goto-tables (make-hash-table :test 'equal))
-      (let ((table-length (length goto-table))
-            (table-index 0))
-        (while (< table-index table-length)
-          (puthash table-index (car (cdr (nth table-index goto-table))) parser-generator-lr--goto-tables)
-          (setq table-index (1+ table-index)))))
+    (setq goto-table (sort goto-table 'parser-generator--sort-list))
+    (setq parser-generator-lr--goto-tables (make-hash-table :test 'equal))
+    (let ((table-length (length goto-table))
+          (table-index 0))
+      (while (< table-index table-length)
+        (puthash table-index (car (cdr (nth table-index goto-table))) parser-generator-lr--goto-tables)
+        (setq table-index (1+ table-index))))
     (unless
         (parser-generator-lr--items-valid-p
-         (parser-generator--hash-values-to-list parser-generator-lr--items t)) ;; TODO Should not use this debug function
-      (error "Inconsistent grammar!"))))
+         (parser-generator--hash-values-to-list table-lr-items t)) ;; TODO Should not use this debug function
+      (error "Inconsistent grammar!"))
+    table-lr-items))
 
 ;; Algorithm 5.10, p. 391
 (defun parser-generator-lr--items-valid-p (lr-item-sets)
@@ -504,8 +492,10 @@
     (parser-generator-lex-analyzer--reset))
 
   ;; Make sure tables exists
-  (parser-generator-lr--generate-goto-tables)
-  (parser-generator-lr--generate-action-tables)
+  (unless parser-generator-lr--action-tables
+    (error "Missing action-tables for grammar!"))
+  (unless parser-generator-lr--goto-tables
+    (error "Missing GOTO-tables for grammar!"))
 
   (let ((accept))
     (while (and
