@@ -13,6 +13,10 @@
 ;;; Variables:
 
 
+(defvar parser-generator-lex-analyzer--get-function
+  nil
+  "Get token information function.")
+
 (defvar parser-generator-lex-analyzer--function
   nil
   "Function used as lex-analyzer.")
@@ -27,6 +31,13 @@
 
 
 ;; Functions
+
+
+(defun parser-generator-lex-analyzer--get-function (token)
+  "Get information about TOKEN."
+  (unless parser-generator-lex-analyzer--get-function
+    (error "Missing lex-analyzer get function!"))
+  (funcall parser-generator-lex-analyzer--get-function token))
 
 
 (defun parser-generator-lex-analyzer--peek-next-look-ahead ()
