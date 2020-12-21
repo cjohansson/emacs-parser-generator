@@ -23,9 +23,9 @@ Calculate the set of LR items valid for any viable prefix S.
 ``` emacs-lisp
 (require 'ert)
 
-(parser--set-grammar '((Sp S) (a b) ((Sp S) (S (S a S b)) (S e)) Sp))
-(parser--set-look-ahead-number 1)
-(parser--process-grammar)
+(parser-set-grammar '((Sp S) (a b) ((Sp S) (S (S a S b)) (S e)) Sp))
+(parser-set-look-ahead-number 1)
+(parser-process-grammar)
 
 (should
   (equal
@@ -40,9 +40,9 @@ Calculate the set of LR items valid for any viable prefix S.
 ``` emacs-lisp
 (require 'ert)
 
-(parser--set-grammar '((Sp S) (a b) ((Sp S) (S (S a S b)) (S e)) Sp))
-(parser--set-look-ahead-number 1)
-(parser--process-grammar)
+(parser-set-grammar '((Sp S) (a b) ((Sp S) (S (S a S b)) (S e)) Sp))
+(parser-set-look-ahead-number 1)
+(parser-process-grammar)
 
 (should
   (equal
@@ -59,9 +59,9 @@ Perform a right-parse of input-stream.
 ```emacs-lisp
 (require 'ert)
 
-(parser-generator--set-grammar '((Sp S) (a b) ((Sp S) (S (S a S b)) (S e)) Sp))
-(parser-generator--set-look-ahead-number 1)
-(parser-generator--process-grammar)
+(parser-generator-set-grammar '((Sp S) (a b) ((Sp S) (S (S a S b)) (S e)) Sp))
+(parser-generator-set-look-ahead-number 1)
+(parser-generator-process-grammar)
 
 (setq
    parser-generator-lex-analyzer--function

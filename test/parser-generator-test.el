@@ -14,9 +14,9 @@
   "Test `parser-generator--valid-look-ahead-p'."
   (message "Starting tests for (parser-generator--valid-look-ahead-p)")
 
-  (parser-generator--set-look-ahead-number 1)
-  (parser-generator--set-grammar '((S A) ("a" "b") ((S A) (A ("b" "a"))) S))
-  (parser-generator--process-grammar)
+  (parser-generator-set-look-ahead-number 1)
+  (parser-generator-set-grammar '((S A) ("a" "b") ((S A) (A ("b" "a"))) S))
+  (parser-generator-process-grammar)
 
   (should
    (equal
@@ -45,9 +45,9 @@
   "Test `parser-generator--get-look-aheads'."
   (message "Starting tests for (parser-generator--get-grammar-look-aheads)")
 
-  (parser-generator--set-look-ahead-number 1)
-  (parser-generator--set-grammar '((S A) ("a" "b") ((S A) (A ("b" "a"))) S))
-  (parser-generator--process-grammar)
+  (parser-generator-set-look-ahead-number 1)
+  (parser-generator-set-grammar '((S A) ("a" "b") ((S A) (A ("b" "a"))) S))
+  (parser-generator-process-grammar)
 
   (should
    (equal
@@ -55,7 +55,7 @@
     (parser-generator--get-grammar-look-aheads)))
   (message "Passed ((a) (b) (e))")
 
-  (parser-generator--set-look-ahead-number 2)
+  (parser-generator-set-look-ahead-number 2)
 
   (should
    (equal
@@ -109,9 +109,9 @@
   "Test `parser-generator--follow'."
   (message "Starting tests for (parser-generator--follow)")
 
-  (parser-generator--set-grammar '((S A) (b) ((S A) (A b)) S))
-  (parser-generator--set-look-ahead-number 2)
-  (parser-generator--process-grammar)
+  (parser-generator-set-grammar '((S A) (b) ((S A) (A b)) S))
+  (parser-generator-set-look-ahead-number 2)
+  (parser-generator-process-grammar)
 
   (should
    (equal
@@ -119,9 +119,9 @@
     (parser-generator--follow 'A)))
   (message "Passed follow 1 with intermediate grammar")
 
-  (parser-generator--set-grammar '((S A B) (a c d f) ((S (A a)) (A B) (B (c f) d)) S))
-  (parser-generator--set-look-ahead-number 2)
-  (parser-generator--process-grammar)
+  (parser-generator-set-grammar '((S A B) (a c d f) ((S (A a)) (A B) (B (c f) d)) S))
+  (parser-generator-set-look-ahead-number 2)
+  (parser-generator-process-grammar)
 
   (should
    (equal
@@ -129,9 +129,9 @@
     (parser-generator--follow 'A)))
   (message "Passed follow 2 with intermediate grammar")
 
-  (parser-generator--set-grammar '((S A B) (a c d f) ((S (A a)) (A (B c d)) (B (c f) d)) S))
-  (parser-generator--set-look-ahead-number 2)
-  (parser-generator--process-grammar)
+  (parser-generator-set-grammar '((S A B) (a c d f) ((S (A a)) (A (B c d)) (B (c f) d)) S))
+  (parser-generator-set-look-ahead-number 2)
+  (parser-generator-process-grammar)
 
   (should
    (equal
@@ -145,9 +145,9 @@
   "Test `parser-generator--first'."
   (message "Starting tests for (parser-generator--first)")
 
-  (parser-generator--set-grammar '((S) (a) ((S a)) S))
-  (parser-generator--set-look-ahead-number 1)
-  (parser-generator--process-grammar)
+  (parser-generator-set-grammar '((S) (a) ((S a)) S))
+  (parser-generator-set-look-ahead-number 1)
+  (parser-generator-process-grammar)
 
   (should
    (equal
@@ -155,9 +155,9 @@
     (parser-generator--first 'S)))
   (message "Passed first 1 with rudimentary grammar")
 
-  (parser-generator--set-grammar '((S) (a) ((S a)) S))
-  (parser-generator--set-look-ahead-number 1)
-  (parser-generator--process-grammar)
+  (parser-generator-set-grammar '((S) (a) ((S a)) S))
+  (parser-generator-set-look-ahead-number 1)
+  (parser-generator-process-grammar)
 
   (should
    (equal
@@ -165,9 +165,9 @@
     (parser-generator--first '(S a))))
   (message "Passed first 1b with rudimentary grammar")
 
-  (parser-generator--set-grammar '((S) (a) ((S a)) S))
-  (parser-generator--set-look-ahead-number 2)
-  (parser-generator--process-grammar)
+  (parser-generator-set-grammar '((S) (a) ((S a)) S))
+  (parser-generator-set-look-ahead-number 2)
+  (parser-generator-process-grammar)
 
   (should
    (equal
@@ -175,9 +175,9 @@
     (parser-generator--first '(S a))))
   (message "Passed first 1c with rudimentary grammar")
 
-  (parser-generator--set-grammar '((S) (a) ((S a)) S))
-  (parser-generator--set-look-ahead-number 2)
-  (parser-generator--process-grammar)
+  (parser-generator-set-grammar '((S) (a) ((S a)) S))
+  (parser-generator-set-look-ahead-number 2)
+  (parser-generator-process-grammar)
 
   (should
    (equal
@@ -185,9 +185,9 @@
     (parser-generator--first '(a))))
   (message "Passed first 1d with rudimentary grammar")
 
-  (parser-generator--set-grammar '((S) ("a" "b" "c") ((S ("a" "b" "c"))) S))
-  (parser-generator--set-look-ahead-number 2)
-  (parser-generator--process-grammar)
+  (parser-generator-set-grammar '((S) ("a" "b" "c") ((S ("a" "b" "c"))) S))
+  (parser-generator-set-look-ahead-number 2)
+  (parser-generator-process-grammar)
 
   (should
    (equal
@@ -195,9 +195,9 @@
     (parser-generator--first 'S)))
   (message "Passed first 2 with rudimentary grammar")
 
-  (parser-generator--set-grammar '((S) ("a" b "c") ((S ("a" b "c"))) S))
-  (parser-generator--set-look-ahead-number 3)
-  (parser-generator--process-grammar)
+  (parser-generator-set-grammar '((S) ("a" b "c") ((S ("a" b "c"))) S))
+  (parser-generator-set-look-ahead-number 3)
+  (parser-generator-process-grammar)
 
   (should
    (equal
@@ -205,9 +205,9 @@
     (parser-generator--first 'S)))
   (message "Passed first 3 with rudimentary grammar")
 
-  (parser-generator--set-grammar '((S A) (b) ((S A) (A b)) S))
-  (parser-generator--set-look-ahead-number 2)
-  (parser-generator--process-grammar)
+  (parser-generator-set-grammar '((S A) (b) ((S A) (A b)) S))
+  (parser-generator-set-look-ahead-number 2)
+  (parser-generator-process-grammar)
 
   (should
    (equal
@@ -215,9 +215,9 @@
     (parser-generator--first 'S)))
   (message "Passed first 1 with intermediate grammar")
 
-  (parser-generator--set-grammar '((S A) ("a" "b") ((S A) (A ("b" "a"))) S))
-  (parser-generator--set-look-ahead-number 2)
-  (parser-generator--process-grammar)
+  (parser-generator-set-grammar '((S A) ("a" "b") ((S A) (A ("b" "a"))) S))
+  (parser-generator-set-look-ahead-number 2)
+  (parser-generator-process-grammar)
 
   (should
    (equal
@@ -225,9 +225,9 @@
     (parser-generator--first 'S)))
   (message "Passed first 2 with intermediate grammar")
 
-  (parser-generator--set-grammar '((S A) ("a" "b" "c" "d") ((S A) (A ("b" "a" "c" "d"))) S))
-  (parser-generator--set-look-ahead-number 3)
-  (parser-generator--process-grammar)
+  (parser-generator-set-grammar '((S A) ("a" "b" "c" "d") ((S A) (A ("b" "a" "c" "d"))) S))
+  (parser-generator-set-look-ahead-number 3)
+  (parser-generator-process-grammar)
 
   (should
    (equal
@@ -235,9 +235,9 @@
     (parser-generator--first 'S)))
   (message "Passed first 3 with intermediate grammar")
 
-  (parser-generator--set-grammar '((S A B) ("c" "d") ((S A) (A B) (B "c" "d")) S))
-  (parser-generator--set-look-ahead-number 1)
-  (parser-generator--process-grammar)
+  (parser-generator-set-grammar '((S A B) ("c" "d") ((S A) (A B) (B "c" "d")) S))
+  (parser-generator-set-look-ahead-number 1)
+  (parser-generator-process-grammar)
 
   (should
    (equal
@@ -245,9 +245,9 @@
     (parser-generator--first 'S)))
   (message "Passed first 1 with semi-complex grammar")
 
-  (parser-generator--set-grammar '((S A B) (a c d f) ((S (A a)) (A B) (B (c f) d)) S))
-  (parser-generator--set-look-ahead-number 2)
-  (parser-generator--process-grammar)
+  (parser-generator-set-grammar '((S A B) (a c d f) ((S (A a)) (A B) (B (c f) d)) S))
+  (parser-generator-set-look-ahead-number 2)
+  (parser-generator-process-grammar)
 
   (should
    (equal
@@ -255,9 +255,9 @@
     (parser-generator--first 'S)))
   (message "Passed first 2 with semi-complex grammar")
 
-  (parser-generator--set-grammar '((S A B) ("a" "c" "d" "m") ((S A) (A (B "a" "m")) (B "c" "d")) S))
-  (parser-generator--set-look-ahead-number 3)
-  (parser-generator--process-grammar)
+  (parser-generator-set-grammar '((S A B) ("a" "c" "d" "m") ((S A) (A (B "a" "m")) (B "c" "d")) S))
+  (parser-generator-set-look-ahead-number 3)
+  (parser-generator-process-grammar)
 
   (should
    (equal
@@ -265,9 +265,9 @@
     (parser-generator--first 'S)))
   (message "Passed first 3 with semi-complex grammar")
 
-  (parser-generator--set-grammar '((S A B C) (a b c) ((S A B) (A (B a) e) (B (C b) C) (C c e)) S))
-  (parser-generator--set-look-ahead-number 1)
-  (parser-generator--process-grammar)
+  (parser-generator-set-grammar '((S A B C) (a b c) ((S A B) (A (B a) e) (B (C b) C) (C c e)) S))
+  (parser-generator-set-look-ahead-number 1)
+  (parser-generator-process-grammar)
 
   (should
    (equal
@@ -276,9 +276,9 @@
   (message "Passed first 1 with complex grammar")
 
   ;; Example 5.28 p 382
-  (parser-generator--set-grammar '((S A B C) (a b c) ((S (A B)) (A (B a) e) (B (C b) C) (C c e)) S))
-  (parser-generator--set-look-ahead-number 2)
-  (parser-generator--process-grammar)
+  (parser-generator-set-grammar '((S A B C) (a b c) ((S (A B)) (A (B a) e) (B (C b) C) (C c e)) S))
+  (parser-generator-set-look-ahead-number 2)
+  (parser-generator-process-grammar)
 
   (should
    (equal
@@ -286,9 +286,9 @@
     (parser-generator--first 'S)))
   (message "Passed first 2 with complex grammar")
 
-  (parser-generator--set-grammar '((S A B C) (a b c) ((S (A B)) (A (B a) e) (B (C b) C) (C c e)) S))
-  (parser-generator--set-look-ahead-number 3)
-  (parser-generator--process-grammar)
+  (parser-generator-set-grammar '((S A B C) (a b c) ((S (A B)) (A (B a) e) (B (C b) C) (C c e)) S))
+  (parser-generator-set-look-ahead-number 3)
+  (parser-generator-process-grammar)
 
   (should
    (equal
@@ -304,9 +304,9 @@
   (message "Starting tests for (parser-generator--e-free-first)")
 
   ;; Example 5.28 p 402
-  (parser-generator--set-grammar '((S A B C) (a b c) ((S (A B)) (A (B a) e) (B (C b) C) (C c e)) S))
-  (parser-generator--set-look-ahead-number 2)
-  (parser-generator--process-grammar)
+  (parser-generator-set-grammar '((S A B C) (a b c) ((S (A B)) (A (B a) e) (B (C b) C) (C c e)) S))
+  (parser-generator-set-look-ahead-number 2)
+  (parser-generator-process-grammar)
 
   (should
    (equal
@@ -314,17 +314,17 @@
     (parser-generator--e-free-first 'S)))
   (message "Passed empty-free-first 2 with complex grammar")
 
-  (parser-generator--set-look-ahead-number 1)
-  (parser-generator--process-grammar)
+  (parser-generator-set-look-ahead-number 1)
+  (parser-generator-process-grammar)
   (should
    (equal
     '((c))
     (parser-generator--e-free-first '(S b a))))
   (message "Passed empty-free-first 1 with complex grammar")
 
-  (parser-generator--set-grammar '((Sp S) (a b) ((Sp S) (S (S a S b)) (S e)) Sp))
-  (parser-generator--set-look-ahead-number 1)
-  (parser-generator--process-grammar)
+  (parser-generator-set-grammar '((Sp S) (a b) ((Sp S) (S (S a S b)) (S e)) Sp))
+  (parser-generator-set-look-ahead-number 1)
+  (parser-generator-process-grammar)
   (should
    (equal
     nil
@@ -435,8 +435,8 @@
   "Test `parser-generator--get-grammar-rhs'."
   (message "Started tests  for (parser-generator--get-grammar-rhs)")
 
-  (parser-generator--set-grammar '((S A) ("a" "b") ((S A) (A ("b" "a"))) S))
-  (parser-generator--process-grammar)
+  (parser-generator-set-grammar '((S A) ("a" "b") ((S A) (A ("b" "a"))) S))
+  (parser-generator-process-grammar)
 
   (should (equal
            '((A))
@@ -445,8 +445,8 @@
            '(("b" "a"))
            (parser-generator--get-grammar-rhs 'A)))
 
-  (parser-generator--set-grammar '((S A B) ("a" "b") ((S A) (S (B)) (B "a") (A "a") (A ("b" "a"))) S))
-  (parser-generator--process-grammar)
+  (parser-generator-set-grammar '((S A B) ("a" "b") ((S A) (S (B)) (B "a") (A "a") (A ("b" "a"))) S))
+  (parser-generator-process-grammar)
 
   (should (equal
            '((A) (B))
@@ -461,8 +461,8 @@
   "Test `parser-generator--valid-non-terminal-p'."
   (message "Starting tests  for (parser-generator--valid-non-terminal-p)")
 
-  (parser-generator--set-grammar '((S A B) ("a" "b") ((S A) (S (B)) (B "a") (A "a") (A ("b" "a"))) S))
-  (parser-generator--process-grammar)
+  (parser-generator-set-grammar '((S A B) ("a" "b") ((S A) (S (B)) (B "a") (A "a") (A ("b" "a"))) S))
+  (parser-generator-process-grammar)
 
   (should
    (equal
@@ -491,8 +491,8 @@
   "Test `parser-generator--valid-terminal-p'."
   (message "Starting tests  for (parser-generator--valid-terminal-p)")
 
-  (parser-generator--set-grammar '((S A B) ("a" "b") ((S A) (S (B)) (B "a") (A "a") (A ("b" "a"))) S))
-  (parser-generator--process-grammar)
+  (parser-generator-set-grammar '((S A B) ("a" "b") ((S A) (S (B)) (B "a") (A "a") (A ("b" "a"))) S))
+  (parser-generator-process-grammar)
 
   (should
    (equal

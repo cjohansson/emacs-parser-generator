@@ -269,7 +269,7 @@
     (dolist (look-ahead look-aheads)
       (puthash look-ahead t parser-generator--table-look-aheads-p))))
 
-(defun parser-generator--set-look-ahead-number (k)
+(defun parser-generator-set-look-ahead-number (k)
   "Set look-ahead number K."
   (unless (parser-generator--valid-look-ahead-number-p k)
     (error "Invalid look-ahead number k!"))
@@ -279,13 +279,13 @@
   "Set FLAG whether e-productions is allowed or not."
   (setq parser-generator--allow-e-productions flag))
 
-(defun parser-generator--set-grammar (G)
+(defun parser-generator-set-grammar (G)
   "Set grammar G.."
   (unless (parser-generator--valid-grammar-p G)
     (error "Invalid grammar G!"))
   (setq parser-generator--grammar G))
 
-(defun parser-generator--process-grammar ()
+(defun parser-generator-process-grammar ()
   "Process grammar."
   (parser-generator--clear-cache)
   (parser-generator--load-symbols))

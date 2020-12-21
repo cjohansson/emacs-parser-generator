@@ -33,7 +33,7 @@ Grammar consists of `N`, `T`, `P` and `S`, where `N` is non-terminals, `T` is te
 * S = `'S`
 
 ``` emacs-lisp
-(parser-generator--set-grammar '((S A B C) (a b c) ((S (A B)) (A (B a) e) (B (C b) C) (C c e)) S))
+(parser-generator-set-grammar '((S A B C) (a b c) ((S (A B)) (A (B a) e) (B (C b) C) (C c e)) S))
 ```
 
 ### e
@@ -74,7 +74,7 @@ The start symbol is the entry-point of the grammar and should be either a string
 
 ### Look-ahead number
 
-Is a simple integer above zero. You set it like this: `(parser-generator--set-look-ahead-number 1)` for `1` number look-ahead.
+Is a simple integer above zero. You set it like this: `(parser-generator-set-look-ahead-number 1)` for `1` number look-ahead.
 
 ### Syntax-directed-translation (SDT)
 
@@ -93,9 +93,9 @@ Calculate the first look-ahead number of terminals of the sentential-form `S`, e
 ``` emacs-lisp
 (require 'ert)
 
-(parser-generator--set-grammar '((S A B C) (a b c) ((S (A B)) (A (B a) e) (B (C b) C) (C c e)) S))
-(parser-generator--set-look-ahead-number 2)
-(parser-generator--process-grammar)
+(parser-generator-set-grammar '((S A B C) (a b c) ((S (A B)) (A (B a) e) (B (C b) C) (C c e)) S))
+(parser-generator-set-look-ahead-number 2)
+(parser-generator-process-grammar)
 
 (should
   (equal
@@ -110,9 +110,9 @@ Calculate the e-free-first look-ahead number of terminals of sentential-form `S`
 ``` emacs-lisp
 (require 'ert)
 
-(parser-generator--set-grammar '((S A B C) (a b c) ((S (A B)) (A (B a) e) (B (C b) C) (C c e)) S))
-(parser-generator--set-look-ahead-number 2)
-(parser-generator--process-grammar)
+(parser-generator-set-grammar '((S A B C) (a b c) ((S (A B)) (A (B a) e) (B (C b) C) (C c e)) S))
+(parser-generator-set-look-ahead-number 2)
+(parser-generator-process-grammar)
 
 (should
   (equal
@@ -127,9 +127,9 @@ Calculate the look-ahead number of terminals possibly following S.
 ``` emacs-lisp
 (require 'ert)
 
-(parser-generator--set-grammar '((S A B) (a c d f) ((S (A a)) (A B) (B (c f) d)) S))
-(parser-generator--set-look-ahead-number 2)
-(parser-generator--process-grammar)
+(parser-generator-set-grammar '((S A B) (a c d f) ((S (A a)) (A B) (B (c f) d)) S))
+(parser-generator-set-look-ahead-number 2)
+(parser-generator-process-grammar)
 
 (should
   (equal

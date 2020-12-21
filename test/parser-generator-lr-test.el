@@ -15,9 +15,9 @@
   (message "Starting tests for (parser-generator-lr--generate-action-tables)")
 
   ;; Example 5.32 p. 393
-  (parser-generator--set-grammar '((Sp S) (a b) ((Sp S) (S (S a S b)) (S e)) Sp))
-  (parser-generator--set-look-ahead-number 1)
-  (parser-generator--process-grammar)
+  (parser-generator-set-grammar '((Sp S) (a b) ((Sp S) (S (S a S b)) (S e)) Sp))
+  (parser-generator-set-look-ahead-number 1)
+  (parser-generator-process-grammar)
   (parser-generator-lr-generate-parser-tables)
 
   ;; Fig. 5.9 p. 374
@@ -40,9 +40,9 @@
   (message "Starting tests for (parser-generator-lr--generate-goto-tables)")
 
   ;; Example 5.30, p. 389
-  (parser-generator--set-grammar '((Sp S) (a b) ((Sp S) (S (S a S b)) (S e)) Sp))
-  (parser-generator--set-look-ahead-number 1)
-  (parser-generator--process-grammar)
+  (parser-generator-set-grammar '((Sp S) (a b) ((Sp S) (S (S a S b)) (S e)) Sp))
+  (parser-generator-set-look-ahead-number 1)
+  (parser-generator-process-grammar)
   (let ((table-lr-items (parser-generator-lr-generate-parser-tables)))
 
     ;; (message "GOTO-table: %s" parser-generator-lr--goto-tables)
@@ -75,9 +75,9 @@
   (message "Passed LR-items for example 5.30")
 
   ;; Example 5.30, p. 389 but with terminals as strings
-  (parser-generator--set-grammar '((Sp S) ("a" "b") ((Sp S) (S (S "a" S "b")) (S e)) Sp))
-  (parser-generator--set-look-ahead-number 1)
-  (parser-generator--process-grammar)
+  (parser-generator-set-grammar '((Sp S) ("a" "b") ((Sp S) (S (S "a" S "b")) (S e)) Sp))
+  (parser-generator-set-look-ahead-number 1)
+  (parser-generator-process-grammar)
 
   (let ((table-lr-items (parser-generator-lr-generate-parser-tables)))
 
@@ -117,9 +117,9 @@
   (message "Starting tests for (parser-generator-lr--items-for-prefix)")
 
   ;; Example 5.29 p 387
-  (parser-generator--set-grammar '((Sp S) (a b) ((Sp S) (S (S a S b)) (S e)) Sp))
-  (parser-generator--set-look-ahead-number 1)
-  (parser-generator--process-grammar)
+  (parser-generator-set-grammar '((Sp S) (a b) ((Sp S) (S (S a S b)) (S e)) Sp))
+  (parser-generator-set-look-ahead-number 1)
+  (parser-generator-process-grammar)
 
   (should
    (equal
@@ -202,11 +202,11 @@
   "Test `parser-generator-lr--items-valid-p'."
   (message "Started tests for (parser-generator-lr--items-valid-p)")
 
-  (parser-generator--set-grammar '((Sp S) (a b) ((Sp S) (S (S a S b)) (S e)) Sp))
-  (parser-generator--set-look-ahead-number 1)
+  (parser-generator-set-grammar '((Sp S) (a b) ((Sp S) (S (S a S b)) (S e)) Sp))
+  (parser-generator-set-look-ahead-number 1)
   
 
-  (let ((table-lr-items (parser-generator--process-grammar)))
+  (let ((table-lr-items (parser-generator-process-grammar)))
 
     (should
      (equal
@@ -227,9 +227,9 @@
   "Test `parser-generator-lr--parse'."
   (message "Started tests for (parser-generator-lr--parse)")
 
-  (parser-generator--set-grammar '((Sp S) (a b) ((Sp S) (S (S a S b)) (S e)) Sp))
-  (parser-generator--set-look-ahead-number 1)
-  (parser-generator--process-grammar)
+  (parser-generator-set-grammar '((Sp S) (a b) ((Sp S) (S (S a S b)) (S e)) Sp))
+  (parser-generator-set-look-ahead-number 1)
+  (parser-generator-process-grammar)
   (parser-generator-lr-generate-parser-tables)
 
   (setq
@@ -274,9 +274,9 @@
 
   ;; Test with terminals as strings here
 
-  (parser-generator--set-grammar '((Sp S) ("a" "b") ((Sp S) (S (S "a" S "b")) (S e)) Sp))
-  (parser-generator--set-look-ahead-number 1)
-  (parser-generator--process-grammar)
+  (parser-generator-set-grammar '((Sp S) ("a" "b") ((Sp S) (S (S "a" S "b")) (S e)) Sp))
+  (parser-generator-set-look-ahead-number 1)
+  (parser-generator-process-grammar)
   (parser-generator-lr-generate-parser-tables)
 
   (setq
