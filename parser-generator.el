@@ -475,12 +475,32 @@
               (cond
                ((stringp rhs-element))
                ((symbolp rhs-element))
-               ((listp rhs-element)
-                (dolist (rhs-sub-element rhs-element)
-                  (unless (or
-                           (stringp rhs-sub-element)
-                           (symbolp rhs-sub-element))
-                    (setq is-valid nil))))
+               ((and (functionp rhs-element)
+                     (= rhs-index (1- rhs-length))))
+               ((and
+                 (listp rhs-element)
+                 (not (functionp rhs-element)))
+                (let ((rhs-sub-index 0)
+                      (rhs-sub-element)
+                      (rhs-sub-length (length rhs-element)))
+                  (while (and is-valid
+                              (< rhs-sub-index rhs-sub-length))
+                    (setq rhs-sub-element (nth rhs-sub-index rhs-element))
+                    (cond
+                     ((and
+                       (listp rhs-sub-element)
+                       (not (functionp rhs-sub-element)))
+                      (unless (and
+                               (or (stringp (car rhs-sub-element))
+                                   (symbolp (car rhs-sub-element)))
+                               (functionp (car (cdr rhs-sub-element))))
+                        (setq is-valid nil)))
+                     ((and (functionp rhs-sub-element)
+                           (= rhs-sub-index (1- rhs-sub-length))))
+                     ((or (stringp rhs-sub-element)
+                          (symbolp rhs-sub-element)))
+                     (t (setq is-valid nil)))
+                    (setq rhs-sub-index (1+ rhs-sub-index)))))
                (t (setq is-valid nil)))
               (setq rhs-index (1+ rhs-index)))))))
     is-valid))

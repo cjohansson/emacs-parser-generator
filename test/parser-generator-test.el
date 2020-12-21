@@ -422,12 +422,28 @@
            (parser-generator--valid-production-p '(A a))))
 
   (should (equal
+           t
+           (parser-generator--valid-production-p '(A (a)))))
+
+  (should (equal
            nil
            (parser-generator--valid-production-p "A")))
 
   (should (equal
            nil
            (parser-generator--valid-production-p '((A a)))))
+
+  (should (equal
+           t
+           (parser-generator--valid-production-p '(A a (lambda(a) (message "Here 1 %s"))))))
+
+  (should (equal
+           t
+           (parser-generator--valid-production-p '(A (a (lambda(a) (message "Here 2 %s")))))))
+
+  (should (equal
+           t
+           (parser-generator--valid-production-p '(A (a (lambda(a) (message "Here 3 %s"))) b))))
 
   (message "Passed tests  for (parser-generator--valid-production-p)"))
 
