@@ -639,7 +639,8 @@
                                    production-number)
                                   popped-items-meta-contents)))
                             (message "Partial-translation: %s" partial-translation)
-                            (push partial-translation translation))))
+                            (when partial-translation
+                              (push partial-translation translation)))))
 
                       (let ((new-table-index (car pushdown-list)))
                         (let ((goto-table (gethash new-table-index parser-generator-lr--goto-tables)))
