@@ -617,9 +617,29 @@
                             (setq popped-items (1+ popped-items)))))
                       (push production-number output)
 
-                      (when (parser-generator--get-grammar-translation-by-number production-number)
-                        ;; TODO Perform translation here
-                        (message "Popped-items: %s" popped-items-contents))
+                      ;; Perform translation at reduction if specified
+                      (when
+                          (parser-generator--get-grammar-translation-by-number
+                           production-number)
+                        (let ((popped-items-meta-contents))
+                          (dolist (popped-item popped-items-contents)
+                            (push
+                             (parser-generator-lex-analyzer--get-function
+                              popped-item)
+                             popped-items-meta-contents))
+                          (setq
+                           popped-items-meta-contents
+                           (nreverse popped-items-meta-contents))
+                          (message "Popped-items: %s" popped-items-contents)
+                          (message "Popped-items-meta-contents: %s" popped-items-meta-contents)
+
+                          (let ((partial-translation
+                                 (funcall
+                                  (parser-generator--get-grammar-translation-by-number
+                                   production-number)
+                                  popped-items-meta-contents)))
+                            (message "Partial-translation: %s" partial-translation)
+                            (push partial-translation translation))))
 
                       (let ((new-table-index (car pushdown-list)))
                         (let ((goto-table (gethash new-table-index parser-generator-lr--goto-tables)))
