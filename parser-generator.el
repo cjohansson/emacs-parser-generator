@@ -201,6 +201,12 @@
       (error "No grammar G defined!")))
   (nth 1 G))
 
+(defun parser-generator--get-grammar-translation-by-number (production-number)
+  "If translation for PRODUCTION-NUMBER exist, return it."
+  (unless parser-generator--table-translations
+    (error "Table for translations by production-number is undefined!"))
+  (gethash production-number parser-generator--table-translations))
+
 (defun parser-generator--hash-to-list (hash-table &optional un-sorted)
   "Return a list that represent the HASH-TABLE.  Each element is a list: (list key value), optionally UN-SORTED."
   (let (result)
