@@ -378,7 +378,7 @@
            (parser-generator--valid-grammar-p '((A B C) ("a" "b" "c") ((A "a" (lambda(a) (message "Was here: %s" a)))) A))))
 
   (should (equal
-           t
+           nil
            (parser-generator--valid-grammar-p '((A B C) ("a" "b" "c") ((A "a" (lambda(a) (message "Was here: %s" a)) "b")) A))))
 
   (should (equal
