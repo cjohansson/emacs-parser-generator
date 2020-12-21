@@ -22,10 +22,10 @@
    (parser-generator-lex-analyzer--peek-next-look-ahead))
   (setq
    parser-generator-lex-analyzer--function
-   (lambda (index length)
+   (lambda (index)
      (let* ((string '(("a" 1 . 2) ("b" 2 . 3) ("c" 3 . 4) ("d" 4 . 5)))
             (string-length (length string))
-            (max-index (+ index length))
+            (max-index (1+ index))
             (tokens))
        (while (and
                (< index string-length)
@@ -54,7 +54,7 @@
   (setq parser-generator--look-ahead-number 10)
   (should
    (equal
-    '(("a" 1 . 2) ("b" 2 . 3) ("c" 3 . 4) ("d" 4 . 5))
+    '(("a" 1 . 2) ("b" 2 . 3) ("c" 3 . 4) ("d" 4 . 5) (e) (e) (e) (e) (e) (e))
     (parser-generator-lex-analyzer--peek-next-look-ahead)))
 
   (message "Ended tests for (parser-generator-lex-analyzer--peek-next-look-ahead)"))
@@ -71,10 +71,10 @@
    (parser-generator-lex-analyzer--pop-token))
   (setq
    parser-generator-lex-analyzer--function
-   (lambda (index length)
+   (lambda (index)
      (let* ((string '(("a" 1 . 2) ("b" 2 . 3)))
             (string-length (length string))
-            (max-index (+ index length))
+            (max-index (1+ index))
             (tokens))
        (while (and
                (< index string-length)
@@ -103,6 +103,7 @@
 
 (defun parser-generator-lex-analyzer-test ()
   "Run test."
+  ;; (setq debug-on-error t)
   (parser-generator-lex-analyzer-test--peek-next-look-ahead)
   (parser-generator-lex-analyzer-test--pop-token))
 

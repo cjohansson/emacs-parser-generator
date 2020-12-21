@@ -37,10 +37,27 @@
     (error "Missing lex-analyzer function!"))
   (unless parser-generator--look-ahead-number
     (error "Missing look-ahead number!"))
-  (funcall
-   parser-generator-lex-analyzer--function
-   parser-generator-lex-analyzer--index
-   parser-generator--look-ahead-number))
+  (let ((look-ahead)
+        (look-ahead-length 0)
+        (index parser-generator-lex-analyzer--index))
+    (while (< look-ahead-length parser-generator--look-ahead-number)
+      (let ((next-look-ahead
+             (funcall
+              parser-generator-lex-analyzer--function
+              index)))
+        (if next-look-ahead
+            (progn
+              (unless (listp (car next-look-ahead))
+                (setq next-look-ahead (list next-look-ahead)))
+              (dolist (next-look-ahead-item next-look-ahead)
+                (when (< look-ahead-length parser-generator--look-ahead-number)
+                  (push next-look-ahead-item look-ahead)
+                  (setq look-ahead-length (1+ look-ahead-length))
+                  (setq index (1+ index)))))
+          (push (list parser-generator--e-identifier) look-ahead)
+          (setq look-ahead-length (1+ look-ahead-length))
+          (setq index (1+ index)))))
+    (nreverse look-ahead)))
 
 (defun parser-generator-lex-analyzer--pop-token ()
   "Pop next token via lex-analyzer."
@@ -48,13 +65,15 @@
     (error "Missing lex-analyzer index!"))
   (unless parser-generator-lex-analyzer--function
     (error "Missing lex-analyzer function!"))
-  (let ((token (car (funcall
-                parser-generator-lex-analyzer--function
-                parser-generator-lex-analyzer--index
-                1))))
-    (setq parser-generator-lex-analyzer--index
-          (1+ parser-generator-lex-analyzer--index))
-    token))
+  (let ((token (funcall
+                     parser-generator-lex-analyzer--function
+                     parser-generator-lex-analyzer--index)))
+    (unless (listp (car token))
+      (setq token (list token)))
+    (let ((first-token (car token)))
+      (setq parser-generator-lex-analyzer--index
+            (1+ parser-generator-lex-analyzer--index))
+      first-token)))
 
 (defun parser-generator-lex-analyzer--reset ()
   "Reset lex-analyzer."

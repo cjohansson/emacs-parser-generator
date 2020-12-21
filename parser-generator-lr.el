@@ -514,19 +514,11 @@
 
       ;; (1) The lookahead string u, consisting of the next k input symbols, is determined.
       (let ((look-ahead (parser-generator-lex-analyzer--peek-next-look-ahead))
-            (look-ahead-length 0)
             (look-ahead-full))
-
-        (setq look-ahead-length (length look-ahead))
-
-        ;; If we reached end of input-tape and look-ahead is too small, append e-identifiers
-        (while (< look-ahead-length parser-generator--look-ahead-number)
-          (push parser-generator--e-identifier look-ahead)
-          (setq look-ahead-length (1+ look-ahead-length)))
-
         ;; Save token stream indexes in separate variable if needed later
         (setq look-ahead-full (nreverse look-ahead))
 
+        ;; Create simplified look-ahead for logic below
         (setq look-ahead nil)
         (dolist (look-ahead-item look-ahead-full)
           (if (listp look-ahead-item)

@@ -266,10 +266,10 @@
 
   (setq
    parser-generator-lex-analyzer--function
-   (lambda (index length)
+   (lambda (index)
      (let* ((string '((a 1 . 2) (a 2 . 3) (b 3 . 4) (b 4 . 5)))
             (string-length (length string))
-            (max-index (+ index length))
+            (max-index (1+ index))
             (tokens))
        (while (and
                (< index string-length)
@@ -285,10 +285,10 @@
 
   (setq
    parser-generator-lex-analyzer--function
-   (lambda (index length)
+   (lambda (index)
      (let* ((string '((a 1 . 2) (a 2 . 3) (b 3 . 4) (b 4 . 5) (b 5 . 6)))
             (string-length (length string))
-            (max-index (+ index length))
+            (max-index (1+ index))
             (tokens))
        (while (and
                (< index string-length)
@@ -309,10 +309,10 @@
 
   (setq
    parser-generator-lex-analyzer--function
-   (lambda (index length)
+   (lambda (index)
      (let* ((string '(("a" 1 . 2) ("a" 2 . 3) ("b" 3 . 4) ("b" 4 . 5)))
             (string-length (length string))
-            (max-index (+ index length))
+            (max-index (1+ index))
             (tokens))
        (while (and
                (< index string-length)
@@ -328,10 +328,10 @@
 
   (setq
    parser-generator-lex-analyzer--function
-   (lambda (index length)
+   (lambda (index)
      (let* ((string '(("a" 1 . 2) ("a" 2 . 3) ("b" 3 . 4) ("b" 4 . 5) ("b" 5 . 6)))
             (string-length (length string))
-            (max-index (+ index length))
+            (max-index (1+ index))
             (tokens))
        (while (and
                (< index string-length)
