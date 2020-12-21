@@ -373,6 +373,10 @@
            nil
            (parser-generator--valid-grammar-p '((A B C) (a (b c) "c") (A ("a" "b") (a b)) (B b) (C "c")))))
 
+  (should (equal
+           t
+           (parser-generator--valid-grammar-p '((A B C) ("a" "b" "c") ((A "a" (lambda(a) (message "Was here: %s" a)))) A))))
+
   (message "Passed tests for (parser-generator--valid-grammar-p)"))
 
 (defun parser-generator-test--valid-look-ahead-number-p ()
@@ -451,7 +455,7 @@
   "Test `parser-generator--get-grammar-rhs'."
   (message "Started tests  for (parser-generator--get-grammar-rhs)")
 
-  (parser-generator-set-grammar '((S A) ("a" "b") ((S A) (A ("b" "a"))) S))
+  (parser-generator-set-grammar '((S A B) ("a" "b") ((S A) (A ("b" "a")) (B "b" (lambda(b) (message "Was here: %s" b)))) S))
   (parser-generator-process-grammar)
 
   (should (equal

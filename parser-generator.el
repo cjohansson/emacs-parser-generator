@@ -62,6 +62,10 @@
   nil
   "Hash-table of non-terminals for quick checking.")
 
+(defvar parser-generator--table-translations
+  nil
+  "Hash-table indexed by production-number and value is translation function.")
+
 
 ;; Macros
 
@@ -249,19 +253,36 @@
 
     (setq parser-generator--table-productions-number (make-hash-table :test 'equal))
     (setq parser-generator--table-productions-number-reverse (make-hash-table :test 'equal))
+    (setq parser-generator--table-translations (make-hash-table :test 'equal))
     (let ((production-index 0))
       (dolist (p productions)
         (let ((lhs (car p))
               (rhs (cdr p))
-              (production))
-          (dolist (rhs-element rhs)
-            (unless (listp rhs-element)
-              (setq rhs-element (list rhs-element)))
-            (setq production (list lhs rhs-element))
-            (parser-generator--debug
-             (message "Production %s: %s" production-index production))
+              (production)
+              (translation))
+          (let ((rhs-element-index 0)
+                (rhs-length (length rhs))
+                (rhs-element))
+            (while (< rhs-element-index rhs-length)
+              (setq rhs-element (nth rhs-element-index rhs))
+              (unless (listp rhs-element)
+                (setq rhs-element (list rhs-element)))
+
+              (if (and
+                   (functionp rhs-element)
+                   (= rhs-element-index (1- rhs-length)))
+                  (progn
+                    (setq translation rhs-element)
+                    (parser-generator--debug
+                     (message "Translation %s: %s" production-index translation)))
+                (setq production (list lhs rhs-element))
+                (parser-generator--debug
+                 (message "Production %s: %s" production-index production)))
+              (setq rhs-element-index (1+ rhs-element-index)))
             (puthash production production-index parser-generator--table-productions-number)
             (puthash production-index production parser-generator--table-productions-number-reverse)
+            (when translation
+              (puthash production-index translation parser-generator--table-translations))
             (setq production-index (1+ production-index)))))))
 
   (let ((look-aheads (parser-generator--get-grammar-look-aheads)))
