@@ -476,7 +476,6 @@
 
 ;; Algorithm 5.7, p. 375
 ;; TODO Test incremental usage of this function
-;; TODO Add support for Syntax-directed-translations and semantic-actions
 ;; TODO Consider case with 2 character look-ahead
 (defun parser-generator-lr--parse (&optional input-tape-index pushdown-list output translation)
   "Perform a LR-parse via lex-analyzer, optionally at INPUT-TAPE-INDEX with PUSHDOWN-LIST, OUTPUT and TRANSLATION."
@@ -630,17 +629,17 @@
                           (setq
                            popped-items-meta-contents
                            (nreverse popped-items-meta-contents))
-                          (message "Popped-items: %s" popped-items-contents)
-                          (message "Popped-items-meta-contents: %s" popped-items-meta-contents)
 
                           (let ((partial-translation
                                  (funcall
                                   (parser-generator--get-grammar-translation-by-number
                                    production-number)
                                   popped-items-meta-contents)))
-                            (message "Partial-translation: %s" partial-translation)
                             (when partial-translation
-                              (push partial-translation translation)))))
+                              (unless (listp partial-translation)
+                                (setq partial-translation (list partial-translation)))
+                              (dolist (part-translation partial-translation)
+                                (push part-translation translation))))))
 
                       (let ((new-table-index (car pushdown-list)))
                         (let ((goto-table (gethash new-table-index parser-generator-lr--goto-tables)))
@@ -676,6 +675,8 @@
                (t (error (format "Invalid action-match: %s!" action-match)))))))))
     (unless accept
       (error "Parsed entire string without getting accepting! Output: %s" (nreverse output)))
+    (when translation
+      (setq translation (nreverse translation)))
     (list (nreverse output) translation)))
 
 (provide 'parser-generator-lr)

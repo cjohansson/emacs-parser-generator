@@ -319,31 +319,42 @@
 
   (message "Passed test with terminals as string, invalid syntax")
 
-  ;; TODO Test translation with terminals as strings here
+  ;; Test translation with terminals as strings here
 
-  (parser-generator-set-grammar '((Sp S) ("a" "b") ((Sp S) (S (S "a" S "b" (lambda(args) (nreverse args)))) (S e)) Sp))
-  (parser-generator-set-look-ahead-number 1)
-  (parser-generator-process-grammar)
-  (parser-generator-lr-generate-parser-tables)
+  (let ((buffer (generate-new-buffer "*a*")))
+    (switch-to-buffer buffer)
+    (insert "aabb")
 
-  (setq
-   parser-generator-lex-analyzer--function
-   (lambda (index)
-     (let* ((string '(("a" 1 . 2) ("a" 2 . 3) ("b" 3 . 4) ("b" 4 . 5)))
-            (string-length (length string))
-            (max-index (1+ index))
-            (tokens))
-       (while (and
-               (< index string-length)
-               (< index max-index))
-         (push (nth index string) tokens)
-         (setq index (1+ index)))
-       (nreverse tokens))))
+    (parser-generator-set-grammar '((Sp S) ("a" "b") ((Sp S) (S (S "a" S "b" (lambda(args) (nreverse args)))) (S e)) Sp))
+    (parser-generator-set-look-ahead-number 1)
+    (parser-generator-process-grammar)
+    (parser-generator-lr-generate-parser-tables)
 
-  (should
-   (equal
-    '((2 2 2 1 1) nil)
-    (parser-generator-lr--parse)))
+    (setq
+     parser-generator-lex-analyzer--function
+     (lambda (index)
+       (with-current-buffer buffer
+         (when (<= (+ index 2) (point-max))
+           (let ((start (+ index 1))
+                 (end (+ index 2)))
+             (let ((token (buffer-substring-no-properties start end)))
+               `(,token ,start . ,end)))))))
+
+    (setq
+     parser-generator-lex-analyzer--get-function
+     (lambda (token)
+       (with-current-buffer buffer
+         (let ((start (car (cdr token)))
+               (end (cdr (cdr token))))
+           (when (<= end (point-max))
+             (buffer-substring-no-properties start end))))))
+
+    (should
+     (equal
+      '((2 2 2 1 1) ("b" "a" "b" "a"))
+      (parser-generator-lr--parse)))
+
+    (kill-buffer buffer))
 
   (message "Passed tests for (parser-generator-lr--parse)"))
 
