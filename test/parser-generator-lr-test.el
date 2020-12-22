@@ -355,6 +355,60 @@
       (parser-generator-lr--parse)))
 
     (kill-buffer buffer))
+  (message "Passed test with translation 1")
+
+  (let ((buffer (generate-new-buffer "*a*")))
+    (switch-to-buffer buffer)
+    (insert "if (a) { b; }")
+
+    (parser-generator-set-grammar '((Sp S) (";" OPEN_ROUND_BRACKET CLOSE_ROUND_BRACKET IF OPEN_CURLY_BRACKET CLOSE_CURLY_BRACKET VARIABLE) ((Sp S) (S (IF OPEN_ROUND_BRACKET VARIABLE CLOSE_ROUND_BRACKET OPEN_CURLY_BRACKET VARIABLE CLOSE_CURLY_BRACKET (lambda(args) (nreverse args))))) Sp))
+    (parser-generator-set-look-ahead-number 1)
+    (parser-generator-process-grammar)
+    (parser-generator-lr-generate-parser-tables)
+
+    (setq
+     parser-generator-lex-analyzer--function
+     (lambda (index)
+       (with-current-buffer buffer
+         (goto-char index)
+         (unless (looking-at "[^ \n\t]")
+           (search-forward-regexp "[^ \n\t]")
+           (forward-char -1))
+         (let ((token))
+           (cond
+            ((looking-at "if")
+             (setq token `(IF ,(match-beginning 0) . ,(match-end 0))))
+            ((looking-at "(")
+             (setq token `(OPEN_ROUND_BRACKET ,(match-beginning 0) . ,(match-end 0))))
+            ((looking-at ")")
+             (setq token `(CLOSE_ROUND_BRACKET ,(match-beginning 0) . ,(match-end 0))))
+            ((looking-at "{")
+             (setq token `(OPEN_CURLY_BRACKET ,(match-beginning 0) . ,(match-end 0))))
+            ((looking-at "}")
+             (setq token `(CLOSE_CURLY_BRACKET ,(match-beginning 0) . ,(match-end 0))))
+            ((looking-at ";")
+             (setq token `(";" ,(match-beginning 0) . ,(match-end 0))))
+            ((looking-at "[a-zA-Z]+")
+             (setq token `(VARIABLE ,(match-beginning 0) . ,(match-end 0)))))
+           (message "Token: %s, index: %s, point: %s" token index (point))
+           token))))
+
+    (setq
+     parser-generator-lex-analyzer--get-function
+     (lambda (token)
+       (with-current-buffer buffer
+         (let ((start (car (cdr token)))
+               (end (cdr (cdr token))))
+           (when (<= end (point-max))
+             (buffer-substring-no-properties start end))))))
+
+    (should
+     (equal
+      '((2 2 2 1 1) ("b" "a" "b" "a"))
+      (parser-generator-lr--parse)))
+
+    (kill-buffer buffer))
+  (message "Passed test with translation 2")
 
   (message "Passed tests for (parser-generator-lr--parse)"))
 
