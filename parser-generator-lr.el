@@ -700,11 +700,11 @@
 
                             (when next-index
                               (push production-lhs pushdown-list)
-                              (push next-index pushdown-list)))))
+                              (push next-index pushdown-list)
 
-                      (push
-                       `(,parser-generator-lex-analyzer--index ,pushdown-list)
-                       pushdown-list-history)))))
+                              (push
+                               `(,parser-generator-lex-analyzer--index ,pushdown-list)
+                               pushdown-list-history)))))))))
 
                ((equal action-match '(accept))
                 ;;    (d) If f(u) = accept, we halt and declare the string

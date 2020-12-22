@@ -223,9 +223,9 @@
 
   (message "Passed tests for (parser-generator-lr--items-valid-p)"))
 
-(defun parser-generator-lr-test--parse ()
-  "Test `parser-generator-lr--parse'."
-  (message "Started tests for (parser-generator-lr--parse)")
+(defun parser-generator-lr-test-parse ()
+  "Test `parser-generator-lr-parse'."
+  (message "Started tests for (parser-generator-lr-parse)")
 
   (parser-generator-set-grammar '((Sp S) (a b) ((Sp S) (S (S a S b)) (S e)) Sp))
   (parser-generator-set-look-ahead-number 1)
@@ -318,6 +318,42 @@
    (parser-generator-lr--parse))
 
   (message "Passed test with terminals as string, invalid syntax")
+
+  ;; TODO Add incremental parse here
+
+  (setq
+   parser-generator-lex-analyzer--function
+   (lambda (index)
+     (let* ((string '(("a" 1 . 2) ("a" 2 . 3) ("b" 3 . 4) ("b" 4 . 5)))
+            (string-length (length string))
+            (max-index index)
+            (tokens))
+       (while (and
+               (< (1- index) string-length)
+               (< (1- index) max-index))
+         (push (nth (1- index) string) tokens)
+         (setq index (1+ index)))
+       (nreverse tokens))))
+
+  (let ((history (nth 2 (parser-generator-lr--parse))))
+    (message "History: %s" history)
+
+    (let ((input-tape-index (car (nth 2 history)))
+          (pushdown-list (car (cdr (nth 2 history)))))
+      ;; (let ((parser-generator-lr--parse
+      ;;        input-tape-index
+      ;;        pushdown-list
+      ;;        output-history
+      ;;        translation-history
+      ;;        pushdown-list-history))
+      (message "input-tape-index: %s" input-tape-index)
+      (message "pushdown-list: %s" pushdown-list)))
+
+  (message "Passed tests for (parser-generator-lr--parse)"))
+
+(defun parser-generator-lr-test-translate ()
+  "Test `parser-generator-lr-translate'."
+  (message "Started tests for (parser-generator-lr-translate)")
 
   ;; Test translation with terminals as strings here
 
@@ -418,7 +454,9 @@
     (kill-buffer buffer))
   (message "Passed test with translation 2")
 
-  (message "Passed tests for (parser-generator-lr--parse)"))
+  ;; TODO Add incremental translation here
+
+  (message "Passed tests for (parser-generator-lr-translate)"))
 
 (defun parser-generator-lr-test ()
   "Run test."
@@ -428,7 +466,8 @@
   (parser-generator-lr-test--items-valid-p)
   (parser-generator-lr-test--generate-goto-tables)
   (parser-generator-lr-test--generate-action-tables)
-  (parser-generator-lr-test--parse))
+  (parser-generator-lr-test-parse)
+  (parser-generator-lr-test-translate))
 
 
 (provide 'parser-generator-lr-test)
