@@ -480,14 +480,14 @@
      pushdown-list
      output
      translation
-     pushdown-list-history)
-  "Perform a LR-parse via lex-analyzer, optionally at INPUT-TAPE-INDEX with PUSHDOWN-LIST, OUTPUT, TRANSLATION and PUSHDOWN-LIST-HISTORY."
+     history)
+  "Perform a LR-parse via lex-analyzer, optionally at INPUT-TAPE-INDEX with PUSHDOWN-LIST, OUTPUT, TRANSLATION and HISTORY."
   (let ((result (parser-generator-lr--parse
                  input-tape-index
                  pushdown-list
                  output
                  translation
-                 pushdown-list-history)))
+                 history)))
     (nth 0 result)))
 
 (defun parser-generator-lr-translate
@@ -496,14 +496,14 @@
      pushdown-list
      output
      translation
-     pushdown-list-history)
-  "Perform a LR-parse via lex-analyzer, optionally at INPUT-TAPE-INDEX with PUSHDOWN-LIST, OUTPUT, TRANSLATION and PUSHDOWN-LIST-HISTORY."
+     history)
+  "Perform a LR-parse via lex-analyzer, optionally at INPUT-TAPE-INDEX with PUSHDOWN-LIST, OUTPUT, TRANSLATION and HISTORY."
   (let ((result (parser-generator-lr--parse
                  input-tape-index
                  pushdown-list
                  output
                  translation
-                 pushdown-list-history)))
+                 history)))
     (nth 1 result)))
 
 ;; Algorithm 5.7, p. 375
@@ -514,8 +514,8 @@
                pushdown-list
                output
                translation
-               pushdown-list-history)
-  "Perform a LR-parse via lex-analyzer, optionally at INPUT-TAPE-INDEX with PUSHDOWN-LIST, OUTPUT, TRANSLATION and PUSHDOWN-LIST-HISTORY."
+               history)
+  "Perform a LR-parse via lex-analyzer, optionally at INPUT-TAPE-INDEX with PUSHDOWN-LIST, OUTPUT, TRANSLATION and HISTORY."
   (unless input-tape-index
     (setq input-tape-index 0))
   (unless pushdown-list
@@ -703,8 +703,8 @@
                               (push next-index pushdown-list)
 
                               (push
-                               `(,parser-generator-lex-analyzer--index ,pushdown-list)
-                               pushdown-list-history)))))))))
+                               `(,parser-generator-lex-analyzer--index ,pushdown-list ,output ,translation)
+                               history)))))))))
 
                ((equal action-match '(accept))
                 ;;    (d) If f(u) = accept, we halt and declare the string
@@ -721,7 +721,7 @@
     (list
      (nreverse output)
      translation
-     (nreverse pushdown-list-history))))
+     (nreverse history))))
 
 (provide 'parser-generator-lr)
 

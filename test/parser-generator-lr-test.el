@@ -338,16 +338,27 @@
   (let ((history (nth 2 (parser-generator-lr--parse))))
     (message "History: %s" history)
 
-    (let ((input-tape-index (car (nth 2 history)))
-          (pushdown-list (car (cdr (nth 2 history)))))
-      ;; (let ((parser-generator-lr--parse
-      ;;        input-tape-index
-      ;;        pushdown-list
-      ;;        output-history
-      ;;        translation-history
-      ;;        pushdown-list-history))
-      (message "input-tape-index: %s" input-tape-index)
-      (message "pushdown-list: %s" pushdown-list)))
+    (let ((history-state 2))
+      (let ((input-tape-index (nth 0 (nth history-state history)))
+            (pushdown-list (nth 1 (nth history-state history)))
+            (output (nreverse (nth 2 (nth history-state history))))
+            (translation (nth 3 (nth history-state history)))
+            (history-list))
+        (while (< (car (car history)) input-tape-index)
+          (push (car history) history-list)
+          (pop history))
+        (message "input-tape-index: %s" input-tape-index)
+        (message "pushdown-list: %s" pushdown-list)
+        (message "output: %s" output)
+        (message "translation: %s" translation)
+        (message "history-list: %s" history-list)
+        (let ((parse (parser-generator-lr--parse
+                      input-tape-index
+                      pushdown-list
+                      output
+                      translation
+                      history-list)))
+          (message "parse: %s" parse)))))
 
   (message "Passed tests for (parser-generator-lr--parse)"))
 
