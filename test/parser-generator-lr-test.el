@@ -248,8 +248,8 @@
 
   (should
    (equal
-    '((2 2 2 1 1) nil)
-    (parser-generator-lr--parse)))
+    '(2 2 2 1 1)
+    (parser-generator-lr-parse)))
 
   (message "Passed test with terminals as symbols")
 
@@ -295,8 +295,8 @@
 
   (should
    (equal
-    '((2 2 2 1 1) nil)
-    (parser-generator-lr--parse)))
+    '(2 2 2 1 1)
+    (parser-generator-lr-parse)))
 
   (message "Passed test with terminals as string")
 
@@ -351,8 +351,8 @@
 
     (should
      (equal
-      '((2 2 2 1 1) ("b" "a" "b" "a"))
-      (parser-generator-lr--parse)))
+      '("b" "a" "b" "a")
+      (parser-generator-lr-translate)))
 
     (kill-buffer buffer))
   (message "Passed test with translation 1")
@@ -404,8 +404,8 @@
 
     (should
      (equal
-      '((1) ("(when a b)"))
-      (parser-generator-lr--parse)))
+      '("(when a b)")
+      (parser-generator-lr-translate)))
 
     (switch-to-buffer buffer)
     (kill-region (point-min) (point-max))
@@ -413,7 +413,7 @@
     (insert "if (a) { b }")
 
     (should-error
-     (parser-generator-lr--parse))
+     (parser-generator-lr-parse))
 
     (kill-buffer buffer))
   (message "Passed test with translation 2")
