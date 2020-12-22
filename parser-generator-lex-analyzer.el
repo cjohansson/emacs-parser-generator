@@ -64,7 +64,7 @@
                 (when (< look-ahead-length parser-generator--look-ahead-number)
                   (push next-look-ahead-item look-ahead)
                   (setq look-ahead-length (1+ look-ahead-length))
-                  (setq index (1+ index)))))
+                  (setq index (cdr (cdr next-look-ahead-item))))))
           (push (list parser-generator--e-identifier) look-ahead)
           (setq look-ahead-length (1+ look-ahead-length))
           (setq index (1+ index)))))
@@ -83,12 +83,12 @@
       (setq token (list token)))
     (let ((first-token (car token)))
       (setq parser-generator-lex-analyzer--index
-            (1+ parser-generator-lex-analyzer--index))
+            (cdr (cdr first-token)))
       first-token)))
 
 (defun parser-generator-lex-analyzer--reset ()
   "Reset lex-analyzer."
-  (setq parser-generator-lex-analyzer--index 0)
+  (setq parser-generator-lex-analyzer--index 1)
   (when parser-generator-lex-analyzer--reset-function
     (funcall parser-generator-lex-analyzer--reset-function)))
 

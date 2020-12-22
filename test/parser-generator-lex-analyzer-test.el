@@ -25,12 +25,12 @@
    (lambda (index)
      (let* ((string '(("a" 1 . 2) ("b" 2 . 3) ("c" 3 . 4) ("d" 4 . 5)))
             (string-length (length string))
-            (max-index (1+ index))
+            (max-index index)
             (tokens))
        (while (and
-               (< index string-length)
-               (< index max-index))
-         (push (nth index string) tokens)
+               (< (1- index) string-length)
+               (< (1- index) max-index))
+         (push (nth (1- index) string) tokens)
          (setq index (1+ index)))
        (nreverse tokens))))
   (should-error
@@ -38,6 +38,8 @@
   (parser-generator-lex-analyzer--reset)
   (should-error
    (parser-generator-lex-analyzer--peek-next-look-ahead))
+
+  (message "Passed failing lex analysis")
 
   (setq parser-generator--look-ahead-number 1)
   (should
@@ -74,17 +76,19 @@
    (lambda (index)
      (let* ((string '(("a" 1 . 2) ("b" 2 . 3)))
             (string-length (length string))
-            (max-index (1+ index))
+            (max-index index)
             (tokens))
        (while (and
-               (< index string-length)
-               (< index max-index))
-         (push (nth index string) tokens)
+               (< (1- index) string-length)
+               (< (1- index) max-index))
+         (push (nth (1- index) string) tokens)
          (setq index (1+ index)))
        (nreverse tokens))))
   (should-error
    (parser-generator-lex-analyzer--pop-token))
   (parser-generator-lex-analyzer--reset)
+
+  (message "Passed failing lex analysis 2")
 
   (should
    (equal
