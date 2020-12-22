@@ -533,9 +533,21 @@
   (unless parser-generator-lr--goto-tables
     (error "Missing GOTO-tables for grammar!"))
 
-  (let ((accept))
+  (let ((accept)
+        (pre-index 0))
     (while (and
             (not accept))
+
+      ;; Save history when index has changed
+      (when
+          (>
+           parser-generator-lex-analyzer--index
+           pre-index)
+        (push
+         `(,parser-generator-lex-analyzer--index ,pushdown-list ,output ,translation)
+         history)
+        (setq pre-index
+              parser-generator-lex-analyzer--index))
 
       ;; (1) The lookahead string u, consisting of the next k input symbols, is determined.
       (let ((look-ahead (parser-generator-lex-analyzer--peek-next-look-ahead))
@@ -700,11 +712,7 @@
 
                             (when next-index
                               (push production-lhs pushdown-list)
-                              (push next-index pushdown-list)
-
-                              (push
-                               `(,parser-generator-lex-analyzer--index ,pushdown-list ,output ,translation)
-                               history)))))))))
+                              (push next-index pushdown-list)))))))))
 
                ((equal action-match '(accept))
                 ;;    (d) If f(u) = accept, we halt and declare the string

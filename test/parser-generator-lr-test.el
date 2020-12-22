@@ -347,6 +347,7 @@
         (while (< (car (car history)) input-tape-index)
           (push (car history) history-list)
           (pop history))
+        ;; (setq history (nreverse history))
         (message "input-tape-index: %s" input-tape-index)
         (message "pushdown-list: %s" pushdown-list)
         (message "output: %s" output)
