@@ -13,9 +13,9 @@
 (defun parser-generator-lr-test--parse-incremental-vs-regular ()
   "Verify that regular and incremental parse results in same data."
   (let ((regular-parse (parser-generator-lr--parse)))
-    (message "regular-parse: %s" regular-parse)
+    ;; (message "regular-parse: %s" regular-parse)
     (let ((regular-parse-history (nth 2 regular-parse)))
-      (message "regular-parse-history: %s" regular-parse-history)
+      ;; (message "regular-parse-history: %s" regular-parse-history)
       (let ((history-length (length regular-parse-history))
             (history-index 0)
             (history)
@@ -24,15 +24,15 @@
           (setq history (nth history-index regular-parse-history))
           (let ((input-tape-index (nth 0 history))
                 (pushdown-list (nth 1 history))
-                (output (nreverse (nth 2 history)))
+                (output (nth 2 history))
                 (translation (nth 3 history))
                 (history-list iterated-history))
 
-            (message "input-tape-index: %s" input-tape-index)
-            (message "pushdown-list: %s" pushdown-list)
-            (message "output: %s" output)
-            (message "translation: %s" translation)
-            (message "history-list: %s" history-list)
+            ;; (message "input-tape-index: %s" input-tape-index)
+            ;; (message "pushdown-list: %s" pushdown-list)
+            ;; (message "output: %s" output)
+            ;; (message "translation: %s" translation)
+            ;; (message "history-list: %s" history-list)
 
             (let ((incremental-parse
                    (parser-generator-lr--parse
@@ -41,7 +41,7 @@
                     output
                     translation
                     history-list)))
-              (message "incremental-parse: %s" incremental-parse)
+              ;; (message "incremental-parse: %s" incremental-parse)
               (should
                (equal
                 regular-parse

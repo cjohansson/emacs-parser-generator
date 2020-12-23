@@ -507,8 +507,7 @@
     (nth 1 result)))
 
 ;; Algorithm 5.7, p. 375
-;; TODO Test incremental usage of this function
-;; TODO Consider case with 2 character look-ahead
+;; TODO Test cases with above 1 as look-ahead number
 (defun parser-generator-lr--parse
     (&optional input-tape-index
                pushdown-list
@@ -537,7 +536,7 @@
         (pre-index 0))
     (while (not accept)
 
-      (message "output: %s, index: %s" output parser-generator-lex-analyzer--index)
+      ;; (message "output: %s, index: %s" output parser-generator-lex-analyzer--index)
 
       ;; Save history when index has changed
       (when
