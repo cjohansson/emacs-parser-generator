@@ -26,11 +26,13 @@
      (let* ((string '(("a" 1 . 2) ("b" 2 . 3) ("c" 3 . 4) ("d" 4 . 5)))
             (string-length (length string))
             (max-index index)
-            (tokens))
+            (tokens)
+            (next-token))
        (while (and
                (< (1- index) string-length)
                (< (1- index) max-index))
-         (push (nth (1- index) string) tokens)
+         (setq next-token (nth (1- index) string))
+         (push next-token tokens)
          (setq index (1+ index)))
        (nreverse tokens))))
   (should-error
@@ -58,6 +60,27 @@
    (equal
     '(("a" 1 . 2) ("b" 2 . 3) ("c" 3 . 4) ("d" 4 . 5) (e) (e) (e) (e) (e) (e))
     (parser-generator-lex-analyzer--peek-next-look-ahead)))
+
+  (setq
+   parser-generator-lex-analyzer--function
+   (lambda (index)
+     (let* ((string '(("a" 1 . 2) ("b" 2 . 3) ("c" 3 . 4) ("d" 4 . 5)))
+            (string-length (length string))
+            (max-index index)
+            (tokens)
+            (next-token))
+       (while (and
+               (< (1- index) string-length)
+               (< (1- index) max-index))
+         (setq next-token (nth (1- index) string))
+         (when (string= (car next-token) "d")
+           (error "Invalid token: %s" next-token))
+         (push next-token tokens)
+         (setq index (1+ index)))
+       (nreverse tokens))))
+
+  (should-error
+    (parser-generator-lex-analyzer--peek-next-look-ahead))
 
   (message "Ended tests for (parser-generator-lex-analyzer--peek-next-look-ahead)"))
 
