@@ -25,6 +25,7 @@
 
 ;; Main Algorithms
 
+;; TODO Test this function with above 1 as look-ahead number
 (defun parser-generator-lr-generate-parser-tables ()
   "Generate parsing tables for grammar."
   (let ((table-lr-items (parser-generator-lr--generate-goto-tables)))
@@ -33,6 +34,7 @@
 
 
 ;; Algorithm 5.11, p. 393
+;; TODO Test this function with above 1 as look-ahead number
 (defun parser-generator-lr--generate-action-tables (table-lr-items)
   "Generate action-tables for lr-grammar based on TABLE-LR-ITEMS."
   (let ((action-tables)
@@ -137,6 +139,7 @@
         (setq table-index (1+ table-index))))))
 
 ;; Algorithm 5.9, p. 389
+;; TODO Test this function with above 1 as look-ahead number
 (defun parser-generator-lr--generate-goto-tables ()
   "Calculate set of valid LR(k) items for grammar and a GOTO-table."
   (let ((lr-item-set-new-index 0)
