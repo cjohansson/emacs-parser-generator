@@ -33,13 +33,14 @@
 ;; Functions
 
 
+;; TODO Catch errors
 (defun parser-generator-lex-analyzer--get-function (token)
   "Get information about TOKEN."
   (unless parser-generator-lex-analyzer--get-function
     (error "Missing lex-analyzer get function!"))
   (funcall parser-generator-lex-analyzer--get-function token))
 
-
+;; TODO Catch errors
 (defun parser-generator-lex-analyzer--peek-next-look-ahead ()
   "Peek next look-ahead number of tokens via lex-analyzer."
   (unless parser-generator-lex-analyzer--index
@@ -70,6 +71,7 @@
           (setq index (1+ index)))))
     (nreverse look-ahead)))
 
+;; TODO Catch errors
 (defun parser-generator-lex-analyzer--pop-token ()
   "Pop next token via lex-analyzer."
   (unless parser-generator-lex-analyzer--index

@@ -376,7 +376,7 @@
 
   (parser-generator-lr-test--parse-incremental-vs-regular)
 
-  (message "Passed incremental-test with terminals as string")
+  (message "Passed incremental-tests")
 
   (message "Passed tests for (parser-generator-lr--parse)"))
 
@@ -484,6 +484,57 @@
   (message "Passed test with translation 2")
 
   ;; TODO Add incremental translation here
+
+  (let ((buffer (generate-new-buffer "*a*")))
+    (switch-to-buffer buffer)
+    (insert "if (a) { b; }")
+
+    (parser-generator-set-grammar '((Sp S) (";" OPEN_ROUND_BRACKET CLOSE_ROUND_BRACKET IF OPEN_CURLY_BRACKET CLOSE_CURLY_BRACKET VARIABLE) ((Sp S) (S (IF OPEN_ROUND_BRACKET VARIABLE CLOSE_ROUND_BRACKET OPEN_CURLY_BRACKET VARIABLE ";" CLOSE_CURLY_BRACKET (lambda(args) (format "(when %s %s)" (nth 2 args) (nth 5 args)))))) Sp))
+    (parser-generator-set-look-ahead-number 1)
+    (parser-generator-process-grammar)
+    (parser-generator-lr-generate-parser-tables)
+
+    (setq
+     parser-generator-lex-analyzer--function
+     (lambda (index)
+       (with-current-buffer "*a*"
+         (unless (>= index (point-max))
+           (goto-char index)
+           (unless (looking-at "[^ \n\t]")
+             (search-forward-regexp "[^ \n\t]" nil t nil)
+             (forward-char -1))
+           (let ((token))
+             (cond
+              ((looking-at "if")
+               (setq token `(IF ,(match-beginning 0) . ,(match-end 0))))
+              ((looking-at "(")
+               (setq token `(OPEN_ROUND_BRACKET ,(match-beginning 0) . ,(match-end 0))))
+              ((looking-at ")")
+               (setq token `(CLOSE_ROUND_BRACKET ,(match-beginning 0) . ,(match-end 0))))
+              ((looking-at "{")
+               (setq token `(OPEN_CURLY_BRACKET ,(match-beginning 0) . ,(match-end 0))))
+              ((looking-at "}")
+               (setq token `(CLOSE_CURLY_BRACKET ,(match-beginning 0) . ,(match-end 0))))
+              ((looking-at ";")
+               (setq token `(";" ,(match-beginning 0) . ,(match-end 0))))
+              ((looking-at "[a-zA-Z]+")
+               (setq token `(VARIABLE ,(match-beginning 0) . ,(match-end 0))))
+              (t (error "Invalid syntax! Could not lex-analyze at %s!" (point))))
+             token)))))
+
+    (setq
+     parser-generator-lex-analyzer--get-function
+     (lambda (token)
+       (with-current-buffer "*a*"
+         (let ((start (car (cdr token)))
+               (end (cdr (cdr token))))
+           (when (<= end (point-max))
+             (buffer-substring-no-properties start end))))))
+
+    (parser-generator-lr-test--parse-incremental-vs-regular)
+    (kill-buffer buffer))
+
+  (message "Passed incremental tests")
 
   (message "Passed tests for (parser-generator-lr-translate)"))
 
