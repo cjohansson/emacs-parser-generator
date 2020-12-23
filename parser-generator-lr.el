@@ -730,10 +730,14 @@
              (reverse output)))
     (when translation
       (setq translation (nreverse translation)))
+    (when history
+        (setq history (reverse history)))
+    (when output
+      (setq output (reverse output)))
     (list
-     (reverse output)
+     output
      translation
-     (reverse history))))
+     history)))
 
 (provide 'parser-generator-lr)
 
