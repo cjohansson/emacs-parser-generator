@@ -455,7 +455,8 @@
               ((looking-at ";")
                (setq token `(";" ,(match-beginning 0) . ,(match-end 0))))
               ((looking-at "[a-zA-Z]+")
-               (setq token `(VARIABLE ,(match-beginning 0) . ,(match-end 0)))))
+               (setq token `(VARIABLE ,(match-beginning 0) . ,(match-end 0))))
+              (t (error "Invalid syntax! Could not lex-analyze at %s!" (point))))
              token)))))
 
     (setq
@@ -482,8 +483,6 @@
 
     (kill-buffer buffer))
   (message "Passed test with translation 2")
-
-  ;; TODO Add incremental translation here
 
   (let ((buffer (generate-new-buffer "*a*")))
     (switch-to-buffer buffer)
