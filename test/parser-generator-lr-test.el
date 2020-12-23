@@ -10,6 +10,47 @@
 (require 'parser-generator-lr)
 (require 'ert)
 
+(defun parser-generator-lr-test--parse-incremental-vs-regular ()
+  "Verify that regular and incremental parse results in same data."
+  (let ((regular-parse (parser-generator-lr--parse)))
+    (message "regular-parse: %s" regular-parse)
+    (let ((regular-parse-history (nth 2 regular-parse)))
+      (message "regular-parse-history: %s" regular-parse-history)
+      (let ((history-length (length regular-parse-history))
+            (history-index 0)
+            (history)
+            (iterated-history))
+        (while (< history-index history-length)
+          (setq history (nth history-index regular-parse-history))
+          (let ((input-tape-index (nth 0 history))
+                (pushdown-list (nth 1 history))
+                (output (nreverse (nth 2 history)))
+                (translation (nth 3 history))
+                (history-list iterated-history))
+
+            (message "input-tape-index: %s" input-tape-index)
+            (message "pushdown-list: %s" pushdown-list)
+            (message "output: %s" output)
+            (message "translation: %s" translation)
+            (message "history-list: %s" history-list)
+
+            (let ((incremental-parse
+                   (parser-generator-lr--parse
+                    input-tape-index
+                    pushdown-list
+                    output
+                    translation
+                    history-list)))
+              (message "incremental-parse: %s" incremental-parse)
+              (should
+               (equal
+                regular-parse
+                incremental-parse))
+              (message "Passed incremental parse test %s" (1+ history-index)))
+
+            (push history iterated-history)
+            (setq history-index (1+ history-index))))))))
+
 (defun parser-generator-lr-test--generate-action-tables ()
   "Test `parser-generator-lr--generate-action-tables'."
   (message "Starting tests for (parser-generator-lr--generate-action-tables)")
@@ -319,8 +360,6 @@
 
   (message "Passed test with terminals as string, invalid syntax")
 
-  ;; TODO Add incremental parse here
-
   (setq
    parser-generator-lex-analyzer--function
    (lambda (index)
@@ -335,31 +374,9 @@
          (setq index (1+ index)))
        (nreverse tokens))))
 
-  (let ((history (nth 2 (parser-generator-lr--parse))))
-    (message "History: %s" history)
+  (parser-generator-lr-test--parse-incremental-vs-regular)
 
-    (let ((history-state 2))
-      (let ((input-tape-index (nth 0 (nth history-state history)))
-            (pushdown-list (nth 1 (nth history-state history)))
-            (output (nreverse (nth 2 (nth history-state history))))
-            (translation (nth 3 (nth history-state history)))
-            (history-list))
-        (while (< (car (car history)) input-tape-index)
-          (push (car history) history-list)
-          (pop history))
-        ;; (setq history (nreverse history))
-        (message "input-tape-index: %s" input-tape-index)
-        (message "pushdown-list: %s" pushdown-list)
-        (message "output: %s" output)
-        (message "translation: %s" translation)
-        (message "history-list: %s" history-list)
-        (let ((parse (parser-generator-lr--parse
-                      input-tape-index
-                      pushdown-list
-                      output
-                      translation
-                      history-list)))
-          (message "parse: %s" parse)))))
+  (message "Passed incremental-test with terminals as string")
 
   (message "Passed tests for (parser-generator-lr--parse)"))
 

@@ -517,13 +517,13 @@
                history)
   "Perform a LR-parse via lex-analyzer, optionally at INPUT-TAPE-INDEX with PUSHDOWN-LIST, OUTPUT, TRANSLATION and HISTORY."
   (unless input-tape-index
-    (setq input-tape-index 0))
+    (setq input-tape-index 1))
   (unless pushdown-list
     (push 0 pushdown-list))
 
   (if (and
        input-tape-index
-       (> input-tape-index 0))
+       (> input-tape-index 1))
       (setq parser-generator-lex-analyzer--index input-tape-index)
     (parser-generator-lex-analyzer--reset))
 
@@ -535,8 +535,9 @@
 
   (let ((accept)
         (pre-index 0))
-    (while (and
-            (not accept))
+    (while (not accept)
+
+      (message "output: %s, index: %s" output parser-generator-lex-analyzer--index)
 
       ;; Save history when index has changed
       (when
@@ -544,7 +545,10 @@
            parser-generator-lex-analyzer--index
            pre-index)
         (push
-         `(,parser-generator-lex-analyzer--index ,pushdown-list ,output ,translation)
+         `(,parser-generator-lex-analyzer--index
+           ,pushdown-list
+           ,output
+           ,translation)
          history)
         (setq pre-index
               parser-generator-lex-analyzer--index))
@@ -723,13 +727,14 @@
 
                (t (error (format "Invalid action-match: %s!" action-match)))))))))
     (unless accept
-      (error "Parsed entire string without getting accepting! Output: %s" (nreverse output)))
+      (error "Parsed entire string without getting accepting! Output: %s"
+             (reverse output)))
     (when translation
       (setq translation (nreverse translation)))
     (list
-     (nreverse output)
+     (reverse output)
      translation
-     (nreverse history))))
+     (reverse history))))
 
 (provide 'parser-generator-lr)
 
