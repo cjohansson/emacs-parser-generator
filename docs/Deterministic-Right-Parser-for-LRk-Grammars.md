@@ -1,5 +1,9 @@
 # Deterministic Right Parser for LR(k) Grammars
 
+This library contains functions to parse and translate grammar as well as validate grammars.
+
+## LR Item
+
 A valid LR-item for a viable prefix has this structure:
 
 ``` emacs-lisp
@@ -57,46 +61,32 @@ Calculate the set of LR items valid for any viable prefix S.
 Perform a right-parse of input-stream.
 
 ```emacs-lisp
+(require 'parser-generator-lr)
 (require 'ert)
 
 (parser-generator-set-grammar '((Sp S) (a b) ((Sp S) (S (S a S b)) (S e)) Sp))
 (parser-generator-set-look-ahead-number 1)
 (parser-generator-process-grammar)
+(parser-generator-lr-generate-parser-tables)
 
 (setq
-   parser-generator-lex-analyzer--function
-   (lambda (index length)
-     (let* ((string '((a 1 . 2) (a 2 . 3) (b 3 . 4) (b 4 . 5) (b 5 . 6)))
-            (string-length (length string))
-            (max-index (+ index length))
-            (tokens))
-       (while (and
-               (< index string-length)
-               (< index max-index))
-         (push (nth index string) tokens)
-         (setq index (1+ index)))
-       (nreverse tokens))))
+ parser-generator-lex-analyzer--function
+ (lambda (index)
+   (let* ((string '((a 1 . 2) (a 2 . 3) (b 3 . 4) (b 4 . 5)))
+          (string-length (length string))
+          (max-index index)
+          (tokens))
+     (while (and
+             (< (1- index) string-length)
+             (< (1- index) max-index))
+       (push (nth (1- index) string) tokens)
+       (setq index (1+ index)))
+     (nreverse tokens))))
+
 (should
-   (equal
-    '(2 2 2 1 1)
-    (parser-generator-lr--parse)))
-    
-
-(setq
-   parser-generator-lex-analyzer--function
-   (lambda (index length)
-     (let* ((string '(a a b b b))
-            (string-length (length string))
-            (max-index (+ index length))
-            (tokens))
-       (while (and
-               (< index string-length)
-               (< index max-index))
-         (push (nth index string) tokens)
-         (setq index (1+ index)))
-       (nreverse tokens))))
-(should-error
-    (parser-generator-lr--parse))
+ (equal
+  '(2 2 2 1 1)
+  (parser-generator-lr-parse)))
 ```
 
 [Back to start](../../../)
