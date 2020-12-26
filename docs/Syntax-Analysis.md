@@ -78,11 +78,23 @@ Is a simple integer above zero. You set it like this: `(parser-generator-set-loo
 
 ### Syntax-directed-translation (SDT)
 
-*WIP* Where should this be defined?
+A optional translation is defined as a lambda function as the last element of a production right-hand-side, example:
+
+```
+(parser-generator-set-grammar '((Sp S) ("a" "b") ((Sp S) (S (S "a" S "b" (lambda(args) (nreverse args)))) (S e)) Sp))
+```
+
+You cannot have a SDT+SA on the same production right-hand side, just one or the other.
 
 ### Semantic-actions (SA)
 
-*WIP* Where should this be defined?
+A optional semantic-action is defined as a lambda function as the last element of a production right-hand-side, example:
+
+```
+(parser-generator-set-grammar '((Sp S) ("a" "b") ((Sp S) (S (S "a" S "b" (lambda(args) (nreverse args)))) (S e)) Sp))
+```
+
+You cannot have a SDT+SA on the same production right-hand side, just one or the other.
 
 ## Functions
 
