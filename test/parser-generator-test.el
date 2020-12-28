@@ -324,13 +324,28 @@
   (parser-generator-set-grammar '((Sp S) (a b) ((Sp S) (S (S a S b)) (S e)) Sp))
   (parser-generator-set-look-ahead-number 1)
   (parser-generator-process-grammar)
-  (should
+   (should
    (equal
     nil
     (parser-generator--e-free-first '(S b a))))
   (message "Passed empty-free-first 1 with complex grammar 2")
 
-  ;; TODO Test cases with trailing e-identifier here
+  (parser-generator-set-grammar '((Sp S) (a b) ((Sp S) (S (S a S b)) (S e)) Sp))
+  (parser-generator-set-look-ahead-number 2)
+  (parser-generator-process-grammar)
+  (should
+   (equal
+    '((a b))
+    (parser-generator--e-free-first '(a b))))
+  (should
+   (equal
+    '((a e))
+    (parser-generator--e-free-first '(a e))))
+  (should
+   (equal
+    '((a e))
+    (parser-generator--e-free-first '(a S))))
+  (message "Passed empty-free-first 2 with trailing e-identifier")
 
   (message "Passed tests for (parser-generator--empty-free-first)"))
 

@@ -580,6 +580,58 @@
   "For sentential string Α, Calculate e-free-first k terminals in grammar."
   (parser-generator--first α t))
 
+(defun parser-generator--generate-f-sets ()
+  "Generate F-sets for grammar."
+  ;; Generate F-sets only once per grammar
+  (unless (and
+           parser-generator--f-sets
+           parser-generator--f-free-sets)
+    (let ((productions (parser-generator--get-grammar-productions))
+          (k parser-generator--look-ahead-number))
+      (let ((i-max (length productions))
+            (disallow-set '(nil t)))
+        (dolist (disallow-e-first disallow-set)
+          (let ((f-sets (make-hash-table :test 'equal))
+                (i 0))
+            (while (< i i-max)
+              (parser-generator--debug (message "i = %s" i))
+              (let ((f-set (make-hash-table :test 'equal)))
+
+                ;; Iterate all productions, set F_i
+                (dolist (p productions)
+                  (let ((production-lhs (car p))
+                        (production-rhs (cdr p)))
+                    (parser-generator--debug
+                     (message "Production: %s -> %s" production-lhs production-rhs))
+
+                    ;; Iterate all blocks in RHS
+                    (let ((f-p-set))
+                      (dolist (rhs-p production-rhs)
+                        (let ((rhs-string rhs-p))
+                          (let ((rhs-leading-terminals
+                                 (parser-generator--f-set rhs-string `(,k ,i ,f-sets ,disallow-e-first) '(("" t 0)))))
+                            (parser-generator--debug
+                             (message "Leading %d terminals at index %s (%s) -> %s = %s" k i production-lhs rhs-string rhs-leading-terminals))
+                            (when rhs-leading-terminals
+                              (when (and
+                                     (listp rhs-leading-terminals)
+                                     (> (length rhs-leading-terminals) 0))
+                                (dolist (rhs-leading-terminals-element rhs-leading-terminals)
+                                  (push rhs-leading-terminals-element f-p-set)))))))
+
+                      ;; Make set distinct
+                      (setq f-p-set (parser-generator--distinct f-p-set))
+                      (parser-generator--debug
+                       (message "F_%s_%s(%s) = %s" i k production-lhs f-p-set))
+                      (puthash production-lhs (nreverse f-p-set) f-set))))
+                (puthash i f-set f-sets)
+                (setq i (+ i 1))))
+            (if disallow-e-first
+                (setq parser-generator--f-free-sets f-sets)
+              (setq parser-generator--f-sets f-sets)))))
+      (parser-generator--debug
+       (message "Generated F-sets")))))
+
 ;; p. 358
 (defun parser-generator--f-set (input-tape state stack)
   "A deterministic push-down transducer (DPDT) for building F-sets from INPUT-TAPE, STATE and STACK."
@@ -705,8 +757,10 @@
 
                  ((equal rhs-type 'EMPTY)
                   (if disallow-e-first
-                      (when (= leading-terminals-count 0)
-                        (setq all-leading-terminals-p nil))
+                      (if (= leading-terminals-count 0)
+                          (setq all-leading-terminals-p nil)
+                        (setq leading-terminals (append leading-terminals rhs-element))
+                        (setq leading-terminals-count (1+ leading-terminals-count)))
                     (when (and
                            (= leading-terminals-count 0)
                            (= input-tape-index (1- input-tape-length)))
@@ -736,54 +790,7 @@
     (let ((i-max (length productions)))
 
       ;; Generate F-sets only once per grammar
-      (when (or
-             (and
-              (not disallow-e-first)
-              (not parser-generator--f-sets))
-             (and
-              disallow-e-first
-              (not parser-generator--f-free-sets)))
-        (let ((f-sets (make-hash-table :test 'equal))
-              (i 0))
-          (while (< i i-max)
-            (parser-generator--debug (message "i = %s" i))
-            (let ((f-set (make-hash-table :test 'equal)))
-
-              ;; Iterate all productions, set F_i
-              (dolist (p productions)
-                (let ((production-lhs (car p))
-                      (production-rhs (cdr p)))
-                  (parser-generator--debug
-                   (message "Production: %s -> %s" production-lhs production-rhs))
-
-                  ;; Iterate all blocks in RHS
-                  (let ((f-p-set))
-                    (dolist (rhs-p production-rhs)
-                      (let ((rhs-string rhs-p))
-                        (let ((rhs-leading-terminals
-                               (parser-generator--f-set rhs-string `(,k ,i ,f-sets ,disallow-e-first) '(("" t 0)))))
-                          (parser-generator--debug
-                           (message "Leading %d terminals at index %s (%s) -> %s = %s" k i production-lhs rhs-string rhs-leading-terminals))
-                          (when rhs-leading-terminals
-                            (when (and
-                                   (listp rhs-leading-terminals)
-                                   (> (length rhs-leading-terminals) 0))
-                              (dolist (rhs-leading-terminals-element rhs-leading-terminals)
-                                (push rhs-leading-terminals-element f-p-set)))))))
-
-                    ;; Make set distinct
-                    (setq f-p-set (parser-generator--distinct f-p-set))
-                    (parser-generator--debug
-                     (message "F_%s_%s(%s) = %s" i k production-lhs f-p-set))
-                    (puthash production-lhs (nreverse f-p-set) f-set))))
-              (puthash i f-set f-sets)
-              (setq i (+ i 1))))
-          (if disallow-e-first
-              (setq parser-generator--f-free-sets f-sets)
-            (setq parser-generator--f-sets f-sets))))
-
-      (parser-generator--debug
-       (message "Generated F-sets"))
+      (parser-generator--generate-f-sets)
 
       (let ((first-list nil))
         ;; Iterate each symbol in β using a PDA algorithm
@@ -806,6 +813,15 @@
                     (parser-generator--debug
                      (message "symbol index: %s from %s is: %s" input-tape-index input-tape symbol))
                     (cond
+                     ((parser-generator--valid-e-p symbol)
+                      (if disallow-e-first
+                          (when (> first-length 0)
+                            (setq first (append first (list symbol)))
+                            (setq first-length (1+ first-length)))
+                        (setq first (append first (list symbol)))
+                        (setq first-length (1+ first-length)))
+                      (setq keep-looking nil))
+
                      ((parser-generator--valid-terminal-p symbol)
                       (setq first (append first (list symbol)))
                       (setq first-length (1+ first-length)))
@@ -814,7 +830,9 @@
                       (parser-generator--debug
                        (message "non-terminal symbol: %s" symbol))
                       (let ((symbol-f-set))
-                        (if disallow-e-first
+                        (if (and
+                             disallow-e-first
+                             (= first-length 0))
                             (setq symbol-f-set (gethash symbol (gethash (1- i-max) parser-generator--f-free-sets)))
                           (setq symbol-f-set (gethash symbol (gethash (1- i-max) parser-generator--f-sets))))
                         (parser-generator--debug
