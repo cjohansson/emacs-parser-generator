@@ -602,28 +602,63 @@
                   (let ((production-lhs (car p))
                         (production-rhs (cdr p)))
                     (parser-generator--debug
-                     (message "Production: %s -> %s" production-lhs production-rhs))
+                     (message
+                      "Production: %s -> %s"
+                      production-lhs
+                      production-rhs))
 
                     ;; Iterate all blocks in RHS
                     (let ((f-p-set))
                       (dolist (rhs-p production-rhs)
                         (let ((rhs-string rhs-p))
                           (let ((rhs-leading-terminals
-                                 (parser-generator--f-set rhs-string `(,k ,i ,f-sets ,disallow-e-first) '(("" t 0)))))
+                                 (parser-generator--f-set
+                                  rhs-string
+                                  `(
+                                    ,k
+                                    ,i
+                                    ,f-sets
+                                    ,disallow-e-first)
+                                  '(("" t 0)))))
                             (parser-generator--debug
-                             (message "Leading %d terminals at index %s (%s) -> %s = %s" k i production-lhs rhs-string rhs-leading-terminals))
+                             (message
+                              "Leading %d terminals at index %s (%s) -> %s = %s"
+                              k
+                              i
+                              production-lhs
+                              rhs-string
+                              rhs-leading-terminals))
                             (when rhs-leading-terminals
                               (when (and
                                      (listp rhs-leading-terminals)
                                      (> (length rhs-leading-terminals) 0))
-                                (dolist (rhs-leading-terminals-element rhs-leading-terminals)
-                                  (push rhs-leading-terminals-element f-p-set)))))))
+                                (dolist
+                                    (rhs-leading-terminals-element rhs-leading-terminals)
+                                  (push
+                                   rhs-leading-terminals-element
+                                   f-p-set)))))))
+
+                      ;; If we have multiple equal LHS
+                      ;; merge them
+                      (when (gethash production-lhs f-set)
+                        (setq f-p-set
+                              (append
+                               f-p-set
+                               (gethash production-lhs f-set))))
 
                       ;; Make set distinct
                       (setq f-p-set (parser-generator--distinct f-p-set))
                       (parser-generator--debug
-                       (message "F_%s_%s(%s) = %s" i k production-lhs f-p-set))
-                      (puthash production-lhs (nreverse f-p-set) f-set))))
+                       (message
+                        "F_%s_%s(%s) = %s"
+                        i
+                        k
+                        production-lhs
+                        f-p-set))
+                      (puthash
+                       production-lhs
+                       (nreverse f-p-set)
+                       f-set))))
                 (puthash i f-set f-sets)
                 (setq i (+ i 1))))
             (if disallow-e-first
@@ -757,10 +792,11 @@
 
                  ((equal rhs-type 'EMPTY)
                   (if disallow-e-first
-                      (if (= leading-terminals-count 0)
-                          (setq all-leading-terminals-p nil)
-                        (setq leading-terminals (append leading-terminals rhs-element))
-                        (setq leading-terminals-count (1+ leading-terminals-count)))
+                      (when (= leading-terminals-count 0)
+                          (setq all-leading-terminals-p nil))
+                    ;; Add e-identifier to first when
+                    ;; we have not found any leading terminals
+                    ;; and we are at the last symbol in input-tape
                     (when (and
                            (= leading-terminals-count 0)
                            (= input-tape-index (1- input-tape-length)))
