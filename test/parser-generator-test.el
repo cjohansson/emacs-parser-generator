@@ -296,6 +296,15 @@
     (parser-generator--first 'S)))
   (message "Passed first 3 with complex grammar")
 
+  (parser-generator-set-grammar '((Sp S) (a b) ((Sp S) (S (S a S b)) (S e)) Sp))
+  (parser-generator-set-look-ahead-number 2)
+  (parser-generator-process-grammar)
+  (should
+   (equal
+    '((a a) (a e) (e))
+    (parser-generator--first 'S)))
+  (message "Passed first 4 with complex grammar with starting e-identifier")
+
   (message "Passed tests for (parser-generator--first)"))
 
 (defun parser-generator-test--e-free-first ()
@@ -343,7 +352,7 @@
     (parser-generator--e-free-first '(a e))))
   (should
    (equal
-    '((a e))
+    '((a e) (a a))
     (parser-generator--e-free-first '(a S))))
   (message "Passed empty-free-first 2 with trailing e-identifier")
 
