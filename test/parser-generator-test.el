@@ -298,12 +298,11 @@
 
   (message "Passed tests for (parser-generator--first)"))
 
-;; Example 5.28 page 402
 (defun parser-generator-test--e-free-first ()
   "Test `parser-generator--e-free-first'."
   (message "Starting tests for (parser-generator--e-free-first)")
 
-  ;; Example 5.28 p 402
+  ;; Example 5.28 p 382
   (parser-generator-set-grammar '((S A B C) (a b c) ((S (A B)) (A (B a) e) (B (C b) C) (C c e)) S))
   (parser-generator-set-look-ahead-number 2)
   (parser-generator-process-grammar)
@@ -330,6 +329,8 @@
     nil
     (parser-generator--e-free-first '(S b a))))
   (message "Passed empty-free-first 1 with complex grammar 2")
+
+  ;; TODO Test cases with trailing e-identifier here
 
   (message "Passed tests for (parser-generator--empty-free-first)"))
 
