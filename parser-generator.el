@@ -675,7 +675,6 @@
   (parser-generator--debug
    (message "(parser-generator--f-set)")
    (message "input-tape: %s" input-tape)
-   (message "state: %s" state)
    (message "stack: %s" stack))
 
   (let ((f-set)

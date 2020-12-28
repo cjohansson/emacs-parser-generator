@@ -314,6 +314,7 @@
     (parser-generator--first 'S)))
   (message "Passed first 5 with complex grammar with starting e-identifier variant 2")
 
+  ;; TODO Fix i-max so it automatically is the highest needed number
   
   (parser-generator-set-grammar '((Sp S) (a b) ((Sp S) (S (S a S b) e)) Sp))
   (parser-generator-set-look-ahead-number 2)
@@ -322,7 +323,7 @@
    (equal
     '((a) (a a) (a b) (e))
     (parser-generator--first 'S)))
-  (message "Passed first 5 with complex grammar with starting e-identifier variant 1")
+  (message "Passed first 6 with complex grammar with starting e-identifier variant 1")
 
   (parser-generator-set-grammar '((Sp S) (a b) ((Sp S) (S (S a S b)) (S e)) Sp))
   (parser-generator-set-look-ahead-number 2)
@@ -331,7 +332,7 @@
    (equal
     '((a) (a a) (a b) (e))
     (parser-generator--first 'S)))
-  (message "Passed first 6 with complex grammar with starting e-identifier variant 2")
+  (message "Passed first 7 with complex grammar with starting e-identifier variant 2")
 
   (message "Passed tests for (parser-generator--first)"))
 
