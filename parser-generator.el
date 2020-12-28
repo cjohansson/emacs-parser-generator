@@ -632,7 +632,7 @@
       (parser-generator--debug
        (message "Generated F-sets")))))
 
-;; p. 358
+;; p. 357
 (defun parser-generator--f-set (input-tape state stack)
   "A deterministic push-down transducer (DPDT) for building F-sets from INPUT-TAPE, STATE and STACK."
   (unless (listp input-tape)
