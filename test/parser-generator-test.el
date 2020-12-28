@@ -265,7 +265,7 @@
     (parser-generator--first 'S)))
   (message "Passed first 3 with semi-complex grammar")
 
-  (parser-generator-set-grammar '((S A B C) (a b c) ((S A B) (A (B a) e) (B (C b) C) (C c e)) S))
+  (parser-generator-set-grammar '((S A B C) (a b c) ((S (A B)) (A (B a) e) (B (C b) C) (C c e)) S))
   (parser-generator-set-look-ahead-number 1)
   (parser-generator-process-grammar)
 
@@ -321,7 +321,7 @@
   (parser-generator-process-grammar)
   (should
    (equal
-    '((a) (a a) (a b) (e))
+    '((a e) (a a) (a b) (e))
     (parser-generator--first 'S)))
   (message "Passed first 6 with complex grammar with starting e-identifier variant 1")
 
@@ -330,7 +330,7 @@
   (parser-generator-process-grammar)
   (should
    (equal
-    '((a) (a a) (a b) (e))
+    '((a e) (a a) (a b) (e))
     (parser-generator--first 'S)))
   (message "Passed first 7 with complex grammar with starting e-identifier variant 2")
 

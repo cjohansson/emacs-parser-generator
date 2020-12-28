@@ -588,7 +588,7 @@
            parser-generator--f-free-sets)
     (let ((productions (parser-generator--get-grammar-productions))
           (k parser-generator--look-ahead-number))
-      (let ((i-max (length productions))
+      (let ((i-max (* 2 (length productions)))
             (disallow-set '(nil t)))
         (dolist (disallow-e-first disallow-set)
           (let ((f-sets (make-hash-table :test 'equal))
@@ -688,6 +688,7 @@
      (message "input-tape-length: %s" input-tape-length)
      (message "k: %s" k)
      (message "i: %s" i))
+
     (while stack
       (let ((stack-symbol (pop stack)))
         (parser-generator--debug
@@ -701,13 +702,13 @@
            (message "all-leading-terminals-p: %s" all-leading-terminals-p)
            (message "input-tape-index: %s" input-tape-index))
 
-          ;; Flag whether leading-terminal is empty or not
+          ;; Flag whether leading-terminal is the e-identifier or not
           (when (parser-generator--valid-e-p leading-terminals)
             (setq e-first-p t))
 
           (parser-generator--debug (message "e-first-p: %s" e-first-p))
 
-          ;; If leading terminal is empty and we have input-tape left, disregard it
+          ;; If leading terminal is the e-identifier and we have input-tape left, disregard it
           (when (and
                  (not disallow-e-first)
                  e-first-p
@@ -716,21 +717,24 @@
             (setq leading-terminals nil))
 
           (let ((leading-terminals-count (length leading-terminals)))
-            (parser-generator--debug (message "leading-terminals-count: %s" leading-terminals-count))
+            (parser-generator--debug
+             (message "leading-terminals-count: %s" leading-terminals-count))
+
             (while (and
                     (< input-tape-index input-tape-length)
                     (< leading-terminals-count k)
                     all-leading-terminals-p)
               (let ((rhs-element (nth input-tape-index input-tape))
                     (rhs-type))
-                (parser-generator--debug (message "rhs-element: %s" rhs-element))
+                (parser-generator--debug
+                 (message "rhs-element: %s" rhs-element))
 
                 ;; Determine symbol type
                 (cond
                  ((parser-generator--valid-non-terminal-p rhs-element)
                   (setq rhs-type 'NON-TERMINAL))
                  ((parser-generator--valid-e-p rhs-element)
-                  (setq rhs-type 'EMPTY))
+                  (setq rhs-type 'E-IDENTIFIER))
                  ((parser-generator--valid-terminal-p rhs-element)
                   (setq rhs-type 'TERMINAL))
                  (t (error (format "Invalid symbol %s" rhs-element))))
@@ -740,62 +744,91 @@
 
                  ((equal rhs-type 'NON-TERMINAL)
                   (if (> i 0)
-                      (let ((sub-terminal-sets (gethash rhs-element (gethash (1- i) f-sets))))
+                      (let ((sub-terminal-sets
+                             (gethash rhs-element
+                                      (gethash
+                                       (1- i)
+                                       f-sets))))
                         (if sub-terminal-sets
                             (progn
                               (parser-generator--debug
-                               (message "Sub-terminal-sets F_%s_%s(%s) = %s (%d)" (1- i) k rhs-element sub-terminal-sets (length sub-terminal-sets)))
+                               (message
+                                "Sub-terminal-sets F_%s_%s(%s) = %s (%d)"
+                                (1- i)
+                                k
+                                rhs-element
+                                sub-terminal-sets
+                                (length sub-terminal-sets)))
                               (let ((sub-terminal-set (car sub-terminal-sets)))
 
                                 (unless (= (length sub-terminal-sets) 1)
                                   ;; Should branch off here, each unique permutation should be included in set
-                                  ;; Follow first alternative in this scope but follow the rest in separate scopes
+                                  ;; Follow the first alternative in this scope but follow the rest in separate scopes
                                   (let ((sub-terminal-index 0))
                                     (dolist (sub-terminal-alternative-set sub-terminal-sets)
                                       (unless (= sub-terminal-index 0)
                                         (let ((alternative-all-leading-terminals-p all-leading-terminals-p))
-                                          (parser-generator--debug (message "Sub-terminal-alternative-set: %s" sub-terminal-alternative-set))
+                                          (parser-generator--debug
+                                           (message "Sub-terminal-alternative-set: %s" sub-terminal-alternative-set))
 
-                                          ;; When sub-set only contains the e symbol
-                                          (when (parser-generator--valid-e-p (car sub-terminal-alternative-set))
-                                            (parser-generator--debug (message "alternative-set is e symbol"))
-                                            (if disallow-e-first
-                                                (when (= leading-terminals-count 0)
-                                                  (setq alternative-all-leading-terminals-p nil))
-                                              (when (or
-                                                     (> leading-terminals-count 0)
-                                                     (< input-tape-index (1- input-tape-length)))
-                                                (setq sub-terminal-alternative-set nil)
-                                                (parser-generator--debug (message "Cleared sub-terminal-alternative-set")))))
+                                          ;; When sub-set only contains the e identifier
+                                          (when (parser-generator--valid-e-p
+                                                 (car sub-terminal-alternative-set))
+                                            (parser-generator--debug
+                                             (message "alternative-set is the e identifier"))
 
-                                          (let ((sub-rhs-leading-terminals (append leading-terminals sub-terminal-alternative-set)))
-                                            (parser-generator--debug (message "sub-rhs-leading-terminals: %s" sub-rhs-leading-terminals))
+                                            ;; TODO Branch off here in two separate tracks
+
+                                            (when (and
+                                                   disallow-e-first
+                                                   (= leading-terminals-count 0))
+                                                  (setq alternative-all-leading-terminals-p nil)))
+
+                                          (let ((sub-rhs-leading-terminals
+                                                 (append
+                                                  leading-terminals
+                                                  sub-terminal-alternative-set)))
+                                            (parser-generator--debug
+                                             (message
+                                              "sub-rhs-leading-terminals: %s"
+                                              sub-rhs-leading-terminals))
                                             (when (> (length sub-rhs-leading-terminals) k)
-                                              (setq sub-rhs-leading-terminals (butlast sub-rhs-leading-terminals (- (length sub-rhs-leading-terminals) k))))
-                                            (push `(,sub-rhs-leading-terminals ,alternative-all-leading-terminals-p ,(1+ input-tape-index)) stack))))
+                                              (setq
+                                               sub-rhs-leading-terminals
+                                               (butlast
+                                                sub-rhs-leading-terminals
+                                                (- (length sub-rhs-leading-terminals) k))))
+                                            (push `(
+                                                    ,sub-rhs-leading-terminals
+                                                    ,alternative-all-leading-terminals-p
+                                                    ,(1+ input-tape-index))
+                                                  stack))))
                                       (setq sub-terminal-index (1+ sub-terminal-index)))))
 
-                                (parser-generator--debug (message "Sub-terminal-set: %s" sub-terminal-set))
-                                (when (or
-                                       (not (parser-generator--valid-e-p (car sub-terminal-set)))
-                                       (= input-tape-index (1- input-tape-length)))
-                                  (setq leading-terminals (append leading-terminals sub-terminal-set))
-                                  (setq leading-terminals-count (+ leading-terminals-count (length sub-terminal-set)))
-                                  (when (> leading-terminals-count k)
-                                    (setq leading-terminals (butlast leading-terminals (- leading-terminals-count k)))
-                                    (setq leading-terminals-count k)))))
+                                (parser-generator--debug
+                                 (message "Sub-terminal-set: %s" sub-terminal-set))
+
+                                ;; TODO when sub-terminal-set is the e-identifier branch off in two separate tracks
+
+                                (setq leading-terminals (append leading-terminals sub-terminal-set))
+                                (setq leading-terminals-count (+ leading-terminals-count (length sub-terminal-set)))
+                                (when (> leading-terminals-count k)
+                                  (setq leading-terminals (butlast leading-terminals (- leading-terminals-count k)))
+                                  (setq leading-terminals-count k))))
                           (parser-generator--debug
                            (message "Found no subsets for %s %s" rhs-element (1- i)))
                           (setq all-leading-terminals-p nil)))
                     (setq all-leading-terminals-p nil)))
 
-                 ((equal rhs-type 'EMPTY)
+                 ((equal rhs-type 'E-IDENTIFIER)
                   (if disallow-e-first
                       (when (= leading-terminals-count 0)
-                          (setq all-leading-terminals-p nil))
-                    ;; Add e-identifier to first when
+                        (setq all-leading-terminals-p nil))
+                    ;; Add e-identifier to leading terminals when
                     ;; we have not found any leading terminals
                     ;; and we are at the last symbol in input-tape
+
+                    ;; TODO Branch off here with two separate tracks
                     (when (and
                            (= leading-terminals-count 0)
                            (= input-tape-index (1- input-tape-length)))
@@ -803,9 +836,8 @@
                       (setq leading-terminals-count (1+ leading-terminals-count)))))
 
                  ((equal rhs-type 'TERMINAL)
-                  (when all-leading-terminals-p
-                    (setq leading-terminals (append leading-terminals (list rhs-element)))
-                    (setq leading-terminals-count (1+ leading-terminals-count))))))
+                  (setq leading-terminals (append leading-terminals (list rhs-element)))
+                  (setq leading-terminals-count (1+ leading-terminals-count)))))
               (setq input-tape-index (1+ input-tape-index)))
             (when (> leading-terminals-count 0)
               (unless (listp leading-terminals)
@@ -822,7 +854,7 @@
     (error "Invalid sentential form β! %s" β))
   (let ((productions (parser-generator--get-grammar-productions))
         (k parser-generator--look-ahead-number))
-    (let ((i-max (length productions)))
+    (let ((i-max (* 2 (length productions))))
 
       ;; Generate F-sets only once per grammar
       (parser-generator--generate-f-sets)
