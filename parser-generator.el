@@ -30,17 +30,9 @@
   nil
   "Generated F-sets for grammar.")
 
-(defvar parser-generator--f-sets-max-index
-  nil
-  "Max index for generated F-sets for grammar.")
-
 (defvar parser-generator--f-free-sets
   nil
   "Generated e-free F-sets for grammar.")
-
-(defvar parser-generator--f-free-sets-max-index
-  nil
-  "Max index for generated e-free F-sets for grammar.")
 
 (defvar parser-generator--look-ahead-number
   nil
@@ -676,13 +668,10 @@
                 (puthash i f-set f-sets)
                 (setq i (+ i 1))))
             (if disallow-e-first
-                (progn
-                  (setq parser-generator--f-free-sets f-sets)
-                  (setq parser-generator--f-free-sets-max-index (1- i)))
-              (setq parser-generator--f-sets f-sets)
-              (setq parser-generator--f-sets-max-index (1- i))))))
-      (parser-generator--debug
-       (message "Generated F-sets")))))
+                (setq parser-generator--f-free-sets (gethash (1- i) f-sets))
+              (setq parser-generator--f-sets (gethash (1- i) f-sets)))))))
+    (parser-generator--debug
+     (message "Generated F-sets"))))
 
 ;; p. 357
 (defun parser-generator--f-set (input-tape state stack)
@@ -921,8 +910,8 @@
                         (if (and
                              disallow-e-first
                              (= first-length 0))
-                            (setq symbol-f-set (gethash symbol (gethash parser-generator--f-free-sets-max-index parser-generator--f-free-sets)))
-                          (setq symbol-f-set (gethash symbol (gethash parser-generator--f-sets-max-index parser-generator--f-sets))))
+                            (setq symbol-f-set (gethash symbol parser-generator--f-free-sets))
+                          (setq symbol-f-set (gethash symbol parser-generator--f-sets)))
                         (parser-generator--debug
                          (message "symbol-f-set: %s" symbol-f-set))
                         (if (not symbol-f-set)
