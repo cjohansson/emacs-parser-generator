@@ -30,9 +30,17 @@
   nil
   "Generated F-sets for grammar.")
 
+(defvar parser-generator--f-sets-max-index
+  nil
+  "Max index for generated F-sets for grammar.")
+
 (defvar parser-generator--f-free-sets
   nil
   "Generated e-free F-sets for grammar.")
+
+(defvar parser-generator--f-free-sets-max-index
+  nil
+  "Max index for generated e-free F-sets for grammar.")
 
 (defvar parser-generator--look-ahead-number
   nil
@@ -588,13 +596,14 @@
            parser-generator--f-free-sets)
     (let ((productions (parser-generator--get-grammar-productions))
           (k parser-generator--look-ahead-number))
-      (let ((i-max (* 2 (length productions)))
-            (disallow-set '(nil t)))
+      (let ((disallow-set '(nil t))
+            (expanded-all nil))
         (dolist (disallow-e-first disallow-set)
           (let ((f-sets (make-hash-table :test 'equal))
                 (i 0))
-            (while (< i i-max)
+            (while (not expanded-all)
               (parser-generator--debug (message "i = %s" i))
+              (setq expanded-all t)
               (let ((f-set (make-hash-table :test 'equal)))
 
                 ;; Iterate all productions, set F_i
@@ -611,7 +620,8 @@
                     (let ((f-p-set))
                       (dolist (rhs-p production-rhs)
                         (let ((rhs-string rhs-p))
-                          (let ((rhs-leading-terminals
+                          (let ((rhs-leading-terminals)
+                                (f-set-return
                                  (parser-generator--f-set
                                   rhs-string
                                   `(
@@ -620,6 +630,10 @@
                                     ,f-sets
                                     ,disallow-e-first)
                                   '(("" t 0)))))
+                            (unless (nth 0 f-set-return)
+                              (setq expanded-all nil))
+                            (setq rhs-leading-terminals
+                                  (nth 1 f-set-return))
                             (parser-generator--debug
                              (message
                               "Leading %d terminals at index %s (%s) -> %s = %s"
@@ -662,8 +676,11 @@
                 (puthash i f-set f-sets)
                 (setq i (+ i 1))))
             (if disallow-e-first
-                (setq parser-generator--f-free-sets f-sets)
-              (setq parser-generator--f-sets f-sets)))))
+                (progn
+                  (setq parser-generator--f-free-sets f-sets)
+                  (setq parser-generator--f-free-sets-max-index (1- i)))
+              (setq parser-generator--f-sets f-sets)
+              (setq parser-generator--f-sets-max-index (1- i))))))
       (parser-generator--debug
        (message "Generated F-sets")))))
 
@@ -682,7 +699,8 @@
         (k (nth 0 state))
         (i (nth 1 state))
         (f-sets (nth 2 state))
-        (disallow-e-first (nth 3 state)))
+        (disallow-e-first (nth 3 state))
+        (expanded-all t))
     (parser-generator--debug
      (message "disallow-e-first: %s" disallow-e-first)
      (message "input-tape-length: %s" input-tape-length)
@@ -706,7 +724,8 @@
           (when (parser-generator--valid-e-p leading-terminals)
             (setq e-first-p t))
 
-          (parser-generator--debug (message "e-first-p: %s" e-first-p))
+          (parser-generator--debug
+           (message "e-first-p: %s" e-first-p))
 
           ;; If leading terminal is the e-identifier and we have input-tape left, disregard it
           (when (and
@@ -745,10 +764,11 @@
                  ((equal rhs-type 'NON-TERMINAL)
                   (if (> i 0)
                       (let ((sub-terminal-sets
-                             (gethash rhs-element
-                                      (gethash
-                                       (1- i)
-                                       f-sets))))
+                             (gethash
+                              rhs-element
+                              (gethash
+                               (1- i)
+                               f-sets))))
                         (if sub-terminal-sets
                             (progn
                               (parser-generator--debug
@@ -782,7 +802,7 @@
                                             (when (and
                                                    disallow-e-first
                                                    (= leading-terminals-count 0))
-                                                  (setq alternative-all-leading-terminals-p nil)))
+                                              (setq alternative-all-leading-terminals-p nil)))
 
                                           (let ((sub-rhs-leading-terminals
                                                  (append
@@ -817,7 +837,9 @@
                                   (setq leading-terminals-count k))))
                           (parser-generator--debug
                            (message "Found no subsets for %s %s" rhs-element (1- i)))
+                          (setq expanded-all nil)
                           (setq all-leading-terminals-p nil)))
+                    (setq expanded-all nil)
                     (setq all-leading-terminals-p nil)))
 
                  ((equal rhs-type 'E-IDENTIFIER)
@@ -843,7 +865,7 @@
               (unless (listp leading-terminals)
                 (setq leading-terminals (list leading-terminals)))
               (push leading-terminals f-set))))))
-    f-set))
+    (list expanded-all f-set)))
 
 ;; Algorithm 5.5, p. 357
 (defun parser-generator--first (β &optional disallow-e-first)
@@ -854,7 +876,6 @@
     (error "Invalid sentential form β! %s" β))
   (let ((productions (parser-generator--get-grammar-productions))
         (k parser-generator--look-ahead-number))
-    (let ((i-max (* 2 (length productions))))
 
       ;; Generate F-sets only once per grammar
       (parser-generator--generate-f-sets)
@@ -900,8 +921,8 @@
                         (if (and
                              disallow-e-first
                              (= first-length 0))
-                            (setq symbol-f-set (gethash symbol (gethash (1- i-max) parser-generator--f-free-sets)))
-                          (setq symbol-f-set (gethash symbol (gethash (1- i-max) parser-generator--f-sets))))
+                            (setq symbol-f-set (gethash symbol (gethash parser-generator--f-free-sets-max-index parser-generator--f-free-sets)))
+                          (setq symbol-f-set (gethash symbol (gethash parser-generator--f-sets-max-index parser-generator--f-sets))))
                         (parser-generator--debug
                          (message "symbol-f-set: %s" symbol-f-set))
                         (if (not symbol-f-set)
@@ -935,7 +956,7 @@
                   (push first first-list))))))
 
         (setq first-list (sort first-list 'parser-generator--sort-list))
-        first-list))))
+        first-list)))
 
 ;; Definition at p. 343
 (defun parser-generator--follow (β)

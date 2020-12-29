@@ -148,7 +148,6 @@
   (parser-generator-set-grammar '((S) (a) ((S a)) S))
   (parser-generator-set-look-ahead-number 1)
   (parser-generator-process-grammar)
-
   (should
    (equal
     '((a))
@@ -158,7 +157,6 @@
   (parser-generator-set-grammar '((S) (a) ((S a)) S))
   (parser-generator-set-look-ahead-number 1)
   (parser-generator-process-grammar)
-
   (should
    (equal
     '((a))
@@ -168,7 +166,6 @@
   (parser-generator-set-grammar '((S) (a) ((S a)) S))
   (parser-generator-set-look-ahead-number 2)
   (parser-generator-process-grammar)
-
   (should
    (equal
     '((a a))
@@ -178,7 +175,6 @@
   (parser-generator-set-grammar '((S) (a) ((S a)) S))
   (parser-generator-set-look-ahead-number 2)
   (parser-generator-process-grammar)
-
   (should
    (equal
     '((a))
@@ -188,7 +184,6 @@
   (parser-generator-set-grammar '((S) ("a" "b" "c") ((S ("a" "b" "c"))) S))
   (parser-generator-set-look-ahead-number 2)
   (parser-generator-process-grammar)
-
   (should
    (equal
     '(("a" "b"))
@@ -198,7 +193,6 @@
   (parser-generator-set-grammar '((S) ("a" b "c") ((S ("a" b "c"))) S))
   (parser-generator-set-look-ahead-number 3)
   (parser-generator-process-grammar)
-
   (should
    (equal
     '(("a" b "c"))
@@ -208,7 +202,6 @@
   (parser-generator-set-grammar '((S A) (b) ((S A) (A b)) S))
   (parser-generator-set-look-ahead-number 2)
   (parser-generator-process-grammar)
-
   (should
    (equal
     '((b))
@@ -218,7 +211,6 @@
   (parser-generator-set-grammar '((S A) ("a" "b") ((S A) (A ("b" "a"))) S))
   (parser-generator-set-look-ahead-number 2)
   (parser-generator-process-grammar)
-
   (should
    (equal
     '(("b" "a"))
@@ -228,7 +220,6 @@
   (parser-generator-set-grammar '((S A) ("a" "b" "c" "d") ((S A) (A ("b" "a" "c" "d"))) S))
   (parser-generator-set-look-ahead-number 3)
   (parser-generator-process-grammar)
-
   (should
    (equal
     '(("b" "a" "c"))
@@ -238,7 +229,6 @@
   (parser-generator-set-grammar '((S A B) ("c" "d") ((S A) (A B) (B "c" "d")) S))
   (parser-generator-set-look-ahead-number 1)
   (parser-generator-process-grammar)
-
   (should
    (equal
     '(("c") ("d"))
@@ -248,7 +238,6 @@
   (parser-generator-set-grammar '((S A B) (a c d f) ((S (A a)) (A B) (B (c f) d)) S))
   (parser-generator-set-look-ahead-number 2)
   (parser-generator-process-grammar)
-
   (should
    (equal
     '((c f) (d a))
@@ -258,7 +247,6 @@
   (parser-generator-set-grammar '((S A B) ("a" "c" "d" "m") ((S A) (A (B "a" "m")) (B "c" "d")) S))
   (parser-generator-set-look-ahead-number 3)
   (parser-generator-process-grammar)
-
   (should
    (equal
     '(("c" "a" "m") ("d" "a" "m"))
@@ -268,7 +256,6 @@
   (parser-generator-set-grammar '((S A B C) (a b c) ((S (A B)) (A (B a) e) (B (C b) C) (C c e)) S))
   (parser-generator-set-look-ahead-number 1)
   (parser-generator-process-grammar)
-
   (should
    (equal
     '((a) (b) (c) (e))
@@ -279,7 +266,6 @@
   (parser-generator-set-grammar '((S A B C) (a b c) ((S (A B)) (A (B a) e) (B (C b) C) (C c e)) S))
   (parser-generator-set-look-ahead-number 2)
   (parser-generator-process-grammar)
-
   (should
    (equal
     '((a b) (a c) (a) (b a) (b) (c a) (c) (c b) (e))
@@ -289,7 +275,6 @@
   (parser-generator-set-grammar '((S A B C) (a b c) ((S (A B)) (A (B a) e) (B (C b) C) (C c e)) S))
   (parser-generator-set-look-ahead-number 3)
   (parser-generator-process-grammar)
-
   (should
    (equal
     '((a) (a b) (a c) (a c b) (b a) (b a b) (b a c) (b) (c a) (c a b) (c a c) (c b) (c) (c b a) (e))
@@ -313,8 +298,6 @@
     '((a) (e))
     (parser-generator--first 'S)))
   (message "Passed first 5 with complex grammar with starting e-identifier variant 2")
-
-  ;; TODO Fix i-max so it automatically is the highest needed number
   
   (parser-generator-set-grammar '((Sp S) (a b) ((Sp S) (S (S a S b) e)) Sp))
   (parser-generator-set-look-ahead-number 2)
