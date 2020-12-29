@@ -708,14 +708,6 @@
           (parser-generator--debug
            (message "e-first-p: %s" e-first-p))
 
-          ;; If leading terminal is the e-identifier and we have input-tape left, disregard it
-          (when (and
-                 (not disallow-e-first)
-                 e-first-p
-                 (< input-tape-index input-tape-length))
-            (parser-generator--debug (message "Disregarding empty first terminal"))
-            (setq leading-terminals nil))
-
           (let ((leading-terminals-count (length leading-terminals)))
             (parser-generator--debug
              (message "leading-terminals-count: %s" leading-terminals-count))
