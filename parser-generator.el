@@ -10,10 +10,6 @@
 ;;; Variables:
 
 
-(defvar parser-generator--allow-e-productions
-  nil
-  "Flag whether e-productions is allowed or not.")
-
 (defvar parser-generator--debug
   nil
   "Whether to print debug messages or not.")
@@ -310,10 +306,6 @@
   (unless (parser-generator--valid-look-ahead-number-p k)
     (error "Invalid look-ahead number k!"))
   (setq parser-generator--look-ahead-number k))
-
-(defun parser-generator--set-allow-e-productions (flag)
-  "Set FLAG whether e-productions is allowed or not."
-  (setq parser-generator--allow-e-productions flag))
 
 (defun parser-generator-set-grammar (G)
   "Set grammar G.."
@@ -771,6 +763,7 @@
                               (let ((sub-terminal-set (car sub-terminal-sets)))
 
                                 (unless (= (length sub-terminal-sets) 1)
+
                                   ;; Should branch off here, each unique permutation should be included in set
                                   ;; Follow the first alternative in this scope but follow the rest in separate scopes
                                   (let ((sub-terminal-index 0))
@@ -786,11 +779,35 @@
                                             (parser-generator--debug
                                              (message "alternative-set is the e identifier"))
 
-                                            ;; TODO Branch off here in two separate tracks
+                                            ;; Branch off here in two separate tracks, one with the e-identifier appended and one without
+                                            (if disallow-e-first
+                                                (progn
+                                                  (when (and
+                                                         all-leading-terminals-p
+                                                         (> leading-terminals-count 0))
+                                                    (parser-generator--debug (message "branched off 2"))
+                                                    ;; Branch off here with a separate track where this e-identifier is ignored
+                                                    (push `(
+                                                            ,leading-terminals
+                                                            ,all-leading-terminals-p
+                                                            ,(1+ input-tape-index))
+                                                          stack))
 
-                                            (when (and
-                                                   disallow-e-first
-                                                   (= leading-terminals-count 0))
+                                                  (setq alternative-all-leading-terminals-p nil))
+
+                                              ;; Add e-identifier to leading terminals when
+                                              ;; we have not found any leading terminals
+                                              ;; and we are at the last symbol in input-tape
+
+                                              (when all-leading-terminals-p
+                                                (parser-generator--debug (message "branched off 1"))
+                                                ;; Branch off here with a separate track where this e-identifier is ignored
+                                                (push `(
+                                                        ,leading-terminals
+                                                        ,all-leading-terminals-p
+                                                        ,(1+ input-tape-index))
+                                                      stack))
+
                                               (setq alternative-all-leading-terminals-p nil)))
 
                                           (let ((sub-rhs-leading-terminals
@@ -807,6 +824,7 @@
                                                (butlast
                                                 sub-rhs-leading-terminals
                                                 (- (length sub-rhs-leading-terminals) k))))
+                                            (parser-generator--debug (message "branched off 3"))
                                             (push `(
                                                     ,sub-rhs-leading-terminals
                                                     ,alternative-all-leading-terminals-p
@@ -817,34 +835,94 @@
                                 (parser-generator--debug
                                  (message "Sub-terminal-set: %s" sub-terminal-set))
 
-                                ;; TODO when sub-terminal-set is the e-identifier branch off in two separate tracks
+                                ;; When sub-set only contains the e identifier
+                                (if (parser-generator--valid-e-p
+                                     (car sub-terminal-set))
+                                    (progn
+                                      (parser-generator--debug
+                                       (message "sub-terminal-set is the e identifier"))
 
-                                (setq leading-terminals (append leading-terminals sub-terminal-set))
-                                (setq leading-terminals-count (+ leading-terminals-count (length sub-terminal-set)))
-                                (when (> leading-terminals-count k)
-                                  (setq leading-terminals (butlast leading-terminals (- leading-terminals-count k)))
-                                  (setq leading-terminals-count k))))
+                                      ;; Branch off here in two separate tracks, one with the e-identifier appended and one without
+                                      (if disallow-e-first
+                                          (progn
+                                            (when (and
+                                                   all-leading-terminals-p
+                                                   (> leading-terminals-count 0))
+                                              ;; Branch off here with a separate track where this e-identifier is ignored
+                                              (parser-generator--debug (message "branched off 4"))
+                                              (push `(
+                                                      ,leading-terminals
+                                                      ,all-leading-terminals-p
+                                                      ,(1+ input-tape-index))
+                                                    stack))
+
+                                            (setq all-leading-terminals-p nil))
+
+                                        ;; Add e-identifier to leading terminals when
+                                        ;; we have not found any leading terminals
+                                        ;; and we are at the last symbol in input-tape
+
+                                        (when all-leading-terminals-p
+                                          ;; Branch off here with a separate track where this e-identifier is ignored
+                                          (parser-generator--debug (message "branched off 5"))
+                                          (push `(
+                                                  ,leading-terminals
+                                                  ,all-leading-terminals-p
+                                                  ,(1+ input-tape-index))
+                                                stack))
+
+                                        (setq leading-terminals (append leading-terminals sub-terminal-set))
+                                        (setq leading-terminals-count (+ leading-terminals-count (length sub-terminal-set)))
+                                        (when (> leading-terminals-count k)
+                                          (setq leading-terminals (butlast leading-terminals (- leading-terminals-count k)))
+                                          (setq leading-terminals-count k))
+                                        (setq all-leading-terminals-p nil)))
+
+                                  (setq leading-terminals (append leading-terminals sub-terminal-set))
+                                  (setq leading-terminals-count (+ leading-terminals-count (length sub-terminal-set)))
+                                  (when (> leading-terminals-count k)
+                                    (setq leading-terminals (butlast leading-terminals (- leading-terminals-count k)))
+                                    (setq leading-terminals-count k)))))
+
                           (parser-generator--debug
                            (message "Found no subsets for %s %s" rhs-element (1- i)))
                           (setq expanded-all nil)
                           (setq all-leading-terminals-p nil)))
+
                     (setq expanded-all nil)
                     (setq all-leading-terminals-p nil)))
 
                  ((equal rhs-type 'E-IDENTIFIER)
                   (if disallow-e-first
-                      (when (= leading-terminals-count 0)
+                      (progn
+                        (when (and
+                               all-leading-terminals-p
+                               (> leading-terminals-count 0))
+                          ;; Branch off here with a separate track where this e-identifier is ignored
+                          (parser-generator--debug (message "branched off 6"))
+                          (push `(
+                                  ,leading-terminals
+                                  ,all-leading-terminals-p
+                                  ,(1+ input-tape-index))
+                                stack))
+
                         (setq all-leading-terminals-p nil))
                     ;; Add e-identifier to leading terminals when
                     ;; we have not found any leading terminals
                     ;; and we are at the last symbol in input-tape
 
-                    ;; TODO Branch off here with two separate tracks
-                    (when (and
-                           (= leading-terminals-count 0)
-                           (= input-tape-index (1- input-tape-length)))
+                    (when all-leading-terminals-p
+                      ;; Branch off here with a separate track where this e-identifier is ignored
+                      (parser-generator--debug (message "branched off 7"))
+                      (push `(
+                              ,leading-terminals
+                              ,all-leading-terminals-p
+                              ,(1+ input-tape-index))
+                            stack))
+
                       (setq leading-terminals (append leading-terminals rhs-element))
-                      (setq leading-terminals-count (1+ leading-terminals-count)))))
+                      (setq leading-terminals-count (1+ leading-terminals-count))
+                      (setq all-leading-terminals-p nil)))
 
                  ((equal rhs-type 'TERMINAL)
                   (setq leading-terminals (append leading-terminals (list rhs-element)))
@@ -863,8 +941,7 @@
     (setq β (list β)))
   (unless (parser-generator--valid-sentential-form-p β)
     (error "Invalid sentential form β! %s" β))
-  (let ((productions (parser-generator--get-grammar-productions))
-        (k parser-generator--look-ahead-number))
+  (let ((k parser-generator--look-ahead-number))
 
       ;; Generate F-sets only once per grammar
       (parser-generator--generate-f-sets)
