@@ -304,7 +304,7 @@
   (parser-generator-process-grammar)
   (should
    (equal
-    '((a e) (a a) (a b) (e))
+    '((a a) (a b) (a e) (e e))
     (parser-generator--first 'S)))
   (message "Passed first 6 with complex grammar with starting e-identifier variant 1")
 
@@ -313,7 +313,7 @@
   (parser-generator-process-grammar)
   (should
    (equal
-    '((a e) (a a) (a b) (e))
+    '((a a) (a b) (a e) (e e))
     (parser-generator--first 'S)))
   (message "Passed first 7 with complex grammar with starting e-identifier variant 2")
 

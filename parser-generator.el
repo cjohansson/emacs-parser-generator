@@ -625,7 +625,8 @@
                                     ,k
                                     ,i
                                     ,f-sets
-                                    ,disallow-e-first)
+                                    ,disallow-e-first
+                                    ,production-lhs)
                                   '(("" t 0)))))
 
                             (parser-generator--debug
@@ -723,6 +724,7 @@
         (i (nth 1 state))
         (f-sets (nth 2 state))
         (disallow-e-first (nth 3 state))
+        (lhs (nth 4 state))
         (expanded-all t))
     (parser-generator--debug
      (message "disallow-3-first: %s" disallow-e-first)
@@ -799,7 +801,8 @@
                         ;; as not fully expanded either
                         (when (and
                                sub-terminal-data
-                               (not sub-terminal-expanded))
+                               (not sub-terminal-expanded)
+                               (not (equal lhs rhs-element)))
                           (parser-generator--debug
                            (message
                             "Expanded-all negative set 1 from %s" rhs-element))
