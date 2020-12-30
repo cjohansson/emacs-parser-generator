@@ -684,14 +684,13 @@
                       (setq f-p-set (parser-generator--distinct f-p-set))
                       (parser-generator--debug
                        (message
-                        "F_%s_%s(%s) = %s"
+                        "F_%s(%s) = %s"
                         i
-                        k
                         production-lhs
-                        (list rhs-expanded-full (nreverse f-p-set))))
+                        (list rhs-expanded-full (reverse f-p-set))))
                       (puthash
                        production-lhs
-                       (list rhs-expanded-full (nreverse f-p-set))
+                       (list rhs-expanded-full (reverse f-p-set))
                        f-set))))
 
                 (puthash i f-set f-sets)
@@ -810,9 +809,8 @@
                             (progn
                               (parser-generator--debug
                                (message
-                                "Sub-terminal-sets F_%s_%s(%s) = %s (%d)"
+                                "Sub-terminal-sets F_%s(%s) = %s (%d)"
                                 (1- i)
-                                k
                                 rhs-element
                                 sub-terminal-sets
                                 (length sub-terminal-sets)))

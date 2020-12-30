@@ -253,8 +253,6 @@
     (parser-generator--first 'S)))
   (message "Passed first 3 with semi-complex grammar")
 
-  ;; TODO Need to adjust expanded-flag, A -> B a is not expanded below
-
   (parser-generator-set-grammar '((S A B C) (a b c) ((S (A B)) (A (B a) e) (B (C b) C) (C c e)) S))
   (parser-generator-set-look-ahead-number 1)
   (parser-generator-process-grammar)
