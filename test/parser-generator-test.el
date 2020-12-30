@@ -327,7 +327,6 @@
   (parser-generator-set-grammar '((S A B C) (a b c) ((S (A B)) (A (B a) e) (B (C b) C) (C c e)) S))
   (parser-generator-set-look-ahead-number 2)
   (parser-generator-process-grammar)
-
   (should
    (equal
     '((c a) (c b))
@@ -358,15 +357,25 @@
    (equal
     '((a b))
     (parser-generator--e-free-first '(a b))))
+  (message "Passed empty-free-first 2 with terminals")
   (should
    (equal
     '((a e))
     (parser-generator--e-free-first '(a e))))
+  (message "Passed empty-free-first 2 with trailing e-identifier 1")
+  (should
+   (equal
+    nil
+    (parser-generator--e-free-first 'S)))
+  (should
+   (equal
+    nil
+    (parser-generator--e-free-first '(e a))))
   (should
    (equal
     '((a a) (a e))
     (parser-generator--e-free-first '(a S))))
-  (message "Passed empty-free-first 2 with trailing e-identifier")
+  (message "Passed empty-free-first 2 with trailing e-identifier 2")
 
   (message "Passed tests for (parser-generator--empty-free-first)"))
 

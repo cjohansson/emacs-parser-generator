@@ -1076,6 +1076,14 @@
                           (setq first (append first (car symbol-f-set))))))))
                   (setq input-tape-index (1+ input-tape-index)))
                 (when (> first-length 0)
+
+                  ;; If length exceeds k, strip trailing symbols
+                  (when (> (length first) k)
+                    (setq first (reverse first))
+                    (while (> (length first) k)
+                      (pop first))
+                    (setq first (reverse first)))
+
                   ;; When length of terminals list is below K
                   ;; fill up with e-identifiers
                   (when (and
