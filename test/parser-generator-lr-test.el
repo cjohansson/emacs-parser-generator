@@ -312,6 +312,8 @@
   (parser-generator-set-look-ahead-number 1)
   (parser-generator-process-grammar)
   (parser-generator-lr-generate-parser-tables)
+  (message "goto-tables: %s" (parser-generator--hash-values-to-list parser-generator-lr--goto-tables t))
+  (message "action-tables: %s" (parser-generator--hash-values-to-list parser-generator-lr--action-tables t))
   (setq
    parser-generator-lex-analyzer--function
    (lambda (index)
@@ -365,29 +367,32 @@
   (parser-generator-lr-test--parse-incremental-vs-regular)
   (message "Passed incremental-tests")
 
-  ;; (parser-generator-set-grammar '((Sp S) ("a" "b") ((Sp S) (S (S "a" S "b")) (S e)) Sp))
-  ;; (parser-generator-set-look-ahead-number 2)
-  ;; (parser-generator-process-grammar)
-  ;; (let ((lr-items (parser-generator--hash-values-to-list (parser-generator-lr-generate-parser-tables) t)))
-  ;;   (message "lr-items: %s" lr-items))
-  ;; (setq
-  ;;  parser-generator-lex-analyzer--function
-  ;;  (lambda (index)
-  ;;    (let* ((string '(("a" 1 . 2) ("a" 2 . 3) ("b" 3 . 4)))
-  ;;           (string-length (length string))
-  ;;           (max-index index)
-  ;;           (tokens))
-  ;;      (while (and
-  ;;              (< (1- index) string-length)
-  ;;              (< (1- index) max-index))
-  ;;        (push (nth (1- index) string) tokens)
-  ;;        (setq index (1+ index)))
-  ;;      (nreverse tokens))))
-  ;; (should
-  ;;  (equal
-  ;;   '(2 2 2 1 1)
-  ;;   (parser-generator-lr-parse)))
-  ;; (message "Passed test with terminals as string with look-ahead-number 2")
+  (parser-generator-set-grammar '((Sp S) ("a" "b") ((Sp S) (S (S "a" S "b")) (S e)) Sp))
+  (parser-generator-set-look-ahead-number 2)
+  (parser-generator-process-grammar)
+  (let ((lr-items (parser-generator--hash-values-to-list (parser-generator-lr-generate-parser-tables) t)))
+    (message "lr-items: %s" lr-items)
+    (message "goto-tables: %s" (parser-generator--hash-values-to-list parser-generator-lr--goto-tables t))
+    ;; TODO Should generate accept somewhere in this action-table
+    (message "action-tables: %s" (parser-generator--hash-values-to-list parser-generator-lr--action-tables t)))
+  (setq
+   parser-generator-lex-analyzer--function
+   (lambda (index)
+     (let* ((string '(("a" 1 . 2) ("a" 2 . 3) ("b" 3 . 4)))
+            (string-length (length string))
+            (max-index index)
+            (tokens))
+       (while (and
+               (< (1- index) string-length)
+               (< (1- index) max-index))
+         (push (nth (1- index) string) tokens)
+         (setq index (1+ index)))
+       (nreverse tokens))))
+  (should
+   (equal
+    '(2 2 2 1 1)
+    (parser-generator-lr-parse)))
+  (message "Passed test with terminals as string with look-ahead-number 2")
 
 
   (message "Passed tests for (parser-generator-lr--parse)"))
@@ -551,7 +556,7 @@
 
 (defun parser-generator-lr-test ()
   "Run test."
-  (setq debug-on-error t)
+  ;; (setq debug-on-error t)
 
   (parser-generator-lr-test--items-for-prefix)
   (parser-generator-lr-test--items-valid-p)

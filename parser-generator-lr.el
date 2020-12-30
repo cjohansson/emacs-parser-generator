@@ -108,14 +108,17 @@
                                     (error "Expecting production number for %s from LR-item %s!" production lr-item))
 
                                   (if (and
-                                       (= production-number 0)
-                                       (= (length u) 1)
-                                       (parser-generator--valid-e-p (car u)))
+                                       (>= (length u) 1)
+                                       (parser-generator--valid-e-p
+                                        (nth (1- (length u)) u)))
                                       (progn
                                         ;; Reduction by first production
                                         ;; of empty look-ahead means grammar has been accepted
+                                        (message "accept of %s" u)
                                         (push (list u 'accept) action-table)
                                         (setq found-action t))
+
+                                    (message "no accept of %s, p: %s" u production-number)
 
                                     ;; save reduction action in action table
                                     (push (list u 'reduce production-number) action-table)
@@ -592,7 +595,7 @@
                 ;; transfer to an error recovery routine).
 
                 (error (format
-                        "Invalid syntax! Expected one of %s found %s at index %s"
+                        "Invalid syntax! Expected one of %s found %s at index %s "
                         possible-look-aheads
                         look-ahead
                         parser-generator-lex-analyzer--index)
