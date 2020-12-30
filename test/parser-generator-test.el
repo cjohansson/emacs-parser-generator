@@ -125,7 +125,7 @@
 
   (should
    (equal
-    '((a))
+    '((a e))
     (parser-generator--follow 'A)))
   (message "Passed follow 2 with intermediate grammar")
 
