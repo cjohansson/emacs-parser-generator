@@ -177,7 +177,7 @@
   (parser-generator-process-grammar)
   (should
    (equal
-    '((a))
+    '((a e))
     (parser-generator--first '(a))))
   (message "Passed first 1d with rudimentary grammar")
 
@@ -204,7 +204,7 @@
   (parser-generator-process-grammar)
   (should
    (equal
-    '((b))
+    '((b e))
     (parser-generator--first 'S)))
   (message "Passed first 1 with intermediate grammar")
 
@@ -268,7 +268,7 @@
   (parser-generator-process-grammar)
   (should
    (equal
-    '((a b) (a c) (a) (b a) (b) (c a) (c) (c b) (e))
+    '((a b) (a c) (a e) (b a) (b e) (c a) (c b) (c e) (e e))
     (parser-generator--first 'S)))
   (message "Passed first 2 with complex grammar")
 
@@ -277,7 +277,7 @@
   (parser-generator-process-grammar)
   (should
    (equal
-    '((a) (a b) (a c) (a c b) (b a) (b a b) (b a c) (b) (c a) (c a b) (c a c) (c b) (c) (c b a) (e))
+    '((a b e) (a c b) (a c e) (a e e) (b a b) (b a c) (b a e) (b e e) (c a b) (c a c) (c a e) (c b a) (c b e) (c e e) (e e e))
     (parser-generator--first 'S)))
   (message "Passed first 3 with complex grammar")
 

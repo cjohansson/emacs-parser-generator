@@ -11,7 +11,7 @@
 
 
 (defvar parser-generator--debug
-  t
+  nil
   "Whether to print debug messages or not.")
 
 (defvar parser-generator--e-identifier
@@ -1073,10 +1073,19 @@
                           (setq first (append first (car symbol-f-set))))))))
                   (setq input-tape-index (1+ input-tape-index)))
                 (when (> first-length 0)
+                  ;; When length of terminals list is below K
+                  ;; fill up with e-identifiers
+                  (when (and
+                         (< (length first) k))
+                    (setq first (reverse first))
+                    (while (< (length first) k)
+                      (push parser-generator--e-identifier first))
+                    (setq first (reverse first)))
                   (parser-generator--debug
                    (message "push to first-list: %s to %s" first first-list))
                   (push first first-list))))))
 
+        (setq first-list (parser-generator--distinct first-list))
         (setq first-list (sort first-list 'parser-generator--sort-list))
         first-list)))
 
