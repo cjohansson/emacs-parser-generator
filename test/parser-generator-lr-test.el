@@ -363,7 +363,6 @@
        (nreverse tokens))))
 
   (parser-generator-lr-test--parse-incremental-vs-regular)
-
   (message "Passed incremental-tests")
 
   ;; (parser-generator-set-grammar '((Sp S) ("a" "b") ((Sp S) (S (S "a" S "b")) (S e)) Sp))
@@ -374,7 +373,7 @@
   ;; (setq
   ;;  parser-generator-lex-analyzer--function
   ;;  (lambda (index)
-  ;;    (let* ((string '(("a" 1 . 2) ("a" 2 . 3) ("b" 3 . 4) ("b" 4 . 5)))
+  ;;    (let* ((string '(("a" 1 . 2) ("a" 2 . 3) ("b" 3 . 4)))
   ;;           (string-length (length string))
   ;;           (max-index index)
   ;;           (tokens))
@@ -552,7 +551,7 @@
 
 (defun parser-generator-lr-test ()
   "Run test."
-  ;; (setq debug-on-error t)
+  (setq debug-on-error t)
 
   (parser-generator-lr-test--items-for-prefix)
   (parser-generator-lr-test--items-valid-p)

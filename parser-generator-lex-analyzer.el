@@ -40,9 +40,10 @@
   (let ((meta-information))
     (condition-case error
         (progn
-          (setq meta-information (funcall
-                                  parser-generator-lex-analyzer--get-function
-                                  token)))
+          (setq meta-information
+                (funcall
+                 parser-generator-lex-analyzer--get-function
+                 token)))
       (error (error
               "Lex-analyze failed to get token meta-data of %s, error: %s"
               token
@@ -108,12 +109,13 @@
                    (funcall
                     parser-generator-lex-analyzer--function
                     parser-generator-lex-analyzer--index)))
-              (unless (listp (car token))
-                (setq token (list token)))
-              (let ((first-token (car token)))
-                (setq parser-generator-lex-analyzer--index
-                      (cdr (cdr first-token)))
-                (push first-token tokens))))
+              (when token
+                (unless (listp (car token))
+                  (setq token (list token)))
+                (let ((first-token (car token)))
+                  (setq parser-generator-lex-analyzer--index
+                        (cdr (cdr first-token)))
+                  (push first-token tokens)))))
         (error (error
                 "Lex-analyze failed to pop token at %s, error: %s"
                 parser-generator-lex-analyzer--index

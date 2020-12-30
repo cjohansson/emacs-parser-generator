@@ -125,7 +125,7 @@
     (parser-generator-lex-analyzer--pop-token)))
   (should
    (equal
-    '(nil)
+    nil
     (parser-generator-lex-analyzer--pop-token)))
 
   (message "Ended tests for (parser-generator-lex-analyzer--pop-token)"))
