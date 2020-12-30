@@ -317,6 +317,26 @@
     (parser-generator--first 'S)))
   (message "Passed first 7 with complex grammar with starting e-identifier variant 2")
 
+  (parser-generator-set-grammar '((Sp S) (a b) ((Sp S) (S (S a S b)) (S e)) Sp))
+  (parser-generator-set-look-ahead-number 3)
+  (parser-generator-process-grammar)
+  (message "First-3: %s" (parser-generator--first 'S))
+  (should
+   (equal
+    '((a a a a) (a a a b) (a a b b))
+    (parser-generator--first 'S)))
+  (message "Passed first 8 with complex grammar with starting e-identifier variant 2")
+
+  (parser-generator-set-grammar '((Sp S) (a b) ((Sp S) (S (S a S b)) (S e)) Sp))
+  (parser-generator-set-look-ahead-number 4)
+  (parser-generator-process-grammar)
+  (message "First-4: %s" (parser-generator--first 'S))
+  (should
+   (equal
+    '((a a a a) (a a a b) (a a b b))
+    (parser-generator--first 'S)))
+  (message "Passed first 9 with complex grammar with starting e-identifier variant 2")
+
   (message "Passed tests for (parser-generator--first)"))
 
 (defun parser-generator-test--e-free-first ()

@@ -369,7 +369,8 @@
   ;; (parser-generator-set-grammar '((Sp S) ("a" "b") ((Sp S) (S (S "a" S "b")) (S e)) Sp))
   ;; (parser-generator-set-look-ahead-number 2)
   ;; (parser-generator-process-grammar)
-  ;; (parser-generator-lr-generate-parser-tables)
+  ;; (let ((lr-items (parser-generator--hash-values-to-list (parser-generator-lr-generate-parser-tables) t)))
+  ;;   (message "lr-items: %s" lr-items))
   ;; (setq
   ;;  parser-generator-lex-analyzer--function
   ;;  (lambda (index)
