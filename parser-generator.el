@@ -596,7 +596,7 @@
               ;; Make one iteration after everything has been expanded
               (when expanded-all
                 (setq expanded-all-second t))
-              (when (> i 100)
+              (when (> i 1000)
                 (error "Endless loop!"))
               (parser-generator--debug (message "i = %s" i))
               (setq expanded-all t)
