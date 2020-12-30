@@ -113,17 +113,19 @@
 
   (message "Passed failing lex analysis 2")
 
+  (setq parser-generator--look-ahead-number 1)
+
   (should
    (equal
-    '("a" 1 . 2)
+    '(("a" 1 . 2))
     (parser-generator-lex-analyzer--pop-token)))
   (should
    (equal
-    '("b" 2 . 3)
+    '(("b" 2 . 3))
     (parser-generator-lex-analyzer--pop-token)))
   (should
    (equal
-    nil
+    '(nil)
     (parser-generator-lex-analyzer--pop-token)))
 
   (message "Ended tests for (parser-generator-lex-analyzer--pop-token)"))

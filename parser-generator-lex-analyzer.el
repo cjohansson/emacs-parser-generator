@@ -58,7 +58,7 @@
   (unless parser-generator-lex-analyzer--function
     (error "Missing lex-analyzer function!"))
   (unless parser-generator--look-ahead-number
-    (error "Missing look-ahead number!"))
+    (error "Missing look-ahead-number!"))
   (let ((look-ahead)
         (look-ahead-length 0)
         (index parser-generator-lex-analyzer--index))
@@ -97,21 +97,29 @@
     (error "Missing lex-analyzer index!"))
   (unless parser-generator-lex-analyzer--function
     (error "Missing lex-analyzer function!"))
-  (condition-case error
-      (progn
-        (let ((token (funcall
-                      parser-generator-lex-analyzer--function
-                      parser-generator-lex-analyzer--index)))
-          (unless (listp (car token))
-            (setq token (list token)))
-          (let ((first-token (car token)))
-            (setq parser-generator-lex-analyzer--index
-                  (cdr (cdr first-token)))
-            first-token)))
-    (error (error
-            "Lex-analyze failed to pop token at %s, error: %s"
-            parser-generator-lex-analyzer--index
-            (car (cdr error))))))
+  (unless parser-generator--look-ahead-number
+    (error "Missing look-ahead-number!"))
+  (let ((iteration 0)
+        (tokens))
+    (while (< iteration parser-generator--look-ahead-number)
+      (condition-case error
+          (progn
+            (let ((token
+                   (funcall
+                    parser-generator-lex-analyzer--function
+                    parser-generator-lex-analyzer--index)))
+              (unless (listp (car token))
+                (setq token (list token)))
+              (let ((first-token (car token)))
+                (setq parser-generator-lex-analyzer--index
+                      (cdr (cdr first-token)))
+                (push first-token tokens))))
+        (error (error
+                "Lex-analyze failed to pop token at %s, error: %s"
+                parser-generator-lex-analyzer--index
+                (car (cdr error)))))
+      (setq iteration (1+ iteration)))
+    (nreverse tokens)))
 
 (defun parser-generator-lex-analyzer--reset ()
   "Reset lex-analyzer."

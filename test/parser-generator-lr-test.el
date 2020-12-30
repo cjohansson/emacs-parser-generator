@@ -272,7 +272,6 @@
   (parser-generator-set-look-ahead-number 1)
   (parser-generator-process-grammar)
   (parser-generator-lr-generate-parser-tables)
-
   (setq
    parser-generator-lex-analyzer--function
    (lambda (index)
@@ -286,12 +285,10 @@
          (push (nth (1- index) string) tokens)
          (setq index (1+ index)))
        (nreverse tokens))))
-
   (should
    (equal
     '(2 2 2 1 1)
     (parser-generator-lr-parse)))
-
   (message "Passed test with terminals as symbols")
 
   (setq
@@ -307,19 +304,14 @@
          (push (nth (1- index) string) tokens)
          (setq index (1+ index)))
        (nreverse tokens))))
-
   (should-error
    (parser-generator-lr--parse))
-
   (message "Passed test with terminals as symbols, invalid syntax")
-
-  ;; Test with terminals as strings here
 
   (parser-generator-set-grammar '((Sp S) ("a" "b") ((Sp S) (S (S "a" S "b")) (S e)) Sp))
   (parser-generator-set-look-ahead-number 1)
   (parser-generator-process-grammar)
   (parser-generator-lr-generate-parser-tables)
-
   (setq
    parser-generator-lex-analyzer--function
    (lambda (index)
@@ -333,12 +325,10 @@
          (push (nth (1- index) string) tokens)
          (setq index (1+ index)))
        (nreverse tokens))))
-
   (should
    (equal
     '(2 2 2 1 1)
     (parser-generator-lr-parse)))
-
   (message "Passed test with terminals as string")
 
   (setq
@@ -354,10 +344,8 @@
          (push (nth (1- index) string) tokens)
          (setq index (1+ index)))
        (nreverse tokens))))
-
   (should-error
    (parser-generator-lr--parse))
-
   (message "Passed test with terminals as string, invalid syntax")
 
   (setq
@@ -377,6 +365,30 @@
   (parser-generator-lr-test--parse-incremental-vs-regular)
 
   (message "Passed incremental-tests")
+
+  ;; (parser-generator-set-grammar '((Sp S) ("a" "b") ((Sp S) (S (S "a" S "b")) (S e)) Sp))
+  ;; (parser-generator-set-look-ahead-number 2)
+  ;; (parser-generator-process-grammar)
+  ;; (parser-generator-lr-generate-parser-tables)
+  ;; (setq
+  ;;  parser-generator-lex-analyzer--function
+  ;;  (lambda (index)
+  ;;    (let* ((string '(("a" 1 . 2) ("a" 2 . 3) ("b" 3 . 4) ("b" 4 . 5)))
+  ;;           (string-length (length string))
+  ;;           (max-index index)
+  ;;           (tokens))
+  ;;      (while (and
+  ;;              (< (1- index) string-length)
+  ;;              (< (1- index) max-index))
+  ;;        (push (nth (1- index) string) tokens)
+  ;;        (setq index (1+ index)))
+  ;;      (nreverse tokens))))
+  ;; (should
+  ;;  (equal
+  ;;   '(2 2 2 1 1)
+  ;;   (parser-generator-lr-parse)))
+  ;; (message "Passed test with terminals as string with look-ahead-number 2")
+
 
   (message "Passed tests for (parser-generator-lr--parse)"))
 
