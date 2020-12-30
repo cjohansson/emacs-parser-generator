@@ -624,6 +624,28 @@
 
   (message "Passed tests  for (parser-generator--valid-terminal-p)"))
 
+(defun parser-generator-test--merge-max-terminals ()
+  "Test `parser-generator--merge-max-terminals'."
+  (message "Passed tests  for (parser-generator--merge-max-terminals)")
+
+  (should
+   (equal
+    '(a b e)
+    (parser-generator--merge-max-terminals
+     '(a)
+     '(b e)
+     3)))
+
+  (should
+   (equal
+    '(a e)
+    (parser-generator--merge-max-terminals
+     '(a e)
+     '(b e)
+     3)))
+
+  (message "Passed tests  for (parser-generator--merge-max-terminals)"))
+
 (defun parser-generator-test ()
   "Run test."
   ;; (setq debug-on-error t)
@@ -640,6 +662,7 @@
   (parser-generator-test--sort-list)
   (parser-generator-test--get-grammar-rhs)
   (parser-generator-test--get-grammar-look-aheads)
+  (parser-generator-test--merge-max-terminals)
 
   ;; Algorithms
   (parser-generator-test--first)

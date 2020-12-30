@@ -11,7 +11,7 @@
 
 
 (defvar parser-generator--debug
-  nil
+  t
   "Whether to print debug messages or not.")
 
 (defvar parser-generator--e-identifier
@@ -708,6 +708,37 @@
     (parser-generator--debug
      (message "Generated F-sets"))))
 
+(defun parser-generator--merge-max-terminals (a b k)
+  "Merge terminals from A and B to a maximum length of K."
+  (let ((merged)
+        (merge-count 0)
+        (continue t)
+        (a-element)
+        (a-index 0)
+        (a-length (length a))
+        (b-element)
+        (b-index 0)
+        (b-length (length b)))
+    (while (and
+            (< a-index a-length)
+            (< merge-count k)
+            continue)
+      (setq a-element (nth a-index a))
+      (if (parser-generator--valid-e-p a-element)
+          (setq continue nil)
+        (push a-element merged))
+      (setq a-index (1+ a-index)))
+    (while (and
+            (< b-index b-length)
+            (< merge-count k)
+            continue)
+      (setq b-element (nth b-index b))
+      (if (parser-generator--valid-e-p b-element)
+          (setq continue nil)
+        (push b-element merged))
+      (setq b-index (1+ b-index)))
+    merged))
+
 ;; p. 357
 (defun parser-generator--f-set (input-tape state stack)
   "A deterministic push-down transducer (DPDT) for building F-sets from INPUT-TAPE, STATE and STACK."
@@ -872,7 +903,7 @@
                                                              ,alternative-leading-terminals
                                                              ,alternative-all-leading-terminals-p
                                                              ,(1+ input-tape-index))))
-                                                      (parser-generator--debug (message "branched off01: %s" branch))
+                                                      (parser-generator--debug (message "branched off 0: %s" branch))
                                                       ;; Branch off here with a separate track where this e-identifier is ignored
                                                       (push branch stack)))))
 
@@ -942,7 +973,9 @@
                                             (parser-generator--debug (message "branched off 5: %s" branch))
                                             (push branch stack)))
 
+                                        (parser-generator--debug (message "leading-terminals-1: %s" leading-terminals))
                                         (setq leading-terminals (append leading-terminals sub-terminal-set))
+                                        (parser-generator--debug (message "leading-terminals-2: %s" leading-terminals))
                                         (setq leading-terminals-count (+ leading-terminals-count (length sub-terminal-set)))
                                         (when (> leading-terminals-count k)
                                           (setq leading-terminals (butlast leading-terminals (- leading-terminals-count k)))
@@ -1008,6 +1041,7 @@
             (when (> leading-terminals-count 0)
               (unless (listp leading-terminals)
                 (setq leading-terminals (list leading-terminals)))
+              (message "leading-terminals: %s" leading-terminals)
               (push leading-terminals f-set))))))
     (list expanded-all f-set)))
 
