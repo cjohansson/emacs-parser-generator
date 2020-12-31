@@ -40,7 +40,8 @@
   (let ((action-tables)
         (states '(shift reduce error))
         (added-actions (make-hash-table :test 'equal))
-        (goto-tables (parser-generator--hash-to-list parser-generator-lr--goto-tables)))
+        (goto-tables (parser-generator--hash-to-list parser-generator-lr--goto-tables))
+        (found-accept))
     (dolist (goto-table goto-tables)
       (let ((goto-index (car goto-table))
             (found-action nil)
@@ -103,11 +104,13 @@
                             (unless (gethash hash-key added-actions)
                               (puthash hash-key t added-actions)
                               (let ((production (list A B)))
-                                (let ((production-number (parser-generator--get-grammar-production-number production)))
+                                (let ((production-number
+                                       (parser-generator--get-grammar-production-number production)))
                                   (unless production-number
                                     (error "Expecting production number for %s from LR-item %s!" production lr-item))
 
                                   (if (and
+                                       (= production-number 0)
                                        (>= (length u) 1)
                                        (parser-generator--valid-e-p
                                         (nth (1- (length u)) u)))
@@ -116,6 +119,7 @@
                                         ;; of empty look-ahead means grammar has been accepted
                                         (message "accept of %s" u)
                                         (push (list u 'accept) action-table)
+                                        (setq found-accept t)
                                         (setq found-action t))
 
                                     (message "no accept of %s, p: %s" u production-number)
@@ -133,6 +137,8 @@
          (message "%s actions %s" goto-index action-table))
         (when action-table
           (push (list goto-index (sort action-table 'parser-generator--sort-list)) action-tables))))
+    (unless found-accept
+      (error "Failed to find a accept action in generated action-tables: %s from goto-tabbles: %s" action-tables goto-tables))
     (setq action-tables (nreverse action-tables))
     (setq parser-generator-lr--action-tables (make-hash-table :test 'equal))
     (let ((table-length (length action-tables))
