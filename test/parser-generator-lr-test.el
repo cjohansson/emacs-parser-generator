@@ -375,7 +375,7 @@
   (let ((lr-items (parser-generator-lr--generate-goto-tables)))
     (message "lr-items: %s" (parser-generator--hash-values-to-list lr-items t))
 
-    ;; TODO Fix so that lr-item (Sp (S) nil (e)) instead is (Sp (S) nil (e e))
+    ;; TODO Fix so that there is an accept path in look-ahead number 2
     
     (message "goto-tables: %s" (parser-generator--hash-values-to-list parser-generator-lr--goto-tables t))
     (parser-generator-lr--generate-action-tables lr-items)

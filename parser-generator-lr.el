@@ -153,9 +153,16 @@
         (unmarked-lr-item-sets)
         (marked-lr-item-sets (make-hash-table :test 'equal))
         (symbols (append (parser-generator--get-grammar-non-terminals) (parser-generator--get-grammar-terminals)))
-        (table-lr-items (make-hash-table :test 'equal)))
+        (table-lr-items (make-hash-table :test 'equal))
+        (e-list))
 
-    (let ((e-set (parser-generator-lr--items-for-prefix parser-generator--e-identifier)))
+    (let ((e-list-index 0)
+          (e-list-length parser-generator--look-ahead-number))
+      (while (< e-list-index e-list-length)
+        (push parser-generator--e-identifier e-list)
+        (setq e-list-index (1+ e-list-index))))
+
+    (let ((e-set (parser-generator-lr--items-for-prefix e-list)))
       ;;(1) Place V(e) in S. The set V(e) is initially unmarked.
       (push `(,lr-item-set-new-index ,e-set) unmarked-lr-item-sets)
       (setq lr-item-set-new-index (1+ lr-item-set-new-index)))
@@ -327,13 +334,20 @@
 
       ;; Iterate all productions in grammar
       (let ((lr-items-e)
-            (start-productions (parser-generator--get-grammar-rhs start)))
+            (start-productions (parser-generator--get-grammar-rhs start))
+            (e-list))
+
+        (let ((e-list-index 0)
+              (e-list-length parser-generator--look-ahead-number))
+          (while (< e-list-index e-list-length)
+            (push parser-generator--e-identifier e-list)
+            (setq e-list-index (1+ e-list-index))))
 
         ;; (a)
         (dolist (rhs start-productions)
           ;; Add [S -> . α] to V(e)
-          (push `(,start nil ,rhs (e)) lr-items-e)
-          (puthash `(,parser-generator--e-identifier ,start nil ,rhs (,parser-generator--e-identifier)) t lr-item-exists))
+          (push `(,start nil ,rhs ,e-list) lr-items-e)
+          (puthash `(,e-list ,start nil ,rhs ,e-list) t lr-item-exists))
 
         ;; (b) Iterate every item in v-set(e), if [A -> . Bα, u] is an item and B -> β is in P
         ;; then for each x in FIRST(αu) add [B -> . β, x] to v-set(e), provided it is not already there
@@ -362,7 +376,7 @@
                           (parser-generator--debug
                            (message "rhs-rest-first: %s" rhs-rest-first))
                           (unless rhs-rest-first
-                            (setq rhs-rest-first `((,parser-generator--e-identifier))))
+                            (setq rhs-rest-first `(,e-list)))
                           (let ((sub-production (parser-generator--get-grammar-rhs rhs-first)))
                             (parser-generator--debug
                              (message "sub-production: %s" sub-production))
@@ -372,7 +386,7 @@
 
                               ;; Set follow to nil if it's the e-identifier
                               (when (and
-                                     (= (length sub-rhs) 1)
+                                     (>= (length sub-rhs) 1)
                                      (parser-generator--valid-e-p (car sub-rhs)))
                                 (setq sub-rhs nil))
 
@@ -401,7 +415,7 @@
         ;; Only do this step if prefix is not the e-identifier
         (let ((prefix-previous lr-items-e))
           (unless (and
-                   (= (length γ) 1)
+                   (>= (length γ) 1)
                    (parser-generator--valid-e-p (car γ)))
             (dolist (prefix γ)
               (let ((lr-new-item))
