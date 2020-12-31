@@ -117,12 +117,9 @@
                                       (progn
                                         ;; Reduction by first production
                                         ;; of empty look-ahead means grammar has been accepted
-                                        (message "accept of %s" u)
                                         (push (list u 'accept) action-table)
                                         (setq found-accept t)
                                         (setq found-action t))
-
-                                    (message "no accept of %s, p: %s" u production-number)
 
                                     ;; save reduction action in action table
                                     (push (list u 'reduce production-number) action-table)
@@ -138,7 +135,7 @@
         (when action-table
           (push (list goto-index (sort action-table 'parser-generator--sort-list)) action-tables))))
     (unless found-accept
-      (error "Failed to find a accept action in generated action-tables: %s from goto-tabbles: %s" action-tables goto-tables))
+      (error "Failed to find an accept action in the generated action-tables!"))
     (setq action-tables (nreverse action-tables))
     (setq parser-generator-lr--action-tables (make-hash-table :test 'equal))
     (let ((table-length (length action-tables))

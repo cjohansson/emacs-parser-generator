@@ -311,7 +311,9 @@
   (parser-generator-set-grammar '((Sp S) ("a" "b") ((Sp S) (S (S "a" S "b")) (S e)) Sp))
   (parser-generator-set-look-ahead-number 1)
   (parser-generator-process-grammar)
-  (parser-generator-lr-generate-parser-tables)
+  (let ((lr-items (parser-generator-lr-generate-parser-tables)))
+    (message "lr-items: %s" (parser-generator--hash-values-to-list lr-items t))
+    )
   (message "goto-tables: %s" (parser-generator--hash-values-to-list parser-generator-lr--goto-tables t))
   (message "action-tables: %s" (parser-generator--hash-values-to-list parser-generator-lr--action-tables t))
   (setq
@@ -370,9 +372,13 @@
   (parser-generator-set-grammar '((Sp S) ("a" "b") ((Sp S) (S (S "a" S "b")) (S e)) Sp))
   (parser-generator-set-look-ahead-number 2)
   (parser-generator-process-grammar)
-  (let ((lr-items (parser-generator--hash-values-to-list (parser-generator-lr-generate-parser-tables) t)))
-    (message "lr-items: %s" lr-items)
+  (let ((lr-items (parser-generator-lr--generate-goto-tables)))
+    (message "lr-items: %s" (parser-generator--hash-values-to-list lr-items t))
+
+    ;; TODO Fix so that lr-item (Sp (S) nil (e)) instead is (Sp (S) nil (e e))
+    
     (message "goto-tables: %s" (parser-generator--hash-values-to-list parser-generator-lr--goto-tables t))
+    (parser-generator-lr--generate-action-tables lr-items)
     ;; TODO Should generate accept somewhere in this action-table
     (message "action-tables: %s" (parser-generator--hash-values-to-list parser-generator-lr--action-tables t)))
   (setq
