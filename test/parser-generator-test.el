@@ -20,8 +20,16 @@
 
   (should
    (equal
+    nil
+    (parser-generator--valid-look-ahead-p '("a" "b"))))
+  (should
+   (equal
     t
     (parser-generator--valid-look-ahead-p "a")))
+  (should
+   (equal
+    nil
+    (parser-generator--valid-look-ahead-p "A")))
   (should
    (equal
     t
@@ -36,8 +44,50 @@
     (parser-generator--valid-look-ahead-p "d")))
   (should
    (equal
+    nil
+    (parser-generator--valid-look-ahead-p 'f)))
+  (should
+   (equal
     t
     (parser-generator--valid-look-ahead-p 'e)))
+
+  (message "Passed with look-ahead number is 1")
+
+  ;; TODO Test with look-ahead number = 2 here
+
+  (parser-generator-set-look-ahead-number 2)
+  (parser-generator-set-grammar '((S A) ("a" "b") ((S A) (A ("b" "a"))) S))
+  (parser-generator-process-grammar)
+  (should
+   (equal
+    t
+    (parser-generator--valid-look-ahead-p '("a" "a"))))
+  (should
+   (equal
+    nil
+    (parser-generator--valid-look-ahead-p "a")))
+  (should
+   (equal
+    t
+    (parser-generator--valid-look-ahead-p '("b" "b"))))
+  (should
+   (equal
+    nil
+    (parser-generator--valid-look-ahead-p '("a" "c"))))
+  (should
+   (equal
+    nil
+    (parser-generator--valid-look-ahead-p '("a" "d"))))
+  (should
+   (equal
+    nil
+    (parser-generator--valid-look-ahead-p '(f e))))
+  (should
+   (equal
+    t
+    (parser-generator--valid-look-ahead-p '(e e))))
+
+  (message "Passed with look-ahead number is 2")
 
   (message "Passed tests for (parser-generator--valid-look-ahead-p)"))
 
@@ -59,7 +109,7 @@
 
   (should
    (equal
-    '(("a" "a") ("a" "b") ("a" e) ("b" "a") ("b" "b") ("b" e))
+    '(("a" "a") ("a" "b") ("a" e) ("b" "a") ("b" "b") ("b" e) (e e))
     (parser-generator--get-grammar-look-aheads)))
 
   (message "Passed tests for (parser-generator--get-grammar-look-aheads)"))

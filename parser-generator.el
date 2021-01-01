@@ -103,7 +103,15 @@
     (let ((terminals-max-index (1- (length terminals)))
           (terminal-index)
           (look-ahead-length)
-          (look-ahead))
+          (look-ahead)
+          (e-list))
+
+      (let ((e-list-index 0)
+            (e-list-length parser-generator--look-ahead-number))
+        (while (< e-list-index e-list-length)
+          (push parser-generator--e-identifier e-list)
+          (setq e-list-index (1+ e-list-index))))
+
       (while stack
         (let ((item (pop stack)))
           (setq terminal-index (nth 0 item))
@@ -130,15 +138,12 @@
             (if look-ahead
                 (progn
 
-                  (when (= look-ahead-length k)
-                    (setq look-ahead-to-add (reverse look-ahead)))
-
-                  (when (= look-ahead-length (1- k))
+                  (while (< look-ahead-length k)
                     (push parser-generator--e-identifier look-ahead)
-                    (setq look-ahead-to-add (reverse look-ahead))))
+                    (setq look-ahead-length (1+ look-ahead-length)))
+                  (setq look-ahead-to-add (reverse look-ahead)))
 
-              (when (= k 1)
-                (setq look-ahead-to-add `(,parser-generator--e-identifier))))
+              (setq look-ahead-to-add e-list))
 
             (when (and look-ahead-to-add
                        (not (gethash look-ahead-to-add added-look-aheads)))

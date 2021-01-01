@@ -70,6 +70,7 @@
                               (when eff
                                 ;; Go through eff-items and see if any item is a valid look-ahead of grammar
                                 ;; in that case save in action table a shift action here
+                                ;; TODO Verify that stuff like aeee is valid look-ahead if look-ahead is 4
                                 (let ((eff-index 0)
                                       (eff-item)
                                       (eff-length (length eff))
@@ -155,6 +156,8 @@
         (symbols (append (parser-generator--get-grammar-non-terminals) (parser-generator--get-grammar-terminals)))
         (table-lr-items (make-hash-table :test 'equal))
         (e-list))
+
+    ;; TODO Verify what symbols should consist of if k > 1
 
     (let ((e-list-index 0)
           (e-list-length parser-generator--look-ahead-number))
