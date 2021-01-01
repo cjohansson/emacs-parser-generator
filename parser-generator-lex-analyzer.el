@@ -87,7 +87,7 @@
                 (setq look-ahead-length (1+ look-ahead-length))
                 (setq index (1+ index)))))
         (error (error
-                "Lex-analyze failed to peek next look-ahead at %s, error: %s"
+                "Lex-analyze faxiled to peek next look-ahead at %s, error: %s"
                 index
                 (car (cdr error))))))
     (nreverse look-ahead)))

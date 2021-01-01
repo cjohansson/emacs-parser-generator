@@ -198,7 +198,8 @@
           (parser-generator--debug
            (message "symbol: %s" symbol))
 
-          (let ((prefix-lr-items (parser-generator-lr--items-for-goto lr-items symbol)))
+          (let ((prefix-lr-items
+                 (parser-generator-lr--items-for-goto lr-items symbol)))
 
             ;; If a' = GOTO(a, X) is nonempty
             (when prefix-lr-items
@@ -579,7 +580,8 @@
               parser-generator-lex-analyzer--index))
 
       ;; (1) The lookahead string u, consisting of the next k input symbols, is determined.
-      (let ((look-ahead (parser-generator-lex-analyzer--peek-next-look-ahead))
+      (let ((look-ahead
+             (parser-generator-lex-analyzer--peek-next-look-ahead))
             (look-ahead-full))
         ;; Save token stream indexes in separate variable if needed later
         (setq look-ahead-full (nreverse look-ahead))
@@ -592,7 +594,8 @@
             (push look-ahead-item look-ahead)))
 
         (let ((table-index (car pushdown-list)))
-          (let ((action-table (gethash table-index parser-generator-lr--action-tables)))
+          (let ((action-table
+                 (gethash table-index parser-generator-lr--action-tables)))
 
             (let ((action-match nil)
                   (action-table-length (length action-table))
@@ -634,9 +637,13 @@
                 ;; there is no next input symbol or g(a) is undefined, halt
                 ;; and declare error.
 
+                ;; TODO a and a-full needs to all tokens of look-ahead
+
                 (let ((a (car look-ahead))
                       (a-full (car look-ahead-full)))
-                  (let ((goto-table (gethash table-index parser-generator-lr--goto-tables)))
+                  (let ((goto-table
+                         (gethash table-index
+                                  parser-generator-lr--goto-tables)))
                     (let ((goto-table-length (length goto-table))
                           (goto-index 0)
                           (searching-match t)
@@ -679,11 +686,15 @@
                 ;; the pushdown list and return to step (1)
 
                 (let ((production-number (car (cdr action-match))))
-                  (let ((production (parser-generator--get-grammar-production-by-number production-number)))
+                  (let ((production
+                         (parser-generator--get-grammar-production-by-number
+                          production-number)))
                     (let ((production-lhs (car production))
                           (production-rhs (car (cdr production)))
                           (popped-items-contents))
-                      (unless (equal production-rhs (list parser-generator--e-identifier))
+                      (unless (equal
+                               production-rhs
+                               (list parser-generator--e-identifier)) ;; TODO Verify this
                         (let ((pop-items (* 2 (length production-rhs)))
                               (popped-items 0)
                               (popped-item))
@@ -720,8 +731,12 @@
                                 (push part-translation translation))))))
 
                       (let ((new-table-index (car pushdown-list)))
-                        (let ((goto-table (gethash new-table-index parser-generator-lr--goto-tables)))
-                          (let ((goto-table-length (length goto-table))
+                        (let ((goto-table
+                               (gethash
+                                new-table-index
+                                parser-generator-lr--goto-tables)))
+                          (let ((goto-table-length
+                                 (length goto-table))
                                 (goto-index 0)
                                 (searching-match t)
                                 (next-index))
@@ -750,10 +765,12 @@
 
                 (setq accept t))
 
-               (t (error (format "Invalid action-match: %s!" action-match)))))))))
+               (t (error
+                   (format "Invalid action-match: %s!" action-match)))))))))
     (unless accept
-      (error "Parsed entire string without getting accepting! Output: %s"
-             (reverse output)))
+      (error
+       "Parsed entire string without getting accepting! Output: %s"
+       (reverse output)))
     (when translation
       (setq translation (nreverse translation)))
     (when history
