@@ -707,6 +707,16 @@
     '((A) (B) (S) ("a") ("b"))
     (parser-generator--get-grammar-prefixes)))
 
+  (parser-generator-set-look-ahead-number 2)
+  (should
+   (equal
+    '((A A) (A B) (A S) (A "a") (A "b")
+      (B A) (B B) (B S) (B "a") (B "b")
+      (S A) (S B) (S S) (S "a") (S "b")
+      ("a" A) ("a" B) ("a" S) ("a" "a") ("a" "b")
+      ("b" A) ("b" B) ("b" S) ("b" "a") ("b" "b"))
+    (parser-generator--get-grammar-prefixes)))
+
   (message "Passed tests  for (parser-generator--get-grammar-prefixes)"))
 
 (defun parser-generator-test ()

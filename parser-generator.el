@@ -172,7 +172,8 @@
         (index)
         (prefix)
         (stack)
-        (increment-index 0))
+        (increment-index)
+        (include))
     (let ((symbols-length (length symbols))
           (i 0))
 
@@ -181,7 +182,6 @@
         (puthash i 0 indexes)
         (push 0 index)
         (setq i (1+ i)))
-      (setq stack (list index))
 
       ;; Build stack of all indexes that needs to be processed
       (let ((index-remains t))
@@ -189,26 +189,52 @@
 
           (setq i 0)
           (setq prefix nil)
+          (setq include t)
           (while (< i k)
             (setq index (gethash i indexes))
 
-            (when (= i increment-index)
-              (if (and
-                   (= index (1- symbols-length))
-                   (= increment-index (1- k)))
-                  (setq index-remains nil)
-                (if (= index (1- symbols-length))
+            (when increment-index
+              (when (= i increment-index)
+                (if (and
+                     (= index (1- symbols-length))
+                     (= increment-index (1- k)))
                     (progn
-                      (setq index 0)
-                      (setq increment-index (1+ increment-index)))
-                  (setq index (1+ index)))
-                (puthash i index indexes)))
+
+                      ;; Iterate columns and see if any is less than
+                      ;; max index, in that case increment it and re-do
+                      ;; last column
+                      (let ((found-not-incremented)
+                            (i-2 0))
+                        (while (and
+                                (< i-2 (1- k))
+                                (not found-not-incremented))
+                          (unless (= (gethash i-2 indexes) (1- symbols-length))
+                            (puthash i-2 (1+ (gethash i-2 indexes)) indexes)
+                            (puthash i -1 indexes)
+                            (setq include nil)
+                            (setq found-not-incremented t))
+                          (setq i-2 (1+ i-2)))
+
+                        (unless found-not-incremented
+                          (setq index-remains nil))))
+                  (if (= index (1- symbols-length))
+                      (progn
+                        (setq index 0)
+                        (setq increment-index (1+ increment-index)))
+                    (setq index (1+ index)))
+                  (puthash i index indexes))))
 
             (when index-remains
               (push index prefix))
             (setq i (1+ i)))
 
-          (when index-remains
+          (unless increment-index
+            (setq increment-index (1- k)))
+
+          (when (and
+                 index-remains
+                 include)
+            (setq prefix (nreverse prefix))
             (push prefix stack))
           ))
 
@@ -225,7 +251,7 @@
             (setq i (1+ i)))
 
           (push prefix prefixes))))
-      (sort prefixes 'parser-generator--sort-list)))
+    (sort prefixes 'parser-generator--sort-list)))
 
 (defun parser-generator--get-grammar-production-number (production)
   "If PRODUCTION exist, return it's number."
