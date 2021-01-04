@@ -167,46 +167,65 @@
           (parser-generator--get-grammar-terminals)
           (parser-generator--get-grammar-non-terminals)))
         (prefixes)
-        (added-prefixes (make-hash-table :test 'equal))
         (k parser-generator--look-ahead-number)
-        (indexes)
+        (indexes (make-hash-table :test 'equal))
         (index)
         (prefix)
-        (prefix-indexes))
+        (stack)
+        (increment-index 0))
     (let ((symbols-length (length symbols))
-          (i 0)
-          (found-new t))
+          (i 0))
 
-      ;; Initialize indexes
+      ;; Reset all indexes
       (while (< i k)
-        (push 0 indexes)
+        (puthash i 0 indexes)
+        (push 0 index)
         (setq i (1+ i)))
+      (setq stack (list index))
 
-      (while found-new
-        ;; Reset variables
-        (setq found-new nil)
-        (setq i 0)
-        (setq prefix nil)
-        (setq prefix-indexes nil)
+      ;; Build stack of all indexes that needs to be processed
+      (let ((index-remains t))
+        (while index-remains
 
-        ;; Build prefix and prefix-indexes from actual state
-        (while (< i k)
-          (setq index (nth i indexes))
-          (push (nth index symbols) prefix)
-          (push index prefix-indexes)
-          (setq i (1+ i)))
+          (setq i 0)
+          (setq prefix nil)
+          (while (< i k)
+            (setq index (gethash i indexes))
 
-        (message "prefix: %s" prefix)
+            (when (= i increment-index)
+              (if (and
+                   (= index (1- symbols-length))
+                   (= increment-index (1- k)))
+                  (setq index-remains nil)
+                (if (= index (1- symbols-length))
+                    (progn
+                      (setq index 0)
+                      (setq increment-index (1+ increment-index)))
+                  (setq index (1+ index)))
+                (puthash i index indexes)))
 
-        ;; If prefix is new add to list
-        (unless (gethash prefix-indexes added-prefixes)
-          (push prefix prefixes)
-          (puthash prefix-indexes t added-prefixes))
+            (when index-remains
+              (push index prefix))
+            (setq i (1+ i)))
 
-        ;; TODO Try to find a new index here
+          (when index-remains
+            (push prefix stack))
+          ))
 
-        ))
-    (sort prefixes 'parser-generator--sort-list)))
+      (while stack
+        (let ((index-list (pop stack)))
+          ;; Reset variables
+          (setq i 0)
+          (setq prefix nil)
+
+          ;; Build prefix and prefix-indexes from actual state
+          (while (< i k)
+            (setq index (nth i index-list))
+            (push (nth index symbols) prefix)
+            (setq i (1+ i)))
+
+          (push prefix prefixes))))
+      (sort prefixes 'parser-generator--sort-list)))
 
 (defun parser-generator--get-grammar-production-number (production)
   "If PRODUCTION exist, return it's number."

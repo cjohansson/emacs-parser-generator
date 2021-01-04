@@ -704,7 +704,7 @@
 
   (should
    (equal
-    '(("a") (A) ("b") (B) (S))
+    '((A) (B) (S) ("a") ("b"))
     (parser-generator--get-grammar-prefixes)))
 
   (message "Passed tests  for (parser-generator--get-grammar-prefixes)"))
