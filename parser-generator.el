@@ -160,6 +160,54 @@
       (error "No grammar G defined!")))
   (nth 0 G))
 
+(defun parser-generator--get-grammar-prefixes ()
+  "Return all prefixes of length look-ahead number of terminals and non-terminals."
+  (let ((symbols
+         (append
+          (parser-generator--get-grammar-terminals)
+          (parser-generator--get-grammar-non-terminals)))
+        (prefixes)
+        (added-prefixes (make-hash-table :test 'equal))
+        (k parser-generator--look-ahead-number)
+        (indexes)
+        (index)
+        (prefix)
+        (prefix-indexes))
+    (let ((symbols-length (length symbols))
+          (i 0)
+          (found-new t))
+
+      ;; Initialize indexes
+      (while (< i k)
+        (push 0 indexes)
+        (setq i (1+ i)))
+
+      (while found-new
+        ;; Reset variables
+        (setq found-new nil)
+        (setq i 0)
+        (setq prefix nil)
+        (setq prefix-indexes nil)
+
+        ;; Build prefix and prefix-indexes from actual state
+        (while (< i k)
+          (setq index (nth i indexes))
+          (push (nth index symbols) prefix)
+          (push index prefix-indexes)
+          (setq i (1+ i)))
+
+        (message "prefix: %s" prefix)
+
+        ;; If prefix is new add to list
+        (unless (gethash prefix-indexes added-prefixes)
+          (push prefix prefixes)
+          (puthash prefix-indexes t added-prefixes))
+
+        ;; TODO Try to find a new index here
+
+        ))
+    (sort prefixes 'parser-generator--sort-list)))
+
 (defun parser-generator--get-grammar-production-number (production)
   "If PRODUCTION exist, return it's number."
   (unless parser-generator--table-productions-number

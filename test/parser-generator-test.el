@@ -694,6 +694,21 @@
 
   (message "Passed tests  for (parser-generator--merge-max-terminals)"))
 
+(defun parser-generator-test--get-grammar-prefixes ()
+  "Test `parser-generator--get-grammar-prefixes'."
+  (message "Passed tests  for (parser-generator--get-grammar-prefixes)")
+
+  (parser-generator-set-look-ahead-number 1)
+  (parser-generator-set-grammar '((S A B) ("a" "b") ((S A) (S (B)) (B "a") (A "a") (A ("b" "a"))) S))
+  (parser-generator-process-grammar)
+
+  (should
+   (equal
+    '(("a") (A) ("b") (B) (S))
+    (parser-generator--get-grammar-prefixes)))
+
+  (message "Passed tests  for (parser-generator--get-grammar-prefixes)"))
+
 (defun parser-generator-test ()
   "Run test."
   ;; (setq debug-on-error t)
@@ -711,6 +726,7 @@
   (parser-generator-test--get-grammar-rhs)
   (parser-generator-test--get-grammar-look-aheads)
   (parser-generator-test--merge-max-terminals)
+  (parser-generator-test--get-grammar-prefixes)
 
   ;; Algorithms
   (parser-generator-test--first)
