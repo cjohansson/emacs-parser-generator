@@ -84,10 +84,23 @@
   (parser-generator-set-grammar '((Sp S) (a b) ((Sp S) (S (S a S b)) (S e)) Sp))
   (parser-generator-set-look-ahead-number 1)
   (parser-generator-process-grammar)
-  (let ((table-lr-items (parser-generator-lr-generate-parser-tables)))
+  (let ((table-lr-items (parser-generator-lr--generate-goto-tables)))
 
-    ;; (message "GOTO-table: %s" parser-generator-lr--goto-tables)
-    ;; (message "LR-items: %s" (parser-generator--hash-to-list parser-generator-lr--items))
+    (message
+     "GOTO-table: %s"
+     (parser-generator--hash-to-list
+      parser-generator-lr--goto-tables))
+    (message
+     "LR-items: %s"
+     (parser-generator--hash-to-list
+      table-lr-items))
+
+    (parser-generator-lr--generate-action-tables
+     table-lr-items)
+    (message
+     "ACTION-tables: %s"
+     (parser-generator--hash-to-list
+      parser-generator-lr--action-tables))
 
     (should
      (equal
