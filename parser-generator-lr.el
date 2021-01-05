@@ -153,17 +153,17 @@
         (goto-table)
         (unmarked-lr-item-sets)
         (marked-lr-item-sets (make-hash-table :test 'equal))
-        (symbols (append (parser-generator--get-grammar-non-terminals) (parser-generator--get-grammar-terminals)))
+        (symbols
+         (parser-generator--get-list-permutations
+          (append
+           (parser-generator--get-grammar-non-terminals)
+           (parser-generator--get-grammar-terminals))
+          parser-generator--look-ahead-number))
         (table-lr-items (make-hash-table :test 'equal))
-        (e-list))
-
-    ;; TODO Verify what symbols should consist of if k > 1
-
-    (let ((e-list-index 0)
-          (e-list-length parser-generator--look-ahead-number))
-      (while (< e-list-index e-list-length)
-        (push parser-generator--e-identifier e-list)
-        (setq e-list-index (1+ e-list-index))))
+        (e-list
+         (parser-generator--generate-list-of-symbol
+          parser-generator--look-ahead-number
+          parser-generator--e-identifier)))
 
     (let ((e-set (parser-generator-lr--items-for-prefix e-list)))
       ;;(1) Place V(e) in S. The set V(e) is initially unmarked.
@@ -339,13 +339,9 @@
       ;; Iterate all productions in grammar
       (let ((lr-items-e)
             (start-productions (parser-generator--get-grammar-rhs start))
-            (e-list))
-
-        (let ((e-list-index 0)
-              (e-list-length parser-generator--look-ahead-number))
-          (while (< e-list-index e-list-length)
-            (push parser-generator--e-identifier e-list)
-            (setq e-list-index (1+ e-list-index))))
+            (e-list (parser-generator--generate-list-of-symbol
+                     parser-generator--look-ahead-number
+                     parser-generator--e-identifier)))
 
         ;; (a)
         (dolist (rhs start-productions)
@@ -560,7 +556,11 @@
     (error "Missing GOTO-tables for grammar!"))
 
   (let ((accept)
-        (pre-index 0))
+        (pre-index 0)
+        (e-list (parser-generator--generate-list-of-symbol
+                 parser-generator--look-ahead-number
+                 parser-generator--e-identifier)))
+
     (while (not accept)
 
       ;; (message "output: %s, index: %s" output parser-generator-lex-analyzer--index)
@@ -617,14 +617,15 @@
                 ;; (c) If f(u) = error, we halt parsing (and, in practice
                 ;; transfer to an error recovery routine).
 
-                (error (format
-                        "Invalid syntax! Expected one of %s found %s at index %s "
-                        possible-look-aheads
-                        look-ahead
-                        parser-generator-lex-analyzer--index)
-                       possible-look-aheads
-                       look-ahead
-                       parser-generator-lex-analyzer--index))
+                (error
+                 (format
+                  "Invalid syntax! Expected one of %s found %s at index %s "
+                  possible-look-aheads
+                  look-ahead
+                  parser-generator-lex-analyzer--index)
+                 possible-look-aheads
+                 look-ahead
+                 parser-generator-lex-analyzer--index))
 
               (cond
 
@@ -637,13 +638,12 @@
                 ;; there is no next input symbol or g(a) is undefined, halt
                 ;; and declare error.
 
-                ;; TODO a and a-full needs to all tokens of look-ahead
-
-                (let ((a (car look-ahead))
-                      (a-full (car look-ahead-full)))
+                (let ((a look-ahead)
+                      (a-full look-ahead-full))
                   (let ((goto-table
-                         (gethash table-index
-                                  parser-generator-lr--goto-tables)))
+                         (gethash
+                          table-index
+                          parser-generator-lr--goto-tables)))
                     (let ((goto-table-length (length goto-table))
                           (goto-index 0)
                           (searching-match t)
@@ -665,11 +665,12 @@
                         (setq goto-index (1+ goto-index)))
 
                       (unless next-index
-                        (error (format
-                                "In shift, found no goto-item for %s in index %s, expected one of %s"
-                                a
-                                table-index
-                                possible-look-aheads)))
+                        (error
+                         (format
+                          "In shift, found no goto-item for %s in index %s, expected one of %s"
+                          a
+                          table-index
+                          possible-look-aheads)))
 
                       (push a-full pushdown-list)
                       (push next-index pushdown-list)
@@ -694,7 +695,7 @@
                           (popped-items-contents))
                       (unless (equal
                                production-rhs
-                               (list parser-generator--e-identifier)) ;; TODO Verify this
+                               e-list) ;; TODO Verify this
                         (let ((pop-items (* 2 (length production-rhs)))
                               (popped-items 0)
                               (popped-item))

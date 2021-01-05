@@ -160,6 +160,15 @@
       (error "No grammar G defined!")))
   (nth 0 G))
 
+(defun parser-generator--generate-list-of-symbol (k symbol)
+  "Generate list of K number of SYMBOL."
+  (let ((list-index 0)
+        (list))
+    (while (< list-index k)
+      (push symbol list)
+      (setq list-index (1+ list-index)))
+    list))
+
 (defun parser-generator--get-list-permutations (list k)
   "Return all possible LIST permutations length K."
   (let ((permutations)
