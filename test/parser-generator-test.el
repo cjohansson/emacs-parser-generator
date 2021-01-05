@@ -777,8 +777,8 @@
   (parser-generator-test--valid-terminal-p)
 
   ;; Algorithms
-  (parser-generator-test--first)
   (parser-generator-test--e-free-first)
+  (parser-generator-test--first)
   (parser-generator-test--follow))
 
 
