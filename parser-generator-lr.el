@@ -426,23 +426,45 @@
 
         ;; 2 Suppose that we have constructed V(X1,X2,...,Xi-1) we construct V(X1,X2,...,Xi) as follows:
         ;; Only do this step if prefix is not the e-identifier
-        (let ((prefix-previous lr-items-e))
-          (unless (and
-                   (>= (length γ) 1)
-                   (parser-generator--valid-e-p (car γ)))
-            (dolist (prefix γ) ;; TODO Make this depend on look-ahead number
-              (let ((lr-new-item))
-                (setq lr-new-item
-                      (parser-generator-lr--items-for-goto
-                       prefix-previous
-                       prefix))
+        (let ((prefix-previous lr-items-e)
+              (γ-length (length γ))
+              (γ-index 0)
+              (k parser-generator--look-ahead-number))
+          (unless
+              (and
+               (>= γ-length 1)
+               (parser-generator--valid-e-p (car γ)))
 
-                (parser-generator--debug
-                 (message "prefix: %s" prefix)
-                 (message "prefix-previous: %s" prefix-previous)
-                 (message "lr-new-item: %s" lr-new-item))
+            (while (< γ-index γ-length)
+              (let ((k-index 0)
+                    (prefix))
 
-                (setq prefix-previous lr-new-item))))
+                ;; Build prefix of length k
+                (while (and
+                        (< k-index k)
+                        (< γ-index γ-length))
+                  (push (nth γ-index γ) prefix)
+                  (setq γ-index (1+ γ-index))
+                  (setq k-index (1+ k-index)))
+
+                ;; Fill up rest of prefix with e-identifier if length is below k
+                (while (< (length prefix) k)
+                  (push parser-generator--e-identifier prefix))
+                (setq prefix (reverse prefix))
+
+                (let ((lr-new-item))
+                  (setq
+                   lr-new-item
+                   (parser-generator-lr--items-for-goto
+                    prefix-previous
+                    prefix))
+
+                  (parser-generator--debug
+                   (message "prefix: %s" prefix)
+                   (message "prefix-previous: %s" prefix-previous)
+                   (message "lr-new-item: %s" lr-new-item))
+
+                  (setq prefix-previous lr-new-item)))))
 
           (parser-generator--debug
            (message "γ: %s" γ))
@@ -495,7 +517,7 @@
         (when (equal lr-item-suffix-first x)
 
           ;; Add [A -> aXi . B, u] to V(X1,...,Xi)
-          (let ((combined-prefix (append lr-item-prefix (list x))))
+          (let ((combined-prefix (append lr-item-prefix x)))
             (parser-generator--debug
              (message
               "lr-new-item-1: %s"

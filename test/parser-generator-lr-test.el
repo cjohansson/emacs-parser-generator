@@ -104,15 +104,17 @@
 
     (should
      (equal
-      '((0 ((S 1)))
-        (1 ((a 2)))
-        (2 ((S 3)))
-        (3 ((a 4) (b 5)))
-        (4 ((S 6)))
+      '((0 (((S) 1)))
+        (1 (((a) 2)))
+        (2 (((S) 3)))
+        (3 (((a) 4) ((b) 5)))
+        (4 (((S) 6)))
         (5 nil)
-        (6 ((a 4) (b 7)))
+        (6 (((a) 4) ((b) 7)))
         (7 nil))
-      (parser-generator--hash-to-list parser-generator-lr--goto-tables)))
+      (parser-generator--hash-to-list
+       parser-generator-lr--goto-tables)))
+    (message "Passed GOTO-tables")
 
     (should
      (equal
@@ -124,7 +126,9 @@
         (5 ((S (S a S b) nil (a)) (S (S a S b) nil (e))))
         (6 ((S (S) (a S b) (a)) (S (S) (a S b) (b)) (S (S a S) (b) (a)) (S (S a S) (b) (b))))
         (7 ((S (S a S b) nil (a)) (S (S a S b) nil (b)))))
-      (parser-generator--hash-to-list table-lr-items))))
+      (parser-generator--hash-to-list
+       table-lr-items))))
+  (message "Passed LR-items")
 
   (message "Passed LR-items for example 5.30")
 
@@ -133,22 +137,24 @@
   (parser-generator-set-look-ahead-number 1)
   (parser-generator-process-grammar)
 
-  (let ((table-lr-items (parser-generator-lr-generate-parser-tables)))
+  (let ((table-lr-items
+         (parser-generator-lr-generate-parser-tables)))
 
     ;; (message "GOTO-table: %s" (parser-generator--hash-to-list parser-generator-lr--goto-tables))
     ;; (message "LR-items: %s" (parser-generator--hash-to-list parser-generator-lr--items))
 
     (should
      (equal
-      '((0 ((S 1)))
-        (1 (("a" 2)))
-        (2 ((S 3)))
-        (3 (("a" 4) ("b" 5)))
-        (4 ((S 6)))
+      '((0 (((S) 1)))
+        (1 ((("a") 2)))
+        (2 (((S) 3)))
+        (3 ((("a") 4) (("b") 5)))
+        (4 (((S) 6)))
         (5 nil)
-        (6 (("a" 4) ("b" 7)))
+        (6 ((("a") 4) (("b") 7)))
         (7 nil))
       (parser-generator--hash-to-list parser-generator-lr--goto-tables)))
+    (message "Passed GOTO-tables with tokens as strings")
 
     (should
      (equal
@@ -160,7 +166,8 @@
         (5 ((S (S "a" S "b") nil ("a")) (S (S "a" S "b") nil (e))))
         (6 ((S (S) ("a" S "b") ("a")) (S (S) ("a" S "b") ("b")) (S (S "a" S) ("b") ("a")) (S (S "a" S) ("b") ("b"))))
         (7 ((S (S "a" S "b") nil ("a")) (S (S "a" S "b") nil ("b")))))
-      (parser-generator--hash-to-list table-lr-items))))
+      (parser-generator--hash-to-list table-lr-items)))
+    (message "Passed LR-items with tokens as strings"))
 
   (message "Passed LR-items for example 5.30 but with tokens as strings")
 
