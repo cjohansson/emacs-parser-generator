@@ -740,24 +740,41 @@
 
   (message "Passed tests for (parser-generator--get-list-permutations)"))
 
+(defun parser-generator-test--generate-list-of-symbol ()
+  "Test `parser-generator--generate-list-of-symbol'."
+  (message "Starting tests for (parser-generator-test--generate-list-of-symbol)")
+
+  (should
+   (equal
+    '(a a a)
+    (parser-generator--generate-list-of-symbol 3 'a)))
+
+  (should
+   (equal
+    '((a b) (a b))
+    (parser-generator--generate-list-of-symbol 2 '(a b))))
+
+  (message "Passed tests for (parser-generator-test--generate-list-of-symbol)"))
+
 (defun parser-generator-test ()
   "Run test."
   ;; (setq debug-on-error t)
 
   ;; Helpers
-  (parser-generator-test--valid-look-ahead-p)
-  (parser-generator-test--valid-look-ahead-number-p)
-  (parser-generator-test--valid-production-p)
+  (parser-generator-test--distinct)
+  (parser-generator-test--generate-list-of-symbol)
+  (parser-generator-test--get-grammar-look-aheads)
+  (parser-generator-test--get-grammar-rhs)
+  (parser-generator-test--get-list-permutations)
+  (parser-generator-test--merge-max-terminals)
+  (parser-generator-test--sort-list)
   (parser-generator-test--valid-grammar-p)
+  (parser-generator-test--valid-look-ahead-number-p)
+  (parser-generator-test--valid-look-ahead-p)
   (parser-generator-test--valid-non-terminal-p)
+  (parser-generator-test--valid-production-p)
   (parser-generator-test--valid-sentential-form-p)
   (parser-generator-test--valid-terminal-p)
-  (parser-generator-test--distinct)
-  (parser-generator-test--sort-list)
-  (parser-generator-test--get-grammar-rhs)
-  (parser-generator-test--get-grammar-look-aheads)
-  (parser-generator-test--merge-max-terminals)
-  (parser-generator-test--get-list-permutations)
 
   ;; Algorithms
   (parser-generator-test--first)

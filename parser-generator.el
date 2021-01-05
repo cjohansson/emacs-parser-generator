@@ -90,6 +90,15 @@
         (push element new-elements)))
     (nreverse new-elements)))
 
+(defun parser-generator--generate-list-of-symbol (k symbol)
+  "Generate list of K number of SYMBOL."
+  (let ((list-index 0)
+        (list))
+    (while (< list-index k)
+      (push symbol list)
+      (setq list-index (1+ list-index)))
+    list))
+
 (defun parser-generator--get-grammar-look-aheads ()
   "Return all possible look-ahead set."
   (unless parser-generator--look-ahead-number
@@ -160,46 +169,6 @@
       (error "No grammar G defined!")))
   (nth 0 G))
 
-(defun parser-generator--generate-list-of-symbol (k symbol)
-  "Generate list of K number of SYMBOL."
-  (let ((list-index 0)
-        (list))
-    (while (< list-index k)
-      (push symbol list)
-      (setq list-index (1+ list-index)))
-    list))
-
-(defun parser-generator--get-list-permutations (list k)
-  "Return all possible LIST permutations length K."
-  (let ((permutations)
-        (permutations-length 1))
-    (let ((list-length (length list))
-          (i 0))
-      (while (< i k)
-
-        (let ((times (expt list-length (- k (1+ i))))
-              (global-i 0))
-          (while (< global-i permutations-length)
-            ;; For each list..
-            (let ((list-i 0))
-              (while (< list-i list-length)
-
-                ;; Add it |list| ^ (k - i) times to list
-                (let ((times-i 0))
-                  (while (< times-i times)
-                    (if (= i 0)
-                        (push (list (nth list-i list)) permutations)
-                      (push (nth list-i list) (nth global-i permutations)))
-                    (setq global-i (1+ global-i))
-                    (setq times-i (1+ times-i))))
-                (setq list-i (1+ list-i))))
-
-            (when (= i 0)
-              (setq permutations-length (length permutations)))))
-
-        (setq i (1+ i))))
-    (sort permutations 'parser-generator--sort-list)))
-
 (defun parser-generator--get-grammar-production-number (production)
   "If PRODUCTION exist, return it's number."
   (unless parser-generator--table-productions-number
@@ -247,6 +216,37 @@
   (unless parser-generator--table-translations
     (error "Table for translations by production-number is undefined!"))
   (gethash production-number parser-generator--table-translations))
+
+(defun parser-generator--get-list-permutations (list k)
+  "Return all possible LIST permutations length K."
+  (let ((permutations)
+        (permutations-length 1))
+    (let ((list-length (length list))
+          (i 0))
+      (while (< i k)
+
+        (let ((times (expt list-length (- k (1+ i))))
+              (global-i 0))
+          (while (< global-i permutations-length)
+            ;; For each list..
+            (let ((list-i 0))
+              (while (< list-i list-length)
+
+                ;; Add it |list| ^ (k - i) times to list
+                (let ((times-i 0))
+                  (while (< times-i times)
+                    (if (= i 0)
+                        (push (list (nth list-i list)) permutations)
+                      (push (nth list-i list) (nth global-i permutations)))
+                    (setq global-i (1+ global-i))
+                    (setq times-i (1+ times-i))))
+                (setq list-i (1+ list-i))))
+
+            (when (= i 0)
+              (setq permutations-length (length permutations)))))
+
+        (setq i (1+ i))))
+    (sort permutations 'parser-generator--sort-list)))
 
 (defun parser-generator--hash-to-list (hash-table &optional un-sorted)
   "Return a list that represent the HASH-TABLE.  Each element is a list: (list key value), optionally UN-SORTED."
