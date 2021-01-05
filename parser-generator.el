@@ -160,98 +160,36 @@
       (error "No grammar G defined!")))
   (nth 0 G))
 
-(defun parser-generator--get-grammar-prefixes ()
-  "Return all prefixes of length look-ahead number of terminals and non-terminals."
-  (let ((symbols
-         (append
-          (parser-generator--get-grammar-terminals)
-          (parser-generator--get-grammar-non-terminals)))
-        (prefixes)
-        (k parser-generator--look-ahead-number)
-        (indexes (make-hash-table :test 'equal))
-        (index)
-        (prefix)
-        (stack)
-        (increment-index)
-        (include))
-    (let ((symbols-length (length symbols))
+(defun parser-generator--get-list-permutations (list k)
+  "Return all possible LIST permutations length K."
+  (let ((permutations)
+        (permutations-length 1))
+    (let ((list-length (length list))
           (i 0))
-
-      ;; Reset all indexes
       (while (< i k)
-        (puthash i 0 indexes)
-        (push 0 index)
-        (setq i (1+ i)))
 
-      ;; Build stack of all indexes that needs to be processed
-      (let ((index-remains t))
-        (while index-remains
+        (let ((times (expt list-length (- k (1+ i))))
+              (global-i 0))
+          (while (< global-i permutations-length)
+            ;; For each list..
+            (let ((list-i 0))
+              (while (< list-i list-length)
 
-          (setq i 0)
-          (setq prefix nil)
-          (setq include t)
-          (while (< i k)
-            (setq index (gethash i indexes))
+                ;; Add it |list| ^ (k - i) times to list
+                (let ((times-i 0))
+                  (while (< times-i times)
+                    (if (= i 0)
+                        (push (list (nth list-i list)) permutations)
+                      (push (nth list-i list) (nth global-i permutations)))
+                    (setq global-i (1+ global-i))
+                    (setq times-i (1+ times-i))))
+                (setq list-i (1+ list-i))))
 
-            (when increment-index
-              (when (= i increment-index)
-                (if (and
-                     (= index (1- symbols-length))
-                     (= increment-index (1- k)))
-                    (progn
+            (when (= i 0)
+              (setq permutations-length (length permutations)))))
 
-                      ;; Iterate columns and see if any is less than
-                      ;; max index, in that case increment it and re-do
-                      ;; last column
-                      (let ((found-not-incremented)
-                            (i-2 0))
-                        (while (and
-                                (< i-2 (1- k))
-                                (not found-not-incremented))
-                          (unless (= (gethash i-2 indexes) (1- symbols-length))
-                            (puthash i-2 (1+ (gethash i-2 indexes)) indexes)
-                            (puthash i -1 indexes)
-                            (setq include nil)
-                            (setq found-not-incremented t))
-                          (setq i-2 (1+ i-2)))
-
-                        (unless found-not-incremented
-                          (setq index-remains nil))))
-                  (if (= index (1- symbols-length))
-                      (progn
-                        (setq index 0)
-                        (setq increment-index (1+ increment-index)))
-                    (setq index (1+ index)))
-                  (puthash i index indexes))))
-
-            (when index-remains
-              (push index prefix))
-            (setq i (1+ i)))
-
-          (unless increment-index
-            (setq increment-index (1- k)))
-
-          (when (and
-                 index-remains
-                 include)
-            (setq prefix (nreverse prefix))
-            (push prefix stack))
-          ))
-
-      (while stack
-        (let ((index-list (pop stack)))
-          ;; Reset variables
-          (setq i 0)
-          (setq prefix nil)
-
-          ;; Build prefix and prefix-indexes from actual state
-          (while (< i k)
-            (setq index (nth i index-list))
-            (push (nth index symbols) prefix)
-            (setq i (1+ i)))
-
-          (push prefix prefixes))))
-    (sort prefixes 'parser-generator--sort-list)))
+        (setq i (1+ i))))
+    (sort permutations 'parser-generator--sort-list)))
 
 (defun parser-generator--get-grammar-production-number (production)
   "If PRODUCTION exist, return it's number."

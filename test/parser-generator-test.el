@@ -674,7 +674,7 @@
 
 (defun parser-generator-test--merge-max-terminals ()
   "Test `parser-generator--merge-max-terminals'."
-  (message "Passed tests  for (parser-generator--merge-max-terminals)")
+  (message "Starting tests  for (parser-generator--merge-max-terminals)")
 
   (should
    (equal
@@ -694,9 +694,9 @@
 
   (message "Passed tests  for (parser-generator--merge-max-terminals)"))
 
-(defun parser-generator-test--get-grammar-prefixes ()
-  "Test `parser-generator--get-grammar-prefixes'."
-  (message "Passed tests  for (parser-generator--get-grammar-prefixes)")
+(defun parser-generator-test--get-list-permutations ()
+  "Test `parser-generator--get-list-permutations'."
+  (message "Starting tests  for (parser-generator--get-list-permutations)")
 
   (parser-generator-set-look-ahead-number 1)
   (parser-generator-set-grammar '((S A B) ("a" "b") ((S A) (S (B)) (B "a") (A "a") (A ("b" "a"))) S))
@@ -705,7 +705,12 @@
   (should
    (equal
     '((A) (B) (S) ("a") ("b"))
-    (parser-generator--get-grammar-prefixes)))
+    (parser-generator--get-list-permutations
+     (append
+      (parser-generator--get-grammar-terminals)
+      (parser-generator--get-grammar-non-terminals))
+     parser-generator--look-ahead-number)))
+  (message "Passed test for list permutations of length 1")
 
   (parser-generator-set-look-ahead-number 2)
   (should
@@ -715,9 +720,25 @@
       (S A) (S B) (S S) (S "a") (S "b")
       ("a" A) ("a" B) ("a" S) ("a" "a") ("a" "b")
       ("b" A) ("b" B) ("b" S) ("b" "a") ("b" "b"))
-    (parser-generator--get-grammar-prefixes)))
+    (parser-generator--get-list-permutations
+     (append
+      (parser-generator--get-grammar-terminals)
+      (parser-generator--get-grammar-non-terminals))
+     parser-generator--look-ahead-number)))
+  (message "Passed test for list permutations of length 2")
 
-  (message "Passed tests  for (parser-generator--get-grammar-prefixes)"))
+  (parser-generator-set-look-ahead-number 3)
+  (should
+   (equal
+    '((A A A) (A A B) (A A S) (A A "a") (A A "b") (A B A) (A B B) (A B S) (A B "a") (A B "b") (A S A) (A S B) (A S S) (A S "a") (A S "b") (A "a" A) (A "a" B) (A "a" S) (A "a" "a") (A "a" "b") (A "b" A) (A "b" B) (A "b" S) (A "b" "a") (A "b" "b") (B A A) (B A B) (B A S) (B A "a") (B A "b") (B B A) (B B B) (B B S) (B B "a") (B B "b") (B S A) (B S B) (B S S) (B S "a") (B S "b") (B "a" A) (B "a" B) (B "a" S) (B "a" "a") (B "a" "b") (B "b" A) (B "b" B) (B "b" S) (B "b" "a") (B "b" "b") (S A A) (S A B) (S A S) (S A "a") (S A "b") (S B A) (S B B) (S B S) (S B "a") (S B "b") (S S A) (S S B) (S S S) (S S "a") (S S "b") (S "a" A) (S "a" B) (S "a" S) (S "a" "a") (S "a" "b") (S "b" A) (S "b" B) (S "b" S) (S "b" "a") (S "b" "b") ("a" A A) ("a" A B) ("a" A S) ("a" A "a") ("a" A "b") ("a" B A) ("a" B B) ("a" B S) ("a" B "a") ("a" B "b") ("a" S A) ("a" S B) ("a" S S) ("a" S "a") ("a" S "b") ("a" "a" A) ("a" "a" B) ("a" "a" S) ("a" "a" "a") ("a" "a" "b") ("a" "b" A) ("a" "b" B) ("a" "b" S) ("a" "b" "a") ("a" "b" "b") ("b" A A) ("b" A B) ("b" A S) ("b" A "a") ("b" A "b") ("b" B A) ("b" B B) ("b" B S) ("b" B "a") ("b" B "b") ("b" S A) ("b" S B) ("b" S S) ("b" S "a") ("b" S "b") ("b" "a" A) ("b" "a" B) ("b" "a" S) ("b" "a" "a") ("b" "a" "b") ("b" "b" A) ("b" "b" B) ("b" "b" S) ("b" "b" "a") ("b" "b" "b"))
+    (parser-generator--get-list-permutations
+     (append
+      (parser-generator--get-grammar-terminals)
+      (parser-generator--get-grammar-non-terminals))
+     parser-generator--look-ahead-number)))
+  (message "Passed test for list permutations of length 3")
+
+  (message "Passed tests for (parser-generator--get-list-permutations)"))
 
 (defun parser-generator-test ()
   "Run test."
@@ -736,7 +757,7 @@
   (parser-generator-test--get-grammar-rhs)
   (parser-generator-test--get-grammar-look-aheads)
   (parser-generator-test--merge-max-terminals)
-  (parser-generator-test--get-grammar-prefixes)
+  (parser-generator-test--get-list-permutations)
 
   ;; Algorithms
   (parser-generator-test--first)
