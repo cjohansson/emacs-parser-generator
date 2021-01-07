@@ -123,6 +123,9 @@
                                      "Expecting production number for %s from LR-item %s!"
                                      production
                                      lr-item))
+                                  (parser-generator--debug
+                                   (message "production-number: %s" production-number)
+                                   (message "u: %s" u))
 
                                   (if (and
                                        (= production-number 0)
