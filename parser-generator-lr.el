@@ -373,7 +373,8 @@
 
       ;; Iterate all productions in grammar
       (let ((lr-items-e)
-            (start-productions (parser-generator--get-grammar-rhs start))
+            (start-productions
+             (parser-generator--get-grammar-rhs start))
             (e-list (parser-generator--generate-list-of-symbol
                      parser-generator--look-ahead-number
                      parser-generator--e-identifier)))
@@ -381,8 +382,8 @@
         ;; (a)
         (dolist (rhs start-productions)
           ;; Add [S -> . α] to V(e)
-          (push `(,start nil ,rhs ,e-list) lr-items-e)
-          (puthash `(,e-list ,start nil ,rhs ,e-list) t lr-item-exists))
+          (push `(,(list start) nil ,rhs ,e-list) lr-items-e)
+          (puthash `(,e-list ,(list start) nil ,rhs ,e-list) t lr-item-exists))
 
         ;; (b) Iterate every item in v-set(e), if [A -> . Bα, u] is an item and B -> β is in P
         ;; then for each x in FIRST(αu) add [B -> . β, x] to v-set(e), provided it is not already there
@@ -405,14 +406,18 @@
                   (let ((rhs-first (car rhs)))
                     (parser-generator--debug
                      (message "rhs-first: %s" rhs-first))
-                    (when (parser-generator--valid-non-terminal-p rhs-first)
+                    (when
+                        (parser-generator--valid-non-terminal-p
+                         rhs-first)
                       (let ((rhs-rest (append (cdr rhs) suffix)))
                         (let ((rhs-rest-first (parser-generator--first rhs-rest)))
                           (parser-generator--debug
                            (message "rhs-rest-first: %s" rhs-rest-first))
                           (unless rhs-rest-first
                             (setq rhs-rest-first `(,e-list)))
-                          (let ((sub-production (parser-generator--get-grammar-rhs rhs-first)))
+                          (let ((sub-production
+                                 (parser-generator--get-grammar-rhs
+                                  rhs-first)))
                             (parser-generator--debug
                              (message "sub-production: %s" sub-production))
 
@@ -434,9 +439,17 @@
                                  (message "f: %s" f))
 
                                 ;; Add [B -> . β, x] to V(e), provided it is not already there
-                                (unless (gethash `(e ,rhs-first nil ,sub-rhs ,f) lr-item-exists)
-                                  (puthash `(e ,rhs-first nil ,sub-rhs ,f) t lr-item-exists)
-                                  (push `(,rhs-first nil ,sub-rhs ,f) lr-items-e)
+                                (unless
+                                    (gethash
+                                     `(e ,(list rhs-first) nil ,sub-rhs ,f)
+                                     lr-item-exists)
+                                  (puthash
+                                   `(e ,(list rhs-first) nil ,sub-rhs ,f)
+                                   t
+                                   lr-item-exists)
+                                  (push
+                                   `(,(list rhs-first) nil ,sub-rhs ,f)
+                                   lr-items-e)
 
                                   ;; (c) Repeat (b) until no more items can be added to V(e)
                                   (setq found-new t))))))))))))))
@@ -444,7 +457,9 @@
         (parser-generator--debug
          (message "V(e) = %s" lr-items-e))
 
-        (setq lr-items-e (sort lr-items-e 'parser-generator--sort-list))
+        (setq
+         lr-items-e
+         (sort lr-items-e 'parser-generator--sort-list))
 
         ;; 2 Suppose that we have constructed V(X1,X2,...,Xi-1) we construct V(X1,X2,...,Xi) as follows:
         ;; Only do this step if prefix is not the e-identifier
@@ -471,7 +486,9 @@
 
                 ;; Fill up rest of prefix with e-identifier if length is below k
                 (while (< (length prefix) k)
-                  (push parser-generator--e-identifier prefix))
+                  (push
+                   parser-generator--e-identifier
+                   prefix))
                 (setq prefix (reverse prefix))
 
                 (let ((lr-new-item))
@@ -509,7 +526,9 @@
             (lr-item-suffix-i 0))
 
         ;; Gather first and rest of suffix dependent on look-ahead number
-        (let ((lr-item-suffix-length (length lr-item-suffix)))
+        (let
+            ((lr-item-suffix-length
+              (length lr-item-suffix)))
           (while
               (< lr-item-suffix-i lr-item-suffix-length)
             (if
@@ -596,17 +615,27 @@
                         ;; then add [B -> . D, x] to V(X1,...,Xi) for each x in FIRST(bu)
                         ;; provided it is not already there
                         (let ((lr-item-to-add
-                               `(,lr-item-suffix-first nil ,sub-rhs ,f)))
-                          (unless (gethash lr-item-to-add lr-item-exists)
+                               `(,(list lr-item-suffix-first) nil ,sub-rhs ,f)))
+                          (unless
+                              (gethash
+                               lr-item-to-add
+                               lr-item-exists)
                             (setq added-new t)
                             (parser-generator--debug
                              (message
                               "lr-item-to-add: %s"
                               lr-item-to-add))
-                            (puthash lr-item-to-add t lr-item-exists)
-                            (push lr-item-to-add lr-new-item)))))))))))))
+                            (puthash
+                             lr-item-to-add
+                             t
+                             lr-item-exists)
+                            (push
+                             lr-item-to-add
+                             lr-new-item)))))))))))))
 
-    (setq lr-new-item (sort lr-new-item 'parser-generator--sort-list))
+    (setq
+     lr-new-item
+     (sort lr-new-item 'parser-generator--sort-list))
     lr-new-item))
 
 (defun parser-generator-lr-parse
@@ -904,9 +933,7 @@
 
                (t (error
                    "Invalid action-match: %s!"
-                   action-match)))
-
-              (error "was here"))))))
+                   action-match))))))))
     (unless accept
       (error
        "Parsed entire string without getting accepting! Output: %s"

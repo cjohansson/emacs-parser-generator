@@ -84,26 +84,29 @@
   (message "Starting tests for (parser-generator-lr--generate-goto-tables)")
 
   ;; Example 5.30, p. 389
-  (parser-generator-set-grammar '((Sp S) (a b) ((Sp S) (S (S a S b)) (S e)) Sp))
+  (parser-generator-set-grammar
+   '((Sp S) (a b) ((Sp S) (S (S a S b)) (S e)) Sp))
   (parser-generator-set-look-ahead-number 1)
   (parser-generator-process-grammar)
   (let ((table-lr-items (parser-generator-lr--generate-goto-tables)))
 
-    (message
-     "GOTO-table: %s"
-     (parser-generator--hash-to-list
-      parser-generator-lr--goto-tables))
-    (message
-     "LR-items: %s"
-     (parser-generator--hash-to-list
-      table-lr-items))
+    (parser-generator--debug
+     (message
+      "GOTO-table: %s"
+      (parser-generator--hash-to-list
+       parser-generator-lr--goto-tables))
+     (message
+      "LR-items: %s"
+      (parser-generator--hash-to-list
+       table-lr-items)))
 
     (parser-generator-lr--generate-action-tables
      table-lr-items)
-    (message
-     "ACTION-tables: %s"
-     (parser-generator--hash-to-list
-      parser-generator-lr--action-tables))
+    (parser-generator--debug
+     (message
+      "ACTION-tables: %s"
+      (parser-generator--hash-to-list
+       parser-generator-lr--action-tables)))
 
     (should
      (equal
@@ -121,14 +124,14 @@
 
     (should
      (equal
-      '((0 ((S nil (S a S b) (a)) (S nil (S a S b) (e)) (S nil nil (a)) (S nil nil (e)) (Sp nil (S) (e))))
-        (1 ((S (S) (a S b) (a)) (S (S) (a S b) (e)) (Sp (S) nil (e))))
-        (2 ((S (S a) (S b) (a)) (S (S a) (S b) (e)) (S nil (S a S b) (a)) (S nil (S a S b) (b)) (S nil nil (a)) (S nil nil (b))))
-        (3 ((S (S) (a S b) (a)) (S (S) (a S b) (b)) (S (S a S) (b) (a)) (S (S a S) (b) (e))))
-        (4 ((S (S a) (S b) (a)) (S (S a) (S b) (b)) (S nil (S a S b) (a)) (S nil (S a S b) (b)) (S nil nil (a)) (S nil nil (b))))
-        (5 ((S (S a S b) nil (a)) (S (S a S b) nil (e))))
-        (6 ((S (S) (a S b) (a)) (S (S) (a S b) (b)) (S (S a S) (b) (a)) (S (S a S) (b) (b))))
-        (7 ((S (S a S b) nil (a)) (S (S a S b) nil (b)))))
+      '((0 (((S) nil (S a S b) (a)) ((S) nil (S a S b) (e)) ((S) nil nil (a)) ((S) nil nil (e)) ((Sp) nil (S) (e))))
+        (1 (((S) (S) (a S b) (a)) ((S) (S) (a S b) (e)) ((Sp) (S) nil (e))))
+        (2 (((S) (S a) (S b) (a)) ((S) (S a) (S b) (e)) ((S) nil (S a S b) (a)) ((S) nil (S a S b) (b)) ((S) nil nil (a)) ((S) nil nil (b))))
+        (3 (((S) (S) (a S b) (a)) ((S) (S) (a S b) (b)) ((S) (S a S) (b) (a)) ((S) (S a S) (b) (e))))
+        (4 (((S) (S a) (S b) (a)) ((S) (S a) (S b) (b)) ((S) nil (S a S b) (a)) ((S) nil (S a S b) (b)) ((S) nil nil (a)) ((S) nil nil (b))))
+        (5 (((S) (S a S b) nil (a)) ((S) (S a S b) nil (e))))
+        (6 (((S) (S) (a S b) (a)) ((S) (S) (a S b) (b)) ((S) (S a S) (b) (a)) ((S) (S a S) (b) (b))))
+        (7 (((S) (S a S b) nil (a)) ((S) (S a S b) nil (b)))))
       (parser-generator--hash-to-list
        table-lr-items))))
   (message "Passed LR-items")
@@ -136,7 +139,8 @@
   (message "Passed LR-items for example 5.30")
 
   ;; Example 5.30, p. 389 but with terminals as strings
-  (parser-generator-set-grammar '((Sp S) ("a" "b") ((Sp S) (S (S "a" S "b")) (S e)) Sp))
+  (parser-generator-set-grammar
+   '((Sp S) ("a" "b") ((Sp S) (S (S "a" S "b")) (S e)) Sp))
   (parser-generator-set-look-ahead-number 1)
   (parser-generator-process-grammar)
 
@@ -161,14 +165,14 @@
 
     (should
      (equal
-      '((0 ((S nil (S "a" S "b") ("a")) (S nil (S "a" S "b") (e)) (S nil nil ("a")) (S nil nil (e)) (Sp nil (S) (e))))
-        (1 ((S (S) ("a" S "b") ("a")) (S (S) ("a" S "b") (e)) (Sp (S) nil (e))))
-        (2 ((S (S "a") (S "b") ("a")) (S (S "a") (S "b") (e)) (S nil (S "a" S "b") ("a")) (S nil (S "a" S "b") ("b")) (S nil nil ("a")) (S nil nil ("b"))))
-        (3 ((S (S) ("a" S "b") ("a")) (S (S) ("a" S "b") ("b")) (S (S "a" S) ("b") ("a")) (S (S "a" S) ("b") (e))))
-        (4 ((S (S "a") (S "b") ("a")) (S (S "a") (S "b") ("b")) (S nil (S "a" S "b") ("a")) (S nil (S "a" S "b") ("b")) (S nil nil ("a")) (S nil nil ("b"))))
-        (5 ((S (S "a" S "b") nil ("a")) (S (S "a" S "b") nil (e))))
-        (6 ((S (S) ("a" S "b") ("a")) (S (S) ("a" S "b") ("b")) (S (S "a" S) ("b") ("a")) (S (S "a" S) ("b") ("b"))))
-        (7 ((S (S "a" S "b") nil ("a")) (S (S "a" S "b") nil ("b")))))
+      '((0 (((S) nil (S "a" S "b") ("a")) ((S) nil (S "a" S "b") (e)) ((S) nil nil ("a")) ((S) nil nil (e)) ((Sp) nil (S) (e))))
+        (1 (((S) (S) ("a" S "b") ("a")) ((S) (S) ("a" S "b") (e)) ((Sp) (S) nil (e))))
+        (2 (((S) (S "a") (S "b") ("a")) ((S) (S "a") (S "b") (e)) ((S) nil (S "a" S "b") ("a")) ((S) nil (S "a" S "b") ("b")) ((S) nil nil ("a")) ((S) nil nil ("b"))))
+        (3 (((S) (S) ("a" S "b") ("a")) ((S) (S) ("a" S "b") ("b")) ((S) (S "a" S) ("b") ("a")) ((S) (S "a" S) ("b") (e))))
+        (4 (((S) (S "a") (S "b") ("a")) ((S) (S "a") (S "b") ("b")) ((S) nil (S "a" S "b") ("a")) ((S) nil (S "a" S "b") ("b")) ((S) nil nil ("a")) ((S) nil nil ("b"))))
+        (5 (((S) (S "a" S "b") nil ("a")) ((S) (S "a" S "b") nil (e))))
+        (6 (((S) (S) ("a" S "b") ("a")) ((S) (S) ("a" S "b") ("b")) ((S) (S "a" S) ("b") ("a")) ((S) (S "a" S) ("b") ("b"))))
+        (7 (((S) (S "a" S "b") nil ("a")) ((S) (S "a" S "b") nil ("b")))))
       (parser-generator--hash-to-list table-lr-items)))
     (message "Passed LR-items with tokens as strings"))
 
@@ -181,25 +185,26 @@
   (message "Starting tests for (parser-generator-lr--items-for-prefix)")
 
   ;; Example 5.29 p 387
-  (parser-generator-set-grammar '((Sp S) (a b) ((Sp S) (S (S a S b)) (S e)) Sp))
+  (parser-generator-set-grammar
+   '((Sp S) (a b) ((Sp S) (S (S a S b)) (S e)) Sp))
   (parser-generator-set-look-ahead-number 1)
   (parser-generator-process-grammar)
 
   (should
    (equal
-    '((S nil (S a S b) (a))
-      (S nil (S a S b) (e))
-      (S nil nil (a))
-      (S nil nil (e))
-      (Sp nil (S) (e)))
+    '(((S) nil (S a S b) (a))
+      ((S) nil (S a S b) (e))
+      ((S) nil nil (a))
+      ((S) nil nil (e))
+      ((Sp) nil (S) (e)))
     (parser-generator-lr--items-for-prefix 'e)))
   (message "Passed V(e)")
 
   (should
    (equal
-    '((S (S) (a S b) (a))
-      (S (S) (a S b) (e))
-      (Sp (S) nil (e)))
+    '(((S) (S) (a S b) (a))
+      ((S) (S) (a S b) (e))
+      ((Sp) (S) nil (e)))
     (parser-generator-lr--items-for-prefix 'S)))
   (message "Passed V(S)")
 
@@ -217,12 +222,12 @@
 
   (should
    (equal
-    '((S (S a) (S b) (a))
-      (S (S a) (S b) (e))
-      (S nil (S a S b) (a))
-      (S nil (S a S b) (b))
-      (S nil nil (a))
-      (S nil nil (b)))
+    '(((S) (S a) (S b) (a))
+      ((S) (S a) (S b) (e))
+      ((S) nil (S a S b) (a))
+      ((S) nil (S a S b) (b))
+      ((S) nil nil (a))
+      ((S) nil nil (b)))
     (parser-generator-lr--items-for-prefix '(S a))))
   (message "Passed V(Sa)")
 
@@ -241,10 +246,10 @@
   ;; a3 p. 390
   (should
    (equal
-    '((S (S) (a S b) (a))
-      (S (S) (a S b) (b))
-      (S (S a S) (b) (a))
-      (S (S a S) (b) (e)))
+    '(((S) (S) (a S b) (a))
+      ((S) (S) (a S b) (b))
+      ((S) (S a S) (b) (a))
+      ((S) (S a S) (b) (e)))
     (parser-generator-lr--items-for-prefix '(S a S))))
   (message "Passed V(SaS)")
 
@@ -336,10 +341,12 @@
   (parser-generator-set-look-ahead-number 1)
   (parser-generator-process-grammar)
   (let ((lr-items (parser-generator-lr-generate-parser-tables)))
-    (message "lr-items: %s" (parser-generator--hash-values-to-list lr-items t))
+    (parser-generator--debug
+     (message "lr-items: %s" (parser-generator--hash-values-to-list lr-items t)))
     )
-  (message "goto-tables: %s" (parser-generator--hash-values-to-list parser-generator-lr--goto-tables t))
-  (message "action-tables: %s" (parser-generator--hash-values-to-list parser-generator-lr--action-tables t))
+  (parser-generator--debug
+   (message "goto-tables: %s" (parser-generator--hash-values-to-list parser-generator-lr--goto-tables t))
+   (message "action-tables: %s" (parser-generator--hash-values-to-list parser-generator-lr--action-tables t)))
   (setq
    parser-generator-lex-analyzer--function
    (lambda (index)
@@ -393,18 +400,23 @@
   (parser-generator-lr-test--parse-incremental-vs-regular)
   (message "Passed incremental-tests")
 
+  (message "Starting test with look-ahead number = 2")
+
   (parser-generator-set-grammar '((Sp S) ("a" "b") ((Sp S) (S (S "a" S "b")) (S e)) Sp))
   (parser-generator-set-look-ahead-number 2)
   (parser-generator-process-grammar)
   (let ((lr-items (parser-generator-lr--generate-goto-tables)))
-    (message "lr-items: %s" (parser-generator--hash-values-to-list lr-items t))
+    (parser-generator--debug
+     (message "lr-items: %s" (parser-generator--hash-values-to-list lr-items t)))
 
     ;; TODO Fix so that there is an accept path in look-ahead number 2
-    
-    (message "goto-tables: %s" (parser-generator--hash-values-to-list parser-generator-lr--goto-tables t))
+
+    (parser-generator--debug
+     (message "goto-tables: %s" (parser-generator--hash-values-to-list parser-generator-lr--goto-tables t)))
     (parser-generator-lr--generate-action-tables lr-items)
     ;; TODO Should generate accept somewhere in this action-table
-    (message "action-tables: %s" (parser-generator--hash-values-to-list parser-generator-lr--action-tables t)))
+    (parser-generator--debug
+     (message "action-tables: %s" (parser-generator--hash-values-to-list parser-generator-lr--action-tables t))))
   (setq
    parser-generator-lex-analyzer--function
    (lambda (index)

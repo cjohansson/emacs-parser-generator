@@ -11,7 +11,7 @@
 
 
 (defvar parser-generator--debug
-  t
+  nil
   "Whether to print debug messages or not.")
 
 (defvar parser-generator--e-identifier
@@ -197,7 +197,11 @@
   "Return right hand sides of LHS if there is any."
   (unless parser-generator--table-productions-rhs
     (error "Table for productions RHS indexed by LHS is undefined!"))
-  (gethash lhs parser-generator--table-productions-rhs))
+  (unless (listp lhs)
+    (setq lhs (list lhs)))
+  (gethash
+   lhs
+   parser-generator--table-productions-rhs))
 
 (defun parser-generator--get-grammar-start (&optional G)
   "Return start of grammar G."
@@ -295,6 +299,8 @@
     (dolist (p productions)
       (let ((lhs (car p))
             (rhs (cdr p)))
+        (unless (listp lhs)
+          (setq lhs (list lhs)))
         (let ((new-value
                (gethash
                 lhs
