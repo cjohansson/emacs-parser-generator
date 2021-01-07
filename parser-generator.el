@@ -173,13 +173,17 @@
   "If PRODUCTION exist, return it's number."
   (unless parser-generator--table-productions-number
     (error "Table for production-numbers is undefined!"))
-  (gethash production parser-generator--table-productions-number))
+  (gethash
+   production
+   parser-generator--table-productions-number))
 
 (defun parser-generator--get-grammar-production-by-number (production-number)
   "If PRODUCTION-NUMBER exist, return it's production."
   (unless parser-generator--table-productions-number-reverse
     (error "Table for reverse production-numbers is undefined!"))
-  (gethash production-number parser-generator--table-productions-number-reverse))
+  (gethash
+   production-number
+   parser-generator--table-productions-number-reverse))
 
 (defun parser-generator--get-grammar-productions (&optional G)
   "Return productions of grammar G."
@@ -291,7 +295,10 @@
     (dolist (p productions)
       (let ((lhs (car p))
             (rhs (cdr p)))
-        (let ((new-value (gethash lhs parser-generator--table-productions-rhs)))
+        (let ((new-value
+               (gethash
+                lhs
+                parser-generator--table-productions-rhs)))
           (dolist (rhs-element rhs)
             (unless (listp rhs-element)
               (setq rhs-element (list rhs-element)))
@@ -300,17 +307,28 @@
                 (unless (functionp rhs-sub-element)
                   (push rhs-sub-element new-rhs)))
               (push (nreverse new-rhs) new-value)))
-          (puthash lhs (nreverse new-value) parser-generator--table-productions-rhs))))
+          (puthash
+           lhs
+           (nreverse new-value)
+           parser-generator--table-productions-rhs))))
 
-    (setq parser-generator--table-productions-number (make-hash-table :test 'equal))
-    (setq parser-generator--table-productions-number-reverse (make-hash-table :test 'equal))
-    (setq parser-generator--table-translations (make-hash-table :test 'equal))
+    (setq
+     parser-generator--table-productions-number
+     (make-hash-table :test 'equal))
+    (setq
+     parser-generator--table-productions-number-reverse
+     (make-hash-table :test 'equal))
+    (setq
+     parser-generator--table-translations
+     (make-hash-table :test 'equal))
     (let ((production-index 0))
       (dolist (p productions)
         (let ((lhs (car p))
               (rhs (cdr p))
               (production)
               (translation))
+          (unless (listp lhs)
+            (setq lhs (list lhs)))
           (let ((rhs-element-index 0)
                 (rhs-length (length rhs))
                 (rhs-element))
@@ -333,18 +351,33 @@
                 (parser-generator--debug
                  (message "Production %s: %s" production-index production)))
               (setq rhs-element-index (1+ rhs-element-index))
-              (puthash production production-index parser-generator--table-productions-number)
-              (puthash production-index production parser-generator--table-productions-number-reverse)
+              (puthash
+               production
+               production-index
+               parser-generator--table-productions-number)
+              (puthash
+               production-index
+               production
+               parser-generator--table-productions-number-reverse)
               (when translation
                 (parser-generator--debug
                  (message "Translation %s: %s" production-index translation))
-                (puthash production-index translation parser-generator--table-translations))
+                (puthash
+                 production-index
+                 translation
+                 parser-generator--table-translations))
               (setq production-index (1+ production-index))))))))
 
-  (let ((look-aheads (parser-generator--get-grammar-look-aheads)))
-    (setq parser-generator--table-look-aheads-p (make-hash-table :test 'equal))
+  (let ((look-aheads
+         (parser-generator--get-grammar-look-aheads)))
+    (setq
+     parser-generator--table-look-aheads-p
+     (make-hash-table :test 'equal))
     (dolist (look-ahead look-aheads)
-      (puthash look-ahead t parser-generator--table-look-aheads-p))))
+      (puthash
+       look-ahead
+       t
+       parser-generator--table-look-aheads-p))))
 
 (defun parser-generator-set-look-ahead-number (k)
   "Set look-ahead number K."

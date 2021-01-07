@@ -72,7 +72,10 @@
       (5 (((a) reduce 1) ((e) reduce 1)))
       (6 (((a) shift) ((b) shift)))
       (7 (((a) reduce 1) ((b) reduce 1))))
-      (parser-generator--hash-to-list parser-generator-lr--action-tables)))
+    (parser-generator--hash-to-list
+     parser-generator-lr--action-tables)))
+
+  ;; TODO Test with look-ahead number > 1 here
 
   (message "Ended tests for (parser-generator-lr--generate-action-tables)"))
 
@@ -288,7 +291,8 @@
   "Test `parser-generator-lr-parse'."
   (message "Started tests for (parser-generator-lr-parse)")
 
-  (parser-generator-set-grammar '((Sp S) (a b) ((Sp S) (S (S a S b)) (S e)) Sp))
+  (parser-generator-set-grammar
+   '((Sp S) (a b) ((Sp S) (S (S a S b)) (S e)) Sp))
   (parser-generator-set-look-ahead-number 1)
   (parser-generator-process-grammar)
   (parser-generator-lr-generate-parser-tables)

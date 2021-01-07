@@ -42,13 +42,16 @@
   (let ((action-tables)
         (states '(shift reduce error))
         (added-actions (make-hash-table :test 'equal))
-        (goto-tables (parser-generator--hash-to-list parser-generator-lr--goto-tables))
+        (goto-tables
+         (parser-generator--hash-to-list
+          parser-generator-lr--goto-tables))
         (found-accept))
     (dolist (goto-table goto-tables)
       (let ((goto-index (car goto-table))
             (found-action nil)
             (action-table))
-        (let ((lr-items (gethash goto-index table-lr-items)))
+        (let ((lr-items
+               (gethash goto-index table-lr-items)))
           (let ((lr-items-length (length lr-items)))
             ;; Where u is in (T U e)*k
             (dolist (state states)
@@ -68,7 +71,9 @@
                             (v (nth 3 lr-item)))
                         (let ((Cv (append C v)))
                           (when Cv
-                            (let ((eff (parser-generator--e-free-first Cv)))
+                            (let
+                                ((eff
+                                  (parser-generator--e-free-first Cv)))
                               (when eff
                                 ;; Go through eff-items and see if any item is a valid look-ahead of grammar
                                 ;; in that case save in action table a shift action here
@@ -82,7 +87,8 @@
                                           (< eff-index eff-length))
                                     (setq eff-item (nth eff-index eff))
                                     (when (parser-generator--valid-look-ahead-p eff-item)
-                                      (let ((hash-key (format "%s-%s-%s" goto-index state eff-item)))
+                                      (let ((hash-key
+                                             (format "%s-%s-%s" goto-index state eff-item)))
                                         (unless (gethash hash-key added-actions)
                                           (puthash hash-key t added-actions)
                                           (setq searching-match nil))))
@@ -103,14 +109,20 @@
                         (unless B
                           (setq B (list parser-generator--e-identifier)))
                         (when (parser-generator--valid-look-ahead-p u)
-                          (let ((hash-key (format "%s-%s-%s" goto-index state u)))
+                          (let ((hash-key
+                                 (format "%s-%s-%s" goto-index state u)))
                             (unless (gethash hash-key added-actions)
                               (puthash hash-key t added-actions)
                               (let ((production (list A B)))
-                                (let ((production-number
-                                       (parser-generator--get-grammar-production-number production)))
+                                (let
+                                    ((production-number
+                                      (parser-generator--get-grammar-production-number
+                                       production)))
                                   (unless production-number
-                                    (error "Expecting production number for %s from LR-item %s!" production lr-item))
+                                    (error
+                                     "Expecting production number for %s from LR-item %s!"
+                                     production
+                                     lr-item))
 
                                   (if (and
                                        (= production-number 0)
@@ -130,21 +142,31 @@
 
                    ((eq state 'error)
                     (unless found-action
-                      (error (format "Failed to find any action in set %s" lr-items)))
+                      (error
+                       "Failed to find any action in set %s"
+                       lr-items))
                     (setq continue-loop nil)))
                   (setq lr-item-index (1+ lr-item-index)))))))
         (parser-generator--debug
          (message "%s actions %s" goto-index action-table))
         (when action-table
-          (push (list goto-index (sort action-table 'parser-generator--sort-list)) action-tables))))
+          (push
+           (list
+            goto-index
+            (sort action-table 'parser-generator--sort-list))
+           action-tables))))
     (unless found-accept
       (error "Failed to find an accept action in the generated action-tables!"))
     (setq action-tables (nreverse action-tables))
-    (setq parser-generator-lr--action-tables (make-hash-table :test 'equal))
+    (setq parser-generator-lr--action-tables
+          (make-hash-table :test 'equal))
     (let ((table-length (length action-tables))
           (table-index 0))
       (while (< table-index table-length)
-        (puthash table-index (car (cdr (nth table-index action-tables))) parser-generator-lr--action-tables)
+        (puthash
+         table-index
+         (car (cdr (nth table-index action-tables)))
+         parser-generator-lr--action-tables)
         (setq table-index (1+ table-index))))))
 
 ;; Algorithm 5.9, p. 389
@@ -595,12 +617,13 @@
      translation
      history)
   "Perform a LR-parse via lex-analyzer, optionally at INPUT-TAPE-INDEX with PUSHDOWN-LIST, OUTPUT, TRANSLATION and HISTORY."
-  (let ((result (parser-generator-lr--parse
-                 input-tape-index
-                 pushdown-list
-                 output
-                 translation
-                 history)))
+  (let ((result
+         (parser-generator-lr--parse
+          input-tape-index
+          pushdown-list
+          output
+          translation
+          history)))
     (nth 0 result)))
 
 (defun parser-generator-lr-translate
@@ -636,7 +659,9 @@
   (if (and
        input-tape-index
        (> input-tape-index 1))
-      (setq parser-generator-lex-analyzer--index input-tape-index)
+      (setq
+       parser-generator-lex-analyzer--index
+       input-tape-index)
     (parser-generator-lex-analyzer--reset))
 
   ;; Make sure tables exists
@@ -647,9 +672,12 @@
 
   (let ((accept)
         (pre-index 0)
-        (e-list (parser-generator--generate-list-of-symbol
-                 parser-generator--look-ahead-number
-                 parser-generator--e-identifier)))
+        (e-list
+         (parser-generator--generate-list-of-symbol
+          parser-generator--look-ahead-number
+          parser-generator--e-identifier)))
+    (parser-generator--debug
+     (message "e-list: %s" e-list))
 
     (while (not accept)
 
@@ -666,10 +694,11 @@
            ,output
            ,translation)
          history)
-        (setq pre-index
-              parser-generator-lex-analyzer--index))
+        (setq
+         pre-index
+         parser-generator-lex-analyzer--index))
 
-      ;; (1) The lookahead string u, consisting of the next k input symbols, is determined.
+      ;; (1) The look-ahead string u, consisting of the next k input symbols, is determined.
       (let ((look-ahead
              (parser-generator-lex-analyzer--peek-next-look-ahead))
             (look-ahead-full))
@@ -683,9 +712,12 @@
               (push (car look-ahead-item) look-ahead)
             (push look-ahead-item look-ahead)))
 
-        (let ((table-index (car pushdown-list)))
+        (let ((table-index
+               (car pushdown-list)))
           (let ((action-table
-                 (gethash table-index parser-generator-lr--action-tables)))
+                 (gethash
+                  table-index
+                  parser-generator-lr--action-tables)))
 
             (let ((action-match nil)
                   (action-table-length (length action-table))
@@ -716,6 +748,10 @@
                  possible-look-aheads
                  look-ahead
                  parser-generator-lex-analyzer--index))
+
+              (parser-generator--debug
+               (message "action-table: %s" action-table)
+               (message "action-match: %s" action-match))
 
               (cond
 
@@ -756,11 +792,10 @@
 
                       (unless next-index
                         (error
-                         (format
-                          "In shift, found no goto-item for %s in index %s, expected one of %s"
-                          a
-                          table-index
-                          possible-look-aheads)))
+                         "In shift, found no goto-item for %s in index %s, expected one of %s"
+                         a
+                         table-index
+                         possible-look-aheads))
 
                       (push a-full pushdown-list)
                       (push next-index pushdown-list)
@@ -783,9 +818,12 @@
                     (let ((production-lhs (car production))
                           (production-rhs (car (cdr production)))
                           (popped-items-contents))
+                      (parser-generator--debug
+                       (message "production-lhs: %s" production-lhs)
+                       (message "production-rhs: %s" production-rhs))
                       (unless (equal
                                production-rhs
-                               e-list) ;; TODO Verify this
+                               e-list)
                         (let ((pop-items (* 2 (length production-rhs)))
                               (popped-items 0)
                               (popped-item))
@@ -838,12 +876,20 @@
                               (let ((goto-item (nth goto-index goto-table)))
                                 (let ((goto-item-look-ahead (car goto-item))
                                       (goto-item-next-index (car (cdr goto-item))))
+                                  (parser-generator--debug
+                                   (message "goto-item: %s" goto-item)
+                                   (message "goto-item-look-ahead: %s" goto-item-look-ahead))
 
-                                  (when (equal goto-item-look-ahead production-lhs)
+                                  (when (equal
+                                         goto-item-look-ahead
+                                         production-lhs)
                                     (setq next-index goto-item-next-index)
                                     (setq searching-match nil))))
 
                               (setq goto-index (1+ goto-index)))
+
+                            (parser-generator--debug
+                             (message "next-index: %s" next-index))
 
                             (when next-index
                               (push production-lhs pushdown-list)
@@ -857,7 +903,10 @@
                 (setq accept t))
 
                (t (error
-                   (format "Invalid action-match: %s!" action-match)))))))))
+                   "Invalid action-match: %s!"
+                   action-match)))
+
+              (error "was here"))))))
     (unless accept
       (error
        "Parsed entire string without getting accepting! Output: %s"
