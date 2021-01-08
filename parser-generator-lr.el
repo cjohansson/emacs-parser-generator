@@ -124,7 +124,7 @@
                                      production
                                      lr-item))
                                   (parser-generator--debug
-                                   (message "production-number: %s" production-number)
+                                   (message "production: %s (%s)" production production-number)
                                    (message "u: %s" u))
 
                                   (if (and
@@ -272,11 +272,16 @@
     (let ((table-length (length goto-table))
           (table-index 0))
       (while (< table-index table-length)
-        (puthash table-index (car (cdr (nth table-index goto-table))) parser-generator-lr--goto-tables)
+        (puthash
+         table-index
+         (car (cdr (nth table-index goto-table)))
+         parser-generator-lr--goto-tables)
         (setq table-index (1+ table-index))))
     (unless
         (parser-generator-lr--items-valid-p
-         (parser-generator--hash-values-to-list table-lr-items t)) ;; TODO Should not use this debug function
+         (parser-generator--hash-values-to-list
+          table-lr-items
+          t)) ;; TODO Should not use this debug function
       (error "Inconsistent grammar!"))
     table-lr-items))
 
@@ -861,8 +866,16 @@
                               (popped-item))
                           (while (< popped-items pop-items)
                             (setq popped-item (pop pushdown-list))
-                            (when (listp popped-item)
-                              (push popped-item popped-items-contents))
+                            (parser-generator--debug
+                             (message "popped-item: %s" popped-item))
+                            (when (and
+                                   (listp popped-item)
+                                   (listp (car popped-item))
+                                   (parser-generator--valid-terminal-p
+                                    (car (car popped-item))))
+                              (push
+                               (car popped-item)
+                               popped-items-contents))
                             (setq popped-items (1+ popped-items)))))
                       (push production-number output)
 
