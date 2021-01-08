@@ -102,7 +102,7 @@
     (error "Missing look-ahead-number!"))
   (let ((iteration 0)
         (tokens))
-    (while (< iteration parser-generator--look-ahead-number)
+    (while (< iteration 1)
       (condition-case error
           (progn
             (let ((token

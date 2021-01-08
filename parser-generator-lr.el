@@ -718,6 +718,12 @@
                   table-index
                   parser-generator-lr--action-tables)))
 
+            (unless action-table
+              (error
+               "Action-table with index %s is empty! Push-down-list: %s"
+               table-index
+               pushdown-list))
+
             (let ((action-match nil)
                   (action-table-length (length action-table))
                   (action-index 0)
@@ -740,10 +746,11 @@
 
                 (error
                  (format
-                  "Invalid syntax! Expected one of %s found %s at index %s "
+                  "Invalid syntax! Expected one of %s found %s at index %s, push-down-list: %s"
                   possible-look-aheads
                   look-ahead
-                  parser-generator-lex-analyzer--index)
+                  parser-generator-lex-analyzer--index
+                  pushdown-list)
                  possible-look-aheads
                  look-ahead
                  parser-generator-lex-analyzer--index))
@@ -763,8 +770,8 @@
                 ;; there is no next input symbol or g(a) is undefined, halt
                 ;; and declare error.
 
-                (let ((a look-ahead)
-                      (a-full look-ahead-full))
+                (let ((a (list (car look-ahead)))
+                      (a-full (list (car look-ahead-full))))
                   (let ((goto-table
                          (gethash
                           table-index
@@ -822,7 +829,7 @@
                        (message "production-rhs: %s" production-rhs))
                       (unless (equal
                                production-rhs
-                               e-list)
+                               (list parser-generator--e-identifier))
                         (let ((pop-items (* 2 (length production-rhs)))
                               (popped-items 0)
                               (popped-item))
