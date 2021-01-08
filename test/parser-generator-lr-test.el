@@ -110,13 +110,13 @@
 
     (should
      (equal
-      '((0 (((S) 1)))
-        (1 (((a) 2)))
-        (2 (((S) 3)))
-        (3 (((a) 4) ((b) 5)))
-        (4 (((S) 6)))
+      '((0 ((S 1)))
+        (1 ((a 2)))
+        (2 ((S 3)))
+        (3 ((a 4) (b 5)))
+        (4 ((S 6)))
         (5 nil)
-        (6 (((a) 4) ((b) 7)))
+        (6 ((a 4) (b 7)))
         (7 nil))
       (parser-generator--hash-to-list
        parser-generator-lr--goto-tables)))
@@ -152,13 +152,13 @@
 
     (should
      (equal
-      '((0 (((S) 1)))
-        (1 ((("a") 2)))
-        (2 (((S) 3)))
-        (3 ((("a") 4) (("b") 5)))
-        (4 (((S) 6)))
+      '((0 ((S 1)))
+        (1 (("a" 2)))
+        (2 ((S 3)))
+        (3 (("a" 4) ("b" 5)))
+        (4 ((S 6)))
         (5 nil)
-        (6 ((("a") 4) (("b") 7)))
+        (6 (("a" 4) ("b" 7)))
         (7 nil))
       (parser-generator--hash-to-list parser-generator-lr--goto-tables)))
     (message "Passed GOTO-tables with tokens as strings")
@@ -662,7 +662,8 @@
   (parser-generator-lr-test--generate-action-tables)
   (parser-generator-lr-test-parse)
   (parser-generator-lr-test-translate)
-  (parser-generator-lr-test-parse-k-2))
+  ;; (parser-generator-lr-test-parse-k-2)
+  )
 
 
 (provide 'parser-generator-lr-test)
