@@ -439,6 +439,62 @@
 
   (message "Passed tests for (parser-generator-lr--parse)"))
 
+(defun parser-generator-lr-test-parse-k-2 ()
+  "Test `parser-generator-lr-parse' with k = 2."
+  (message "Started tests for (parser-generator-lr-parse) k = 2")
+
+  (setq
+   parser-generator-lex-analyzer--function
+   (lambda (index)
+     (let* ((string '(("a" 1 . 2) ("a" 2 . 3) ("b" 3 . 4) ("b" 4 . 5)))
+            (string-length (length string))
+            (max-index index)
+            (tokens))
+       (while (and
+               (< (1- index) string-length)
+               (< (1- index) max-index))
+         (push (nth (1- index) string) tokens)
+         (setq index (1+ index)))
+       (nreverse tokens))))
+
+  (message "Starting test with look-ahead number = 2")
+
+  (parser-generator-set-grammar '((Sp S) ("a" "b") ((Sp S) (S (S "a" S "b")) (S e)) Sp))
+  (parser-generator-set-look-ahead-number 2)
+  (parser-generator-process-grammar)
+  (let ((lr-items (parser-generator-lr--generate-goto-tables)))
+    (parser-generator--debug
+     (message "lr-items: %s" (parser-generator--hash-values-to-list lr-items t)))
+
+    ;; TODO Fix so that there is an accept path in look-ahead number 2
+
+    (parser-generator--debug
+     (message "goto-tables: %s" (parser-generator--hash-values-to-list parser-generator-lr--goto-tables t)))
+    (parser-generator-lr--generate-action-tables lr-items)
+    ;; TODO Should generate accept somewhere in this action-table
+    (parser-generator--debug
+     (message "action-tables: %s" (parser-generator--hash-values-to-list parser-generator-lr--action-tables t))))
+  (setq
+   parser-generator-lex-analyzer--function
+   (lambda (index)
+     (let* ((string '(("a" 1 . 2) ("a" 2 . 3) ("b" 3 . 4)))
+            (string-length (length string))
+            (max-index index)
+            (tokens))
+       (while (and
+               (< (1- index) string-length)
+               (< (1- index) max-index))
+         (push (nth (1- index) string) tokens)
+         (setq index (1+ index)))
+       (nreverse tokens))))
+  (should
+   (equal
+    '(2 2 2 1 1)
+    (parser-generator-lr-parse)))
+  (message "Passed test with terminals as string with look-ahead-number 2")
+
+  (message "Passed tests for (parser-generator-lr--parse-k-2)"))
+
 (defun parser-generator-lr-test-translate ()
   "Test `parser-generator-lr-translate'."
   (message "Started tests for (parser-generator-lr-translate)")
@@ -605,7 +661,8 @@
   (parser-generator-lr-test--generate-goto-tables)
   (parser-generator-lr-test--generate-action-tables)
   (parser-generator-lr-test-parse)
-  (parser-generator-lr-test-translate))
+  (parser-generator-lr-test-translate)
+  (parser-generator-lr-test-parse-k-2))
 
 
 (provide 'parser-generator-lr-test)
