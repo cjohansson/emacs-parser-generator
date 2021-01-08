@@ -803,7 +803,7 @@
                          table-index
                          possible-look-aheads))
 
-                      (push a-full pushdown-list)
+                      (push (car a-full) pushdown-list)
                       (push next-index pushdown-list)
                       (parser-generator-lex-analyzer--pop-token)))))
 
@@ -835,18 +835,20 @@
                               (popped-item))
                           (while (< popped-items pop-items)
                             (setq popped-item (pop pushdown-list))
-                            (parser-generator--debug
-                             (message "popped-item: %s" popped-item))
+                             (message "popped-item: %s" popped-item)
                             (when (and
                                    (listp popped-item)
-                                   (listp (car popped-item))
-                                   (parser-generator--valid-terminal-p
-                                    (car (car popped-item))))
+                                   (parser-generator--valid-symbol-p
+                                    (car popped-item)))
                               (push
                                (car popped-item)
                                popped-items-contents))
                             (setq popped-items (1+ popped-items)))))
                       (push production-number output)
+
+                      ;; TODO If popped items contain a non-terminal
+                      ;; it should be evaluated first before
+                      ;; translation is executed.
 
                       ;; Perform translation at reduction if specified
                       (when
@@ -871,6 +873,7 @@
                               (unless (listp partial-translation)
                                 (setq partial-translation (list partial-translation)))
                               (dolist (part-translation partial-translation)
+                                (message "part-translation: %s" part-translation)
                                 (push part-translation translation))))))
 
                       (let ((new-table-index (car pushdown-list)))

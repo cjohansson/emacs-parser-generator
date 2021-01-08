@@ -488,7 +488,7 @@
     (switch-to-buffer buffer)
     (insert "if (a) { b; }")
 
-    (parser-generator-set-grammar '((Sp S) (";" OPEN_ROUND_BRACKET CLOSE_ROUND_BRACKET IF OPEN_CURLY_BRACKET CLOSE_CURLY_BRACKET VARIABLE) ((Sp S) (S (IF OPEN_ROUND_BRACKET VARIABLE CLOSE_ROUND_BRACKET OPEN_CURLY_BRACKET VARIABLE ";" CLOSE_CURLY_BRACKET (lambda(args) (format "(when %s %s)" (nth 2 args) (nth 5 args)))))) Sp))
+    (parser-generator-set-grammar '((Sp S) (";" OPEN_ROUND_BRACKET CLOSE_ROUND_BRACKET ECHO IF OPEN_CURLY_BRACKET CLOSE_CURLY_BRACKET VARIABLE) ((Sp S) (S (IF OPEN_ROUND_BRACKET VARIABLE CLOSE_ROUND_BRACKET OPEN_CURLY_BRACKET VARIABLE ";" CLOSE_CURLY_BRACKET (lambda(args) (format "(when %s %s)" (nth 2 args) (nth 5 args)))))) Sp))
     (parser-generator-set-look-ahead-number 1)
     (parser-generator-process-grammar)
     (parser-generator-lr-generate-parser-tables)
@@ -506,6 +506,8 @@
              (cond
               ((looking-at "if")
                (setq token `(IF ,(match-beginning 0) . ,(match-end 0))))
+              ((looking-at "echo")
+               (setq token `(ECHO ,(match-beginning 0) . ,(match-end 0))))
               ((looking-at "(")
                (setq token `(OPEN_ROUND_BRACKET ,(match-beginning 0) . ,(match-end 0))))
               ((looking-at ")")
@@ -534,11 +536,29 @@
      (equal
       '("(when a b)")
       (parser-generator-lr-translate)))
+    (message "Passed test with non-nested translation")
+
+    (switch-to-buffer buffer)
+    (kill-region (point-min) (point-max))
+
+    (parser-generator-set-grammar '((Sp S T) (";" OPEN_ROUND_BRACKET CLOSE_ROUND_BRACKET ECHO IF OPEN_CURLY_BRACKET CLOSE_CURLY_BRACKET VARIABLE) ((Sp S) (S (IF OPEN_ROUND_BRACKET VARIABLE CLOSE_ROUND_BRACKET OPEN_CURLY_BRACKET T CLOSE_CURLY_BRACKET (lambda(args) (format "(when %s %s)" (nth 2 args) (nth 5 args))))) (T (ECHO VARIABLE ";" (lambda(args) (format "(message %s)" (nth 1 args)))) (VARIABLE ";" (lambda(args) (format "%s" (nth 0 args)))))) Sp))
+    (parser-generator-set-look-ahead-number 1)
+    (parser-generator-process-grammar)
+    (parser-generator-lr-generate-parser-tables)
+
+    (insert "if (a) { echo b; }")
+
+    (should
+     (equal
+      '("(when a (message b))")
+      (parser-generator-lr-translate)))
+
+    (message "Passed test with nested-translation with depth 2")
 
     (switch-to-buffer buffer)
     (kill-region (point-min) (point-max))
     (goto-char 1)
-    (insert "if (a) { b }")
+    (insert "if (a) { echo b }")
 
     (should-error
      (parser-generator-lr-parse))
