@@ -452,7 +452,7 @@
     (switch-to-buffer buffer)
     (insert "aabb")
 
-    (parser-generator-set-grammar '((Sp S) ("a" "b") ((Sp S) (S (S "a" S "b" (lambda(args) (nreverse args)))) (S e)) Sp))
+    (parser-generator-set-grammar '((Sp S) ("a" "b") ((Sp S) (S (S "a" S "b" (lambda(args) (let ((list "")) (dolist (item args) (when item (setq list (format "%s%s" item list)))) list)))) (S e)) Sp))
     (parser-generator-set-look-ahead-number 1)
     (parser-generator-process-grammar)
     (parser-generator-lr-generate-parser-tables)
@@ -478,7 +478,7 @@
 
     (should
      (equal
-      '("b" "a" "b" "a")
+      "bbaaba"
       (parser-generator-lr-translate)))
 
     (kill-buffer buffer))
@@ -534,7 +534,7 @@
 
     (should
      (equal
-      '("(when a b)")
+      "(when a b)"
       (parser-generator-lr-translate)))
     (message "Passed test with non-nested translation")
 
@@ -550,7 +550,7 @@
 
     (should
      (equal
-      '("(when a (message b))")
+      "(when a (message b))"
       (parser-generator-lr-translate)))
 
     (message "Passed test with nested-translation with depth 2")
@@ -629,7 +629,7 @@
   (parser-generator-lr-test--generate-action-tables)
   (parser-generator-lr-test-parse)
   (parser-generator-lr-test-translate)
-  (parser-generator-lr-test-parse-k-2)
+  ;; (parser-generator-lr-test-parse-k-2)
   )
 
 
