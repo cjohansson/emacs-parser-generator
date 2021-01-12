@@ -712,6 +712,9 @@
               (push (car look-ahead-item) look-ahead)
             (push look-ahead-item look-ahead)))
 
+        (parser-generator--debug
+         (message "look-ahead: %s" look-ahead))
+
         (let ((table-index
                (car pushdown-list)))
           (let ((action-table
@@ -787,15 +790,21 @@
                               searching-match
                               (< goto-index goto-table-length))
                         (let ((goto-item (nth goto-index goto-table)))
-                          (let ((goto-item-look-ahead (list (car goto-item)))
+                          (let ((goto-item-symbol (list (car goto-item)))
                                 (goto-item-next-index (car (cdr goto-item))))
-                            (push goto-item-look-ahead possible-look-aheads)
+                            (push goto-item-symbol possible-look-aheads)
 
-                            (when (equal goto-item-look-ahead a)
+                            (parser-generator--debug
+                             (message "goto-item: %s" goto-item)
+                             (message "goto-item-symbol: %s" goto-item-symbol))
+
+                            (when (equal goto-item-symbol a)
                               (setq next-index goto-item-next-index)
                               (setq searching-match nil))))
 
                         (setq goto-index (1+ goto-index)))
+                      (parser-generator--debug
+                             (message "next-index: %s" next-index))
 
                       (unless next-index
                         (error
@@ -804,6 +813,7 @@
                          table-index
                          possible-look-aheads))
 
+                      ;; Maybe push both tokens here?
                       (push (car a-full) pushdown-list)
                       (push next-index pushdown-list)
                       (parser-generator-lex-analyzer--pop-token)))))
@@ -913,14 +923,14 @@
                                     searching-match
                                     (< goto-index goto-table-length))
                               (let ((goto-item (nth goto-index goto-table)))
-                                (let ((goto-item-look-ahead (list (car goto-item)))
+                                (let ((goto-item-symbol (list (car goto-item)))
                                       (goto-item-next-index (car (cdr goto-item))))
                                   (parser-generator--debug
                                    (message "goto-item: %s" goto-item)
-                                   (message "goto-item-look-ahead: %s" goto-item-look-ahead))
+                                   (message "goto-item-symbol: %s" goto-item-symbol))
 
                                   (when (equal
-                                         goto-item-look-ahead
+                                         goto-item-symbol
                                          production-lhs)
                                     (setq next-index goto-item-next-index)
                                     (setq searching-match nil))))

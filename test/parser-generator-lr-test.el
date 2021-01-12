@@ -409,18 +409,62 @@
   (parser-generator-set-grammar '((Sp S) ("a" "b") ((Sp S) (S (S "a" S "b")) (S e)) Sp))
   (parser-generator-set-look-ahead-number 2)
   (parser-generator-process-grammar)
+
   (let ((lr-items (parser-generator-lr--generate-goto-tables)))
     (parser-generator--debug
-     (message "lr-items: %s" (parser-generator--hash-values-to-list lr-items t)))
+     (message "all lr-items: %s" (parser-generator--hash-values-to-list lr-items t)))
 
-    ;; TODO Fix so that there is an accept path in look-ahead number 2
+    (should
+     (equal
+      '((0 ((S 1)))
+        (1 (("a" 2)))
+        (2 ((S 3)))
+        (3 (("a" 4) ("b" 5)))
+        (4 ((S 6)))
+        (5 nil)
+        (6 (("a" 4) ("b" 7)))
+        (7 nil))
+      (parser-generator--hash-to-list
+       parser-generator-lr--goto-tables)))
+    (message "Passed GOTO-tables k = 2")
 
-    (parser-generator--debug
-     (message "goto-tables: %s" (parser-generator--hash-values-to-list parser-generator-lr--goto-tables t)))
+    ;; TODO Validate lr-items here
+    
+    ;; (should
+    ;;  (equal
+    ;;   '((0 (((S) nil (S "a" S "b") ("a")) ((S) nil (S "a" S "b") (e)) ((S) nil nil ("a")) ((S) nil nil (e)) ((Sp) nil (S) (e))))
+    ;;     (1 (((S) (S) ("a" S "b") ("a")) ((S) (S) ("a" S "b") (e)) ((Sp) (S) nil (e))))
+    ;;     (2 (((S) (S "a") (S "b") ("a")) ((S) (S "a") (S "b") (e)) ((S) nil (S "a" S "b") ("a")) ((S) nil (S "a" S "b") ("b")) ((S) nil nil ("a")) ((S) nil nil ("b"))))
+    ;;     (3 (((S) (S) ("a" S "b") ("a")) ((S) (S) ("a" S "b") ("b")) ((S) (S "a" S) ("b") ("a")) ((S) (S "a" S) ("b") (e))))
+    ;;     (4 (((S) (S "a") (S "b") ("a")) ((S) (S "a") (S "b") ("b")) ((S) nil (S "a" S "b") ("a")) ((S) nil (S "a" S "b") ("b")) ((S) nil nil ("a")) ((S) nil nil ("b"))))
+    ;;     (5 (((S) (S "a" S "b") nil ("a")) ((S) (S "a" S "b") nil (e))))
+    ;;     (6 (((S) (S) ("a" S "b") ("a")) ((S) (S) ("a" S "b") ("b")) ((S) (S "a" S) ("b") ("a")) ((S) (S "a" S) ("b") ("b"))))
+    ;;     (7 (((S) (S "a" S "b") nil ("a")) ((S) (S "a" S "b") nil ("b")))))
+    ;;   (parser-generator--hash-to-list
+    ;;    lr-items)))
+    ;; (message "Passed LR-items k = 2")
+
     (parser-generator-lr--generate-action-tables lr-items)
-    ;; TODO Should generate accept somewhere in this action-table
     (parser-generator--debug
-     (message "action-tables: %s" (parser-generator--hash-values-to-list parser-generator-lr--action-tables t))))
+     (message "action-tables: %s" (parser-generator--hash-values-to-list parser-generator-lr--action-tables t)))
+
+    ;; TODO Validate action-table here
+
+    ;; (should
+    ;;  (equal
+    ;;   '((0 (((a) reduce 2) ((e) reduce 2)))
+    ;;     (1 (((a) shift) ((e) accept)))
+    ;;     (2 (((a) reduce 2) ((b) reduce 2)))
+    ;;     (3 (((a) shift) ((b) shift)))
+    ;;     (4 (((a) reduce 2) ((b) reduce 2)))
+    ;;     (5 (((a) reduce 1) ((e) reduce 1)))
+    ;;     (6 (((a) shift) ((b) shift)))
+    ;;     (7 (((a) reduce 1) ((b) reduce 1))))
+    ;;   (parser-generator--hash-to-list
+    ;;    parser-generator-lr--action-tables)))
+    ;; (message "Passed ACTION-tables k = 2")
+
+    )
   (setq
    parser-generator-lex-analyzer--function
    (lambda (index)
@@ -629,7 +673,7 @@
   (parser-generator-lr-test--generate-action-tables)
   (parser-generator-lr-test-parse)
   (parser-generator-lr-test-translate)
-  ;; (parser-generator-lr-test-parse-k-2)
+  (parser-generator-lr-test-parse-k-2)
   )
 
 
