@@ -444,6 +444,11 @@
     '((a a) (a e))
     (parser-generator--e-free-first '(a S))))
   (message "Passed empty-free-first 2 with trailing e-identifier 2")
+  (should
+   (equal
+    '((a a) (a b))
+    (parser-generator--e-free-first '(a S b))))
+  (message "Passed empty-free-first 2 with trailing e-identifier 1")
 
   (message "Passed tests for (parser-generator--empty-free-first)"))
 

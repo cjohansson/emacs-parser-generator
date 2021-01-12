@@ -429,6 +429,17 @@
     (message "Passed GOTO-tables k = 2")
 
     ;; TODO Validate lr-items here
+
+    ;; (
+    ;; (((S) nil (S a S b) (a e)) ((S) nil (S a S b) (a a)) ((S) nil (S a S b) (e e)) ((S) nil nil (a e)) ((S) nil nil (a a)) ((S) nil nil (e e)) ((Sp) nil (S) (e e)))
+    ;; (((S) (S) (a S b) (a a)) ((S) (S) (a S b) (a e)) ((S) (S) (a S b) (e e)) ((Sp) (S) nil (e e)))
+    ;; (((S) (S a) (S b) (a e)) ((S) (S a) (S b) (a a)) ((S) (S a) (S b) (e e)) ((S) nil (S a S b) (a e)) ((S) nil (S a S b) (a a)) ((S) nil (S a S b) (b e)) ((S) nil nil (a e)) ((S) nil nil (a a)) ((S) nil nil (b e)))
+    ;; (((S) (S) (a S b) (a a)) ((S) (S) (a S b) (a e)) ((S) (S) (a S b) (b e)) ((S) (S a S) (b) (a a)) ((S) (S a S) (b) (a e)) ((S) (S a S) (b) (e e)))
+    ;; (((S) (S a S b) nil (a e)) ((S) (S a S b) nil (a a)) ((S) (S a S b) nil (e e)))
+    ;; (((S) (S a) (S b) (a e)) ((S) (S a) (S b) (a a)) ((S) (S a) (S b) (b e)) ((S) nil (S a S b) (a e)) ((S) nil (S a S b) (a a)) ((S) nil (S a S b) (b e)) ((S) nil nil (a e)) ((S) nil nil (a a)) ((S) nil nil (b e)))
+    ;; (((S) (S) (a S b) (a a)) ((S) (S) (a S b) (a e)) ((S) (S) (a S b) (b e)) ((S) (S a S) (b) (a a)) ((S) (S a S) (b) (a e)) ((S) (S a S) (b) (b e)))
+    ;; (((S) (S a S b) nil (a e)) ((S) (S a S b) nil (a a)) ((S) (S a S b) nil (b e)))
+    ;; )
     
     ;; (should
     ;;  (equal
