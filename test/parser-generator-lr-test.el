@@ -59,7 +59,37 @@
   (parser-generator-set-grammar '((Sp S) (a b) ((Sp S) (S (S a S b)) (S e)) Sp))
   (parser-generator-set-look-ahead-number 1)
   (parser-generator-process-grammar)
-  (parser-generator-lr-generate-parser-tables)
+  (let ((table-lr-items (parser-generator-lr-generate-parser-tables)))
+
+    (should
+     (equal
+      '((0 ((S 1)))
+        (1 ((a 2)))
+        (2 ((S 3)))
+        (3 ((a 4) (b 5)))
+        (4 ((S 6)))
+        (5 nil)
+        (6 ((a 4) (b 7)))
+        (7 nil))
+      (parser-generator--hash-to-list
+       parser-generator-lr--goto-tables)))
+    (message "Passed GOTO-tables")
+
+    (should
+     (equal
+      '((0 (((S) nil (S a S b) (a)) ((S) nil (S a S b) (e)) ((S) nil nil (a)) ((S) nil nil (e)) ((Sp) nil (S) (e))))
+        (1 (((S) (S) (a S b) (a)) ((S) (S) (a S b) (e)) ((Sp) (S) nil (e))))
+        (2 (((S) (S a) (S b) (a)) ((S) (S a) (S b) (e)) ((S) nil (S a S b) (a)) ((S) nil (S a S b) (b)) ((S) nil nil (a)) ((S) nil nil (b))))
+        (3 (((S) (S) (a S b) (a)) ((S) (S) (a S b) (b)) ((S) (S a S) (b) (a)) ((S) (S a S) (b) (e))))
+        (4 (((S) (S a) (S b) (a)) ((S) (S a) (S b) (b)) ((S) nil (S a S b) (a)) ((S) nil (S a S b) (b)) ((S) nil nil (a)) ((S) nil nil (b))))
+        (5 (((S) (S a S b) nil (a)) ((S) (S a S b) nil (e))))
+        (6 (((S) (S) (a S b) (a)) ((S) (S) (a S b) (b)) ((S) (S a S) (b) (a)) ((S) (S a S) (b) (b))))
+        (7 (((S) (S a S b) nil (a)) ((S) (S a S b) nil (b)))))
+      (parser-generator--hash-to-list
+       table-lr-items)))
+    (message "Passed LR-items"))
+
+  ;; TODO Make this work with improved FIRST-functions
 
   ;; Fig. 5.9 p. 374
   (should
@@ -684,7 +714,7 @@
   (parser-generator-lr-test--generate-action-tables)
   (parser-generator-lr-test-parse)
   (parser-generator-lr-test-translate)
-  (parser-generator-lr-test-parse-k-2)
+  ;; (parser-generator-lr-test-parse-k-2)
   )
 
 

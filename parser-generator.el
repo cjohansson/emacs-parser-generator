@@ -11,7 +11,7 @@
 
 
 (defvar parser-generator--debug
-  t
+  nil
   "Whether to print debug messages or not.")
 
 (defvar parser-generator--e-identifier
@@ -1184,19 +1184,21 @@
                     (parser-generator--debug
                      (message "non-terminal symbol: %s" symbol))
                     (let ((symbol-f-set))
-                      (if (and
-                           disallow-e-first
-                           (= first-length 0))
+                      (if disallow-e-first
                           (setq symbol-f-set (nth 1 (gethash symbol parser-generator--f-free-sets)))
                         (setq symbol-f-set (nth 1 (gethash symbol parser-generator--f-sets))))
                       (parser-generator--debug
                        (message "symbol-f-set: %s" symbol-f-set))
-                      (if (not symbol-f-set)
+                      (if (and
+                           (not symbol-f-set)
+                           disallow-e-first
+                           (= first-length 0))
                           (progn
                             (parser-generator--debug
-                             (message "empty symbol-f-set, so stop looking"))
+                             (message
+                              "stopped looking since non-terminal starts with e-identifier: %s" symbol-f-set))
                             (setq keep-looking nil))
-
+                          
                         ;; Handle this scenario here were a non-terminal can result in different FIRST sets
                         (when (> (length symbol-f-set) 1)
                           (let ((symbol-f-set-index 1)
