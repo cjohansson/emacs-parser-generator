@@ -74,29 +74,33 @@
                             (let
                                 ((eff
                                   (parser-generator--e-free-first Cv)))
-                              (when eff
-                                ;; Go through eff-items and see if any item is a valid look-ahead of grammar
-                                ;; in that case save in action table a shift action here
-                                ;; TODO Verify that stuff like aeee is valid look-ahead if look-ahead is 4
-                                (let ((eff-index 0)
-                                      (eff-item)
-                                      (eff-length (length eff))
-                                      (searching-match t))
-                                  (while (and
-                                          searching-match
-                                          (< eff-index eff-length))
-                                    (setq eff-item (nth eff-index eff))
-                                    (when (parser-generator--valid-look-ahead-p eff-item)
-                                      (let ((hash-key
-                                             (format "%s-%s-%s" goto-index state eff-item)))
-                                        (unless (gethash hash-key added-actions)
-                                          (puthash hash-key t added-actions)
-                                          (setq searching-match nil))))
-                                    (setq eff-index (1+ eff-index)))
+                              (if eff
+                                  ;; Go through eff-items and see if any item is a valid look-ahead of grammar
+                                  ;; in that case save in action table a shift action here
+                                  ;; TODO Verify that stuff like aeee is valid look-ahead if look-ahead is 4
+                                  (let ((eff-index 0)
+                                        (eff-item)
+                                        (eff-length (length eff))
+                                        (searching-match t))
+                                    (while (and
+                                            searching-match
+                                            (< eff-index eff-length))
+                                      (setq eff-item (nth eff-index eff))
+                                      (if (parser-generator--valid-look-ahead-p eff-item)
+                                          (let ((hash-key
+                                                 (format "%s-%s-%s" goto-index state eff-item)))
+                                            (unless (gethash hash-key added-actions)
+                                              (puthash hash-key t added-actions)
+                                              (setq searching-match nil)))
+                                        (parser-generator--debug
+                                         (message "Not valid look-ahead: %s" eff-item)))
+                                      (setq eff-index (1+ eff-index)))
 
-                                  (unless searching-match
-                                    (push (list eff-item 'shift) action-table)
-                                    (setq found-action t))))))))))
+                                    (unless searching-match
+                                      (push (list eff-item 'shift) action-table)
+                                      (setq found-action t)))
+                                (parser-generator--debug
+                                 (message "E-FREE-FIRST is empty for %s" Cv)))))))))
 
                    ((eq state 'reduce)
                     ;; (b) f(u) = reduce i if [A -> B ., u] is in a and A -> B is production i in P, i > 1
@@ -123,6 +127,8 @@
                                      "Expecting production number for %s from LR-item %s!"
                                      production
                                      lr-item))
+
+                                  ;; TODO Add production length here to avoid retrieving it later
                                   (parser-generator--debug
                                    (message "production: %s (%s)" production production-number)
                                    (message "u: %s" u))
@@ -182,9 +188,9 @@
         (marked-lr-item-sets
          (make-hash-table :test 'equal))
         (symbols
-          (append
-           (parser-generator--get-grammar-non-terminals)
-           (parser-generator--get-grammar-terminals)))
+         (append
+          (parser-generator--get-grammar-non-terminals)
+          (parser-generator--get-grammar-terminals)))
         (table-lr-items (make-hash-table :test 'equal))
         (e-list
          (parser-generator--generate-list-of-symbol
@@ -804,7 +810,7 @@
 
                         (setq goto-index (1+ goto-index)))
                       (parser-generator--debug
-                             (message "next-index: %s" next-index))
+                       (message "next-index: %s" next-index))
 
                       (unless next-index
                         (error
@@ -829,6 +835,8 @@
                 ;; the pushdown list and return to step (1)
 
                 (let ((production-number (car (cdr action-match))))
+
+                  ;; TODO Remove need of this
                   (let ((production
                          (parser-generator--get-grammar-production-by-number
                           production-number)))
@@ -858,6 +866,8 @@
                             (setq popped-items (1+ popped-items)))))
                       (push production-number output)
 
+                      ;; TODO Remove dependency of hash-table for productions here
+
                       ;; Perform translation at reduction if specified
                       (when
                           (parser-generator--get-grammar-translation-by-number
@@ -869,8 +879,9 @@
                              (message
                               "popped-item: %s"
                               popped-item))
-                            (if (parser-generator--valid-terminal-p
-                                 (car popped-item))
+                            (if (and
+                                 (listp popped-item)
+                                 (cdr popped-item))
                                 (push
                                  (parser-generator-lex-analyzer--get-function
                                   popped-item)
@@ -890,6 +901,7 @@
                            popped-items-meta-contents
                            (nreverse popped-items-meta-contents))
 
+                          ;; TODO Remove dependency of hash-table of translations here
                           (let ((partial-translation
                                  (funcall
                                   (parser-generator--get-grammar-translation-by-number
@@ -959,7 +971,7 @@
        "Parsed entire string without getting accepting! Output: %s"
        (reverse output)))
     (when history
-        (setq history (reverse history)))
+      (setq history (reverse history)))
     (when output
       (setq output (reverse output)))
     (list
