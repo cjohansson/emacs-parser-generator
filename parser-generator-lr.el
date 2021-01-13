@@ -654,12 +654,15 @@
                pushdown-list
                output
                translation
+               translation-symbol-table
                history)
   "Perform a LR-parse via lex-analyzer, optionally at INPUT-TAPE-INDEX with PUSHDOWN-LIST, OUTPUT, TRANSLATION and HISTORY."
   (unless input-tape-index
     (setq input-tape-index 1))
   (unless pushdown-list
     (push 0 pushdown-list))
+  (unless translation-symbol-table
+    (setq translation-symbol-table (make-hash-table :test 'equal)))
 
   (if (and
        input-tape-index
@@ -677,7 +680,6 @@
 
   (let ((accept)
         (pre-index 0)
-        (translation-symbol-table (make-hash-table :test 'equal))
         (e-list
          (parser-generator--generate-list-of-symbol
           parser-generator--look-ahead-number
@@ -698,7 +700,8 @@
          `(,parser-generator-lex-analyzer--index
            ,pushdown-list
            ,output
-           ,translation)
+           ,translation
+           ,translation-symbol-table)
          history)
         (setq
          pre-index
@@ -708,6 +711,7 @@
       (let ((look-ahead
              (parser-generator-lex-analyzer--peek-next-look-ahead))
             (look-ahead-full))
+
         ;; Save token stream indexes in separate variable if needed later
         (setq look-ahead-full (nreverse look-ahead))
 
@@ -972,6 +976,7 @@
     (list
      output
      translation
+     translation-symbol-table
      history)))
 
 (provide 'parser-generator-lr)

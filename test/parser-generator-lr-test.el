@@ -14,7 +14,7 @@
   "Verify that regular and incremental parse results in same data."
   (let ((regular-parse (parser-generator-lr--parse)))
     ;; (message "regular-parse: %s" regular-parse)
-    (let ((regular-parse-history (nth 2 regular-parse)))
+    (let ((regular-parse-history (nth 3 regular-parse)))
       ;; (message "regular-parse-history: %s" regular-parse-history)
       (let ((history-length (length regular-parse-history))
             (history-index 0)
@@ -26,6 +26,7 @@
                 (pushdown-list (nth 1 history))
                 (output (nth 2 history))
                 (translation (nth 3 history))
+                (translation-symbol-table (nth 4 history))
                 (history-list iterated-history))
 
             ;; (message "input-tape-index: %s" input-tape-index)
@@ -40,6 +41,7 @@
                     pushdown-list
                     output
                     translation
+                    translation-symbol-table
                     history-list)))
               ;; (message "incremental-parse: %s" incremental-parse)
               (should
