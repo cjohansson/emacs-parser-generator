@@ -188,14 +188,18 @@
         (marked-lr-item-sets
          (make-hash-table :test 'equal))
         (symbols
-         (append
-          (parser-generator--get-grammar-non-terminals)
-          (parser-generator--get-grammar-terminals)))
+         (parser-generator--get-list-permutations
+          (append
+           (parser-generator--get-grammar-non-terminals)
+           (parser-generator--get-grammar-terminals))
+          parser-generator--look-ahead-number))
         (table-lr-items (make-hash-table :test 'equal))
         (e-list
          (parser-generator--generate-list-of-symbol
           parser-generator--look-ahead-number
           parser-generator--e-identifier)))
+    (parser-generator--debug
+     (message "symbols: %s" symbols))
 
     (let ((e-set
            (parser-generator-lr--items-for-prefix
@@ -230,7 +234,7 @@
         ;; V(X1,...,Xi) = GOTO(V(X1,...,Xi-1), Xi)
         (dolist (symbol symbols)
           (parser-generator--debug
-           (message "symbol: %s" symbol))
+           (message "goto-symbol: %s" symbol))
 
           (let ((prefix-lr-items
                  (parser-generator-lr--items-for-goto
@@ -248,14 +252,17 @@
                 prefix-lr-items))
 
               ;; and is not already in S
-              (let ((goto (gethash
-                           prefix-lr-items
-                           marked-lr-item-sets)))
+              (let ((goto
+                     (gethash
+                      prefix-lr-items
+                      marked-lr-item-sets)))
                 (if goto
                     (progn
                       (parser-generator--debug
                        (message "Set already exists in: %s" goto))
-                      (push `(,symbol ,goto) goto-table-table))
+                      (push
+                       `(,(car symbol) ,goto)
+                       goto-table-table))
 
                   (parser-generator--debug
                    (message "Set is new"))
@@ -264,12 +271,22 @@
                   ;; have the dot at the right end of the production
 
                   ;; then add a' to S as an unmarked set of items
-                  (push `(,symbol ,lr-item-set-new-index) goto-table-table)
-                  (push `(,lr-item-set-new-index ,prefix-lr-items) unmarked-lr-item-sets)
-                  (setq lr-item-set-new-index (1+ lr-item-set-new-index)))))))
+                  (push
+                   `(,(car symbol) ,lr-item-set-new-index)
+                   goto-table-table)
+                  (push
+                   `(,lr-item-set-new-index ,prefix-lr-items)
+                   unmarked-lr-item-sets)
+                  (setq
+                   lr-item-set-new-index
+                   (1+ lr-item-set-new-index)))))))
 
-        (setq goto-table-table (sort goto-table-table 'parser-generator--sort-list))
-        (push `(,lr-item-set-index ,goto-table-table) goto-table)))
+        (setq
+         goto-table-table
+         (sort goto-table-table 'parser-generator--sort-list))
+        (push
+         `(,lr-item-set-index ,goto-table-table)
+         goto-table)))
 
     (setq goto-table (sort goto-table 'parser-generator--sort-list))
     (setq parser-generator-lr--goto-tables (make-hash-table :test 'equal))
@@ -285,7 +302,7 @@
         (parser-generator-lr--items-valid-p
          (parser-generator--hash-values-to-list
           table-lr-items
-          t)) ;; TODO Should not use this debug function
+          t))
       (error "Inconsistent grammar!"))
     table-lr-items))
 
@@ -476,26 +493,45 @@
         ;; 2 Suppose that we have constructed V(X1,X2,...,Xi-1) we construct V(X1,X2,...,Xi) as follows:
         ;; Only do this step if prefix is not the e-identifier
         (let ((prefix-previous lr-items-e)
-              (γ-length (length γ)))
+              (γ-length (length γ))
+              (γ-index 0))
           (unless
               (and
                (>= γ-length 1)
                (parser-generator--valid-e-p (car γ)))
 
-            (dolist (prefix γ)
-              (let ((lr-new-item))
-                (setq
-                 lr-new-item
-                 (parser-generator-lr--items-for-goto
-                  prefix-previous
-                  prefix))
+            (while (and
+                    (< γ-index γ-length)
+                    prefix-previous)
+              (let ((prefix)
+                    (prefix-index 0))
 
-                (parser-generator--debug
-                 (message "prefix: %s" prefix)
-                 (message "prefix-previous: %s" prefix-previous)
-                 (message "lr-new-item: %s" lr-new-item))
+                ;; Build next prefix of length k
+                (while (and
+                        (<
+                         γ-index
+                         γ-length)
+                        (<
+                         prefix-index
+                         parser-generator--look-ahead-number))
+                  (push (nth γ-index γ) prefix)
+                  (setq γ-index (1+ γ-index))
+                  (setq prefix-index (1+ prefix-index)))
+                (setq prefix (reverse prefix))
 
-                (setq prefix-previous lr-new-item))))
+                (let ((lr-new-item))
+                  (setq
+                   lr-new-item
+                   (parser-generator-lr--items-for-goto
+                    prefix-previous
+                    prefix))
+
+                  (parser-generator--debug
+                   (message "prefix: %s" prefix)
+                   (message "prefix-previous: %s" prefix-previous)
+                   (message "lr-new-item: %s" lr-new-item))
+
+                  (setq prefix-previous lr-new-item)))))
 
           (parser-generator--debug
            (message "γ: %s" γ))
@@ -517,10 +553,12 @@
             (lr-item-suffix-rest))
         (setq
          lr-item-suffix-first
-         (car lr-item-suffix))
+         (butlast
+          lr-item-suffix
+          (- (length lr-item-suffix) parser-generator--look-ahead-number)))
         (setq
          lr-item-suffix-rest
-         (cdr lr-item-suffix))
+         (nthcdr parser-generator--look-ahead-number lr-item-suffix))
 
         (parser-generator--debug
          (message "lr-item-suffix: %s" lr-item-suffix)
@@ -534,7 +572,7 @@
 
           ;; Add [A -> aXi . B, u] to V(X1,...,Xi)
           (let ((combined-prefix
-                 (append lr-item-prefix (list x))))
+                 (append lr-item-prefix x)))
             (parser-generator--debug
              (message
               "lr-new-item-1: %s"

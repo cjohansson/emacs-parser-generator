@@ -444,43 +444,32 @@
     (parser-generator--debug
      (message "all lr-items: %s" (parser-generator--hash-values-to-list lr-items t)))
 
-    (should
-     (equal
-      '((0 ((S 1)))
-        (1 (("a" 2)))
-        (2 ((S 3)))
-        (3 (("a" 4) ("b" 5)))
-        (4 ((S 6)))
-        (5 nil)
-        (6 (("a" 4) ("b" 7)))
-        (7 nil))
-      (parser-generator--hash-to-list
-       parser-generator-lr--goto-tables)))
-    (message "Passed GOTO-tables k = 2")
+    ;; (should
+    ;;  (equal
+    ;;   '((0 ((S 1)))
+    ;;     (1 (("a" 2)))
+    ;;     (2 ((S 3)))
+    ;;     (3 (("a" 4) ("b" 5)))
+    ;;     (4 ((S 6)))
+    ;;     (5 nil)
+    ;;     (6 (("a" 4) ("b" 7)))
+    ;;     (7 nil))
+    ;;   (parser-generator--hash-to-list
+    ;;    parser-generator-lr--goto-tables)))
+    ;; (message "Passed GOTO-tables k = 2")
 
     ;; TODO Validate lr-items here
 
-    ;; (
-    ;; (((S) nil (S a S b) (a e)) ((S) nil (S a S b) (a a)) ((S) nil (S a S b) (e e)) ((S) nil nil (a e)) ((S) nil nil (a a)) ((S) nil nil (e e)) ((Sp) nil (S) (e e)))
-    ;; (((S) (S) (a S b) (a a)) ((S) (S) (a S b) (a e)) ((S) (S) (a S b) (e e)) ((Sp) (S) nil (e e)))
-    ;; (((S) (S a) (S b) (a e)) ((S) (S a) (S b) (a a)) ((S) (S a) (S b) (e e)) ((S) nil (S a S b) (a e)) ((S) nil (S a S b) (a a)) ((S) nil (S a S b) (b e)) ((S) nil nil (a e)) ((S) nil nil (a a)) ((S) nil nil (b e)))
-    ;; (((S) (S) (a S b) (a a)) ((S) (S) (a S b) (a e)) ((S) (S) (a S b) (b e)) ((S) (S a S) (b) (a a)) ((S) (S a S) (b) (a e)) ((S) (S a S) (b) (e e)))
-    ;; (((S) (S a S b) nil (a e)) ((S) (S a S b) nil (a a)) ((S) (S a S b) nil (e e)))
-    ;; (((S) (S a) (S b) (a e)) ((S) (S a) (S b) (a a)) ((S) (S a) (S b) (b e)) ((S) nil (S a S b) (a e)) ((S) nil (S a S b) (a a)) ((S) nil (S a S b) (b e)) ((S) nil nil (a e)) ((S) nil nil (a a)) ((S) nil nil (b e)))
-    ;; (((S) (S) (a S b) (a a)) ((S) (S) (a S b) (a e)) ((S) (S) (a S b) (b e)) ((S) (S a S) (b) (a a)) ((S) (S a S) (b) (a e)) ((S) (S a S) (b) (b e)))
-    ;; (((S) (S a S b) nil (a e)) ((S) (S a S b) nil (a a)) ((S) (S a S b) nil (b e)))
-    ;; )
-    
     ;; (should
     ;;  (equal
-    ;;   '((0 (((S) nil (S "a" S "b") ("a")) ((S) nil (S "a" S "b") (e)) ((S) nil nil ("a")) ((S) nil nil (e)) ((Sp) nil (S) (e))))
-    ;;     (1 (((S) (S) ("a" S "b") ("a")) ((S) (S) ("a" S "b") (e)) ((Sp) (S) nil (e))))
-    ;;     (2 (((S) (S "a") (S "b") ("a")) ((S) (S "a") (S "b") (e)) ((S) nil (S "a" S "b") ("a")) ((S) nil (S "a" S "b") ("b")) ((S) nil nil ("a")) ((S) nil nil ("b"))))
-    ;;     (3 (((S) (S) ("a" S "b") ("a")) ((S) (S) ("a" S "b") ("b")) ((S) (S "a" S) ("b") ("a")) ((S) (S "a" S) ("b") (e))))
-    ;;     (4 (((S) (S "a") (S "b") ("a")) ((S) (S "a") (S "b") ("b")) ((S) nil (S "a" S "b") ("a")) ((S) nil (S "a" S "b") ("b")) ((S) nil nil ("a")) ((S) nil nil ("b"))))
-    ;;     (5 (((S) (S "a" S "b") nil ("a")) ((S) (S "a" S "b") nil (e))))
-    ;;     (6 (((S) (S) ("a" S "b") ("a")) ((S) (S) ("a" S "b") ("b")) ((S) (S "a" S) ("b") ("a")) ((S) (S "a" S) ("b") ("b"))))
-    ;;     (7 (((S) (S "a" S "b") nil ("a")) ((S) (S "a" S "b") nil ("b")))))
+    ;;   '((0 (((S) nil (S "a" S "b") ("a" e)) ((S) nil (S "a" S "b") ("a" "a")) ((S) nil (S "a" S "b") (e e)) ((S) nil nil ("a" e)) ((S) nil nil ("a" "a")) ((S) nil nil (e e)) ((Sp) nil (S) (e e))))
+    ;;     (1 (((S) (S) ("a" S "b") ("a" "a")) ((S) (S) ("a" S "b") ("a" e)) ((S) (S) ("a" S "b") (e e)) ((Sp) (S) nil (e e))))
+    ;;     (2 (((S) (S "a") (S "b") ("a" e)) ((S) (S "a") (S "b") ("a" "a")) ((S) (S "a") (S "b") (e e)) ((S) nil (S "a" S "b") ("a" e)) ((S) nil (S "a" S "b") ("a" "a")) ((S) nil (S "a" S "b") ("b" e)) ((S) nil nil ("a" e)) ((S) nil nil ("a" "a")) ((S) nil nil ("b" e))))
+    ;;     (3 (((S) (S) ("a" S "b") ("a" "a")) ((S) (S) ("a" S "b") ("a" e)) ((S) (S) ("a" S "b") ("b" e)) ((S) (S "a" S) ("b") ("a" "a")) ((S) (S "a" S) ("b") ("a" e)) ((S) (S "a" S) ("b") (e e))))
+    ;;     (4 (((S) (S "a") (S "b") ("a" e)) ((S) (S "a") (S "b") ("a" "a")) ((S) (S "a") (S "b") ("b" e)) ((S) nil (S "a" S "b") ("a" e)) ((S) nil (S "a" S "b") ("a" "a")) ((S) nil (S "a" S "b") ("b" e)) ((S) nil nil ("a" e)) ((S) nil nil ("a" "a")) ((S) nil nil ("b" e))))
+    ;;     (5 (((S) (S "a" S "b") nil ("a" e)) ((S) (S "a" S "b") nil ("a" "a")) ((S) (S "a" S "b") nil (e e))))
+    ;;     (6 (((S) (S) ("a" S "b") ("a" "a")) ((S) (S) ("a" S "b") ("a" e)) ((S) (S) ("a" S "b") ("b" e)) ((S) (S "a" S) ("b") ("a" "a")) ((S) (S "a" S) ("b") ("a" e)) ((S) (S "a" S) ("b") ("b" e))))
+    ;;     (7 (((S) (S "a" S "b") nil ("a" e)) ((S) (S "a" S "b") nil ("a" "a")) ((S) (S "a" S "b") nil ("b" e)))))
     ;;   (parser-generator--hash-to-list
     ;;    lr-items)))
     ;; (message "Passed LR-items k = 2")
@@ -489,18 +478,18 @@
     (parser-generator--debug
      (message "action-tables: %s" (parser-generator--hash-values-to-list parser-generator-lr--action-tables t)))
 
-    ;; TODO Validate action-table here
+    ;; TODO Validate action-table here, should be able to reduce at look-ahead ("a" "b") as well
 
     ;; (should
     ;;  (equal
-    ;;   '((0 (((a) reduce 2) ((e) reduce 2)))
-    ;;     (1 (((a) shift) ((e) accept)))
-    ;;     (2 (((a) reduce 2) ((b) reduce 2)))
-    ;;     (3 (((a) shift) ((b) shift)))
-    ;;     (4 (((a) reduce 2) ((b) reduce 2)))
-    ;;     (5 (((a) reduce 1) ((e) reduce 1)))
-    ;;     (6 (((a) shift) ((b) shift)))
-    ;;     (7 (((a) reduce 1) ((b) reduce 1))))
+    ;;   '((0 ((("a" "a") reduce 2) (("a" e) reduce 2) ((e e) reduce 2)))
+    ;;     (1 ((("a" "b") shift) ((e e) accept)))
+    ;;     (2 ((("a" "a") reduce 2) (("a" e) reduce 2) (("b" e) reduce 2)))
+    ;;     (3 ((("a" "b") shift) (("b" e) shift) (("b" "a") shift)))
+    ;;     (4 ((("a" "a") reduce 2) (("a" e) reduce 2) (("b" e) reduce 2)))
+    ;;     (5 ((("a" "a") reduce 1) (("a" e) reduce 1) ((e e) reduce 1)))
+    ;;     (6 ((("a" "b") shift) (("b" "b") shift) (("b" "a") shift)))
+    ;;     (7 ((("a" "a") reduce 1) (("a" e) reduce 1) (("b" e) reduce 1))))
     ;;   (parser-generator--hash-to-list
     ;;    parser-generator-lr--action-tables)))
     ;; (message "Passed ACTION-tables k = 2")
@@ -509,7 +498,7 @@
   (setq
    parser-generator-lex-analyzer--function
    (lambda (index)
-     (let* ((string '(("a" 1 . 2) ("a" 2 . 3) ("b" 3 . 4) ("b" 4 . 5)))
+     (let* ((string '(("a" 1 . 2) ("b" 2 . 3)))
             (string-length (length string))
             (max-index index)
             (tokens))
