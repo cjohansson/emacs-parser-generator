@@ -261,7 +261,7 @@
                       (parser-generator--debug
                        (message "Set already exists in: %s" goto))
                       (push
-                       `(,(car symbol) ,goto)
+                       `(,symbol ,goto)
                        goto-table-table))
 
                   (parser-generator--debug
@@ -272,7 +272,7 @@
 
                   ;; then add a' to S as an unmarked set of items
                   (push
-                   `(,(car symbol) ,lr-item-set-new-index)
+                   `(,symbol ,lr-item-set-new-index)
                    goto-table-table)
                   (push
                    `(,lr-item-set-new-index ,prefix-lr-items)
@@ -821,8 +821,8 @@
                 ;; there is no next input symbol or g(a) is undefined, halt
                 ;; and declare error.
 
-                (let ((a (list (car look-ahead)))
-                      (a-full (list (car look-ahead-full))))
+                (let ((a look-ahead)
+                      (a-full look-ahead-full))
                   (let ((goto-table
                          (gethash
                           table-index
@@ -837,7 +837,7 @@
                               searching-match
                               (< goto-index goto-table-length))
                         (let ((goto-item (nth goto-index goto-table)))
-                          (let ((goto-item-symbol (list (car goto-item)))
+                          (let ((goto-item-symbol (car goto-item))
                                 (goto-item-next-index (car (cdr goto-item))))
                             (push goto-item-symbol possible-look-aheads)
 
@@ -850,6 +850,7 @@
                               (setq searching-match nil))))
 
                         (setq goto-index (1+ goto-index)))
+
                       (parser-generator--debug
                        (message "next-index: %s" next-index))
 
@@ -972,7 +973,7 @@
                                     searching-match
                                     (< goto-index goto-table-length))
                               (let ((goto-item (nth goto-index goto-table)))
-                                (let ((goto-item-symbol (list (car goto-item)))
+                                (let ((goto-item-symbol (car goto-item))
                                       (goto-item-next-index (car (cdr goto-item))))
                                   (parser-generator--debug
                                    (message "goto-item: %s" goto-item)
