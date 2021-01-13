@@ -756,11 +756,10 @@
 
                 (error
                  (format
-                  "Invalid syntax! Expected one of %s found %s at index %s, push-down-list: %s"
+                  "Invalid syntax! Expected one of %s found %s at %s"
                   possible-look-aheads
                   look-ahead
-                  parser-generator-lex-analyzer--index
-                  pushdown-list)
+                  parser-generator-lex-analyzer--index)
                  possible-look-aheads
                  look-ahead
                  parser-generator-lex-analyzer--index))
@@ -814,9 +813,9 @@
 
                       (unless next-index
                         (error
-                         "In shift, found no goto-item for %s in index %s, expected one of %s"
+                         "In shift, found no GOTO-item for %s at %s, expected one of %s"
                          a
-                         table-index
+                         parser-generator-lex-analyzer--index
                          possible-look-aheads))
 
                       ;; Maybe push both tokens here?
@@ -836,7 +835,6 @@
 
                 (let ((production-number (car (cdr action-match))))
 
-                  ;; TODO Remove need of this
                   (let ((production
                          (parser-generator--get-grammar-production-by-number
                           production-number)))
@@ -865,8 +863,6 @@
                                popped-items-contents))
                             (setq popped-items (1+ popped-items)))))
                       (push production-number output)
-
-                      ;; TODO Remove dependency of hash-table for productions here
 
                       ;; Perform translation at reduction if specified
                       (when
@@ -901,7 +897,6 @@
                            popped-items-meta-contents
                            (nreverse popped-items-meta-contents))
 
-                          ;; TODO Remove dependency of hash-table of translations here
                           (let ((partial-translation
                                  (funcall
                                   (parser-generator--get-grammar-translation-by-number

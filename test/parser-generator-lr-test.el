@@ -89,8 +89,6 @@
        table-lr-items)))
     (message "Passed LR-items"))
 
-  ;; TODO Make this work with improved FIRST-functions
-
   ;; Fig. 5.9 p. 374
   (should
    (equal
