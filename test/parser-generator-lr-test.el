@@ -404,26 +404,46 @@
   "Test `parser-generator-lr-parse' with k = 2."
   (message "Started tests for (parser-generator-lr-parse) k = 2")
 
-  (parser-generator-set-grammar '((Sp S) ("a" "b") ((Sp S) (S (S "a" S "b")) (S e)) Sp))
+  ;; https://stackoverflow.com/questions/62075086/what-is-an-lr2-parser-how-does-it-differ-from-an-lr1-parser
+  ;; S → RS | R
+  ;; R → abT
+  ;; T → aT | c | ε
+
+  (parser-generator-set-grammar
+   '((Sp S R T) (a b c) ((Sp S) (S (R S) (R)) (R (a b T)) (T (a T) (c) (e))) Sp))
   (parser-generator-set-look-ahead-number 2)
   (parser-generator-process-grammar)
 
   (let ((lr-items (parser-generator-lr--generate-goto-tables)))
     (parser-generator--debug
      (message
-      "all lr-items: %s"
-      (parser-generator--hash-values-to-list lr-items t)))
+      "LR-items: %s"
+      (parser-generator--hash-values-to-list
+       lr-items
+       t)))
+    (parser-generator--debug
+     (message "GOTO-tables: %s"
+              (parser-generator--hash-to-list
+               parser-generator-lr--goto-tables
+               t)))
 
     (should
       (equal
-       '((0 (((S) 1)))
-         (1 (((a) 2)))
-         (2 (((S) 3)))
-         (3 (((a) 4) ((b) 5)))
-         (4 (((S) 6)))
+       '((0 ((R 2) (S 1) (a 3)))
+         (1 nil)
+         (2 ((R 10) (S 9) (a 11)))
+         (3 ((b 4)))
+         (4 ((T 5) (a 6) (c 7)))
          (5 nil)
-         (6 (((a) 4) ((b) 7)))
-         (7 nil))
+         (6 ((T 8) (a 6) (c 7)))
+         (7 nil)
+         (8 nil)
+         (9 nil)
+         (10 ((R 10) (S 14) (a 11)))
+         (11 ((b 12)))
+         (12 ((T 13) (a 6) (c 7)))
+         (13 nil)
+         (14 nil))
        (parser-generator--hash-to-list
         parser-generator-lr--goto-tables)))
     (message "Passed GOTO-tables k = 2")
@@ -673,8 +693,7 @@
   (parser-generator-lr-test--generate-action-tables)
   (parser-generator-lr-test-parse)
   (parser-generator-lr-test-translate)
-  ;;(parser-generator-lr-test-parse-k-2)
-  )
+  (parser-generator-lr-test-parse-k-2))
 
 
 (provide 'parser-generator-lr-test)
