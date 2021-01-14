@@ -18,6 +18,10 @@
   'e
   "The identifier used for e-symbol.  Default value 'e.")
 
+(defvar parser-generator--eof-identifier
+  '$
+  "The identifier used for end of file identifier.  Default value is '$.")
+
 (defvar parser-generator--grammar
   nil
   "Current grammar used in parser.")
@@ -113,13 +117,17 @@
           (terminal-index)
           (look-ahead-length)
           (look-ahead)
-          (e-list))
+          (eof-list))
 
-      (let ((e-list-index 0)
-            (e-list-length parser-generator--look-ahead-number))
-        (while (< e-list-index e-list-length)
-          (push parser-generator--e-identifier e-list)
-          (setq e-list-index (1+ e-list-index))))
+      (let ((eof-list-index 0)
+            (eof-list-length parser-generator--look-ahead-number))
+        (while (< eof-list-index eof-list-length)
+          (push
+           parser-generator--eof-identifier
+           eof-list)
+          (setq
+           eof-list-index
+           (1+ eof-list-index))))
 
       (while stack
         (let ((item (pop stack)))
@@ -147,12 +155,17 @@
             (if look-ahead
                 (progn
 
+                  ;; If length of look-ahead is below k, append EOF identifiers
                   (while (< look-ahead-length k)
-                    (push parser-generator--e-identifier look-ahead)
-                    (setq look-ahead-length (1+ look-ahead-length)))
+                    (push
+                     parser-generator--eof-identifier
+                     look-ahead)
+                    (setq
+                     look-ahead-length
+                     (1+ look-ahead-length)))
                   (setq look-ahead-to-add (reverse look-ahead)))
 
-              (setq look-ahead-to-add e-list))
+              (setq look-ahead-to-add eof-list))
 
             (when (and look-ahead-to-add
                        (not (gethash look-ahead-to-add added-look-aheads)))
@@ -448,6 +461,10 @@
   "Return whether SYMBOL is the e identifier or not."
   (eq symbol parser-generator--e-identifier))
 
+(defun parser-generator--valid-eof-p (symbol)
+  "Return whether SYMBOL is the EOF identifier or not."
+  (eq symbol parser-generator--eof-identifier))
+
 (defun parser-generator--valid-grammar-p (G)
   "Return if grammar G is valid or not.  Grammar should contain list with 4 elements: non-terminals (N), terminals (T), productions (P), start (S) where N, T and P are lists containing symbols and/or strings and S is a symbol or string."
   (let ((valid-p t))
@@ -636,6 +653,7 @@
   (let ((is-valid t))
     (unless (or
              (parser-generator--valid-e-p symbol)
+             (parser-generator--valid-eof-p symbol)
              (parser-generator--valid-non-terminal-p symbol)
              (parser-generator--valid-terminal-p symbol))
       (setq is-valid nil))

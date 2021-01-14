@@ -58,7 +58,7 @@
   (setq parser-generator--look-ahead-number 10)
   (should
    (equal
-    '(("a" 1 . 2) ("b" 2 . 3) ("c" 3 . 4) ("d" 4 . 5) (e) (e) (e) (e) (e) (e))
+    '(("a" 1 . 2) ("b" 2 . 3) ("c" 3 . 4) ("d" 4 . 5) ($) ($) ($) ($) ($) ($))
     (parser-generator-lex-analyzer--peek-next-look-ahead)))
 
   (setq

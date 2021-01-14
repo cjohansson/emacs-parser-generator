@@ -83,7 +83,7 @@
                         (push next-look-ahead-item look-ahead)
                         (setq look-ahead-length (1+ look-ahead-length))
                         (setq index (cdr (cdr next-look-ahead-item))))))
-                (push (list parser-generator--e-identifier) look-ahead)
+                (push (list parser-generator--eof-identifier) look-ahead)
                 (setq look-ahead-length (1+ look-ahead-length))
                 (setq index (1+ index)))))
         (error (error

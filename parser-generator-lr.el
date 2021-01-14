@@ -53,6 +53,7 @@
         (let ((lr-items
                (gethash goto-index table-lr-items)))
           (let ((lr-items-length (length lr-items)))
+
             ;; Where u is in (T U e)*k
             (dolist (state states)
               (let ((lr-item)
@@ -136,7 +137,7 @@
                                   (if (and
                                        (= production-number 0)
                                        (>= (length u) 1)
-                                       (parser-generator--valid-e-p
+                                       (parser-generator--valid-eof-p
                                         (nth (1- (length u)) u)))
                                       (progn
                                         ;; Reduction by first production
@@ -406,13 +407,21 @@
              (parser-generator--get-grammar-rhs start))
             (e-list (parser-generator--generate-list-of-symbol
                      parser-generator--look-ahead-number
-                     parser-generator--e-identifier)))
+                     parser-generator--e-identifier))
+            (eof-list (parser-generator--generate-list-of-symbol
+                     parser-generator--look-ahead-number
+                     parser-generator--eof-identifier)))
 
         ;; (a)
         (dolist (rhs start-productions)
           ;; Add [S -> . α] to V(e)
-          (push `(,(list start) nil ,rhs ,e-list) lr-items-e)
-          (puthash `(,e-list ,(list start) nil ,rhs ,e-list) t lr-item-exists))
+          (push
+           `(,(list start) nil ,rhs ,eof-list)
+           lr-items-e)
+          (puthash
+           `(,e-list ,(list start) nil ,rhs ,eof-list)
+           t
+           lr-item-exists))
 
         ;; (b) Iterate every item in v-set(e), if [A -> . Bα, u] is an item and B -> β is in P
         ;; then for each x in FIRST(αu) add [B -> . β, x] to v-set(e), provided it is not already there
@@ -439,11 +448,12 @@
                         (parser-generator--valid-non-terminal-p
                          rhs-first)
                       (let ((rhs-rest (append (cdr rhs) suffix)))
-                        (let ((rhs-rest-first (parser-generator--first rhs-rest)))
+                        (let ((rhs-rest-first
+                               (parser-generator--first rhs-rest)))
                           (parser-generator--debug
                            (message "rhs-rest-first: %s" rhs-rest-first))
                           (unless rhs-rest-first
-                            (setq rhs-rest-first `(,e-list)))
+                            (setq rhs-rest-first `(,eof-list)))
                           (let ((sub-production
                                  (parser-generator--get-grammar-rhs
                                   rhs-first)))
@@ -470,10 +480,10 @@
                                 ;; Add [B -> . β, x] to V(e), provided it is not already there
                                 (unless
                                     (gethash
-                                     `(e ,(list rhs-first) nil ,sub-rhs ,f)
+                                     `(,e-list ,(list rhs-first) nil ,sub-rhs ,f)
                                      lr-item-exists)
                                   (puthash
-                                   `(e ,(list rhs-first) nil ,sub-rhs ,f)
+                                   `(,e-list ,(list rhs-first) nil ,sub-rhs ,f)
                                    t
                                    lr-item-exists)
                                   (push
@@ -488,7 +498,9 @@
 
         (setq
          lr-items-e
-         (sort lr-items-e 'parser-generator--sort-list))
+         (sort
+          lr-items-e
+          'parser-generator--sort-list))
 
         ;; 2 Suppose that we have constructed V(X1,X2,...,Xi-1) we construct V(X1,X2,...,Xi) as follows:
         ;; Only do this step if prefix is not the e-identifier
@@ -717,13 +729,7 @@
     (error "Missing GOTO-tables for grammar!"))
 
   (let ((accept)
-        (pre-index 0)
-        (e-list
-         (parser-generator--generate-list-of-symbol
-          parser-generator--look-ahead-number
-          parser-generator--e-identifier)))
-    (parser-generator--debug
-     (message "e-list: %s" e-list))
+        (pre-index 0))
 
     (while (not accept)
 
