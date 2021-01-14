@@ -189,11 +189,9 @@
         (marked-lr-item-sets
          (make-hash-table :test 'equal))
         (symbols
-         (parser-generator--get-list-permutations
-          (append
-           (parser-generator--get-grammar-non-terminals)
-           (parser-generator--get-grammar-terminals))
-          parser-generator--look-ahead-number))
+         (append
+          (parser-generator--get-grammar-non-terminals)
+          (parser-generator--get-grammar-terminals)))
         (table-lr-items (make-hash-table :test 'equal))
         (e-list
          (parser-generator--generate-list-of-symbol
@@ -284,7 +282,9 @@
 
         (setq
          goto-table-table
-         (sort goto-table-table 'parser-generator--sort-list))
+         (sort
+          goto-table-table
+          'parser-generator--sort-list))
         (push
          `(,lr-item-set-index ,goto-table-table)
          goto-table)))
@@ -515,21 +515,11 @@
             (while (and
                     (< γ-index γ-length)
                     prefix-previous)
-              (let ((prefix)
-                    (prefix-index 0))
+              (let ((prefix))
 
                 ;; Build next prefix of length k
-                (while (and
-                        (<
-                         γ-index
-                         γ-length)
-                        (<
-                         prefix-index
-                         parser-generator--look-ahead-number))
-                  (push (nth γ-index γ) prefix)
-                  (setq γ-index (1+ γ-index))
-                  (setq prefix-index (1+ prefix-index)))
-                (setq prefix (reverse prefix))
+                (setq prefix (nth γ-index γ))
+                (setq γ-index (1+ γ-index))
 
                 (let ((lr-new-item))
                   (setq
@@ -565,14 +555,13 @@
             (lr-item-suffix-rest))
         (setq
          lr-item-suffix-first
-         (butlast
-          lr-item-suffix
-          (- (length lr-item-suffix) parser-generator--look-ahead-number)))
+         (car lr-item-suffix))
         (setq
          lr-item-suffix-rest
-         (nthcdr parser-generator--look-ahead-number lr-item-suffix))
+         (cdr lr-item-suffix))
 
         (parser-generator--debug
+         (message "lr-item: %s" lr-item)
          (message "lr-item-suffix: %s" lr-item-suffix)
          (message "lr-item-suffix-first: %s" lr-item-suffix-first)
          (message "lr-item-suffix-rest: %s" lr-item-suffix-rest))
@@ -584,7 +573,7 @@
 
           ;; Add [A -> aXi . B, u] to V(X1,...,Xi)
           (let ((combined-prefix
-                 (append lr-item-prefix x)))
+                 (append lr-item-prefix (list x))))
             (parser-generator--debug
              (message
               "lr-new-item-1: %s"
@@ -606,9 +595,9 @@
         (dolist (lr-item lr-new-item)
           (let ((lr-item-suffix (nth 2 lr-item)))
             (let ((lr-item-suffix-first
-                   (car lr-item-suffix)) ;; TODO Depend on look-ahead number?
+                   (car lr-item-suffix))
                   (lr-item-suffix-rest
-                   (cdr lr-item-suffix))) ;; TODO Depend on look-ahead number?
+                   (cdr lr-item-suffix)))
 
               ;; (b) If [A -> a . Bb, u] has been placed in V(X1,...,Xi)
               ;; and B -> D is in P
@@ -843,13 +832,13 @@
                               searching-match
                               (< goto-index goto-table-length))
                         (let ((goto-item (nth goto-index goto-table)))
-                          (let ((goto-item-symbol (car goto-item))
+                          (let ((goto-item-symbol (list (car goto-item)))
                                 (goto-item-next-index (car (cdr goto-item))))
                             (push goto-item-symbol possible-look-aheads)
 
                             (parser-generator--debug
-                             (message "goto-item: %s" goto-item)
-                             (message "goto-item-symbol: %s" goto-item-symbol))
+                             (message "shift goto-item: %s" goto-item)
+                             (message "shift goto-item-symbol: %s" goto-item-symbol))
 
                             (when (equal goto-item-symbol a)
                               (setq next-index goto-item-next-index)
@@ -858,7 +847,7 @@
                         (setq goto-index (1+ goto-index)))
 
                       (parser-generator--debug
-                       (message "next-index: %s" next-index))
+                       (message "shift next-index: %s" next-index))
 
                       (unless next-index
                         (error
@@ -979,11 +968,11 @@
                                     searching-match
                                     (< goto-index goto-table-length))
                               (let ((goto-item (nth goto-index goto-table)))
-                                (let ((goto-item-symbol (car goto-item))
+                                (let ((goto-item-symbol (list (car goto-item)))
                                       (goto-item-next-index (car (cdr goto-item))))
                                   (parser-generator--debug
-                                   (message "goto-item: %s" goto-item)
-                                   (message "goto-item-symbol: %s" goto-item-symbol))
+                                   (message "reduce goto-item: %s" goto-item)
+                                   (message "reduce goto-item-symbol: %s" goto-item-symbol))
 
                                   (when (equal
                                          goto-item-symbol
@@ -994,7 +983,7 @@
                               (setq goto-index (1+ goto-index)))
 
                             (parser-generator--debug
-                             (message "next-index: %s" next-index))
+                             (message "reduce next-index: %s" next-index))
 
                             (when next-index
                               (push production-lhs pushdown-list)
