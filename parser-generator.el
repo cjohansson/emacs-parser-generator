@@ -16,7 +16,7 @@
 
 (defvar parser-generator--e-identifier
   'e
-  "The identifier used for e-symbol.  Default value 'e.")
+  "The identifier used for ε-symbol.  Default value 'e.")
 
 (defvar parser-generator--eof-identifier
   '$
