@@ -86,10 +86,11 @@
                 (push (list parser-generator--eof-identifier) look-ahead)
                 (setq look-ahead-length (1+ look-ahead-length))
                 (setq index (1+ index)))))
-        (error (error
-                "Lex-analyze faxiled to peek next look-ahead at %s, error: %s"
-                index
-                (car (cdr error))))))
+        (error
+         (error
+          "Lex-analyze failed to peek next look-ahead at %s, error: %s"
+          index
+          (car (cdr error))))))
     (nreverse look-ahead)))
 
 (defun parser-generator-lex-analyzer--pop-token ()
