@@ -78,7 +78,6 @@
                               (if eff
                                   ;; Go through eff-items and see if any item is a valid look-ahead of grammar
                                   ;; in that case save in action table a shift action here
-                                  ;; TODO Verify that stuff like aeee is valid look-ahead if look-ahead is 4
                                   (let ((eff-index 0)
                                         (eff-item)
                                         (eff-length (length eff))
@@ -129,7 +128,6 @@
                                      production
                                      lr-item))
 
-                                  ;; TODO Add production length here to avoid retrieving it later
                                   (parser-generator--debug
                                    (message "production: %s (%s)" production production-number)
                                    (message "u: %s" u))
@@ -695,7 +693,7 @@
                translation
                translation-symbol-table
                history)
-  "Perform a LR-parse via lex-analyzer, optionally at INPUT-TAPE-INDEX with PUSHDOWN-LIST, OUTPUT, TRANSLATION and HISTORY."
+  "Perform a LR-parse via lex-analyzer, optionally at INPUT-TAPE-INDEX with PUSHDOWN-LIST, OUTPUT, TRANSLATION, TRANSLATION-SYMBOL-TABLE and HISTORY."
   (unless input-tape-index
     (setq input-tape-index 1))
   (unless pushdown-list
