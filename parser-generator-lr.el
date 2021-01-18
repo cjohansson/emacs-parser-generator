@@ -191,10 +191,7 @@
           (parser-generator--get-grammar-non-terminals)
           (parser-generator--get-grammar-terminals)))
         (table-lr-items (make-hash-table :test 'equal))
-        (e-list
-         (parser-generator--generate-list-of-symbol
-          parser-generator--look-ahead-number
-          parser-generator--e-identifier)))
+        (e-list parser-generator--e-identifier))
     (parser-generator--debug
      (message "symbols: %s" symbols))
 
@@ -394,6 +391,8 @@
       (setq γ (list γ)))
     (unless (parser-generator--valid-sentential-form-p γ)
       (error "Invalid sentential form γ!"))
+    (parser-generator--debug
+     (message "γ: %s" γ))
 
     (let ((lr-item-exists (make-hash-table :test 'equal)))
 
@@ -403,9 +402,7 @@
       (let ((lr-items-e)
             (start-productions
              (parser-generator--get-grammar-rhs start))
-            (e-list (parser-generator--generate-list-of-symbol
-                     parser-generator--look-ahead-number
-                     parser-generator--e-identifier))
+            (e-list parser-generator--e-identifier)
             (eof-list (parser-generator--generate-list-of-symbol
                      parser-generator--look-ahead-number
                      parser-generator--eof-identifier)))
@@ -442,54 +439,58 @@
                   (let ((rhs-first (car rhs)))
                     (parser-generator--debug
                      (message "rhs-first: %s" rhs-first))
-                    (when
+                    (if
                         (parser-generator--valid-non-terminal-p
                          rhs-first)
-                      (let ((rhs-rest (append (cdr rhs) suffix)))
-                        (let ((rhs-rest-first
-                               (parser-generator--first rhs-rest)))
-                          (parser-generator--debug
-                           (message "rhs-rest-first: %s" rhs-rest-first))
-                          (unless rhs-rest-first
-                            (setq rhs-rest-first `(,eof-list)))
-                          (let ((sub-production
-                                 (parser-generator--get-grammar-rhs
-                                  rhs-first)))
+                        (let ((rhs-rest (append (cdr rhs) suffix)))
+                          (let ((rhs-rest-first
+                                 (parser-generator--first rhs-rest)))
                             (parser-generator--debug
-                             (message "sub-production: %s" sub-production))
-
-                            ;; For each production with B as LHS
-                            (dolist (sub-rhs sub-production)
-
-                              ;; Set follow to nil if it's the e-identifier
-                              (when (and
-                                     (>= (length sub-rhs) 1)
-                                     (parser-generator--valid-e-p (car sub-rhs)))
-                                (setq sub-rhs nil))
-
+                             (message "is non-terminal")
+                             (message "rhs-rest: %s from %s + %s" rhs-rest (cdr rhs) suffix)
+                             (message "rhs-rest-first: %s" rhs-rest-first))
+                            (unless rhs-rest-first
+                              (setq rhs-rest-first `(,eof-list)))
+                            (let ((sub-production
+                                   (parser-generator--get-grammar-rhs
+                                    rhs-first)))
                               (parser-generator--debug
-                               (message "sub-rhs: %s" sub-rhs))
+                               (message "sub-production: %s" sub-production))
 
-                              ;; For each x in FIRST(αu)
-                              (dolist (f rhs-rest-first)
+                              ;; For each production with B as LHS
+                              (dolist (sub-rhs sub-production)
+
+                                ;; Set follow to nil if it's the e-identifier
+                                (when (and
+                                       (= (length sub-rhs) 1)
+                                       (parser-generator--valid-e-p (car sub-rhs)))
+                                  (setq sub-rhs nil))
+
                                 (parser-generator--debug
-                                 (message "f: %s" f))
+                                 (message "sub-rhs: %s" sub-rhs))
 
-                                ;; Add [B -> . β, x] to V(e), provided it is not already there
-                                (unless
-                                    (gethash
+                                ;; For each x in FIRST(αu)
+                                (dolist (f rhs-rest-first)
+                                  (parser-generator--debug
+                                   (message "f: %s" f))
+
+                                  ;; Add [B -> . β, x] to V(e), provided it is not already there
+                                  (unless
+                                      (gethash
+                                       `(,e-list ,(list rhs-first) nil ,sub-rhs ,f)
+                                       lr-item-exists)
+                                    (puthash
                                      `(,e-list ,(list rhs-first) nil ,sub-rhs ,f)
+                                     t
                                      lr-item-exists)
-                                  (puthash
-                                   `(,e-list ,(list rhs-first) nil ,sub-rhs ,f)
-                                   t
-                                   lr-item-exists)
-                                  (push
-                                   `(,(list rhs-first) nil ,sub-rhs ,f)
-                                   lr-items-e)
+                                    (push
+                                     `(,(list rhs-first) nil ,sub-rhs ,f)
+                                     lr-items-e)
 
-                                  ;; (c) Repeat (b) until no more items can be added to V(e)
-                                  (setq found-new t))))))))))))))
+                                    ;; (c) Repeat (b) until no more items can be added to V(e)
+                                    (setq found-new t)))))))
+                      (parser-generator--debug
+                       (message "is not non-terminal")))))))))
 
         (parser-generator--debug
          (message "V(e) = %s" lr-items-e))
@@ -507,7 +508,7 @@
               (γ-index 0))
           (unless
               (and
-               (>= γ-length 1)
+               (= γ-length 1)
                (parser-generator--valid-e-p (car γ)))
 
             (while (and
@@ -531,7 +532,9 @@
                    (message "prefix-previous: %s" prefix-previous)
                    (message "lr-new-item: %s" lr-new-item))
 
-                  (setq prefix-previous lr-new-item)))))
+                  (setq
+                   prefix-previous
+                   lr-new-item)))))
 
           (parser-generator--debug
            (message "γ: %s" γ))
@@ -560,18 +563,23 @@
 
         (parser-generator--debug
          (message "lr-item: %s" lr-item)
+         (message "lr-item-prefix: %s" lr-item-prefix)
          (message "lr-item-suffix: %s" lr-item-suffix)
          (message "lr-item-suffix-first: %s" lr-item-suffix-first)
-         (message "lr-item-suffix-rest: %s" lr-item-suffix-rest))
+         (message "lr-item-suffix-rest: %s" lr-item-suffix-rest)
+         (message "lr-item-look-ahead: %s" lr-item-look-ahead))
 
         ;; (a) If [A -> a . XiB, u] is in V(X1,...,Xi-1)
-        (when (equal
-               lr-item-suffix-first
-               x)
+        (when
+            (equal
+             lr-item-suffix-first
+             x)
 
           ;; Add [A -> aXi . B, u] to V(X1,...,Xi)
           (let ((combined-prefix
-                 (append lr-item-prefix (list x))))
+                 (append
+                  lr-item-prefix
+                  (list x))))
             (parser-generator--debug
              (message
               "lr-new-item-1: %s"
@@ -608,7 +616,13 @@
                         lr-item-suffix-rest)))
                   (unless lr-item-suffix-rest-first
                     (setq lr-item-suffix-rest-first (list nil)))
-                  (let ((sub-production
+
+                  ;; TODO Verify this
+                  (parser-generator--debug
+                   (message
+                    "lr-item-suffix-rest-first: %s"
+                    lr-item-suffix-rest-first))
+                    (let ((sub-production
                          (parser-generator--get-grammar-rhs
                           lr-item-suffix-first)))
 
