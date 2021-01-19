@@ -544,7 +544,10 @@
 (defun parser-generator-lr--items-for-goto (previous-lr-item x)
   "Calculate LR-items for GOTO(PREVIOUS-LR-ITEM, X)."
   (let ((lr-new-item)
-        (lr-item-exists (make-hash-table :test 'equal)))
+        (lr-item-exists (make-hash-table :test 'equal))
+        (eof-list (parser-generator--generate-list-of-symbol
+                     parser-generator--look-ahead-number
+                     parser-generator--eof-identifier)))
     (parser-generator--debug (message "x: %s" x))
 
     (dolist (lr-item previous-lr-item)
@@ -615,7 +618,7 @@
                        (parser-generator--first
                         lr-item-suffix-rest)))
                   (unless lr-item-suffix-rest-first
-                    (setq lr-item-suffix-rest-first (list nil)))
+                    (setq lr-item-suffix-rest-first (list eof-list)))
 
                   ;; TODO Verify this
                   (parser-generator--debug
