@@ -480,18 +480,27 @@
 
     (should
      (equal
-      '(
-        (0 (
+      '((0 (
             ((R) nil (a b T) ($ $))
             ((R) nil (a b T) (a b))
             ((S) nil (R) ($ $))
             ((S) nil (R S) ($ $))
-            ((Sp) nil (S) ($ $)))
-         )
+            ((Sp) nil (S) ($ $))
+            ))
         (1 (
-            ((R) (a) (b T) ($ $))
-            ((R) (a) (b T) (a b))))
+            ((R) nil (a b T) ($ $))
+            ((R) nil (a b T) (a b))
+            ((S) (R) (S) ($ $))
+            ((S) (R) nil ($ $))
+            ((S) nil (R) ($ $))
+            ((S) nil (R S) ($ $))))
         (2 (
+            ((Sp) (S) nil ($ $))))
+        (3 (
+            ((R) (a) (b T) ($ $))
+            ((R) (a) (b T) (a b))
+            ))
+        (4 (
             ((R) (a b) (T) ($ $))
             ((R) (a b) (T) (a b))
             ((T) nil (a T) ($ $))
@@ -499,7 +508,31 @@
             ((T) nil (c) ($ $))
             ((T) nil (c) (a b))
             ((T) nil nil ($ $))
-            ((T) nil nil (a b)))))
+            ((T) nil nil (a b))
+            ))
+        (5 (
+            ((R) (a b T) nil ($ $))
+            ((R) (a b T) nil (a b))
+            ))
+        (6 (
+            ((T) (a) (T) ($ $))
+            ((T) (a) (T) (a b))
+            ((T) nil (a T) ($ $))
+            ((T) nil (a T) (a b))
+            ((T) nil (c) ($ $))
+            ((T) nil (c) (a b))
+            ((T) nil nil ($ $))
+            ((T) nil nil (a b))
+            ))
+        (7 (
+            ((T) (c) nil ($ $))
+            ((T) (c) nil (a b))
+            ))
+        (8 (
+            ((T) (a T) nil ($ $))
+            ((T) (a T) nil (a b))))
+        (9 (
+            ((S) (R S) nil ($ $)))))
       (parser-generator--hash-to-list
        lr-items)))
     (message "Passed LR-items k = 2")

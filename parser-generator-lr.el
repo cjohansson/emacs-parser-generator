@@ -188,15 +188,19 @@
          (make-hash-table :test 'equal))
         (next-symbols)
         (next-symbols-found (make-hash-table :test 'equal))
-        (table-lr-items (make-hash-table :test 'equal))
-        (e-list parser-generator--e-identifier))
+        (table-lr-items (make-hash-table :test 'equal)))
 
     (let ((e-set
            (parser-generator-lr--items-for-prefix
-            e-list)))
+            parser-generator--e-identifier)))
+
       ;;(1) Place V(e) in S. The set V(e) is initially unmarked.
-      (push `(,lr-item-set-new-index ,e-set) unmarked-lr-item-sets)
-      (setq lr-item-set-new-index (1+ lr-item-set-new-index)))
+      (push
+       `(,lr-item-set-new-index ,e-set)
+       unmarked-lr-item-sets)
+      (setq
+       lr-item-set-new-index
+       (1+ lr-item-set-new-index)))
 
     ;; (2) If a set of items a in S is unmarked
     ;; (3) Repeat step (2) until all sets of items in S are marked.
@@ -215,21 +219,29 @@
          (message "popped-item: %s" popped-item))
 
         ;; (2) Mark a
-        (puthash lr-items lr-item-set-index marked-lr-item-sets)
+        (puthash
+         lr-items
+         lr-item-set-index
+         marked-lr-item-sets)
 
-        (puthash lr-item-set-index lr-items table-lr-items)
+        (puthash
+         lr-item-set-index
+         lr-items
+         table-lr-items)
         (setq goto-table-table nil)
 
-        ;; Build list of possible next-symbols here that follows lr-items set
+        ;; Build list of possible next-symbols
+        ;; here that follows current set
         (setq next-symbols nil)
         (dolist (lr-item lr-items)
           (let ((symbols (nth 2 lr-item)))
             (when symbols
               (let ((next-symbol (car symbols)))
-                (when (and
-                       (or
-                        (parser-generator--valid-terminal-p next-symbol)
-                        (parser-generator--valid-non-terminal-p next-symbol))
+                (when
+                    (and
+                     (or
+                      (parser-generator--valid-terminal-p next-symbol)
+                      (parser-generator--valid-non-terminal-p next-symbol))
                        (not
                         (gethash
                          (list
@@ -253,7 +265,6 @@
                (sort
                 next-symbols
                 'string-lessp)))))
-
         (parser-generator--debug
          (message "next-symbols: %s" next-symbols))
 
