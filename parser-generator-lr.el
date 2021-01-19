@@ -400,13 +400,19 @@
                   (< b-index set-length))
             (unless (= a-index b-index)
               (setq b (nth b-index set))
+              (parser-generator--debug
+               (message "b: %s" b))
+
               (setq b-suffix (nth 2 b))
               (setq b-follow (nth 3 b))
-              (setq b-suffix-follow (append b-suffix b-follow))
-              (setq b-suffix-follow-eff (parser-generator--e-free-first b-suffix-follow))
+              (setq
+               b-suffix-follow
+               (append b-suffix b-follow))
+              (setq
+               b-suffix-follow-eff
+               (parser-generator--e-free-first b-suffix-follow))
 
               (parser-generator--debug
-               (message "b: %s" b)
                (message "b-suffix: %s" b-suffix)
                (message "b-follow: %s" b-follow)
                (message "b-suffix-follow: %s" b-suffix-follow)
@@ -658,32 +664,49 @@
                   (let ((lr-item-suffix-rest-first
                          (parser-generator--first
                           lr-item-suffix-rest)))
+                    (parser-generator--debug
+                     (message
+                      "lr-item-suffix-rest-first (before): %s"
+                      lr-item-suffix-rest-first))
+
                     (unless lr-item-suffix-rest-first
                       (setq
                        lr-item-suffix-rest-first
                        (list eof-list)))
 
                     ;; When |FIRST| < k add EOF symbols
-                    (when (
-                           <
-                           (length lr-item-suffix-rest-first)
-                           parser-generator--look-ahead-number)
-                      (setq
-                       lr-item-suffix-rest-first
-                       (reverse lr-item-suffix-rest-first))
-                      (while (<
-                              (length lr-item-suffix-rest-first)
-                              parser-generator--look-ahead-number)
+                    (let ((new-first))
+                      (dolist
+                          (first-item
+                           lr-item-suffix-rest-first)
+                        (when (
+                               <
+                               (length first-item)
+                               parser-generator--look-ahead-number)
+                          (setq
+                           first-item
+                           (reverse
+                            first-item))
+                          (while (<
+                                  (length first-item)
+                                  parser-generator--look-ahead-number)
+                            (push
+                             parser-generator--eof-identifier
+                             first-item))
+                          (setq
+                           first-item
+                           (reverse first-item)))
                         (push
-                         parser-generator--eof-identifier
-                         lr-item-suffix-rest-first))
+                         first-item
+                         new-first))
                       (setq
                        lr-item-suffix-rest-first
-                       (reverse lr-item-suffix-rest-first)))
+                       (reverse
+                        new-first)))
 
                     (parser-generator--debug
                      (message
-                      "lr-item-suffix-rest-first: %s"
+                      "lr-item-suffix-rest-first (after): %s"
                       lr-item-suffix-rest-first))
                     (let ((sub-production
                            (parser-generator--get-grammar-rhs
