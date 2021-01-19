@@ -424,9 +424,25 @@
     (should
      (equal
       '(
-        (0 (((R) nil (a b T) ($ $))((R) nil (a b T) (a b))((S) nil (R) ($ $))((S) nil (R S) ($ $))((Sp) nil (S) ($ $))))
-        (1 (((R) (a) (b T) ($ $)) ((R) (a) (b T) (a b))))
-        (2 (((R) (a b) (T) ($ $)) ((R) (a b) (T) (a b)) ((T) nil (a T) ($ $)) ((T) nil (a T) (a b)) ((T) nil (c) ($ $)) ((T) nil (c) (a b)) ((T) nil nil ($ $)) ((T) nil nil (a b)))))
+        (0 (
+            ((R) nil (a b T) ($ $))
+            ((R) nil (a b T) (a b))
+            ((S) nil (R) ($ $))
+            ((S) nil (R S) ($ $))
+            ((Sp) nil (S) ($ $)))
+         )
+        (1 (
+            ((R) (a) (b T) ($ $))
+            ((R) (a) (b T) (a b))))
+        (2 (
+            ((R) (a b) (T) ($ $))
+            ((R) (a b) (T) (a b))
+            ((T) nil (a T) ($ $))
+            ((T) nil (a T) (a b))
+            ((T) nil (c) ($ $))
+            ((T) nil (c) (a b))
+            ((T) nil nil ($ $))
+            ((T) nil nil (a b)))))
       (parser-generator--hash-to-list
        lr-items)))
     (message "Passed LR-items k = 2")
