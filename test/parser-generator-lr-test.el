@@ -419,7 +419,64 @@
      (message
       "LR-items: %s"
       (parser-generator--hash-to-list
-      lr-items)))
+       lr-items)))
+
+;;     (1)
+;;     S' -> .S   [$$]  // Go to 10
+;;     S  -> .R   [$$]  // Go to 8
+;;     S  -> .RS  [$$]  // Go to 8
+;;     R  -> .abT [$$]  // Shift  on ab, go to (2)
+;;     R  -> .abT [ab]  // Shift  on ab, go to (2)
+
+;; (2)
+;;     R  -> a.bT [$$]  // Shift  on ba, bc, b$, go to (3)
+;;     R  -> a.bT [ab]  // Shift  on ba, bc,     go to (3)
+
+;; (3)
+;;     R  -> ab.T [$$] // Go to 7
+;;     R  -> ab.T [ab] // Go to 7
+;;     T  -> .aT  [$$] // Shift  on aa, ac, a$, go to (4)
+;;     T  -> .c   [$$] // Shift  on c$,         go to (5)
+;;     T  -> .    [$$] // Reduce on $$
+;;     T  -> .aT  [ab] // Shift  on aa, ac,     go to (4)
+;;     T  -> .c   [ab] // Shift  on ca,         go to (5)
+;;     T  -> .    [ab] // Reduce on ab
+
+;; (4)
+;;     T  -> a.T  [$$] // Go to 6
+;;     T  -> a.T  [ab] // Go to 6
+;;     T  -> .    [$$] // Reduce on $$
+;;     T  -> .aT  [$$] // Shift  on aa, ac, a$, go to (4)
+;;     T  -> .c   [$$] // Shift  on c$,         go to (5)
+;;     T  -> .    [ab] // Reduce on ab
+;;     T  -> .aT  [ab] // Shift  on aa, ac,     go to (4)
+;;     T  -> .c   [ab] // Shift  on ca,         go to (5)
+
+;; (5)
+;;     T  -> c.   [$$] // Reduce on $$
+;;     T  -> c.   [ab] // Reduce on ab
+
+;; (6)
+;;     T  -> aT.  [$$] // Reduce on $$ 
+;;     T  -> aT.  [ab] // Reduce on ab
+
+;; (7)
+;;     R  -> abT. [$$] // Reduce on $$
+;;     R  -> abT. [ab] // Reduce on ab
+
+;; (8)
+;;     S  -> R.   [$$] // Reduce on $$
+;;     S  -> R.S  [$$] // Go to 9
+;;     S  -> .RS  [$$] // Go to 8
+;;     S  -> .R   [$$] // Go to 8
+;;     R  -> .abT [$$] // Shift  on ab, go to (2)
+;;     R  -> .abT [ab] // Shift  on ab, go to (2)
+
+;; (9)
+;;     S  -> RS.  [$$] // Reduce on $$
+
+;; (10)
+;;     S' -> S.   [$$] // Accept on $$
 
     (should
      (equal
