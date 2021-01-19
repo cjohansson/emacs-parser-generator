@@ -501,7 +501,8 @@
                          rhs-first)
                         (let ((rhs-rest (append (cdr rhs) suffix)))
                           (let ((rhs-rest-first
-                                 (parser-generator--first rhs-rest)))
+                                 (parser-generator--first
+                                  rhs-rest)))
                             (parser-generator--debug
                              (message "is non-terminal")
                              (message "rhs-rest: %s from %s + %s" rhs-rest (cdr rhs) suffix)
@@ -664,7 +665,15 @@
               (let ((lr-item-suffix-first
                      (car lr-item-suffix))
                     (lr-item-suffix-rest
-                     (cdr lr-item-suffix)))
+                     (append
+                      (cdr lr-item-suffix)
+                      (nth 3 lr-item))))
+                (parser-generator--debug
+                 (message
+                  "lr-item-suffix-rest: %s from %s + %s"
+                  lr-item-suffix-rest
+                  (cdr lr-item-suffix)
+                  (nth 3 lr-item)))
 
                 ;; (b) If [A -> a . Bb, u] has been placed in V(X1,...,Xi)
                 ;; and B -> D is in P
@@ -680,6 +689,7 @@
                       "lr-item-suffix-rest-first (before): %s"
                       lr-item-suffix-rest-first))
 
+                    ;; EOF-markers are always a possible look-ahead
                     (unless lr-item-suffix-rest-first
                       (setq
                        lr-item-suffix-rest-first
