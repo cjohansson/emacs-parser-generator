@@ -502,6 +502,12 @@
            t
            (parser-generator--valid-grammar-p '((A B C) ("a" "b" "c") ((A ("a" (lambda(a) (message "Was here: %s" a))))) A))))
 
+  (should
+   (equal
+    t
+    (parser-generator--valid-grammar-p
+     '((A B C) ("a" "b" "c") ((A ("a" (lambda(args) (message "a: %s" args))) ("b" (lambda(args) (message "b: %s" args))) ("c" (lambda(args) (message "c: %s" args))))) A))))
+
   (message "Passed tests for (parser-generator--valid-grammar-p)"))
 
 (defun parser-generator-test--valid-look-ahead-number-p ()
