@@ -1202,7 +1202,9 @@
                     (parser-generator--debug
                      (message "non-terminal symbol: %s" symbol))
                     (let ((symbol-f-set))
-                      (if disallow-e-first
+                      (if (and
+                           disallow-e-first
+                           (= first-length 0))
                           (setq symbol-f-set (nth 1 (gethash symbol parser-generator--f-free-sets)))
                         (setq symbol-f-set (nth 1 (gethash symbol parser-generator--f-sets))))
                       (parser-generator--debug

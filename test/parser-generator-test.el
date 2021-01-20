@@ -439,12 +439,12 @@
     (parser-generator--e-free-first '(e a))))
   (should
    (equal
-    '((a e))
+    '((a a) (a e))
     (parser-generator--e-free-first '(a S))))
   (message "Passed empty-free-first 2 with trailing e-identifier 2")
   (should
    (equal
-    '((a b))
+    '((a a) (a e))
     (parser-generator--e-free-first '(a S b))))
   (message "Passed empty-free-first 2 with trailing e-identifier 1")
 
