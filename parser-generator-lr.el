@@ -905,7 +905,7 @@
             (look-ahead-full))
 
         ;; Save token stream indexes in separate variable if needed later
-        (setq look-ahead-full (nreverse look-ahead))
+        (setq look-ahead-full look-ahead)
 
         ;; Create simplified look-ahead for logic below
         (setq look-ahead nil)
@@ -913,9 +913,11 @@
           (if (listp look-ahead-item)
               (push (car look-ahead-item) look-ahead)
             (push look-ahead-item look-ahead)))
+        (setq look-ahead (nreverse look-ahead))
 
         (parser-generator--debug
-         (message "look-ahead: %s" look-ahead))
+         (message "look-ahead: %s" look-ahead)
+         (message "look-ahead-full: %s" look-ahead-full))
 
         (let ((table-index
                (car pushdown-list)))
@@ -941,9 +943,14 @@
                       (< action-index action-table-length))
                 (let ((action (nth action-index action-table)))
                   (let ((action-look-ahead (car action)))
-                    (push action-look-ahead possible-look-aheads)
-                    (when (equal action-look-ahead look-ahead)
-                      (setq action-match (cdr action)))))
+                    (push
+                     action-look-ahead
+                     possible-look-aheads)
+                    (when (equal
+                           action-look-ahead
+                           look-ahead)
+                      (setq action-match
+                            (cdr action)))))
                 (setq action-index (1+ action-index)))
 
               (unless action-match
