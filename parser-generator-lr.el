@@ -70,10 +70,21 @@
                       (let ((C (nth 2 lr-item))
                             (v (nth 3 lr-item)))
                         (let ((Cv (append C v)))
+                          (parser-generator--debug
+                           (message
+                            "Cv: %s from %s + %s"
+                            Cv
+                            C
+                            v))
                           (when Cv
                             (let
                                 ((eff
                                   (parser-generator--e-free-first Cv)))
+                              (parser-generator--debug
+                               (message
+                                "E-FREE-FIRST %s = %s"
+                                Cv
+                                eff))
                               (if eff
                                   ;; Go through eff-items and see if any item is a valid look-ahead of grammar
                                   ;; in that case save in action table a shift action here

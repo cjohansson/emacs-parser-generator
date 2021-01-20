@@ -107,27 +107,22 @@
   "Return all possible look-ahead set."
   (unless parser-generator--look-ahead-number
     (error "No look-ahead number defined!"))
-  (let ((terminals (parser-generator--get-grammar-terminals))
+  (let ((terminals
+         (parser-generator--get-grammar-terminals))
         (look-aheads)
         (k parser-generator--look-ahead-number)
         (stack '((0 0 nil)))
         (marked-paths (make-hash-table :test 'equal))
         (added-look-aheads (make-hash-table :test 'equal)))
-    (let ((terminals-max-index (1- (length terminals)))
+    (let ((terminals-max-index
+           (1- (length terminals)))
           (terminal-index)
           (look-ahead-length)
           (look-ahead)
-          (eof-list))
-
-      (let ((eof-list-index 0)
-            (eof-list-length parser-generator--look-ahead-number))
-        (while (< eof-list-index eof-list-length)
-          (push
-           parser-generator--eof-identifier
-           eof-list)
-          (setq
-           eof-list-index
-           (1+ eof-list-index))))
+          (eof-list
+           (parser-generator--generate-list-of-symbol
+            k
+            parser-generator--eof-identifier)))
 
       (while stack
         (let ((item (pop stack)))
@@ -143,9 +138,14 @@
               (push next-terminal potential-look-ahead)
               (if (gethash potential-look-ahead marked-paths)
                   (setq terminal-index (1+ terminal-index))
-                (puthash potential-look-ahead t marked-paths)
+                (puthash
+                 potential-look-ahead
+                 t
+                 marked-paths)
 
-                (push `(,terminal-index ,look-ahead-length,look-ahead) stack)
+                (push
+                 `(,terminal-index ,look-ahead-length,look-ahead)
+                 stack)
 
                 (setq look-ahead-length (1+ look-ahead-length))
                 (setq look-ahead potential-look-ahead)
@@ -163,16 +163,31 @@
                     (setq
                      look-ahead-length
                      (1+ look-ahead-length)))
-                  (setq look-ahead-to-add (reverse look-ahead)))
+                  (setq
+                   look-ahead-to-add
+                   (reverse look-ahead)))
 
-              (setq look-ahead-to-add eof-list))
+              (setq
+               look-ahead-to-add
+               eof-list))
 
-            (when (and look-ahead-to-add
-                       (not (gethash look-ahead-to-add added-look-aheads)))
-              (puthash look-ahead-to-add t added-look-aheads)
-              (push look-ahead-to-add look-aheads))))))
+            (when
+                (and look-ahead-to-add
+                     (not
+                      (gethash
+                       look-ahead-to-add
+                       added-look-aheads)))
+              (puthash
+               look-ahead-to-add
+               t
+               added-look-aheads)
+              (push
+               look-ahead-to-add
+               look-aheads))))))
 
-    (sort look-aheads 'parser-generator--sort-list)))
+    (sort
+     look-aheads
+     'parser-generator--sort-list)))
 
 (defun parser-generator--get-grammar-non-terminals (&optional G)
   "Return non-terminals of grammar G."
@@ -540,7 +555,9 @@
     (error "Table for look-aheads is undefined!"))
   (unless (listp symbol)
     (setq symbol (list symbol)))
-  (gethash symbol parser-generator--table-look-aheads-p))
+  (gethash
+   symbol
+   parser-generator--table-look-aheads-p))
 
 (defun parser-generator--valid-look-ahead-number-p (k)
   "Return if look-ahead number K is valid or not."
@@ -1185,6 +1202,7 @@
                   (parser-generator--debug
                    (message "symbol index: %s from %s is: %s" input-tape-index input-tape symbol))
                   (cond
+
                    ((parser-generator--valid-e-p symbol)
                     (if disallow-e-first
                         (when (> first-length 0)
@@ -1193,6 +1211,10 @@
                       (setq first (append first (list symbol)))
                       (setq first-length (1+ first-length)))
                     (setq keep-looking nil))
+
+                   ((parser-generator--valid-eof-p symbol)
+                    (setq first (append first (list symbol)))
+                    (setq first-length (1+ first-length)))
 
                    ((parser-generator--valid-terminal-p symbol)
                     (setq first (append first (list symbol)))
