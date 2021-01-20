@@ -421,62 +421,62 @@
       (parser-generator--hash-to-list
        lr-items)))
 
-;;     (1)
-;;     S' -> .S   [$$]  // Go to 10
-;;     S  -> .R   [$$]  // Go to 8
-;;     S  -> .RS  [$$]  // Go to 8
-;;     R  -> .abT [$$]  // Shift  on ab, go to (2)
-;;     R  -> .abT [ab]  // Shift  on ab, go to (2)
+    ;;     (1)
+    ;;     S' -> .S   [$$]  // Go to 10
+    ;;     S  -> .R   [$$]  // Go to 8
+    ;;     S  -> .RS  [$$]  // Go to 8
+    ;;     R  -> .abT [$$]  // Shift  on ab, go to (2)
+    ;;     R  -> .abT [ab]  // Shift  on ab, go to (2)
 
-;; (2)
-;;     R  -> a.bT [$$]  // Shift  on ba, bc, b$, go to (3)
-;;     R  -> a.bT [ab]  // Shift  on ba, bc,     go to (3)
+    ;; (2)
+    ;;     R  -> a.bT [$$]  // Shift  on ba, bc, b$, go to (3)
+    ;;     R  -> a.bT [ab]  // Shift  on ba, bc,     go to (3)
 
-;; (3)
-;;     R  -> ab.T [$$] // Go to 7
-;;     R  -> ab.T [ab] // Go to 7
-;;     T  -> .aT  [$$] // Shift  on aa, ac, a$, go to (4)
-;;     T  -> .c   [$$] // Shift  on c$,         go to (5)
-;;     T  -> .    [$$] // Reduce on $$
-;;     T  -> .aT  [ab] // Shift  on aa, ac,     go to (4)
-;;     T  -> .c   [ab] // Shift  on ca,         go to (5)
-;;     T  -> .    [ab] // Reduce on ab
+    ;; (3)
+    ;;     R  -> ab.T [$$] // Go to 7
+    ;;     R  -> ab.T [ab] // Go to 7
+    ;;     T  -> .aT  [$$] // Shift  on aa, ac, a$, go to (4)
+    ;;     T  -> .c   [$$] // Shift  on c$,         go to (5)
+    ;;     T  -> .    [$$] // Reduce on $$
+    ;;     T  -> .aT  [ab] // Shift  on aa, ac,     go to (4)
+    ;;     T  -> .c   [ab] // Shift  on ca,         go to (5)
+    ;;     T  -> .    [ab] // Reduce on ab
 
-;; (4)
-;;     T  -> a.T  [$$] // Go to 6
-;;     T  -> a.T  [ab] // Go to 6
-;;     T  -> .    [$$] // Reduce on $$
-;;     T  -> .aT  [$$] // Shift  on aa, ac, a$, go to (4)
-;;     T  -> .c   [$$] // Shift  on c$,         go to (5)
-;;     T  -> .    [ab] // Reduce on ab
-;;     T  -> .aT  [ab] // Shift  on aa, ac,     go to (4)
-;;     T  -> .c   [ab] // Shift  on ca,         go to (5)
+    ;; (4)
+    ;;     T  -> a.T  [$$] // Go to 6
+    ;;     T  -> a.T  [ab] // Go to 6
+    ;;     T  -> .    [$$] // Reduce on $$
+    ;;     T  -> .aT  [$$] // Shift  on aa, ac, a$, go to (4)
+    ;;     T  -> .c   [$$] // Shift  on c$,         go to (5)
+    ;;     T  -> .    [ab] // Reduce on ab
+    ;;     T  -> .aT  [ab] // Shift  on aa, ac,     go to (4)
+    ;;     T  -> .c   [ab] // Shift  on ca,         go to (5)
 
-;; (5)
-;;     T  -> c.   [$$] // Reduce on $$
-;;     T  -> c.   [ab] // Reduce on ab
+    ;; (5)
+    ;;     T  -> c.   [$$] // Reduce on $$
+    ;;     T  -> c.   [ab] // Reduce on ab
 
-;; (6)
-;;     T  -> aT.  [$$] // Reduce on $$ 
-;;     T  -> aT.  [ab] // Reduce on ab
+    ;; (6)
+    ;;     T  -> aT.  [$$] // Reduce on $$ 
+    ;;     T  -> aT.  [ab] // Reduce on ab
 
-;; (7)
-;;     R  -> abT. [$$] // Reduce on $$
-;;     R  -> abT. [ab] // Reduce on ab
+    ;; (7)
+    ;;     R  -> abT. [$$] // Reduce on $$
+    ;;     R  -> abT. [ab] // Reduce on ab
 
-;; (8)
-;;     S  -> R.   [$$] // Reduce on $$
-;;     S  -> R.S  [$$] // Go to 9
-;;     S  -> .RS  [$$] // Go to 8
-;;     S  -> .R   [$$] // Go to 8
-;;     R  -> .abT [$$] // Shift  on ab, go to (2)
-;;     R  -> .abT [ab] // Shift  on ab, go to (2)
+    ;; (8)
+    ;;     S  -> R.   [$$] // Reduce on $$
+    ;;     S  -> R.S  [$$] // Go to 9
+    ;;     S  -> .RS  [$$] // Go to 8
+    ;;     S  -> .R   [$$] // Go to 8
+    ;;     R  -> .abT [$$] // Shift  on ab, go to (2)
+    ;;     R  -> .abT [ab] // Shift  on ab, go to (2)
 
-;; (9)
-;;     S  -> RS.  [$$] // Reduce on $$
+    ;; (9)
+    ;;     S  -> RS.  [$$] // Reduce on $$
 
-;; (10)
-;;     S' -> S.   [$$] // Accept on $$
+    ;; (10)
+    ;;     S' -> S.   [$$] // Accept on $$
 
     (should
      (equal
@@ -538,51 +538,55 @@
     (message "Passed LR-items k = 2")
 
     (parser-generator--debug
-     (message "GOTO-tables: %s"
+     (message "GOTO-tables k = 2: %s"
               (parser-generator--hash-to-list
                parser-generator-lr--goto-tables
                t)))
 
+    ;; state |  a  |  b  |  c  |  $  |  S  |  R  |  T
+    ;; -------+-----+-----+-----+-----+-----+-----+-----
+    ;;    1   |  2  |     |     |     |  10 |  8  |
+    ;; -------+-----+-----+-----+-----+-----+-----+-----
+    ;;    2   |     |  3  |     |     |     |     |
+    ;; -------+-----+-----+-----+-----+-----+-----+-----
+    ;;    3   |  4  |     |  5  |     |     |     |  7
+    ;; -------+-----+-----+-----+-----+-----+-----+-----
+    ;;    4   |  4  |     |  5  |     |     |     |  6
+    ;; -------+-----+-----+-----+-----+-----+-----+-----
+    ;;    5   |     |     |     |     |     |     |
+    ;; -------+-----+-----+-----+-----+-----+-----+-----
+    ;;    6   |     |     |     |     |     |     |
+    ;; -------+-----+-----+-----+-----+-----+-----+-----
+    ;;    7   |     |     |     |     |     |     |
+    ;; -------+-----+-----+-----+-----+-----+-----+-----
+    ;;    8   |  2  |     |     |     |  9  |  8  |
+    ;; -------+-----+-----+-----+-----+-----+-----+-----
+    ;;    9   |     |     |     |     |     |     |
+    ;; -------+-----+-----+-----+-----+-----+-----+-----
+    ;;    10  |     |     |     |     |     |     |
+
     (should
-      (equal
-       '((0 ((R 2) (S 1) (a 3)))
-         (1 nil)
-         (2 ((R 10) (S 9) (a 11)))
-         (3 ((b 4)))
-         (4 ((T 5) (a 6) (c 7)))
-         (5 nil)
-         (6 ((T 8) (a 6) (c 7)))
-         (7 nil)
-         (8 nil)
-         (9 nil)
-         (10 ((R 10) (S 14) (a 11)))
-         (11 ((b 12)))
-         (12 ((T 13) (a 6) (c 7)))
-         (13 nil)
-         (14 nil))
-       (parser-generator--hash-to-list
-        parser-generator-lr--goto-tables)))
+     (equal
+      '((0 ((R 1) (S 2) (a 3)))
+        (1 ((R 1) (S 9) (a 3)))
+        (2 nil)
+        (3 ((b 4)))
+        (4 ((T 5) (a 6) (c 7)))
+        (5 nil)
+        (6 ((T 8) (a 6) (c 7)))
+        (7 nil)
+        (8 nil)
+        (9 nil))
+      (parser-generator--hash-to-list
+       parser-generator-lr--goto-tables)))
     (message "Passed GOTO-tables k = 2")
 
-    ;; TODO Validate lr-items here
-
-    ;; (should
-    ;;  (equal
-    ;;   '((0 (((S) nil (S "a" S "b") ("a" e)) ((S) nil (S "a" S "b") ("a" "a")) ((S) nil (S "a" S "b") (e e)) ((S) nil nil ("a" e)) ((S) nil nil ("a" "a")) ((S) nil nil (e e)) ((Sp) nil (S) (e e))))
-    ;;     (1 (((S) (S) ("a" S "b") ("a" "a")) ((S) (S) ("a" S "b") ("a" e)) ((S) (S) ("a" S "b") (e e)) ((Sp) (S) nil (e e))))
-    ;;     (2 (((S) (S "a") (S "b") ("a" e)) ((S) (S "a") (S "b") ("a" "a")) ((S) (S "a") (S "b") (e e)) ((S) nil (S "a" S "b") ("a" e)) ((S) nil (S "a" S "b") ("a" "a")) ((S) nil (S "a" S "b") ("b" e)) ((S) nil nil ("a" e)) ((S) nil nil ("a" "a")) ((S) nil nil ("b" e))))
-    ;;     (3 (((S) (S) ("a" S "b") ("a" "a")) ((S) (S) ("a" S "b") ("a" e)) ((S) (S) ("a" S "b") ("b" e)) ((S) (S "a" S) ("b") ("a" "a")) ((S) (S "a" S) ("b") ("a" e)) ((S) (S "a" S) ("b") (e e))))
-    ;;     (4 (((S) (S "a") (S "b") ("a" e)) ((S) (S "a") (S "b") ("a" "a")) ((S) (S "a") (S "b") ("b" e)) ((S) nil (S "a" S "b") ("a" e)) ((S) nil (S "a" S "b") ("a" "a")) ((S) nil (S "a" S "b") ("b" e)) ((S) nil nil ("a" e)) ((S) nil nil ("a" "a")) ((S) nil nil ("b" e))))
-    ;;     (5 (((S) (S "a" S "b") nil ("a" e)) ((S) (S "a" S "b") nil ("a" "a")) ((S) (S "a" S "b") nil (e e))))
-    ;;     (6 (((S) (S) ("a" S "b") ("a" "a")) ((S) (S) ("a" S "b") ("a" e)) ((S) (S) ("a" S "b") ("b" e)) ((S) (S "a" S) ("b") ("a" "a")) ((S) (S "a" S) ("b") ("a" e)) ((S) (S "a" S) ("b") ("b" e))))
-    ;;     (7 (((S) (S "a" S "b") nil ("a" e)) ((S) (S "a" S "b") nil ("a" "a")) ((S) (S "a" S "b") nil ("b" e)))))
-    ;;   (parser-generator--hash-to-list
-    ;;    lr-items)))
-    ;; (message "Passed LR-items k = 2")
-
-    (parser-generator-lr--generate-action-tables lr-items)
+    (parser-generator-lr--generate-action-tables
+     lr-items)
     (parser-generator--debug
-     (message "action-tables: %s" (parser-generator--hash-values-to-list parser-generator-lr--action-tables t)))
+     (message
+      "Action-tables k = 2: %s"
+      (parser-generator--hash-values-to-list parser-generator-lr--action-tables t)))
 
     ;; TODO Validate action-table here, should be able to reduce at look-ahead ("a" "b") as well
 
