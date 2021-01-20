@@ -581,48 +581,56 @@
        parser-generator-lr--goto-tables)))
     (message "Passed GOTO-tables k = 2")
 
+    ;; state | aa | ab | ac | a$ | ba | bb | bc | b$ | ca | cb | cc | c$ | $$ 
+    ;; ------+----+----+----+----+----+----+----+----+----+----+----+----+----
+    ;;   1   |    | S  |    |    |    |    |    |    |    |    |    |    |
+    ;; ------+----+----+----+----+----+----+----+----+----+----+----+----+----
+    ;;   2   |    |    |    |    | S  |    | S  | S  |    |    |    |    |
+    ;; ------+----+----+----+----+----+----+----+----+----+----+----+----+----
+    ;;   3   | S  | R  | S  | S  |    |    |    |    | S  |    |    | S  | R
+    ;; ------+----+----+----+----+----+----+----+----+----+----+----+----+----
+    ;;   4   | S  | R  | S  | S  |    |    |    |    | S  |    |    | S  | R
+    ;; ------+----+----+----+----+----+----+----+----+----+----+----+----+----
+    ;;   5   |    | R  |    |    |    |    |    |    |    |    |    |    | R
+    ;; ------+----+----+----+----+----+----+----+----+----+----+----+----+----
+    ;;   6   |    | R  |    |    |    |    |    |    |    |    |    |    | R
+    ;; ------+----+----+----+----+----+----+----+----+----+----+----+----+----
+    ;;   7   |    | R  |    |    |    |    |    |    |    |    |    |    | R
+    ;; ------+----+----+----+----+----+----+----+----+----+----+----+----+----
+    ;;   8   |    | S  |    |    |    |    |    |    |    |    |    |    | R
+    ;; ------+----+----+----+----+----+----+----+----+----+----+----+----+----
+    ;;   9   |    |    |    |    |    |    |    |    |    |    |    |    | R
+    ;; ------+----+----+----+----+----+----+----+----+----+----+----+----+----
+    ;;   10  |    |    |    |    |    |    |    |    |    |    |    |    | A
+
     (parser-generator-lr--generate-action-tables
      lr-items)
     (parser-generator--debug
      (message
       "Action-tables k = 2: %s"
-      (parser-generator--hash-values-to-list parser-generator-lr--action-tables t)))
+      (parser-generator--hash-to-list parser-generator-lr--action-tables)))
 
-    ;; TODO Validate action-table here, should be able to reduce at look-ahead ("a" "b") as well
-
-    ;; (should
-    ;;  (equal
-    ;;   '((0 ((("a" "a") reduce 2) (("a" e) reduce 2) ((e e) reduce 2)))
-    ;;     (1 ((("a" "b") shift) ((e e) accept)))
-    ;;     (2 ((("a" "a") reduce 2) (("a" e) reduce 2) (("b" e) reduce 2)))
-    ;;     (3 ((("a" "b") shift) (("b" e) shift) (("b" "a") shift)))
-    ;;     (4 ((("a" "a") reduce 2) (("a" e) reduce 2) (("b" e) reduce 2)))
-    ;;     (5 ((("a" "a") reduce 1) (("a" e) reduce 1) ((e e) reduce 1)))
-    ;;     (6 ((("a" "b") shift) (("b" "b") shift) (("b" "a") shift)))
-    ;;     (7 ((("a" "a") reduce 1) (("a" e) reduce 1) (("b" e) reduce 1))))
-    ;;   (parser-generator--hash-to-list
-    ;;    parser-generator-lr--action-tables)))
-    ;; (message "Passed ACTION-tables k = 2")
+    (should
+     (equal
+      '(
+        (0 (((a b) shift)))
+        (1 ((($ $) reduce 2) ((a b) shift)))
+        (2 ((($ $) accept)))
+        (3 (((b $) shift) ((b c) shift) ((b a) shift)))
+        (4 ((($ $) reduce 6) ((a b) reduce 6) ((a c) shift) ((a a) shift) ((c $) shift) ((c a) shift)))
+        (5 ((($ $) reduce 3) ((a b) reduce 3)))
+        (6 ((($ $) reduce 6) ((a b) reduce 6) ((a c) shift) ((a a) shift) ((c $) shift) ((c a) shift)))
+        (7 ((($ $) reduce 5) ((a b) reduce 5)))
+        (8 ((($ $) reduce 4) ((a b) reduce 4)))
+        (9 ((($ $) reduce 1)))
+        )
+      (parser-generator--hash-to-list
+       parser-generator-lr--action-tables)))
+    (message "Passed ACTION-tables k = 2")
 
     )
-  (setq
-   parser-generator-lex-analyzer--function
-   (lambda (index)
-     (let* ((string '(("a" 1 . 2) ("b" 2 . 3)))
-            (string-length (length string))
-            (max-index index)
-            (tokens))
-       (while (and
-               (< (1- index) string-length)
-               (< (1- index) max-index))
-         (push (nth (1- index) string) tokens)
-         (setq index (1+ index)))
-       (nreverse tokens))))
-  (should
-   (equal
-    '(2 2 2 1 1)
-    (parser-generator-lr-parse)))
-  (message "Passed test with terminals as string with look-ahead-number 2")
+
+  ;; TODO Test parse and translate here
 
   (message "Passed tests for (parser-generator-lr--parse-k-2)"))
 
