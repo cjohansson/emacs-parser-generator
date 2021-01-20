@@ -827,6 +827,20 @@
     (parser-generator--debug
      (message "Generated F-sets"))))
 
+(defun parser-generator--first-to-lookahead (first)
+  "Replace all e-identifiers with eof-identifiers in FIRST."
+  (let ((look-ahead))
+    (dolist (symbol first)
+      (if (parser-generator--valid-e-p
+           symbol)
+          (push
+           parser-generator--eof-identifier
+           look-ahead)
+        (push
+         symbol
+         look-ahead)))
+    (nreverse look-ahead)))
+
 (defun parser-generator--merge-max-terminals (a b k)
   "Merge terminals from A and B to a maximum length of K."
   (let ((merged)

@@ -95,15 +95,22 @@
                                     (while (and
                                             searching-match
                                             (< eff-index eff-length))
-                                      (setq eff-item (nth eff-index eff))
-                                      (if (parser-generator--valid-look-ahead-p eff-item)
+                                      (setq
+                                       eff-item
+                                       (parser-generator--first-to-lookahead
+                                        (nth eff-index eff)))
+                                      (if
+                                          (parser-generator--valid-look-ahead-p
+                                           eff-item)
                                           (let ((hash-key
                                                  (format "%s-%s-%s" goto-index state eff-item)))
                                             (unless (gethash hash-key added-actions)
                                               (puthash hash-key t added-actions)
                                               (setq searching-match nil)))
                                         (parser-generator--debug
-                                         (message "Not valid look-ahead: %s" eff-item)))
+                                         (message
+                                          "Not valid look-ahead: %s"
+                                          eff-item)))
                                       (setq eff-index (1+ eff-index)))
 
                                     (unless searching-match
