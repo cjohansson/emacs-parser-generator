@@ -975,8 +975,11 @@
                 ;; there is no next input symbol or g(a) is undefined, halt
                 ;; and declare error.
 
-                (let ((a look-ahead)
-                      (a-full look-ahead-full))
+                (let ((a (list (car look-ahead)))
+                      (a-full (list (car look-ahead-full))))
+                  (parser-generator--debug
+                   (message "shift a: %s" a)
+                   (message "shift a-full: %s" a-full))
                   (let ((goto-table
                          (gethash
                           table-index
@@ -999,7 +1002,9 @@
                              (message "shift goto-item: %s" goto-item)
                              (message "shift goto-item-symbol: %s" goto-item-symbol))
 
-                            (when (equal goto-item-symbol a)
+                            (when (equal
+                                   goto-item-symbol
+                                   a)
                               (setq next-index goto-item-next-index)
                               (setq searching-match nil))))
 
