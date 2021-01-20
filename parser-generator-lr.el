@@ -90,32 +90,57 @@
                                   ;; in that case save in action table a shift action here
                                   (let ((eff-index 0)
                                         (eff-item)
-                                        (eff-length (length eff))
-                                        (searching-match t))
-                                    (while (and
-                                            searching-match
-                                            (< eff-index eff-length))
+                                        (eff-length (length eff)))
+                                    (while (< eff-index eff-length)
                                       (setq
                                        eff-item
                                        (parser-generator--first-to-lookahead
                                         (nth eff-index eff)))
+                                      (parser-generator--debug
+                                       (message
+                                        "eff-item: %s"
+                                        eff-item
+                                        ))
                                       (if
                                           (parser-generator--valid-look-ahead-p
                                            eff-item)
                                           (let ((hash-key
                                                  (format "%s-%s-%s" goto-index state eff-item)))
-                                            (unless (gethash hash-key added-actions)
-                                              (puthash hash-key t added-actions)
-                                              (setq searching-match nil)))
+                                            (parser-generator--debug
+                                             (message
+                                              "Valid look-ahead: %s"
+                                              eff-item
+                                              ))
+                                            (if (gethash hash-key added-actions)
+                                                (parser-generator--debug
+                                                 (message
+                                                  "Duplicate action: %s"
+                                                  hash-key
+                                                  ))
+                                              (parser-generator--debug
+                                               (message
+                                                "New action: %s"
+                                                hash-key
+                                                ))
+                                              (puthash
+                                               hash-key
+                                               t
+                                               added-actions)
+                                              (push
+                                               (list
+                                                eff-item
+                                                'shift
+                                                )
+                                               action-table)
+                                              (setq
+                                               found-action
+                                               t)
+                                              ))
                                         (parser-generator--debug
                                          (message
                                           "Not valid look-ahead: %s"
                                           eff-item)))
-                                      (setq eff-index (1+ eff-index)))
-
-                                    (unless searching-match
-                                      (push (list eff-item 'shift) action-table)
-                                      (setq found-action t)))
+                                      (setq eff-index (1+ eff-index))))
                                 (parser-generator--debug
                                  (message "E-FREE-FIRST is empty for %s" Cv)))))))))
 
