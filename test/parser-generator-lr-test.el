@@ -630,7 +630,58 @@
 
     )
 
-  ;; TODO Test parse and translate here
+  (let ((buffer (generate-new-buffer "*a*")))
+    (switch-to-buffer buffer)
+    (kill-region (point-min) (point-max))
+    (insert "abac")
+
+    (parser-generator-set-grammar
+     '((Sp S R T) ("a" "b" "c") ((Sp S) (S (R S) (R)) (R ("a" "b" T)) (T ("a" T) ("c") (e))) Sp))
+    (parser-generator-set-look-ahead-number 2)
+    (parser-generator-process-grammar)
+    (parser-generator-lr-generate-parser-tables)
+
+    ;; Setup lex-analyzer
+    (setq
+     parser-generator-lex-analyzer--function
+     (lambda (index)
+       (with-current-buffer buffer
+         (when (<= (+ index 1) (point-max))
+           (let ((start index)
+                 (end (+ index 1)))
+             (let ((token (buffer-substring-no-properties start end)))
+               `(,token ,start . ,end)))))))
+    (setq
+     parser-generator-lex-analyzer--get-function
+     (lambda (token)
+       (with-current-buffer buffer
+         (let ((start (car (cdr token)))
+               (end (cdr (cdr token))))
+           (when (<= end (point-max))
+             (buffer-substring-no-properties start end))))))
+
+    (should
+     (equal
+      '(5 4 3 2)
+      (parser-generator-lr-parse)))
+
+    (message "Passed parse with k = 2 # 1")
+
+    (switch-to-buffer buffer)
+    (kill-region (point-min) (point-max))
+    (insert "aba")
+
+    (should
+     (equal
+      '(6 4 3 2)
+      (parser-generator-lr-parse)))
+
+    (message "Passed parse with k = 2 # 2")
+
+    (kill-buffer))
+
+  ;; TODO Test translate here
+
 
   (message "Passed tests for (parser-generator-lr--parse-k-2)"))
 
