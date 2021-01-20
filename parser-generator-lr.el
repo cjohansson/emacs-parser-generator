@@ -695,35 +695,35 @@
                        lr-item-suffix-rest-first
                        (list eof-list)))
 
-                    ;; When |FIRST| < k add EOF symbols
-                    (let ((new-first))
-                      (dolist
-                          (first-item
-                           lr-item-suffix-rest-first)
-                        (when (
-                               <
-                               (length first-item)
-                               parser-generator--look-ahead-number)
-                          (setq
-                           first-item
-                           (reverse
-                            first-item))
-                          (while (<
-                                  (length first-item)
-                                  parser-generator--look-ahead-number)
-                            (push
-                             parser-generator--eof-identifier
-                             first-item))
-                          (setq
-                           first-item
-                           (reverse first-item)))
-                        (push
-                         first-item
-                         new-first))
-                      (setq
-                       lr-item-suffix-rest-first
-                       (reverse
-                        new-first)))
+                    ;; ;; When |FIRST| < k add EOF symbols
+                    ;; (let ((new-first))
+                    ;;   (dolist
+                    ;;       (first-item
+                    ;;        lr-item-suffix-rest-first)
+                    ;;     (when (
+                    ;;            <
+                    ;;            (length first-item)
+                    ;;            parser-generator--look-ahead-number)
+                    ;;       (setq
+                    ;;        first-item
+                    ;;        (reverse
+                    ;;         first-item))
+                    ;;       (while (<
+                    ;;               (length first-item)
+                    ;;               parser-generator--look-ahead-number)
+                    ;;         (push
+                    ;;          parser-generator--eof-identifier
+                    ;;          first-item))
+                    ;;       (setq
+                    ;;        first-item
+                    ;;        (reverse first-item)))
+                    ;;     (push
+                    ;;      first-item
+                    ;;      new-first))
+                    ;;   (setq
+                    ;;    lr-item-suffix-rest-first
+                    ;;    (reverse
+                    ;;     new-first)))
 
                     (parser-generator--debug
                      (message
