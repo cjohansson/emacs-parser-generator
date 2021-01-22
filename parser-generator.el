@@ -1272,7 +1272,9 @@
         (while stack
           (let ((stack-topmost (pop stack)))
             (parser-generator--debug
-             (message "stack-topmost: %s" stack-topmost))
+             (message
+              "stack-topmost: %s"
+              stack-topmost))
             (let ((input-tape-index (car stack-topmost))
                   (first-length (car (cdr stack-topmost)))
                   (first (car (cdr (cdr stack-topmost))))
@@ -1283,7 +1285,10 @@
                       (< first-length k))
                 (let ((symbol (nth input-tape-index input-tape)))
                   (parser-generator--debug
-                   (message "symbol index: %s from %s is: %s" input-tape-index input-tape symbol))
+                   (message
+                    "symbol index: %s from %s is: %s"
+                    input-tape-index
+                    input-tape symbol))
                   (cond
 
                    ((parser-generator--valid-e-p symbol)
@@ -1307,13 +1312,26 @@
                     (parser-generator--debug
                      (message "non-terminal symbol: %s" symbol))
                     (let ((symbol-f-set))
+
+                      ;; Load the pre-generated F-set
+                      ;; if it's the first symbol and we are using
+                      ;; E-FREE-FIRST then use separate hash-table
                       (if (and
                            disallow-e-first
                            (= first-length 0))
-                          (setq symbol-f-set (nth 1 (gethash symbol parser-generator--f-free-sets)))
-                        (setq symbol-f-set (nth 1 (gethash symbol parser-generator--f-sets))))
+                          (setq
+                           symbol-f-set
+                           (nth 1
+                                (gethash
+                                 symbol
+                                 parser-generator--f-free-sets)))
+                        (setq
+                         symbol-f-set
+                         (nth 1
+                              (gethash symbol parser-generator--f-sets))))
                       (parser-generator--debug
                        (message "symbol-f-set: %s" symbol-f-set))
+
                       (if (and
                            (not symbol-f-set)
                            disallow-e-first
@@ -1321,7 +1339,8 @@
                           (progn
                             (parser-generator--debug
                              (message
-                              "stopped looking since non-terminal starts with e-identifier: %s" symbol-f-set))
+                              "stopped looking since non-terminal starts with e-identifier: %s"
+                              symbol-f-set))
                             (setq keep-looking nil))
                           
                         ;; Handle this scenario here were a non-terminal can result in different FIRST sets
@@ -1335,14 +1354,27 @@
                                       (alternative-tape-index (1+ input-tape-index)))
                                   (parser-generator--debug
                                    (message "alternative-first: %s" alternative-first))
-                                  (push `(,alternative-tape-index ,alternative-first-length ,alternative-first) stack)))
-                              (setq symbol-f-set-index (1+ symbol-f-set-index)))))
+                                  (push
+                                   `(
+                                     ,alternative-tape-index
+                                     ,alternative-first-length
+                                     ,alternative-first)
+                                   stack)))
+                              (setq
+                               symbol-f-set-index
+                               (1+ symbol-f-set-index)))))
 
                         (parser-generator--debug
                          (message "main-symbol-f-set: %s" (car symbol-f-set)))
-                        (setq first-length (+ first-length (length (car symbol-f-set))))
-                        (setq first (append first (car symbol-f-set))))))))
-                (setq input-tape-index (1+ input-tape-index)))
+                        (setq
+                         first-length
+                         (+ first-length (length (car symbol-f-set))))
+                        (setq
+                         first
+                         (append first (car symbol-f-set))))))))
+                (setq
+                 input-tape-index
+                 (1+ input-tape-index)))
               (when (> first-length 0)
 
                 ;; If length exceeds k, strip trailing symbols
@@ -1364,11 +1396,20 @@
                   ;; (message "first-after-fill: %s" first)
                   )
                 (parser-generator--debug
-                 (message "push to first-list: %s to %s" first first-list))
-                (push first first-list))))))
+                 (message
+                  "push to first-list: %s to %s"
+                  first
+                  first-list))
+                (push
+                 first
+                 first-list))))))
 
-      (setq first-list (parser-generator--distinct first-list))
-      (setq first-list (sort first-list 'parser-generator--sort-list))
+      (setq
+       first-list
+       (parser-generator--distinct first-list))
+      (setq
+       first-list
+       (sort first-list 'parser-generator--sort-list))
       first-list)))
 
 ;; Definition at p. 343
