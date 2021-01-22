@@ -1,8 +1,8 @@
 # LRk Parser
 
-LR(k) parser is the left-to-right parse calculating a right-derivation in reverse invented by Donald Knuth.
+LR(k) parser is a Left-to-right, Rightmost derivation in reverse with look-ahead number k invented by Donald Knuth.
 
-This library contains functions to parse and translate grammar as well as validate grammars.
+This library contains functions to parse, translate, validate grammars as well as exporting parser, parser/translators as stand-alone emacs-lisp code. *WIP*
 
 ## LR Item
 
