@@ -11,7 +11,7 @@
 
 
 (defvar parser-generator--debug
-  nil
+  t
   "Whether to print debug messages or not.")
 
 (defvar parser-generator--e-identifier
@@ -311,19 +311,42 @@
       nil)))
 
 (defun parser-generator--load-symbols ()
-  "Load terminals and non-terminals in grammar."
-  (let ((terminals (parser-generator--get-grammar-terminals)))
-    (setq parser-generator--table-terminal-p (make-hash-table :test 'equal))
+  "Load all symbols of grammar."
+
+  ;; Build hash-table of all terminals of grammar
+  (let ((terminals
+         (parser-generator--get-grammar-terminals)))
+    (setq
+     parser-generator--table-terminal-p
+     (make-hash-table :test 'equal))
     (dolist (terminal terminals)
-      (puthash terminal t parser-generator--table-terminal-p)))
+      (puthash
+       terminal
+       t
+       parser-generator--table-terminal-p)))
 
-  (let ((non-terminals (parser-generator--get-grammar-non-terminals)))
-    (setq parser-generator--table-non-terminal-p (make-hash-table :test 'equal))
+  ;; Build hash-table of all non-terminals
+  (let ((non-terminals
+         (parser-generator--get-grammar-non-terminals)))
+    (setq
+     parser-generator--table-non-terminal-p
+     (make-hash-table :test 'equal))
     (dolist (non-terminal non-terminals)
-      (puthash non-terminal t parser-generator--table-non-terminal-p)))
+      (puthash
+       non-terminal
+       t
+       parser-generator--table-non-terminal-p)))
 
-  (let ((productions (parser-generator--get-grammar-productions)))
-    (setq parser-generator--table-productions-rhs (make-hash-table :test 'equal))
+  (let ((productions
+         (parser-generator--get-grammar-productions)))
+
+    ;; TODO Could optimize this two loops into one
+
+    ;; Build hash-table of all right-hand-sides of
+    ;; a given left-hand-side of a production
+    (setq
+     parser-generator--table-productions-rhs
+     (make-hash-table :test 'equal))
     (dolist (p productions)
       (let ((lhs (car p))
             (rhs (cdr p)))
@@ -334,18 +357,27 @@
                 lhs
                 parser-generator--table-productions-rhs)))
           (dolist (rhs-element rhs)
-            (unless (listp rhs-element)
-              (setq rhs-element (list rhs-element)))
-            (let ((new-rhs))
-              (dolist (rhs-sub-element rhs-element)
-                (unless (functionp rhs-sub-element)
-                  (push rhs-sub-element new-rhs)))
-              (push (nreverse new-rhs) new-value)))
+            (unless (functionp rhs-element)
+              (unless (listp rhs-element)
+                (setq rhs-element (list rhs-element)))
+              (let ((new-rhs))
+                (dolist (rhs-sub-element rhs-element)
+                  (unless (functionp rhs-sub-element)
+                    (push
+                     rhs-sub-element
+                     new-rhs)))
+                (push
+                 (nreverse new-rhs)
+                 new-value))))
           (puthash
            lhs
            (nreverse new-value)
            parser-generator--table-productions-rhs))))
 
+    ;; Build hash-table of production -> production number
+    ;; and production-number -> production
+    ;; and a new set of productions that excludes translations
+    ;; and always has the left-hand-side as a list
     (setq
      parser-generator--table-productions-number
      (make-hash-table :test 'equal))
@@ -355,7 +387,8 @@
     (setq
      parser-generator--table-translations
      (make-hash-table :test 'equal))
-    (let ((production-index 0))
+    (let ((production-index 0)
+          (new-productions))
       (dolist (p productions)
         (let ((lhs (car p))
               (rhs (cdr p))
@@ -367,24 +400,45 @@
                 (rhs-length (length rhs))
                 (rhs-element))
             (while (< rhs-element-index rhs-length)
-              (setq rhs-element (nth rhs-element-index rhs))
+              (setq
+               rhs-element
+               (nth rhs-element-index rhs))
               (unless (listp rhs-element)
-                (setq rhs-element (list rhs-element)))
-
+                (setq
+                 rhs-element
+                 (list rhs-element)))
               (let ((sub-rhs-element-index 0)
                     (sub-rhs-element-length (length rhs-element))
                     (sub-rhs-element)
                     (new-rhs))
-                (while (< sub-rhs-element-index sub-rhs-element-length)
-                  (setq sub-rhs-element (nth sub-rhs-element-index rhs-element))
+                (while
+                    (<
+                     sub-rhs-element-index
+                     sub-rhs-element-length)
+                  (setq
+                   sub-rhs-element
+                   (nth sub-rhs-element-index rhs-element))
                   (if (functionp sub-rhs-element)
-                      (setq translation sub-rhs-element)
-                    (push sub-rhs-element new-rhs))
-                  (setq sub-rhs-element-index (1+ sub-rhs-element-index)))
-                (setq production (list lhs (nreverse new-rhs)))
+                      (setq
+                       translation
+                       sub-rhs-element)
+                    (push
+                     sub-rhs-element
+                     new-rhs))
+                  (setq
+                   sub-rhs-element-index
+                   (1+ sub-rhs-element-index)))
+                (setq
+                 production
+                 (list lhs (nreverse new-rhs)))
                 (parser-generator--debug
-                 (message "Production %s: %s" production-index production)))
-              (setq rhs-element-index (1+ rhs-element-index))
+                 (message
+                  "Production %s: %s"
+                  production-index
+                  production)))
+              (setq
+               rhs-element-index
+               (1+ rhs-element-index))
               (puthash
                production
                production-index
@@ -393,14 +447,28 @@
                production-index
                production
                parser-generator--table-productions-number-reverse)
+              (push
+               production
+               new-productions)
               (when translation
                 (parser-generator--debug
-                 (message "Translation %s: %s" production-index translation))
+                 (message
+                  "Translation %s: %s"
+                  production-index
+                  translation))
                 (puthash
                  production-index
                  translation
                  parser-generator--table-translations))
-              (setq production-index (1+ production-index))))))))
+              (setq production-index (1+ production-index))))))
+      (setq
+       new-productions
+       (nreverse new-productions))
+      (setcar
+       (nthcdr
+        2
+        parser-generator--grammar)
+       new-productions)))
 
   (let ((look-aheads
          (parser-generator--get-grammar-look-aheads)))
@@ -787,7 +855,8 @@
                       ;; If we have multiple equal LHS
                       ;; merge them
                       (when (gethash production-lhs f-set)
-                        (let ((existing-f-set (gethash production-lhs f-set)))
+                        (let ((existing-f-set
+                               (gethash production-lhs f-set)))
 
                           ;; If another set has not been fully expanded
                           ;; mark LHS as not fully expanded
@@ -966,7 +1035,7 @@
                         (when (and
                                sub-terminal-data
                                (not sub-terminal-expanded)
-                               (not (equal lhs rhs-element)))
+                               (not (equal lhs (list rhs-element))))
                           (parser-generator--debug
                            (message
                             "Expanded-all negative set 1 from %s" rhs-element))
@@ -1311,7 +1380,8 @@
   (let ((follow-set nil)
         (match-length (length β)))
     ;; Iterate all productions in grammar
-    (let ((productions (parser-generator--get-grammar-productions)))
+    (let ((productions
+           (parser-generator--get-grammar-productions)))
       (dolist (p productions)
         ;; Iterate all RHS of every production
         (let ((production-rhs (cdr p))
@@ -1346,7 +1416,8 @@
                       (setq match-index 0))))
                 (setq rhs-index (1+ rhs-index))))))))
     (when (> (length follow-set) 0)
-      (setq follow-set (parser-generator--distinct follow-set)))
+      (setq follow-set
+            (parser-generator--distinct follow-set)))
     follow-set))
 
 

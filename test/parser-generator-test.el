@@ -599,7 +599,8 @@
   "Test `parser-generator--get-grammar-rhs'."
   (message "Started tests  for (parser-generator--get-grammar-rhs)")
 
-  (parser-generator-set-grammar '((S A B) ("a" "b") ((S A) (A ("b" "a")) (B "b" (lambda(b) (message "Was here: %s" b)))) S))
+  (parser-generator-set-grammar
+   '((S A B) ("a" "b") ((S A) (A ("b" "a")) (B "b" (lambda(b) (message "Was here: %s" b)))) S))
   (parser-generator-process-grammar)
 
   (should (equal
@@ -608,6 +609,9 @@
   (should (equal
            '(("b" "a"))
            (parser-generator--get-grammar-rhs 'A)))
+  (should (equal
+           '(("b"))
+           (parser-generator--get-grammar-rhs 'B)))
 
   (parser-generator-set-grammar '((S A B) ("a" "b") ((S A) (S (B)) (B "a") (A "a") (A ("b" "a"))) S))
   (parser-generator-process-grammar)
