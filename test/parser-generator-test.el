@@ -602,7 +602,6 @@
   (parser-generator-set-grammar
    '((S A B) ("a" "b") ((S A) (A ("b" "a")) (B "b" (lambda(b) (message "Was here: %s" b)))) S))
   (parser-generator-process-grammar)
-
   (should (equal
            '((A))
            (parser-generator--get-grammar-rhs 'S)))
@@ -615,13 +614,22 @@
 
   (parser-generator-set-grammar '((S A B) ("a" "b") ((S A) (S (B)) (B "a") (A "a") (A ("b" "a"))) S))
   (parser-generator-process-grammar)
-
   (should (equal
            '((A) (B))
            (parser-generator--get-grammar-rhs 'S)))
   (should (equal
            '(("a") ("b" "a"))
            (parser-generator--get-grammar-rhs 'A)))
+
+  (parser-generator-set-grammar
+   '((Sp S R T) ("a" "b" "c") ((Sp S) (S (R S) (R)) (R ("a" "b" T (lambda(args) (list "begin" (nth 2 args) "end")))) (T ("a" T (lambda() "test")) ("c") (e))) Sp))
+  (parser-generator-process-grammar)
+  (should
+   (equal
+    '(("a" T) ("c") (e))
+    (parser-generator--get-grammar-rhs 'T)))
+
+  (parser-generator-process-grammar)
 
   (message "Passed tests  for (parser-generator--get-grammar-rhs)"))
 

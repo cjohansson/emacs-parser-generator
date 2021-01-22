@@ -686,7 +686,7 @@
     (insert "abac")
 
     (parser-generator-set-grammar
-     '((Sp S R T) ("a" "b" "c") ((Sp S) (S (R S) (R)) (R ("a" "b" T (lambda(args) (list "begin" (nth 2 args) "end")))) (T ("a" T (lambda() "test")) ("c") (e))) Sp))
+     '((Sp S R T) ("a" "b" "c") ((Sp S) (S (R S) (R)) (R ("a" "b" T (lambda(args) (list "begin" (nth 2 args) "end")))) (T ("a" T (lambda(args) "test")) ("c") (e))) Sp))
     (parser-generator-set-look-ahead-number 2)
     (parser-generator-process-grammar)
     (parser-generator-lr-generate-parser-tables)
@@ -901,7 +901,7 @@
 
 (defun parser-generator-lr-test ()
   "Run test."
-  ;; (setq debug-on-error t)
+  (setq debug-on-error t)
 
   (parser-generator-lr-test--items-for-prefix)
   (parser-generator-lr-test--items-valid-p)

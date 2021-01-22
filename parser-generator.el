@@ -11,7 +11,7 @@
 
 
 (defvar parser-generator--debug
-  t
+  nil
   "Whether to print debug messages or not.")
 
 (defvar parser-generator--e-identifier
@@ -827,6 +827,7 @@
                                (message "rhs-expanded-full flagged negative"))
                               (setq rhs-expanded-full nil)
                               (setq expanded-all nil))
+
                             (setq rhs-leading-terminals
                                   (nth 1 f-set-return))
 
@@ -847,16 +848,22 @@
                                      (listp rhs-leading-terminals)
                                      (> (length rhs-leading-terminals) 0))
                                 (dolist
-                                    (rhs-leading-terminals-element rhs-leading-terminals)
+                                    (rhs-leading-terminals-element
+                                     rhs-leading-terminals)
                                   (push
                                    rhs-leading-terminals-element
                                    f-p-set)))))))
 
                       ;; If we have multiple equal LHS
                       ;; merge them
-                      (when (gethash production-lhs f-set)
+                      (when (
+                             gethash
+                             production-lhs
+                             f-set)
                         (let ((existing-f-set
-                               (gethash production-lhs f-set)))
+                               (gethash
+                                production-lhs
+                                f-set)))
 
                           ;; If another set has not been fully expanded
                           ;; mark LHS as not fully expanded
@@ -870,29 +877,54 @@
                                  (nth 1 existing-f-set)))))
 
                       ;; Make set distinct
-                      (setq f-p-set (parser-generator--distinct f-p-set))
-                      (parser-generator--debug
-                       (message
-                        "F_%s(%s) = %s"
-                        i
-                        production-lhs
-                        (list rhs-expanded-full (reverse f-p-set))))
+                      (setq
+                       f-p-set
+                       (parser-generator--distinct f-p-set))
                       (puthash
                        production-lhs
-                       (list rhs-expanded-full (reverse f-p-set))
-                       f-set))))
+                       (list
+                        rhs-expanded-full
+                        (reverse f-p-set))
+                       f-set)
+                      (parser-generator--debug
+                       (message
+                        "F_%s%s = %s"
+                        i
+                        production-lhs
+                        (gethash
+                         production-lhs
+                         f-set))))))
 
-                (puthash i f-set f-sets)
-                (setq i (+ i 1))))
+                (puthash
+                 i
+                 f-set
+                 f-sets)
+                (setq
+                 i
+                 (+ i 1))))
 
             (if disallow-e-first
                 (progn
+                  (setq
+                   parser-generator--f-free-sets
+                   (gethash
+                    (1- i)
+                    f-sets))
                   (parser-generator--debug
-                   (message "Max-index: %s" (1- i)))
-                  (setq parser-generator--f-free-sets (gethash (1- i) f-sets)))
+                   (message
+                    "E-FREE-FIRST max-index: %s, contents: %s"
+                    (1- i)
+                    parser-generator--f-free-sets)))
+              (setq
+               parser-generator--f-sets
+               (gethash
+                (1- i)
+                f-sets))
               (parser-generator--debug
-               (message "Max-index: %s" (1- i)))
-              (setq parser-generator--f-sets (gethash (1- i) f-sets)))))))
+               (message
+                "FIRST max-index: %s, contents: %s"
+                (1- i)
+                parser-generator--f-sets)))))))
     (parser-generator--debug
      (message "Generated F-sets"))))
 
@@ -996,7 +1028,9 @@
               (let ((rhs-element (nth input-tape-index input-tape))
                     (rhs-type))
                 (parser-generator--debug
-                 (message "rhs-element: %s" rhs-element))
+                 (message
+                  "rhs-element: %s"
+                  rhs-element))
 
                 ;; Determine symbol type
                 (cond
@@ -1007,7 +1041,10 @@
                  ((parser-generator--valid-terminal-p rhs-element)
                   (setq rhs-type 'TERMINAL))
                  (t (error (format "Invalid symbol %s" rhs-element))))
-                (parser-generator--debug (message "rhs-type: %s" rhs-type))
+                (parser-generator--debug
+                 (message
+                  "rhs-type: %s"
+                  rhs-type))
 
                 (cond
 
@@ -1017,7 +1054,7 @@
                             (sub-terminal-expanded)
                             (sub-terminal-data
                              (gethash
-                              rhs-element
+                              (list rhs-element)
                               (gethash
                                (1- i)
                                f-sets))))
@@ -1027,8 +1064,12 @@
                           rhs-element
                           sub-terminal-data))
                         
-                        (setq sub-terminal-expanded (nth 0 sub-terminal-data))
-                        (setq sub-terminal-sets (nth 1 sub-terminal-data))
+                        (setq
+                         sub-terminal-expanded
+                         (nth 0 sub-terminal-data))
+                        (setq
+                         sub-terminal-sets
+                         (nth 1 sub-terminal-data))
 
                         ;; When sub-set has not been fully expanded mark this set
                         ;; as not fully expanded either
@@ -1194,8 +1235,13 @@
                                     (setq all-leading-terminals-p nil)))))
 
                           (parser-generator--debug
-                           (message "Found no subsets for %s %s" rhs-element (1- i)))
-                          (setq all-leading-terminals-p nil)))
+                           (message
+                            "Found no subsets for %s %s"
+                            rhs-element
+                            (1- i)))
+                          (setq
+                           all-leading-terminals-p
+                           nil)))
 
                     (parser-generator--debug
                      (message
@@ -1311,6 +1357,11 @@
                    ((parser-generator--valid-non-terminal-p symbol)
                     (parser-generator--debug
                      (message "non-terminal symbol: %s" symbol))
+                    (setq
+                     symbol
+                     (list symbol))
+                    (parser-generator--debug
+                     (message "non-terminal symbol production: %s" symbol))
                     (let ((symbol-f-set))
 
                       ;; Load the pre-generated F-set
@@ -1319,18 +1370,37 @@
                       (if (and
                            disallow-e-first
                            (= first-length 0))
-                          (setq
-                           symbol-f-set
-                           (nth 1
-                                (gethash
-                                 symbol
-                                 parser-generator--f-free-sets)))
+                          (progn
+                            (parser-generator--debug
+                             (message
+                              "gethash: %s"
+                              (gethash
+                               symbol
+                               parser-generator--f-free-sets)))
+                            (setq
+                             symbol-f-set
+                             (nth
+                              1
+                              (gethash
+                               symbol
+                               parser-generator--f-free-sets))))
+                        (parser-generator--debug
+                         (message
+                          "gethash: %s"
+                          (gethash
+                           symbol
+                           parser-generator--f-sets)))
                         (setq
                          symbol-f-set
-                         (nth 1
-                              (gethash symbol parser-generator--f-sets))))
+                         (nth
+                          1
+                          (gethash
+                           symbol
+                           parser-generator--f-sets))))
                       (parser-generator--debug
-                       (message "symbol-f-set: %s" symbol-f-set))
+                       (message
+                        "symbol-f-set: %s"
+                        symbol-f-set))
 
                       (if (and
                            (not symbol-f-set)
@@ -1344,16 +1414,31 @@
                             (setq keep-looking nil))
                           
                         ;; Handle this scenario here were a non-terminal can result in different FIRST sets
-                        (when (> (length symbol-f-set) 1)
-                          (let ((symbol-f-set-index 1)
-                                (symbol-f-set-length (length symbol-f-set)))
-                            (while (< symbol-f-set-index symbol-f-set-length)
-                              (let ((symbol-f-set-element (nth symbol-f-set-index symbol-f-set)))
-                                (let ((alternative-first-length (+ first-length (length symbol-f-set-element)))
-                                      (alternative-first (append first symbol-f-set-element))
-                                      (alternative-tape-index (1+ input-tape-index)))
+                        (when (>
+                               (length symbol-f-set)
+                               1)
+                          (let ((symbol-f-set-index
+                                 1)
+                                (symbol-f-set-length
+                                 (length symbol-f-set)))
+                            (while
+                                (<
+                                 symbol-f-set-index
+                                 symbol-f-set-length)
+                              (let ((symbol-f-set-element
+                                     (nth
+                                      symbol-f-set-index
+                                      symbol-f-set)))
+                                (let ((alternative-first-length
+                                       (+ first-length (length symbol-f-set-element)))
+                                      (alternative-first
+                                       (append first symbol-f-set-element))
+                                      (alternative-tape-index
+                                       (1+ input-tape-index)))
                                   (parser-generator--debug
-                                   (message "alternative-first: %s" alternative-first))
+                                   (message
+                                    "alternative-first: %s"
+                                    alternative-first))
                                   (push
                                    `(
                                      ,alternative-tape-index
@@ -1365,7 +1450,9 @@
                                (1+ symbol-f-set-index)))))
 
                         (parser-generator--debug
-                         (message "main-symbol-f-set: %s" (car symbol-f-set)))
+                         (message
+                          "main-symbol-f-set: %s"
+                          (car symbol-f-set)))
                         (setq
                          first-length
                          (+ first-length (length (car symbol-f-set))))
