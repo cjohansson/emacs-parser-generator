@@ -340,40 +340,12 @@
   (let ((productions
          (parser-generator--get-grammar-productions)))
 
-    ;; TODO Could optimize these two loops into one
-
     ;; Build hash-table of all right-hand-sides of
     ;; a given left-hand-side of a production
     ;; exclude all functions that are used for translations
     (setq
      parser-generator--table-productions-rhs
      (make-hash-table :test 'equal))
-    (dolist (p productions)
-      (let ((lhs (car p))
-            (rhs (cdr p)))
-        (unless (listp lhs)
-          (setq lhs (list lhs)))
-        (let ((new-value
-               (gethash
-                lhs
-                parser-generator--table-productions-rhs)))
-          (dolist (rhs-element rhs)
-            (unless (functionp rhs-element)
-              (unless (listp rhs-element)
-                (setq rhs-element (list rhs-element)))
-              (let ((new-rhs))
-                (dolist (rhs-sub-element rhs-element)
-                  (unless (functionp rhs-sub-element)
-                    (push
-                     rhs-sub-element
-                     new-rhs)))
-                (push
-                 (nreverse new-rhs)
-                 new-value))))
-          (puthash
-           lhs
-           (nreverse new-value)
-           parser-generator--table-productions-rhs))))
 
     ;; Build hash-table of production -> production number
     ;; and production-number -> production
@@ -390,6 +362,7 @@
     (setq
      parser-generator--table-translations
      (make-hash-table :test 'equal))
+
     (let ((production-index 0)
           (new-productions))
       (dolist (p productions)
@@ -399,7 +372,11 @@
               (translation))
           (unless (listp lhs)
             (setq lhs (list lhs)))
-          (let ((rhs-element-index 0)
+          (let ((new-value
+                 (gethash
+                  lhs
+                  parser-generator--table-productions-rhs))
+                (rhs-element-index 0)
                 (rhs-length (length rhs))
                 (rhs-element))
             (while
@@ -417,51 +394,58 @@
                  rhs-element
                  rhs
                  lhs))
-                (unless (listp rhs-element)
-                  (setq
-                   rhs-element
-                   (list rhs-element)))
-                (let ((sub-rhs-element-index 0)
-                      (sub-rhs-element-length (length rhs-element))
-                      (sub-rhs-element)
-                      (new-rhs))
-                  (while
-                      (<
-                       sub-rhs-element-index
-                       sub-rhs-element-length)
-                    (setq
-                     sub-rhs-element
-                     (nth
-                      sub-rhs-element-index
-                      rhs-element))
-                    (if (functionp sub-rhs-element)
-                        (setq
-                         translation
-                         sub-rhs-element)
-                      (unless
-                          (or
-                           (parser-generator--valid-terminal-p sub-rhs-element)
-                           (parser-generator--valid-non-terminal-p sub-rhs-element)
-                           (parser-generator--valid-e-p sub-rhs-element))
-                        (error
-                         "Element %s in RHS %s of production %s is not a valid terminal, non-terminal or e-identifier!"
-                         sub-rhs-element
-                         rhs-element
-                         lhs))
-                      (push
-                       sub-rhs-element
-                       new-rhs))
-                    (setq
+              (unless (listp rhs-element)
+                (setq rhs-element (list rhs-element)))
+              (let ((sub-rhs-element-index 0)
+                    (sub-rhs-element-length (length rhs-element))
+                    (sub-rhs-element)
+                    (new-rhs))
+                (while
+                    (<
                      sub-rhs-element-index
-                     (1+ sub-rhs-element-index)))
+                     sub-rhs-element-length)
                   (setq
-                   production
-                   (list lhs (nreverse new-rhs)))
-                  (parser-generator--debug
-                   (message
-                    "Production %s: %s"
-                    production-index
-                    production)))
+                   sub-rhs-element
+                   (nth
+                    sub-rhs-element-index
+                    rhs-element))
+                  (if (functionp sub-rhs-element)
+                      (setq
+                       translation
+                       sub-rhs-element)
+                    (unless
+                        (or
+                         (parser-generator--valid-terminal-p sub-rhs-element)
+                         (parser-generator--valid-non-terminal-p sub-rhs-element)
+                         (parser-generator--valid-e-p sub-rhs-element))
+                      (error
+                       "Element %s in RHS %s of production %s is not a valid terminal, non-terminal or e-identifier!"
+                       sub-rhs-element
+                       rhs-element
+                       lhs))
+                    (push
+                     sub-rhs-element
+                     new-rhs))
+                  (setq
+                   sub-rhs-element-index
+                   (1+ sub-rhs-element-index)))
+                (setq
+                 production
+                 (list
+                  lhs
+                  (reverse new-rhs)))
+                (parser-generator--debug
+                 (message
+                  "Production %s: %s"
+                  production-index
+                  production))
+                (push
+                 (reverse new-rhs)
+                 new-value)
+                (puthash
+                 lhs
+                 (reverse new-value)
+                 parser-generator--table-productions-rhs))
               (setq
                rhs-element-index
                (1+ rhs-element-index))
@@ -486,7 +470,9 @@
                  production-index
                  translation
                  parser-generator--table-translations))
-              (setq production-index (1+ production-index))))))
+              (setq
+               production-index
+               (1+ production-index))))))
       (setq
        new-productions
        (nreverse new-productions))

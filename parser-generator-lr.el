@@ -35,7 +35,6 @@
 
 
 ;; Algorithm 5.11, p. 393
-;; TODO Test this function with above 1 as look-ahead number
 (defun parser-generator-lr--generate-action-tables (table-lr-items)
   "Generate action-tables for lr-grammar based on TABLE-LR-ITEMS."
   (let ((action-tables)
@@ -816,7 +815,6 @@
     (nth 1 result)))
 
 ;; Algorithm 5.7, p. 375
-;; TODO Test cases with above 1 as look-ahead number
 (defun parser-generator-lr--parse
     (&optional input-tape-index
                pushdown-list

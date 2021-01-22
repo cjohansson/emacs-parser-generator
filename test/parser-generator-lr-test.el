@@ -77,8 +77,6 @@
     (parser-generator--hash-to-list
      parser-generator-lr--action-tables)))
 
-  ;; TODO Test with look-ahead number > 1 here
-
   (message "Ended tests for (parser-generator-lr--generate-action-tables)"))
 
 (defun parser-generator-lr-test--generate-goto-tables ()
@@ -173,8 +171,6 @@
     (message "Passed LR-items with tokens as strings"))
 
   (message "Passed LR-items for example 5.30 but with tokens as strings")
-
-  ;; TODO Test with look-ahead number > 1 he
 
   (message "Passed tests for (parser-r--generate-goto-tables)"))
 

@@ -571,6 +571,10 @@
     (parser-generator--valid-sentential-form-p
      '(B "b"))))
 
+  (parser-generator-set-grammar '((S A B) ("a" "b") ((S A) (A (b "a")) (B ("b" (lambda(b) (message "Was here: %s" b))))) S))
+  (should-error
+   (parser-generator-process-grammar))
+
   (message "Passed tests for (parser-generator--valid-sentential-form-p)"))
 
 (defun parser-generator-test--valid-production-p ()
