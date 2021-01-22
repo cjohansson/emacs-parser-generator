@@ -454,53 +454,65 @@
   "Test function `parser-generator--valid-grammar-p'."
   (message "Starting tests for (parser-generator--valid-grammar-p)")
 
-  (should (equal
-           t
-           (parser-generator--valid-grammar-p '((A B C) ("a" "b" "c") ((A "a")) A))))
+  (should
+   (equal
+    t
+    (parser-generator--valid-grammar-p '((A B C) ("a" "b" "c") ((A "a")) A))))
 
-  (should (equal
-           nil
-           (parser-generator--valid-grammar-p '((A B C) ("a" "b" "c") ((A "a")) (A)))))
+  (should
+   (equal
+    nil
+    (parser-generator--valid-grammar-p '((A B C) ("a" "b" "c") ((A "a")) (A)))))
 
-  (should (equal
-           nil
-           (parser-generator--valid-grammar-p '((A B C) (("a" "b") "c") ((A "a")) A))))
+  (should
+   (equal
+    nil
+    (parser-generator--valid-grammar-p '((A B C) (("a" "b") "c") ((A "a")) A))))
 
-  (should (equal
-           nil
-           (parser-generator--valid-grammar-p '(((A B) C) ("a" "b" "c") ((A "a")) A))))
+  (should
+   (equal
+    nil
+    (parser-generator--valid-grammar-p '(((A B) C) ("a" "b" "c") ((A "a")) A))))
 
-  (should (equal
-           nil
-           (parser-generator--valid-grammar-p '(((A B) C) ("a" "b" "c") ((A)) A))))
+  (should
+   (equal
+    nil
+    (parser-generator--valid-grammar-p '(((A B) C) ("a" "b" "c") ((A)) A))))
 
-  (should (equal
-           nil
-           (parser-generator--valid-grammar-p "A")))
+  (should
+   (equal
+    nil
+    (parser-generator--valid-grammar-p "A")))
 
-  (should (equal
-           nil
-           (parser-generator--valid-grammar-p '(A B C))))
+  (should
+   (equal
+    nil
+    (parser-generator--valid-grammar-p '(A B C))))
 
-  (should (equal
-           nil
-           (parser-generator--valid-grammar-p '((A B)))))
+  (should
+   (equal
+    nil
+    (parser-generator--valid-grammar-p '((A B)))))
 
-  (should (equal
-           nil
-           (parser-generator--valid-grammar-p '((A B C) (a (b c) "c") (A ("a" "b") (a b)) (B b) (C "c")))))
+  (should
+   (equal
+    nil
+    (parser-generator--valid-grammar-p '((A B C) (a (b c) "c") (A ("a" "b") (a b)) (B b) (C "c")))))
 
-  (should (equal
-           t
-           (parser-generator--valid-grammar-p '((A B C) ("a" "b" "c") ((A "a" (lambda(a) (message "Was here: %s" a)))) A))))
+  (should
+   (equal
+    t
+    (parser-generator--valid-grammar-p '((A B C) ("a" "b" "c") ((A "a" (lambda(a) (message "Was here: %s" a)))) A))))
 
-  (should (equal
-           nil
-           (parser-generator--valid-grammar-p '((A B C) ("a" "b" "c") ((A "a" (lambda(a) (message "Was here: %s" a)) "b")) A))))
+  (should
+   (equal
+    nil
+    (parser-generator--valid-grammar-p '((A B C) ("a" "b" "c") ((A "a" (lambda(a) (message "Was here: %s" a)) "b")) A))))
 
-  (should (equal
-           t
-           (parser-generator--valid-grammar-p '((A B C) ("a" "b" "c") ((A ("a" (lambda(a) (message "Was here: %s" a))))) A))))
+  (should
+   (equal
+    t
+    (parser-generator--valid-grammar-p '((A B C) ("a" "b" "c") ((A ("a" (lambda(a) (message "Was here: %s" a))))) A))))
 
   (should
    (equal
@@ -544,7 +556,7 @@
   "Test `parser-generator--valid-sentential-form-p'."
   (message "Starting tests  for (parser-generator--valid-sentential-form-p)")
 
-  (parser-generator-set-grammar '((S A B) ("a" "b") ((S A) (A ("b" "a")) (B "b" (lambda(b) (message "Was here: %s" b)))) S))
+  (parser-generator-set-grammar '((S A B) ("a" "b") ((S A) (A ("b" "a")) (B ("b" (lambda(b) (message "Was here: %s" b))))) S))
   (parser-generator-process-grammar)
 
   (should
@@ -600,7 +612,7 @@
   (message "Started tests  for (parser-generator--get-grammar-rhs)")
 
   (parser-generator-set-grammar
-   '((S A B) ("a" "b") ((S A) (A ("b" "a")) (B "b" (lambda(b) (message "Was here: %s" b)))) S))
+   '((S A B) ("a" "b") ((S A) (A ("b" "a")) (B ("b" (lambda(b) (message "Was here: %s" b))))) S))
   (parser-generator-process-grammar)
   (should (equal
            '((A))
@@ -611,6 +623,7 @@
   (should (equal
            '(("b"))
            (parser-generator--get-grammar-rhs 'B)))
+  (message "Passed first")
 
   (parser-generator-set-grammar '((S A B) ("a" "b") ((S A) (S (B)) (B "a") (A "a") (A ("b" "a"))) S))
   (parser-generator-process-grammar)
