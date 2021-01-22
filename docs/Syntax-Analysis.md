@@ -13,7 +13,7 @@ We use push down transducer (PDT) based algorithms.
 
 * LL(k) *WIP*
 * Deterministic Shift-Reduce Parsing *WIP*
-* [LR(k)](Deterministic-Right-Parser-for-LRk-Grammars.md)
+* [LR(k)](Syntax-Analysis/LRk.md)
 * Formal Shift-Reduce Parsing Algorithms *WIP*
 * Simple Precedence Grammars *WIP*
 * Extended Precedence Grammars *WIP*
@@ -42,9 +42,13 @@ Grammar consists of `N`, `T`, `P` and `S`, where `N` is non-terminals, `T` is te
 (parser-generator-set-grammar '((S A B C) (a b c) ((S (A B)) (A (B a) e) (B (C b) C) (C c e)) S))
 ```
 
-### e
+### e-identifier
 
 The symbol defined in variable `parser-generator--e-identifier`, with default-value: 'e`, symbolizes the e symbol. The symbol is allowed in some grammars and not in others.
+
+### End-of-file identifier
+
+The symbol defined in variable `parser-generator--eof-identifier`, with default-value: '$`, symbolizes the end-of-file symbol.
 
 ### Non-terminals
 
@@ -86,8 +90,9 @@ Is a simple integer above zero. You set it like this: `(parser-generator-set-loo
 
 A optional translation is defined as a lambda function as the last element of a production right-hand-side, example:
 
-```
-(parser-generator-set-grammar '((Sp S) ("a" "b") ((Sp S) (S (S "a" S "b" (lambda(args) (nreverse args)))) (S e)) Sp))
+```emacs-lisp
+(parser-generator-set-grammar 
+  '((Sp S) ("a" "b") ((Sp S) (S (S "a" S "b" (lambda(args) (nreverse args)))) (S e)) Sp))
 ```
 
 You cannot have a SDT + SA on the same production right-hand side, just one or the other.
@@ -96,8 +101,9 @@ You cannot have a SDT + SA on the same production right-hand side, just one or t
 
 A optional semantic action is defined as a lambda function as the last element of a production right-hand-side, example:
 
-```
-(parser-generator-set-grammar '((Sp S) ("a" "b") ((Sp S) (S (S "a" S "b" (lambda(args) (nreverse args)))) (S e)) Sp))
+```emacs-lisp
+(parser-generator-set-grammar 
+  '((Sp S) ("a" "b") ((Sp S) (S (S "a" S "b" (lambda(args) (nreverse args)))) (S e)) Sp))
 ```
 
 You cannot have a SDT + SA on the same production right-hand side, just one or the other.
@@ -111,7 +117,8 @@ Calculate the first look-ahead number of terminals of the sentential-form `S`, e
 ``` emacs-lisp
 (require 'ert)
 
-(parser-generator-set-grammar '((S A B C) (a b c) ((S (A B)) (A (B a) e) (B (C b) C) (C c e)) S))
+(parser-generator-set-grammar 
+  '((S A B C) (a b c) ((S (A B)) (A (B a) e) (B (C b) C) (C c e)) S))
 (parser-generator-set-look-ahead-number 2)
 (parser-generator-process-grammar)
 
@@ -123,12 +130,13 @@ Calculate the first look-ahead number of terminals of the sentential-form `S`, e
 
 ### E-FREE-FIRST(S)
 
-Calculate the e-free-first look-ahead number of terminals of sentential-form `S`, example:
+Calculate the e-free-first look-ahead number of terminals of sentential-form `S`, if you have multiple symbols the e-free-first will only affect the first symbol, the rest will be treated via first-function (above). Example:
 
 ``` emacs-lisp
 (require 'ert)
 
-(parser-generator-set-grammar '((S A B C) (a b c) ((S (A B)) (A (B a) e) (B (C b) C) (C c e)) S))
+(parser-generator-set-grammar 
+  '((S A B C) (a b c) ((S (A B)) (A (B a) e) (B (C b) C) (C c e)) S))
 (parser-generator-set-look-ahead-number 2)
 (parser-generator-process-grammar)
 
@@ -145,7 +153,8 @@ Calculate the look-ahead number of terminals possibly following S.
 ``` emacs-lisp
 (require 'ert)
 
-(parser-generator-set-grammar '((S A B) (a c d f) ((S (A a)) (A B) (B (c f) d)) S))
+(parser-generator-set-grammar 
+  '((S A B) (a c d f) ((S (A a)) (A B) (B (c f) d)) S))
 (parser-generator-set-look-ahead-number 2)
 (parser-generator-process-grammar)
 

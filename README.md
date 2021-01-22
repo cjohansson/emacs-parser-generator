@@ -11,7 +11,7 @@ This is just started, so most stuff are *WIP*.
 
 We use a regular-language based lexical analyzer that can be implemented by a finite-state-machine (FSM). Read more [here](docs/Lexical-Analysis.md).
 
-## Syntax Analysis
+## Syntax Analysis / Parser
 
 We use deterministic push down transducer (PDT) based algorithms. Read more [here](docs/Syntax-Analysis.md).
 

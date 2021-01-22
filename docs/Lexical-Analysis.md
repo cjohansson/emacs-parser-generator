@@ -22,6 +22,7 @@ Returns the look-ahead number of next terminals in stream.
          (setq index (1+ index)))
        (nreverse tokens))))
 (parser-generator-lex-analyzer--reset)
+
 (setq parser-generator--look-ahead-number 1)
   (should
    (equal
@@ -38,7 +39,7 @@ Returns the look-ahead number of next terminals in stream.
 
 ### Pop token
 
-Returns the next token in stream and moves index one forward.
+Returns the next token in stream and moves the index one point forward.
 
 ``` emacs-lisp
 (require 'ert)
@@ -56,6 +57,7 @@ Returns the next token in stream and moves index one forward.
          (setq index (1+ index)))
        (nreverse tokens))))
 (parser-generator-lex-analyzer--reset)
+
 (should
    (equal
     '(a)

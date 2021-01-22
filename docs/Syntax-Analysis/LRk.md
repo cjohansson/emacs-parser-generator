@@ -1,4 +1,6 @@
-# Deterministic Right Parser for LR(k) Grammars
+# LRk Parser
+
+LR(k) parser is the left-to-right parse calculating a right-derivation in reverse invented by Donald Knuth.
 
 This library contains functions to parse and translate grammar as well as validate grammars.
 
@@ -89,4 +91,8 @@ Perform a right-parse of input-stream.
   (parser-generator-lr-parse)))
 ```
 
-[Back to start](../../../)
+## Translate
+
+Coming soon!
+
+[Back to syntax analysis](../../Syntax-Analysis.md)
