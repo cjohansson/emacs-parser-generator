@@ -4,7 +4,7 @@ Set lexical analysis function by setting variable `parser-generator-lex-analyzer
 
 ## Token
 
-A token is defined as a list with 3 elements, first is a string or symbol, second is the start index of token in stream and third is the end index of token in stream, second and third element have a dot between them, this structure is to be compatible with Emacs Semantic system. Example token
+A token is defined as a list with 3 elements, first is a string or symbol, second is the start index of token in stream and third is the end index of token in stream, second and third element have a dot between them, this structure is to be compatible with Emacs Semantic system. Example token:
 
 ``` emacs-lisp
 '("a" 1 . 2)
@@ -33,7 +33,6 @@ Returns the look-ahead number of next terminals in stream, if end of stream is r
        (nreverse tokens))))
 (parser-generator-lex-analyzer--reset)
 
-(setq parser-generator--look-ahead-number 1)
 (setq parser-generator--look-ahead-number 1)
 (should
  (equal
@@ -75,7 +74,6 @@ Returns the next token in stream and moves the lexical analyzer index one point 
 (parser-generator-lex-analyzer--reset)
 
 (setq parser-generator--look-ahead-number 1)
-
 (should
  (equal
   '(("a" 1 . 2))
