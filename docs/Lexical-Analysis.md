@@ -7,12 +7,12 @@ Set lexical analysis function by setting variable `parser-generator-lex-analyzer
 A token is defined as a list with 3 elements, first is a string or symbol, second is the start index of token in stream and third is the end index of token in stream, second and third element have a dot between them, this structure is to be compatible with Emacs Semantic system. Example token
 
 ``` emacs-lisp
-'(("a" 1 . 2))
+'("a" 1 . 2)
 ```
 
 ## Peek next look-ahead
 
-Returns the look-ahead number of next terminals in stream, if end of stream is reached a EOF-identifier is returned.
+Returns the look-ahead number of next terminals in stream, if end of stream is reached a EOF-identifier is returned. Result is expected to be a list with each token in it.
 
 ``` emacs-lisp
 (require 'ert)
@@ -55,7 +55,7 @@ Returns the look-ahead number of next terminals in stream, if end of stream is r
 
 ## Pop token
 
-Returns the next token in stream and moves the lexical analyzer index one point forward. If end of stream is reached return nil.
+Returns the next token in stream and moves the lexical analyzer index one point forward. If end of stream is reached return nil. The result is expected to be a list containing each token popped.
 
 ``` emacs-lisp
 (require 'ert)
