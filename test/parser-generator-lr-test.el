@@ -718,6 +718,288 @@
 
   (message "Passed tests for (parser-generator-lr--parse-k-2)"))
 
+(defun parser-generator-lr-test-parse-k-0 ()
+  "Test `parser-generator-lr-parse' with k = 0."
+  (message "Started tests for (parser-generator-lr-parse) k = 0")
+
+  ;; https://en.wikipedia.org/wiki/LR_parser#Constructing_LR(0)_parsing_tables
+  ;; (0) S → E eof
+  ;; (1) E → E * B
+  ;; (2) E → E + B
+  ;; (3) E → B
+  ;; (4) B → 0
+  ;; (5) B → 1
+
+  (parser-generator-set-grammar
+   '((S E B) ("*" "+" "0" "1") ((S E) (E (E "*" B) (E "+" B) (B)) (B ("0") ("1"))) S))
+  (parser-generator-set-look-ahead-number 0)
+  (parser-generator-process-grammar)
+
+  (let ((lr-items (parser-generator-lr--generate-goto-tables)))
+    (parser-generator--debug
+     (message
+      "LR-items: %s"
+      (parser-generator--hash-to-list
+       lr-items)))
+
+    ;; Item set 0
+    ;; S → • E eof
+    ;; + E → • E * B
+    ;; + E → • E + B
+    ;; + E → • B
+    ;; + B → • 0
+    ;; + B → • 1
+
+    ;; Item set 1
+    ;; B → 0 •
+
+    ;; Item set 2
+    ;; B → 1 •
+
+    ;; Item set 3
+    ;; S → E • eof
+    ;; E → E • * B
+    ;; E → E • + B
+
+    ;; Item set 4
+    ;; E → B •
+
+    ;; Item set 5
+    ;; E → E * • B
+    ;; + B → • 0
+    ;; + B → • 1
+
+    ;; Item set 6
+    ;; E → E + • B
+    ;; + B → • 0
+    ;; + B → • 1
+
+    ;; Item set 7
+    ;; E → E * B •
+
+    ;; Item set 8
+    ;; E → E + B •
+
+    (should
+     (equal
+      '((0 (
+            ((S) nil (E $))
+            ((E) nil (E "*" B))
+            ((E) nil (E "+" B))
+            ((E) nil (B))
+            ((B) nil ("0"))
+            ((B) nil ("1"))
+            ))
+        (1 (((B) ("0") nil)))
+        (2 (((B) ("1") nil)))
+        (3 (
+            ((S) (E) ($))
+            ((E) (E) ("*" B))
+            ((E) (E) ("+" B))
+            ))
+        (4 (((E) (B) nil)))
+        (5 (
+            ((E) (E "*") (B))
+            ((B) nil ("1"))
+            ))
+        (6 (
+            ((E) (E "+") (B))
+            ((B) nil ("0"))
+            ((B) nil ("1"))
+            ))
+        (7 (((E) (E "*" B) nil)))
+        (8 (((E) (E "+" B) nil))))
+      (parser-generator--hash-to-list
+       lr-items)))
+    (message "Passed LR-items k = 0")
+
+    ;; TODO Replace all below
+
+    (parser-generator--debug
+     (message "GOTO-tables k = 2: %s"
+              (parser-generator--hash-to-list
+               parser-generator-lr--goto-tables
+               t)))
+
+    ;; state |  a  |  b  |  c  |  $  |  S  |  R  |  T
+    ;; -------+-----+-----+-----+-----+-----+-----+-----
+    ;;    1   |  2  |     |     |     |  10 |  8  |
+    ;; -------+-----+-----+-----+-----+-----+-----+-----
+    ;;    2   |     |  3  |     |     |     |     |
+    ;; -------+-----+-----+-----+-----+-----+-----+-----
+    ;;    3   |  4  |     |  5  |     |     |     |  7
+    ;; -------+-----+-----+-----+-----+-----+-----+-----
+    ;;    4   |  4  |     |  5  |     |     |     |  6
+    ;; -------+-----+-----+-----+-----+-----+-----+-----
+    ;;    5   |     |     |     |     |     |     |
+    ;; -------+-----+-----+-----+-----+-----+-----+-----
+    ;;    6   |     |     |     |     |     |     |
+    ;; -------+-----+-----+-----+-----+-----+-----+-----
+    ;;    7   |     |     |     |     |     |     |
+    ;; -------+-----+-----+-----+-----+-----+-----+-----
+    ;;    8   |  2  |     |     |     |  9  |  8  |
+    ;; -------+-----+-----+-----+-----+-----+-----+-----
+    ;;    9   |     |     |     |     |     |     |
+    ;; -------+-----+-----+-----+-----+-----+-----+-----
+    ;;    10  |     |     |     |     |     |     |
+
+    (should
+     (equal
+      '((0 ((R 1) (S 2) (a 3)))
+        (1 ((R 1) (S 9) (a 3)))
+        (2 nil)
+        (3 ((b 4)))
+        (4 ((T 5) (a 6) (c 7)))
+        (5 nil)
+        (6 ((T 8) (a 6) (c 7)))
+        (7 nil)
+        (8 nil)
+        (9 nil))
+      (parser-generator--hash-to-list
+       parser-generator-lr--goto-tables)))
+    (message "Passed GOTO-tables k = 2")
+
+    ;; state | aa | ab | ac | a$ | ba | bb | bc | b$ | ca | cb | cc | c$ | $$ 
+    ;; ------+----+----+----+----+----+----+----+----+----+----+----+----+----
+    ;;   1   |    | S  |    |    |    |    |    |    |    |    |    |    |
+    ;; ------+----+----+----+----+----+----+----+----+----+----+----+----+----
+    ;;   2   |    |    |    |    | S  |    | S  | S  |    |    |    |    |
+    ;; ------+----+----+----+----+----+----+----+----+----+----+----+----+----
+    ;;   3   | S  | R  | S  | S  |    |    |    |    | S  |    |    | S  | R
+    ;; ------+----+----+----+----+----+----+----+----+----+----+----+----+----
+    ;;   4   | S  | R  | S  | S  |    |    |    |    | S  |    |    | S  | R
+    ;; ------+----+----+----+----+----+----+----+----+----+----+----+----+----
+    ;;   5   |    | R  |    |    |    |    |    |    |    |    |    |    | R
+    ;; ------+----+----+----+----+----+----+----+----+----+----+----+----+----
+    ;;   6   |    | R  |    |    |    |    |    |    |    |    |    |    | R
+    ;; ------+----+----+----+----+----+----+----+----+----+----+----+----+----
+    ;;   7   |    | R  |    |    |    |    |    |    |    |    |    |    | R
+    ;; ------+----+----+----+----+----+----+----+----+----+----+----+----+----
+    ;;   8   |    | S  |    |    |    |    |    |    |    |    |    |    | R
+    ;; ------+----+----+----+----+----+----+----+----+----+----+----+----+----
+    ;;   9   |    |    |    |    |    |    |    |    |    |    |    |    | R
+    ;; ------+----+----+----+----+----+----+----+----+----+----+----+----+----
+    ;;   10  |    |    |    |    |    |    |    |    |    |    |    |    | A
+
+    (parser-generator-lr--generate-action-tables
+     lr-items)
+    (parser-generator--debug
+     (message
+      "Action-tables k = 2: %s"
+      (parser-generator--hash-to-list parser-generator-lr--action-tables)))
+
+    (should
+     (equal
+      '(
+        (0 (((a b) shift)))
+        (1 ((($ $) reduce 2) ((a b) shift)))
+        (2 ((($ $) accept)))
+        (3 (((b $) shift) ((b c) shift) ((b a) shift)))
+        (4 ((($ $) reduce 6) ((a b) reduce 6) ((a $) shift) ((a c) shift) ((a a) shift) ((c a) shift) ((c $) shift)))
+        (5 ((($ $) reduce 3) ((a b) reduce 3)))
+        (6 ((($ $) reduce 6) ((a b) reduce 6) ((a $) shift) ((a c) shift) ((a a) shift) ((c a) shift) ((c $) shift)))
+        (7 ((($ $) reduce 5) ((a b) reduce 5)))
+        (8 ((($ $) reduce 4) ((a b) reduce 4)))
+        (9 ((($ $) reduce 1)))
+        )
+      (parser-generator--hash-to-list
+       parser-generator-lr--action-tables)))
+    (message "Passed ACTION-tables k = 2")
+
+    )
+
+  (let ((buffer (generate-new-buffer "*a*")))
+    (switch-to-buffer buffer)
+    (kill-region (point-min) (point-max))
+    (insert "abac")
+
+    (parser-generator-set-grammar
+     '((Sp S R T) ("a" "b" "c") ((Sp S) (S (R S) (R)) (R ("a" "b" T)) (T ("a" T) ("c") (e))) Sp))
+    (parser-generator-set-look-ahead-number 2)
+    (parser-generator-process-grammar)
+    (parser-generator-lr-generate-parser-tables)
+
+    ;; Setup lex-analyzer
+    (setq
+     parser-generator-lex-analyzer--function
+     (lambda (index)
+       (with-current-buffer buffer
+         (when (<= (+ index 1) (point-max))
+           (let ((start index)
+                 (end (+ index 1)))
+             (let ((token (buffer-substring-no-properties start end)))
+               `(,token ,start . ,end)))))))
+    (setq
+     parser-generator-lex-analyzer--get-function
+     (lambda (token)
+       (with-current-buffer buffer
+         (let ((start (car (cdr token)))
+               (end (cdr (cdr token))))
+           (when (<= end (point-max))
+             (buffer-substring-no-properties start end))))))
+
+    (should
+     (equal
+      '(5 4 3 2)
+      (parser-generator-lr-parse)))
+
+    (message "Passed parse with k = 0 # 1")
+
+    (switch-to-buffer buffer)
+    (kill-region (point-min) (point-max))
+    (insert "aba")
+
+    (should
+     (equal
+      '(6 4 3 2)
+      (parser-generator-lr-parse)))
+
+    (message "Passed parse with k = 0 # 2")
+
+    (kill-buffer))
+
+  (let ((buffer (generate-new-buffer "*a*")))
+    (switch-to-buffer buffer)
+    (kill-region (point-min) (point-max))
+    (insert "abac")
+
+    (parser-generator-set-grammar
+     '((Sp S R T) ("a" "b" "c") ((Sp S) (S (R S) (R)) (R ("a" "b" T (lambda(args) (list "begin" (nth 2 args) "end")))) (T ("a" T (lambda(args) "test")) ("c") (e))) Sp))
+    (parser-generator-set-look-ahead-number 2)
+    (parser-generator-process-grammar)
+    (parser-generator-lr-generate-parser-tables)
+
+    ;; Setup lex-analyzer
+    (setq
+     parser-generator-lex-analyzer--function
+     (lambda (index)
+       (with-current-buffer buffer
+         (when (<= (+ index 1) (point-max))
+           (let ((start index)
+                 (end (+ index 1)))
+             (let ((token (buffer-substring-no-properties start end)))
+               `(,token ,start . ,end)))))))
+    (setq
+     parser-generator-lex-analyzer--get-function
+     (lambda (token)
+       (with-current-buffer buffer
+         (let ((start (car (cdr token)))
+               (end (cdr (cdr token))))
+           (when (<= end (point-max))
+             (buffer-substring-no-properties start end))))))
+
+    (should
+     (equal
+      '("begin" "test" "end")
+      (parser-generator-lr-translate)))
+
+    (message "Passed translation k=0")
+     
+    (kill-buffer))
+
+
+  (message "Passed tests for (parser-generator-lr--parse-k-0)"))
+
 (defun parser-generator-lr-test-translate ()
   "Test `parser-generator-lr-translate'."
   (message "Started tests for (parser-generator-lr-translate)")
@@ -905,7 +1187,8 @@
   (parser-generator-lr-test--generate-action-tables)
   (parser-generator-lr-test-parse)
   (parser-generator-lr-test-translate)
-  (parser-generator-lr-test-parse-k-2))
+  (parser-generator-lr-test-parse-k-2)
+  (parser-generator-lr-test-parse-k-0))
 
 
 (provide 'parser-generator-lr-test)
