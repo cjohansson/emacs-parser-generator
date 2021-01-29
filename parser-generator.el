@@ -11,7 +11,7 @@
 
 
 (defvar parser-generator--debug
-  t
+  nil
   "Whether to print debug messages or not.")
 
 (defvar parser-generator--e-identifier

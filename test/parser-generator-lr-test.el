@@ -792,12 +792,12 @@
             ))
         (1 (((B) ("0") nil)))
         (2 (((B) ("1") nil)))
-        (3 (
-            ((E) (E) ("+" B))
+        (3 (((E) (B) nil)))
+        (4 (
             ((E) (E) ("*" B))
+            ((E) (E) ("+" B))
             ((S) (E) ($))
             ))
-        (4 (((E) (B) nil)))
         (5 (
             ((B) nil ("0"))
             ((B) nil ("1"))
@@ -808,8 +808,9 @@
             ((B) nil ("1"))
             ((E) (E "+") (B))
             ))
-        (7 (((E) (E "*" B) nil)))
-        (8 (((E) (E "+" B) nil))))
+        (7 (((E) (E "+" B) nil)))
+        (8 (((E) (E "*" B) nil)))
+        )
       (parser-generator--hash-to-list
        lr-items)))
     (message "Passed LR-items k = 0")
@@ -817,7 +818,7 @@
     ;; TODO Replace all below
 
     (parser-generator--debug
-     (message "GOTO-tables k = 2: %s"
+     (message "GOTO-tables k = 0: %s"
               (parser-generator--hash-to-list
                parser-generator-lr--goto-tables
                t)))
@@ -842,7 +843,6 @@
     ;; -------+-----+-----+-----+-----+-----+-----+-----
     ;;    9   |     |     |     |     |     |     |
     ;; -------+-----+-----+-----+-----+-----+-----+-----
-    ;;    10  |     |     |     |     |     |     |
 
     (should
      (equal
@@ -854,8 +854,7 @@
         (5 nil)
         (6 ((T 8) (a 6) (c 7)))
         (7 nil)
-        (8 nil)
-        (9 nil))
+        (8 nil))
       (parser-generator--hash-to-list
        parser-generator-lr--goto-tables)))
     (message "Passed GOTO-tables k = 2")
