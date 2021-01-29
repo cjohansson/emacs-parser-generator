@@ -113,6 +113,7 @@
 
   (message "Passed failing lex analysis 2")
 
+  (parser-generator-lex-analyzer--reset)
   (setq parser-generator--look-ahead-number 1)
 
   (should
