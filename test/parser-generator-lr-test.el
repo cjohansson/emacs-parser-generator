@@ -731,7 +731,7 @@
   ;; (5) B → 1
 
   (parser-generator-set-grammar
-   '((S E B) ("*" "+" "0" "1") ((S E) (E (E "*" B) (E "+" B) (B)) (B ("0") ("1"))) S))
+   '((S E B) ("*" "+" "0" "1") ((S (E $)) (E (E "*" B) (E "+" B) (B)) (B ("0") ("1"))) S))
   (parser-generator-set-look-ahead-number 0)
   (parser-generator-process-grammar)
 
@@ -783,29 +783,30 @@
     (should
      (equal
       '((0 (
-            ((S) nil (E $))
-            ((E) nil (E "*" B))
-            ((E) nil (E "+" B))
-            ((E) nil (B))
             ((B) nil ("0"))
             ((B) nil ("1"))
+            ((E) nil (B))
+            ((E) nil (E "+" B))
+            ((E) nil (E "*" B))
+            ((S) nil (E $))
             ))
         (1 (((B) ("0") nil)))
         (2 (((B) ("1") nil)))
         (3 (
-            ((S) (E) ($))
-            ((E) (E) ("*" B))
             ((E) (E) ("+" B))
+            ((E) (E) ("*" B))
+            ((S) (E) ($))
             ))
         (4 (((E) (B) nil)))
         (5 (
-            ((E) (E "*") (B))
-            ((B) nil ("1"))
-            ))
-        (6 (
-            ((E) (E "+") (B))
             ((B) nil ("0"))
             ((B) nil ("1"))
+            ((E) (E "*") (B))
+            ))
+        (6 (
+            ((B) nil ("0"))
+            ((B) nil ("1"))
+            ((E) (E "+") (B))
             ))
         (7 (((E) (E "*" B) nil)))
         (8 (((E) (E "+" B) nil))))
@@ -1179,7 +1180,7 @@
 
 (defun parser-generator-lr-test ()
   "Run test."
-  (setq debug-on-error t)
+  ;; (setq debug-on-error t)
 
   (parser-generator-lr-test--items-for-prefix)
   (parser-generator-lr-test--items-valid-p)

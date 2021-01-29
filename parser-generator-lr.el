@@ -221,6 +221,8 @@
 ;; Algorithm 5.9, p. 389
 (defun parser-generator-lr--generate-goto-tables ()
   "Calculate set of valid LR(k) items for grammar and a GOTO-table."
+  (parser-generator--debug
+   (message "(parser-generator-lr--generate-goto-tables)"))
   (let ((lr-item-set-new-index 0)
         (goto-table)
         (unmarked-lr-item-sets)
@@ -240,7 +242,12 @@
        unmarked-lr-item-sets)
       (setq
        lr-item-set-new-index
-       (1+ lr-item-set-new-index)))
+       (1+ lr-item-set-new-index))
+        ;; Mark the initial set
+        (puthash
+         e-set
+         lr-item-set-new-index
+         marked-lr-item-sets))
 
     ;; (2) If a set of items a in S is unmarked
     ;; (3) Repeat step (2) until all sets of items in S are marked.
@@ -255,14 +262,8 @@
         (setq lr-items (car (cdr popped-item)))
         (parser-generator--debug
          (message "lr-item-set-index: %s" lr-item-set-index)
-         (message "lr-items: %s" lr-items)
+         (message "marked lr-items: %s" lr-items)
          (message "popped-item: %s" popped-item))
-
-        ;; (2) Mark a
-        (puthash
-         lr-items
-         lr-item-set-index
-         marked-lr-item-sets)
 
         (puthash
          lr-item-set-index
@@ -338,13 +339,18 @@
                   (if goto
                       (progn
                         (parser-generator--debug
-                         (message "Set already exists in: %s" goto))
+                         (message
+                          "Set already exists in: %s set: %s"
+                          goto
+                          prefix-lr-items))
                         (push
                          `(,symbol ,goto)
                          goto-table-table))
 
                     (parser-generator--debug
-                     (message "Set is new"))
+                     (message
+                      "Set is new: %s"
+                      prefix-lr-items))
 
                     ;; Note that GOTO(a, X) will always be empty if all items in a
                     ;; have the dot at the right end of the production
@@ -356,6 +362,11 @@
                     (push
                      `(,lr-item-set-new-index ,prefix-lr-items)
                      unmarked-lr-item-sets)
+                    ;; (2) Mark a
+                    (puthash
+                     prefix-lr-items
+                     lr-item-set-new-index
+                     marked-lr-item-sets)
                     (setq
                      lr-item-set-new-index
                      (1+ lr-item-set-new-index))))))))
@@ -366,7 +377,9 @@
           goto-table-table
           'parser-generator--sort-list))
         (push
-         `(,lr-item-set-index ,goto-table-table)
+         `(
+           ,lr-item-set-index
+           ,goto-table-table)
          goto-table)))
 
     (setq
@@ -507,13 +520,23 @@
         ;; (a)
         (dolist (rhs start-productions)
           ;; Add [S -> . α] to V(e)
-          (push
-           `(,(list start) nil ,rhs ,eof-list)
-           lr-items-e)
-          (puthash
-           `(,e-list ,(list start) nil ,rhs ,eof-list)
-           t
-           lr-item-exists))
+          (if (= parser-generator--look-ahead-number 0)
+              ;; A dot-look-ahead is only used for k >= 1
+              (progn
+                (push
+                 `(,(list start) nil ,rhs)
+                 lr-items-e)
+                (puthash
+                 `(,e-list ,(list start) nil ,rhs)
+                 t
+                 lr-item-exists))
+            (push
+             `(,(list start) nil ,rhs ,eof-list)
+             lr-items-e)
+            (puthash
+             `(,e-list ,(list start) nil ,rhs ,eof-list)
+             t
+             lr-item-exists)))
 
         ;; (b) Iterate every item in v-set(e), if [A -> . Bα, u] is an item and B -> β is in P
         ;; then for each x in FIRST(αu) add [B -> . β, x] to v-set(e), provided it is not already there
@@ -573,20 +596,38 @@
                                    (message "f: %s" f))
 
                                   ;; Add [B -> . β, x] to V(e), provided it is not already there
-                                  (unless
-                                      (gethash
-                                       `(,e-list ,(list rhs-first) nil ,sub-rhs ,f)
-                                       lr-item-exists)
-                                    (puthash
-                                     `(,e-list ,(list rhs-first) nil ,sub-rhs ,f)
-                                     t
-                                     lr-item-exists)
-                                    (push
-                                     `(,(list rhs-first) nil ,sub-rhs ,f)
-                                     lr-items-e)
+                                  (if (= parser-generator--look-ahead-number 0)
 
-                                    ;; (c) Repeat (b) until no more items can be added to V(e)
-                                    (setq found-new t)))))))
+                                      ;; A dot look-ahead is only used for k >= 1
+                                      (unless
+                                          (gethash
+                                           `(,e-list ,(list rhs-first) nil ,sub-rhs)
+                                           lr-item-exists)
+                                        (puthash
+                                         `(,e-list ,(list rhs-first) nil ,sub-rhs)
+                                         t
+                                         lr-item-exists)
+                                        (push
+                                         `(,(list rhs-first) nil ,sub-rhs)
+                                         lr-items-e)
+
+                                        ;; (c) Repeat (b) until no more items can be added to V(e)
+                                        (setq found-new t))
+
+                                    (unless
+                                        (gethash
+                                         `(,e-list ,(list rhs-first) nil ,sub-rhs ,f)
+                                         lr-item-exists)
+                                      (puthash
+                                       `(,e-list ,(list rhs-first) nil ,sub-rhs ,f)
+                                       t
+                                       lr-item-exists)
+                                      (push
+                                       `(,(list rhs-first) nil ,sub-rhs ,f)
+                                       lr-items-e)
+
+                                      ;; (c) Repeat (b) until no more items can be added to V(e)
+                                      (setq found-new t))))))))
                       (parser-generator--debug
                        (message "is not non-terminal")))))))))
 
@@ -680,19 +721,28 @@
                  (append
                   lr-item-prefix
                   (list x))))
-            (parser-generator--debug
-             (message
-              "lr-new-item-1: %s"
-              `(,lr-item-lhs
-                ,combined-prefix
-                ,lr-item-suffix-rest
-                ,lr-item-look-ahead)))
-            (push
-             `(,lr-item-lhs
-               ,combined-prefix
-               ,lr-item-suffix-rest
-               ,lr-item-look-ahead)
-             lr-new-item)))))
+            (let ((lr-new-item-1))
+              (if (= parser-generator--look-ahead-number 0)
+                  ;; Only k >= 1 needs dot look-ahead
+                  (progn
+                    (setq
+                     lr-new-item-1
+                     `(,lr-item-lhs
+                       ,combined-prefix
+                       ,lr-item-suffix-rest)))
+                (setq
+                 lr-new-item-1
+                 `(,lr-item-lhs
+                   ,combined-prefix
+                   ,lr-item-suffix-rest
+                   ,lr-item-look-ahead)))
+              (parser-generator--debug
+               (message
+                "lr-new-item-1: %s"
+                lr-new-item-1))
+              (push
+               lr-new-item-1
+               lr-new-item))))))
 
     ;; (c) Repeat step (2b) until no more new items can be added to V(X1,...,Xi)
     (when lr-new-item
@@ -759,6 +809,12 @@
                           ;; provided it is not already there
                           (let ((lr-item-to-add
                                  `(,(list lr-item-suffix-first) nil ,sub-rhs ,f)))
+                            ;; Only k >= 1 needs dot a look-ahead
+                            (when
+                                (= parser-generator--look-ahead-number 0)
+                              (setq
+                               lr-item-to-add
+                               `(,(list lr-item-suffix-first) nil ,sub-rhs)))
                             (unless
                                 (gethash
                                  lr-item-to-add
@@ -777,7 +833,9 @@
                                lr-new-item)))))))))))))
       (setq
        lr-new-item
-       (sort lr-new-item 'parser-generator--sort-list)))
+       (sort
+        lr-new-item
+        'parser-generator--sort-list)))
 
     lr-new-item))
 

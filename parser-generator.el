@@ -11,7 +11,7 @@
 
 
 (defvar parser-generator--debug
-  nil
+  t
   "Whether to print debug messages or not.")
 
 (defvar parser-generator--e-identifier
@@ -417,9 +417,10 @@
                         (or
                          (parser-generator--valid-terminal-p sub-rhs-element)
                          (parser-generator--valid-non-terminal-p sub-rhs-element)
-                         (parser-generator--valid-e-p sub-rhs-element))
+                         (parser-generator--valid-e-p sub-rhs-element)
+                         (parser-generator--valid-eof-p sub-rhs-element))
                       (error
-                       "Element %s in RHS %s of production %s is not a valid terminal, non-terminal or e-identifier!"
+                       "Element %s in RHS %s of production %s is not a valid terminal, non-terminal, e-identifier or EOF-identifier!"
                        sub-rhs-element
                        rhs-element
                        lhs))
@@ -508,6 +509,18 @@
 (defun parser-generator-process-grammar ()
   "Process grammar."
   (parser-generator--clear-cache)
+  (unless parser-generator--look-ahead-number
+    (error "No look-ahead-number defined!"))
+  (unless
+      (parser-generator--valid-look-ahead-number-p
+       parser-generator--look-ahead-number)
+    (error "Invalid look-ahead number k!"))
+  (unless parser-generator--grammar
+    (error "No grammar defined!"))
+  (unless
+      (parser-generator--valid-grammar-p
+       parser-generator--grammar)
+    (error "Invalid grammar G!"))
   (parser-generator--load-symbols))
 
 (defun parser-generator--sort-list (a b)
