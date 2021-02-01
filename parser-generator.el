@@ -110,7 +110,9 @@
   (let ((terminals
          (parser-generator--get-grammar-terminals))
         (look-aheads)
-        (k parser-generator--look-ahead-number)
+        (k (max
+            1
+            parser-generator--look-ahead-number))
         (stack '((0 0 nil)))
         (marked-paths (make-hash-table :test 'equal))
         (added-look-aheads (make-hash-table :test 'equal)))
@@ -801,7 +803,10 @@
            parser-generator--f-free-sets)
     (parser-generator--debug (message "(parser-generator--generate-f-sets)"))
     (let ((productions (parser-generator--get-grammar-productions))
-          (k parser-generator--look-ahead-number))
+          (k
+           (max
+            1
+            parser-generator--look-ahead-number)))
       (let ((disallow-set '(nil t)))
         (parser-generator--debug (message "disallow-set: %s" disallow-set))
         (dolist (disallow-e-first disallow-set)
@@ -1339,7 +1344,10 @@
     (setq β (list β)))
   (unless (parser-generator--valid-sentential-form-p β)
     (error "Invalid sentential form β! %s" β))
-  (let ((k parser-generator--look-ahead-number))
+  (let ((k
+         (max
+          1
+          parser-generator--look-ahead-number)))
 
     ;; Generate F-sets only once per grammar
     (parser-generator--generate-f-sets)

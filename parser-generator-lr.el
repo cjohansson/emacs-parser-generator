@@ -193,7 +193,7 @@
                     (unless found-action
                       (error
                        "Failed to find any action in set %d: %s"
-                       lr-item-index
+                       goto-index
                        lr-items))
                     (setq continue-loop nil)))
                   (setq lr-item-index (1+ lr-item-index)))))))
