@@ -815,98 +815,78 @@
        lr-items)))
     (message "Passed LR-items k = 0")
 
-    ;; TODO Replace all below
-
     (parser-generator--debug
-     (message "GOTO-tables k = 0: %s"
-              (parser-generator--hash-to-list
-               parser-generator-lr--goto-tables
-               t)))
+     (message
+      "GOTO-tables k = 0: %s"
+      (parser-generator--hash-to-list
+       parser-generator-lr--goto-tables
+       t)))
 
-    ;; state |  a  |  b  |  c  |  $  |  S  |  R  |  T
-    ;; -------+-----+-----+-----+-----+-----+-----+-----
-    ;;    1   |  2  |     |     |     |  10 |  8  |
-    ;; -------+-----+-----+-----+-----+-----+-----+-----
-    ;;    2   |     |  3  |     |     |     |     |
-    ;; -------+-----+-----+-----+-----+-----+-----+-----
-    ;;    3   |  4  |     |  5  |     |     |     |  7
-    ;; -------+-----+-----+-----+-----+-----+-----+-----
-    ;;    4   |  4  |     |  5  |     |     |     |  6
-    ;; -------+-----+-----+-----+-----+-----+-----+-----
-    ;;    5   |     |     |     |     |     |     |
-    ;; -------+-----+-----+-----+-----+-----+-----+-----
-    ;;    6   |     |     |     |     |     |     |
-    ;; -------+-----+-----+-----+-----+-----+-----+-----
-    ;;    7   |     |     |     |     |     |     |
-    ;; -------+-----+-----+-----+-----+-----+-----+-----
-    ;;    8   |  2  |     |     |     |  9  |  8  |
-    ;; -------+-----+-----+-----+-----+-----+-----+-----
-    ;;    9   |     |     |     |     |     |     |
-    ;; -------+-----+-----+-----+-----+-----+-----+-----
+    ;; 	* 	+ 	0 	1 	E 	B
+    ;; 0 	  	  	1 	2 	3 	4
+    ;; 1 	  	  	  	  	  	 
+    ;; 2 	  	  	  	  	  	 
+    ;; 3 	5 	6 	  	  	  	 
+    ;; 4 	  	  	  	  	  	 
+    ;; 5 	  	  	1 	2 	  	7
+    ;; 6 	  	  	1 	2 	  	8
+    ;; 7 	  	  	  	  	  	 
+    ;; 8 	  	  	  	  	  	  
 
     (should
      (equal
-      '((0 ((R 1) (S 2) (a 3)))
-        (1 ((R 1) (S 9) (a 3)))
+      '((0 (("0" 1) ("1" 2) (B 3) (E 4))) ;; 3-4
+        (1 nil)
         (2 nil)
-        (3 ((b 4)))
-        (4 ((T 5) (a 6) (c 7)))
-        (5 nil)
-        (6 ((T 8) (a 6) (c 7)))
+        (3 nil)
+        (4 (("*" 5) ("+" 6))) ;; 5-6
+        (5 (("0" 1) ("1" 2) (B 8))) ;;7-8
+        (6 (("0" 1) ("1" 2) (B 7))) ;; 7-8
         (7 nil)
         (8 nil))
       (parser-generator--hash-to-list
        parser-generator-lr--goto-tables)))
     (message "Passed GOTO-tables k = 2")
 
-    ;; state | aa | ab | ac | a$ | ba | bb | bc | b$ | ca | cb | cc | c$ | $$ 
-    ;; ------+----+----+----+----+----+----+----+----+----+----+----+----+----
-    ;;   1   |    | S  |    |    |    |    |    |    |    |    |    |    |
-    ;; ------+----+----+----+----+----+----+----+----+----+----+----+----+----
-    ;;   2   |    |    |    |    | S  |    | S  | S  |    |    |    |    |
-    ;; ------+----+----+----+----+----+----+----+----+----+----+----+----+----
-    ;;   3   | S  | R  | S  | S  |    |    |    |    | S  |    |    | S  | R
-    ;; ------+----+----+----+----+----+----+----+----+----+----+----+----+----
-    ;;   4   | S  | R  | S  | S  |    |    |    |    | S  |    |    | S  | R
-    ;; ------+----+----+----+----+----+----+----+----+----+----+----+----+----
-    ;;   5   |    | R  |    |    |    |    |    |    |    |    |    |    | R
-    ;; ------+----+----+----+----+----+----+----+----+----+----+----+----+----
-    ;;   6   |    | R  |    |    |    |    |    |    |    |    |    |    | R
-    ;; ------+----+----+----+----+----+----+----+----+----+----+----+----+----
-    ;;   7   |    | R  |    |    |    |    |    |    |    |    |    |    | R
-    ;; ------+----+----+----+----+----+----+----+----+----+----+----+----+----
-    ;;   8   |    | S  |    |    |    |    |    |    |    |    |    |    | R
-    ;; ------+----+----+----+----+----+----+----+----+----+----+----+----+----
-    ;;   9   |    |    |    |    |    |    |    |    |    |    |    |    | R
-    ;; ------+----+----+----+----+----+----+----+----+----+----+----+----+----
-    ;;   10  |    |    |    |    |    |    |    |    |    |    |    |    | A
+    ;;   	*  	+  	0  	1  	$
+    ;; 0 	   	   	s1 	s2 	
+    ;; 1 	r4 	r4 	r4 	r4 	r4
+    ;; 2 	r5 	r5 	r5 	r5 	r5
+    ;; 3 	s5 	s6 	   	   	acc
+    ;; 4 	r3 	r3 	r3 	r3 	r3
+    ;; 5 	   	   	s1 	s2 	
+    ;; 6 	   	   	s1 	s2 	
+    ;; 7 	r1 	r1 	r1 	r1 	r1
+    ;; 8 	r2 	r2 	r2 	r2 	r2
 
     (parser-generator-lr--generate-action-tables
      lr-items)
     (parser-generator--debug
      (message
-      "Action-tables k = 2: %s"
-      (parser-generator--hash-to-list parser-generator-lr--action-tables)))
+      "Action-tables k = 0: %s"
+      (parser-generator--hash-to-list
+       parser-generator-lr--action-tables)))
 
     (should
      (equal
       '(
-        (0 (((a b) shift)))
-        (1 ((($ $) reduce 2) ((a b) shift)))
-        (2 ((($ $) accept)))
-        (3 (((b $) shift) ((b c) shift) ((b a) shift)))
-        (4 ((($ $) reduce 6) ((a b) reduce 6) ((a $) shift) ((a c) shift) ((a a) shift) ((c a) shift) ((c $) shift)))
-        (5 ((($ $) reduce 3) ((a b) reduce 3)))
-        (6 ((($ $) reduce 6) ((a b) reduce 6) ((a $) shift) ((a c) shift) ((a a) shift) ((c a) shift) ((c $) shift)))
-        (7 ((($ $) reduce 5) ((a b) reduce 5)))
-        (8 ((($ $) reduce 4) ((a b) reduce 4)))
-        (9 ((($ $) reduce 1)))
+        (0 ((("0") shift) (("1") shift)))
+        (1 ((("*") reduce 3) (("+" reduce 3)) (("0") reduce 3) (("1") reduce 3) (($) reduce 3)))
+        (2 ((("*") reduce 6) (("+") reduce 6) (("0") reduce 6) (("1") reduce 6) (($) reduce 6)))
+        (3 ((("*") reduce 4) (("+") reduce 4) (("0") reduce 4) (("1") reduce 4) (($) accept)))
+        (4 ((("*") shift) (("+") shift) (($) accept)))
+        (5 ((("0") shift) (("1") shift)))
+        (6 ((("0") shift) (("1") shift)))
+        (7 ((("*") reduce 2) (("+") reduce 2) (("0") reduce 2) (("1") reduce 2) (($) reduce 1)))
+        (8 ((("*") reduce 1) (("+") reduce 1) (("0") reduce 1) (("1") reduce 1) (($) reduce 2)))
         )
       (parser-generator--hash-to-list
        parser-generator-lr--action-tables)))
-    (message "Passed ACTION-tables k = 2")
+    (message "Passed ACTION-tables k = 0")
 
     )
+
+  ;; TODO Replace below with parse of k=0
 
   (let ((buffer (generate-new-buffer "*a*")))
     (switch-to-buffer buffer)
