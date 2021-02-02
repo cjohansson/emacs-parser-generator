@@ -881,20 +881,16 @@
         (8 ((nil reduce 1))))
       (parser-generator--hash-to-list
        parser-generator-lr--action-tables)))
-    (message "Passed ACTION-tables k = 0")
-
-    )
-
-  ;; TODO Replace below with parse of k=0
+    (message "Passed ACTION-tables k = 0"))
 
   (let ((buffer (generate-new-buffer "*a*")))
     (switch-to-buffer buffer)
     (kill-region (point-min) (point-max))
-    (insert "abac")
+    (insert "1+1")
 
     (parser-generator-set-grammar
-     '((Sp S R T) ("a" "b" "c") ((Sp S) (S (R S) (R)) (R ("a" "b" T)) (T ("a" T) ("c") (e))) Sp))
-    (parser-generator-set-look-ahead-number 2)
+     '((S E B) ("*" "+" "0" "1") ((S (E $)) (E (E "*" B) (E "+" B) (B)) (B ("0") ("1"))) S))
+    (parser-generator-set-look-ahead-number 0)
     (parser-generator-process-grammar)
     (parser-generator-lr-generate-parser-tables)
 
@@ -915,22 +911,23 @@
          (let ((start (car (cdr token)))
                (end (cdr (cdr token))))
            (when (<= end (point-max))
-             (buffer-substring-no-properties start end))))))
+             (buffer-substring-no-properties
+              start
+              end))))))
 
     (should
      (equal
-      '(5 4 3 2)
+      '(5 3 5 2)
       (parser-generator-lr-parse)))
-
     (message "Passed parse with k = 0 # 1")
 
     (switch-to-buffer buffer)
     (kill-region (point-min) (point-max))
-    (insert "aba")
+    (insert "1+1*1")
 
     (should
      (equal
-      '(6 4 3 2)
+      '(5 3 5 2 5 1)
       (parser-generator-lr-parse)))
 
     (message "Passed parse with k = 0 # 2")
@@ -940,11 +937,11 @@
   (let ((buffer (generate-new-buffer "*a*")))
     (switch-to-buffer buffer)
     (kill-region (point-min) (point-max))
-    (insert "abac")
+    (insert "1+1")
 
     (parser-generator-set-grammar
-     '((Sp S R T) ("a" "b" "c") ((Sp S) (S (R S) (R)) (R ("a" "b" T (lambda(args) (list "begin" (nth 2 args) "end")))) (T ("a" T (lambda(args) "test")) ("c") (e))) Sp))
-    (parser-generator-set-look-ahead-number 2)
+     '((S E B) ("*" "+" "0" "1") ((S (E $)) (E (E "*" B (lambda(args) (list (nth 0 args) " x " (nth 2 args)))) (E "+" B (lambda(args) (list (nth 0 args) " . " (nth 2 args)))) (B)) (B ("0") ("1"))) S))
+    (parser-generator-set-look-ahead-number 0)
     (parser-generator-process-grammar)
     (parser-generator-lr-generate-parser-tables)
 
@@ -969,7 +966,7 @@
 
     (should
      (equal
-      '("begin" "test" "end")
+      '("1" " . " "1")
       (parser-generator-lr-translate)))
 
     (message "Passed translation k=0")

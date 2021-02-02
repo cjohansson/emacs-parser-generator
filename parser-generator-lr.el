@@ -997,6 +997,12 @@
                table-index
                pushdown-list))
 
+            (parser-generator--debug
+             (message
+              "Action-table %d: %s"
+              table-index
+              action-table))
+
             (let ((action-match nil)
                   (action-table-length (length action-table))
                   (action-index 0)
@@ -1011,12 +1017,28 @@
                     (push
                      action-look-ahead
                      possible-look-aheads)
-                    (when (equal
-                           action-look-ahead
-                           look-ahead)
-                      (setq action-match
-                            (cdr action)))))
-                (setq action-index (1+ action-index)))
+                    (when
+                        (equal
+                         action-look-ahead
+                         look-ahead)
+                      (setq
+                       action-match
+                       (cdr action)))
+                    (when
+                        (and
+                         (=
+                          parser-generator--look-ahead-number
+                          0)
+                         (not
+                          action-look-ahead))
+                      ;; LR(0) reduce actions occupy entire row
+                      ;; and is applied regardless of look-ahead
+                      (setq
+                       action-match
+                       (cdr action))))
+                  (setq
+                   action-index
+                   (1+ action-index))))
 
               (unless action-match
                 ;; (c) If f(u) = error, we halt parsing (and, in practice

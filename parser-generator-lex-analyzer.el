@@ -62,10 +62,13 @@
     (error "Missing look-ahead-number!"))
   (let ((look-ahead)
         (look-ahead-length 0)
-        (index parser-generator-lex-analyzer--index))
+        (index parser-generator-lex-analyzer--index)
+        (k (max
+            1
+            parser-generator--look-ahead-number)))
     (while (<
             look-ahead-length
-            parser-generator--look-ahead-number)
+            k)
       (condition-case error
           (progn
             (let ((next-look-ahead
@@ -79,7 +82,7 @@
                     (dolist (next-look-ahead-item next-look-ahead)
                       (when (<
                              look-ahead-length
-                             parser-generator--look-ahead-number)
+                             k)
                         (push next-look-ahead-item look-ahead)
                         (setq look-ahead-length (1+ look-ahead-length))
                         (setq index (cdr (cdr next-look-ahead-item))))))
@@ -114,8 +117,9 @@
                 (unless (listp (car token))
                   (setq token (list token)))
                 (let ((first-token (car token)))
-                  (setq parser-generator-lex-analyzer--index
-                        (cdr (cdr first-token)))
+                  (setq
+                   parser-generator-lex-analyzer--index
+                   (cdr (cdr first-token)))
                   (push first-token tokens)))))
         (error (error
                 "Lex-analyze failed to pop token at %s, error: %s"
