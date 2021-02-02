@@ -871,15 +871,14 @@
      (equal
       '(
         (0 ((("0") shift) (("1") shift)))
-        (1 ((("*") reduce 3) (("+" reduce 3)) (("0") reduce 3) (("1") reduce 3) (($) reduce 3)))
-        (2 ((("*") reduce 6) (("+") reduce 6) (("0") reduce 6) (("1") reduce 6) (($) reduce 6)))
-        (3 ((("*") reduce 4) (("+") reduce 4) (("0") reduce 4) (("1") reduce 4) (($) accept)))
-        (4 ((("*") shift) (("+") shift) (($) accept)))
+        (1 ((nil reduce 4)))
+        (2 ((nil reduce 5)))
+        (3 ((nil reduce 3)))
+        (4 ((($) accept) (("*") shift) (("+") shift)))
         (5 ((("0") shift) (("1") shift)))
         (6 ((("0") shift) (("1") shift)))
-        (7 ((("*") reduce 2) (("+") reduce 2) (("0") reduce 2) (("1") reduce 2) (($) reduce 1)))
-        (8 ((("*") reduce 1) (("+") reduce 1) (("0") reduce 1) (("1") reduce 1) (($) reduce 2)))
-        )
+        (7 ((nil reduce 2)))
+        (8 ((nil reduce 1))))
       (parser-generator--hash-to-list
        parser-generator-lr--action-tables)))
     (message "Passed ACTION-tables k = 0")

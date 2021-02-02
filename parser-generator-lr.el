@@ -103,8 +103,9 @@
                                       (if
                                           (parser-generator--valid-look-ahead-p
                                            eff-item)
-                                          (let ((hash-key
-                                                 (format "%s-%s-%s" goto-index state eff-item)))
+                                          (let
+                                              ((hash-key
+                                                (format "%s-%s-%s" goto-index state eff-item)))
                                             (parser-generator--debug
                                              (message
                                               "Valid look-ahead: %s"
@@ -125,16 +126,27 @@
                                                hash-key
                                                t
                                                added-actions)
-                                              (push
-                                               (list
-                                                eff-item
-                                                'shift
-                                                )
-                                               action-table)
-                                              (setq
-                                               found-action
-                                               t)
-                                              ))
+                                              (if
+                                                  (and
+                                                   (=
+                                                    parser-generator--look-ahead-number
+                                                    0)
+                                                   (equal
+                                                    eff-item
+                                                    `(,parser-generator--eof-identifier)))
+                                                  ;; An extra column for '$' (end of input) is added to the action table that contains acc for every item set that contains an item of the form S → w • eof.
+                                                  (progn
+                                                    (push (list eff-item 'accept) action-table)
+                                                    (setq found-accept t))
+                                                (push
+                                                 (list
+                                                  eff-item
+                                                  'shift
+                                                  )
+                                                 action-table)))
+                                            (setq
+                                             found-action
+                                             t))
                                         (parser-generator--debug
                                          (message
                                           "Not valid look-ahead: %s"
@@ -153,11 +165,13 @@
                             (u (nth 3 lr-item)))
                         (unless B
                           (setq B (list parser-generator--e-identifier)))
-                        (when (parser-generator--valid-look-ahead-p u)
-                          (let ((hash-key
-                                 (format "%s-%s-%s" goto-index state u)))
-                            (unless (gethash hash-key added-actions)
-                              (puthash hash-key t added-actions)
+                        (if
+                            (=
+                             parser-generator--look-ahead-number
+                             0)
+
+                            ;; LR(0) uses a different algorithm for determining reduce actions
+                            (unless (nth 2 lr-item)
                               (let ((production (list A B)))
                                 (let
                                     ((production-number
@@ -173,21 +187,45 @@
                                    (message "production: %s (%s)" production production-number)
                                    (message "u: %s" u))
 
-                                  (if (and
-                                       (= production-number 0)
-                                       (>= (length u) 1)
-                                       (parser-generator--valid-eof-p
-                                        (nth (1- (length u)) u)))
-                                      (progn
-                                        ;; Reduction by first production
-                                        ;; of empty look-ahead means grammar has been accepted
-                                        (push (list u 'accept) action-table)
-                                        (setq found-accept t)
-                                        (setq found-action t))
+                                  (push (list nil 'reduce production-number) action-table)
+                                  (setq found-action t)
+                                  (setq continue-loop nil))))
 
-                                    ;; save reduction action in action table
-                                    (push (list u 'reduce production-number) action-table)
-                                    (setq found-action t))))))))))
+                          (when (parser-generator--valid-look-ahead-p u)
+                            (let ((hash-key
+                                   (format "%s-%s-%s" goto-index state u)))
+                              (unless (gethash hash-key added-actions)
+                                (puthash hash-key t added-actions)
+                                (let ((production (list A B)))
+                                  (let
+                                      ((production-number
+                                        (parser-generator--get-grammar-production-number
+                                         production)))
+                                    (unless production-number
+                                      (error
+                                       "Expecting production number for %s from LR-item %s!"
+                                       production
+                                       lr-item))
+
+                                    (parser-generator--debug
+                                     (message "production: %s (%s)" production production-number)
+                                     (message "u: %s" u))
+
+                                    (if (and
+                                         (= production-number 0)
+                                         (>= (length u) 1)
+                                         (parser-generator--valid-eof-p
+                                          (nth (1- (length u)) u)))
+                                        (progn
+                                          ;; Reduction by first production
+                                          ;; of empty look-ahead means grammar has been accepted
+                                          (push (list u 'accept) action-table)
+                                          (setq found-accept t)
+                                          (setq found-action t))
+
+                                      ;; save reduction action in action table
+                                      (push (list u 'reduce production-number) action-table)
+                                      (setq found-action t)))))))))))
 
                    ((eq state 'error)
                     (unless found-action
