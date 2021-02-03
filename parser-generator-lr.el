@@ -282,11 +282,11 @@
       (setq
        lr-item-set-new-index
        (1+ lr-item-set-new-index))
-        ;; Mark the initial set
-        (puthash
-         e-set
-         lr-item-set-new-index
-         marked-lr-item-sets))
+      ;; Mark the initial set
+      (puthash
+       e-set
+       lr-item-set-new-index
+       marked-lr-item-sets))
 
     ;; (2) If a set of items a in S is unmarked
     ;; (3) Repeat step (2) until all sets of items in S are marked.
@@ -322,12 +322,12 @@
                      (or
                       (parser-generator--valid-terminal-p next-symbol)
                       (parser-generator--valid-non-terminal-p next-symbol))
-                       (not
-                        (gethash
-                         (list
-                          lr-item-set-index
-                          next-symbol)
-                         next-symbols-found)))
+                     (not
+                      (gethash
+                       (list
+                        lr-item-set-index
+                        next-symbol)
+                       next-symbols-found)))
                   (push
                    next-symbol
                    next-symbols)
@@ -553,8 +553,8 @@
              (parser-generator--get-grammar-rhs start))
             (e-list parser-generator--e-identifier)
             (eof-list (parser-generator--generate-list-of-symbol
-                     parser-generator--look-ahead-number
-                     parser-generator--eof-identifier)))
+                       parser-generator--look-ahead-number
+                       parser-generator--eof-identifier)))
 
         ;; (a)
         (dolist (rhs start-productions)
@@ -723,8 +723,8 @@
   (let ((lr-new-item)
         (lr-item-exists (make-hash-table :test 'equal))
         (eof-list (parser-generator--generate-list-of-symbol
-                     parser-generator--look-ahead-number
-                     parser-generator--eof-identifier)))
+                   parser-generator--look-ahead-number
+                   parser-generator--eof-identifier)))
     (parser-generator--debug (message "x: %s" x))
 
     (dolist (lr-item previous-lr-item)
@@ -903,12 +903,13 @@
      translation
      history)
   "Perform a LR-parse via lex-analyzer, optionally at INPUT-TAPE-INDEX with PUSHDOWN-LIST, OUTPUT, TRANSLATION and HISTORY."
-  (let ((result (parser-generator-lr--parse
-                 input-tape-index
-                 pushdown-list
-                 output
-                 translation
-                 history)))
+  (let ((result
+         (parser-generator-lr--parse
+          input-tape-index
+          pushdown-list
+          output
+          translation
+          history)))
     (nth 1 result)))
 
 ;; Algorithm 5.7, p. 375
@@ -925,7 +926,9 @@
   (unless pushdown-list
     (push 0 pushdown-list))
   (unless translation-symbol-table
-    (setq translation-symbol-table (make-hash-table :test 'equal)))
+    (setq
+     translation-symbol-table
+     (make-hash-table :test 'equal)))
 
   (if (and
        input-tape-index
@@ -943,12 +946,9 @@
 
   (let ((accept)
         (pre-index 0))
-
     (while (not accept)
 
-      ;; (message "output: %s, index: %s" output parser-generator-lex-analyzer--index)
-
-      ;; Save history when index has changed
+      ;; Save history when index has changed to enable incremental parsing / translating
       (when
           (>
            parser-generator-lex-analyzer--index
@@ -1160,56 +1160,84 @@
                             (setq popped-items (1+ popped-items)))))
                       (push production-number output)
 
-                      ;; Perform translation at reduction if specified
-                      (when
-                          (parser-generator--get-grammar-translation-by-number
-                           production-number)
-
-                        (let ((popped-items-meta-contents))
-                          (dolist (popped-item popped-items-contents)
-                            (parser-generator--debug
-                             (message
-                              "popped-item: %s"
-                              popped-item))
-                            (if (and
-                                 (listp popped-item)
-                                 (cdr popped-item))
+                      (let ((popped-items-meta-contents)
+                            (all-expanded t))
+                        ;; Collect arguments for translation
+                        (dolist (popped-item popped-items-contents)
+                          (parser-generator--debug
+                           (message
+                            "popped-item: %s"
+                            popped-item))
+                          (if (and
+                               (listp popped-item)
+                               (cdr popped-item))
+                              ;; If item is a terminal, use it's literal value
+                              (push
+                               (parser-generator-lex-analyzer--get-function
+                                popped-item)
+                               popped-items-meta-contents)
+                            (if (gethash
+                                 popped-item
+                                 translation-symbol-table)
                                 (push
-                                 (parser-generator-lex-analyzer--get-function
-                                  popped-item)
+                                 (gethash
+                                  popped-item
+                                  translation-symbol-table)
                                  popped-items-meta-contents)
-                              (if (gethash
-                                   popped-item
-                                   translation-symbol-table)
-                                  (push
-                                   (gethash
-                                    popped-item
-                                    translation-symbol-table)
-                                   popped-items-meta-contents)
-                                (push
-                                 nil
-                                 popped-items-meta-contents))))
-                          (setq
-                           popped-items-meta-contents
-                           (nreverse popped-items-meta-contents))
+                              (setq
+                               all-expanded
+                               nil)
+                              (push
+                               nil
+                               popped-items-meta-contents))))
+                        (setq
+                         popped-items-meta-contents
+                         (nreverse popped-items-meta-contents))
+                        (parser-generator--debug
+                         (message
+                          "Production arguments: %s -> %s = %s"
+                          production-lhs
+                          production-rhs
+                          popped-items-meta-contents))
 
-                          (let ((partial-translation
-                                 (funcall
-                                  (parser-generator--get-grammar-translation-by-number
-                                   production-number)
-                                  popped-items-meta-contents)))
-                            (parser-generator--debug
-                             (message
-                              "translation-symbol-table: %s = %s"
-                              production-lhs
-                              partial-translation))
-                            (puthash
-                             production-lhs
-                             partial-translation
-                             translation-symbol-table)
-                            (setq
-                             translation
-                             partial-translation))))
+                        ;; Perform translation at reduction if specified
+                        (if
+                            (parser-generator--get-grammar-translation-by-number
+                             production-number)
+                            (let ((partial-translation
+                                   (funcall
+                                    (parser-generator--get-grammar-translation-by-number
+                                     production-number)
+                                    popped-items-meta-contents)))
+                              (parser-generator--debug
+                               (message
+                                "translation-symbol-table: %s = %s"
+                                production-lhs
+                                partial-translation))
+                              (puthash
+                               production-lhs
+                               partial-translation
+                               translation-symbol-table)
+                              (setq
+                               translation
+                               partial-translation))
+
+                          ;; When no translation is specified just use arguments as translation
+                          (when all-expanded
+                            (let ((partial-translation
+                                   popped-items-meta-contents))
+                              (parser-generator--debug
+                               (message
+                                "translation-symbol-table: %s = %s (generic)"
+                                production-lhs
+                                partial-translation))
+                              (puthash
+                               production-lhs
+                               partial-translation
+                               translation-symbol-table)
+                              (setq
+                               translation
+                               partial-translation)))))
 
                       (let ((new-table-index (car pushdown-list)))
                         (let ((goto-table

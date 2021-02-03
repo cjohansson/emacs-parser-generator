@@ -36,7 +36,7 @@
 (defun parser-generator-lex-analyzer--get-function (token)
   "Get information about TOKEN."
   (unless parser-generator-lex-analyzer--get-function
-    (error "Missing lex-analyzer get function!"))
+    (error "Missing lex-analyzer get function! Token: %s" token))
   (let ((meta-information))
     (condition-case error
         (progn

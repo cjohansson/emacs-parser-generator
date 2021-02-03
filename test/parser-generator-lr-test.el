@@ -77,7 +77,7 @@
     (parser-generator--hash-to-list
      parser-generator-lr--action-tables)))
 
-  (message "Ended tests for (parser-generator-lr--generate-action-tables)"))
+  (message "Passed tests for (parser-generator-lr--generate-action-tables)"))
 
 (defun parser-generator-lr-test--generate-goto-tables ()
   "Test `parser-generator-lr--generate-goto-tables'."
@@ -308,6 +308,10 @@
          (push (nth (1- index) string) tokens)
          (setq index (1+ index)))
        (nreverse tokens))))
+  (setq
+   parser-generator-lex-analyzer--get-function
+   (lambda (token)
+     (car token)))
   (should
    (equal
     '(2 2 2 1 1)
@@ -708,7 +712,7 @@
 
     (should
      (equal
-      '("begin" "test" "end")
+      '(("begin" "test" "end"))
       (parser-generator-lr-translate)))
 
     (message "Passed translation k=2")
@@ -940,7 +944,7 @@
     (insert "1+1")
 
     (parser-generator-set-grammar
-     '((S E B) ("*" "+" "0" "1") ((S (E $)) (E (E "*" B (lambda(args) (list (nth 0 args) " x " (nth 2 args)))) (E "+" B (lambda(args) (list (nth 0 args) " . " (nth 2 args)))) (B)) (B ("0") ("1"))) S))
+     '((S E B) ("*" "+" "0" "1") ((S (E $)) (E (E "*" B (lambda(args) (let ((ret (list (nth 0 args)))) (when (nth 2 args) (setq ret (append ret `(" x " ,(nth 2 args))))) ret))) (E "+" B (lambda(args) (let ((ret (list (nth 0 args)))) (when (nth 2 args) (setq ret (append ret `(" . " ,(nth 2 args))))) ret))) (B)) (B ("0") ("1"))) S))
     (parser-generator-set-look-ahead-number 0)
     (parser-generator-process-grammar)
     (parser-generator-lr-generate-parser-tables)
@@ -966,7 +970,7 @@
 
     (should
      (equal
-      '("1" " . " "1")
+      '((("1")) " . " ("1"))
       (parser-generator-lr-translate)))
 
     (message "Passed translation k=0")
