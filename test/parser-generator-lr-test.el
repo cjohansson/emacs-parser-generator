@@ -933,9 +933,7 @@
      (equal
       '(5 3 5 2 5 1)
       (parser-generator-lr-parse)))
-
     (message "Passed parse with k = 0 # 2")
-
     (kill-buffer))
 
   (let ((buffer (generate-new-buffer "*a*")))
@@ -972,11 +970,8 @@
      (equal
       '((("1")) " . " ("1"))
       (parser-generator-lr-translate)))
-
     (message "Passed translation k=0")
-     
     (kill-buffer))
-
 
   (message "Passed tests for (parser-generator-lr--parse-k-0)"))
 

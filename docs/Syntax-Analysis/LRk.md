@@ -1,4 +1,4 @@
-# LRk Parser
+# LR(k) Parser
 
 LR(k) parser is a Left-to-right, Rightmost derivation in reverse with look-ahead number k invented by Donald Knuth.
 

@@ -14,6 +14,7 @@ We use push down transducer (PDT) based algorithms.
 * LL(k) *WIP*
 * Deterministic Shift-Reduce Parsing *WIP*
 * [LR(k)](Syntax-Analysis/LRk.md)
+* [LR(0)](Syntax-Analysis/LR0.md)
 * Formal Shift-Reduce Parsing Algorithms *WIP*
 * Simple Precedence Grammars *WIP*
 * Extended Precedence Grammars *WIP*
