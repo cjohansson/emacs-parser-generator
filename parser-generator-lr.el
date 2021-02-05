@@ -14,11 +14,13 @@
 ;;; Variables:
 
 
-(defvar parser-generator-lr--action-tables
+(defvar
+  parser-generator-lr--action-tables
   nil
   "Action-tables for grammar.")
 
-(defvar parser-generator-lr--goto-tables
+(defvar
+  parser-generator-lr--goto-tables
   nil
   "Goto-tables for grammar.")
 
@@ -33,6 +35,78 @@
      table-lr-items)
     table-lr-items))
 
+(defun parser-generator-lr--export-parser (namespace)
+  "Export parser with NAMESPACE."
+
+  ;; Make sure all requisites are defined 
+  (unless parser-generator-lr--action-tables
+    (error "Missing generated ACTION-tables!"))
+  (unless parser-generator-lr--goto-tables
+    (error "Missing generated GOTO-tables!"))
+  (unless parser-generator--table-productions-number
+    (error "Table for production-numbers is undefined!"))
+  (unless parser-generator--table-look-aheads-p
+    (error "Table for valid look-aheads is undefined!"))
+  (unless parser-generator--look-ahead-number
+    (error "Missing a look-ahead number!"))
+  (unless parser-generator--e-identifier
+    (error "Missing definition for e-identifier!"))
+  (unless parser-generator--eof-identifier
+    (error "Missing definition for EOF-identifier!"))
+  (unless parser-generator--table-non-terminal-p
+    (error "Table for non-terminals is undefined!"))
+  (unless parser-generator--table-terminal-p
+    (error "Table for terminals is undefined!"))
+  (unless parser-generator--table-translations
+    (error "Table for translations by production-number is undefined!"))
+  (unless parser-generator-lex-analyzer--get-function
+    (error "Missing lex-analyzer get function!"))
+  (unless parser-generator-lex-analyzer--function
+    (error "Missing lex-analyzer function!"))
+
+  ;; TODO Extract some stuff as global
+  ;; 1. parse-function
+  ;; 2. parse variables
+  ;; 2. lex-functions
+  ;; 3. lex index
+
+  ;; TODO Export parser here
+  `(lambda
+    (&optional
+     input-tape-index
+     pushdown-list
+     output
+     translation
+     translation-symbol-table
+     history)
+    (let
+        ((action-tables
+          ,parser-generator-lr--action-tables)
+         (goto-tables
+          ,parser-generator-lr--goto-tables)
+         (table-productions-number
+          ,parser-generator--table-productions-number)
+         (table-look-aheads-p
+          ,parser-generator--table-look-aheads-p)
+         (look-ahead-number
+          ,parser-generator--look-ahead-number)
+         (e-identifier
+          ,parser-generator--e-identifier)
+         (eof-identifier
+          ,parser-generator--eof-identifier)
+         (table-non-terminal-p
+          ,parser-generator--table-non-terminal-p)
+         (table-terminal-p
+          ,parser-generator--table-terminal-p)
+         (table-translations
+          ,parser-generator--table-translations)
+         (lex-analyzer-get-function
+          ,parser-generator-lex-analyzer--get-function)
+         (lex-analyzer-function
+          ,parser-generator-lex-analyzer--function)
+         (lex-analyzer-reset-function
+          ,parser-generator-lex-analyzer--reset-function))
+      )))
 
 ;; Algorithm 5.11, p. 393
 (defun parser-generator-lr--generate-action-tables (table-lr-items)

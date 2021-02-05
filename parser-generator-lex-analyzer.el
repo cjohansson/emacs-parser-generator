@@ -13,19 +13,23 @@
 ;;; Variables:
 
 
-(defvar parser-generator-lex-analyzer--get-function
+(defvar
+  parser-generator-lex-analyzer--get-function
   nil
   "Get token information function.  This function will be called when building token meta-information before calling optional syntax-directed translation / semantic-actions.  Anything other than nil is expected.")
 
-(defvar parser-generator-lex-analyzer--function
+(defvar
+  parser-generator-lex-analyzer--function
   nil
   "Function used as lex-analyzer.  This function will be called and as result a list with structure '(a b . c) is expected where a is a string or symbol, if no more tokens can be found nil is expected, if it's not possible to proceed lex analysis an error-signal is expected.")
 
-(defvar parser-generator-lex-analyzer--index
+(defvar
+  parser-generator-lex-analyzer--index
   nil
   "Index in lex-analyzer.")
 
-(defvar parser-generator-lex-analyzer--reset-function
+(defvar
+  parser-generator-lex-analyzer--reset-function
   nil
   "Function used when resetting lex-analyzer.")
 
