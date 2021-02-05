@@ -80,103 +80,109 @@
       ;; Action-tables
       (insert
        (format
-        "(defconst\n%s-action-tables"
-        namespace))
-      (print
-       parser-generator-lr--action-tables
-       (current-buffer))
-      (insert "\"Generated action-tables.\")\n\n")
+        "(defconst\n  %s-action-tables\n  %s\n  \"Generated action-tables.\")\n\n"
+        namespace
+        parser-generator-lr--action-tables))
 
       ;; Goto-tables
       (insert
        (format
-        "(defconst\n%s-goto-tables"
-        namespace))
-      (print
-       parser-generator-lr--goto-tables
-       (current-buffer))
-      (insert "\"Generated goto-tables.\")\n\n")
+        "(defconst\n  %s-goto-tables\n  %s\n  \"Generated goto-tables.\")\n\n"
+        namespace
+        parser-generator-lr--goto-tables))
 
       ;; Table production-number
       (insert
        (format
-        "(defconst\n%s-table-productions-number"
-        namespace))
-      (print
-       parser-generator--table-productions-number
-       (current-buffer))
-      (insert "\"Hash-table of productions indexed by production-number.\")\n\n")
+        "(defconst\n  %s-table-productions-number\n  %s\n  \"Hash-table of productions indexed by production-number.\")\n\n"
+        namespace
+        parser-generator--table-productions-number))
 
       ;; Table look-aheads
       (insert
        (format
-        "(defconst\n%s-table-look-aheads"
-        namespace))
-      (print
-       parser-generator--table-look-aheads-p
-       (current-buffer))
-      (insert "\"Hash-table of valid look-aheads.\")\n\n")
+        "(defconst\n  %s-table-look-aheads\n  %s\n  \"Hash-table of valid look-aheads.\")\n\n"
+        namespace
+        parser-generator--table-look-aheads-p))
 
       ;; Table terminals
       (insert
        (format
-        "(defconst\n%s-table-terminal-p"
-        namespace))
-      (print
-       parser-generator--table-non-terminal-p
-       (current-buffer))
-      (insert "\"Hash-table of valid terminals.\")\n\n")
+        "(defconst\n  %s-table-terminal-p\n  %s\n  \"Hash-table of valid terminals.\")\n\n"
+        namespace
+        parser-generator--table-non-terminal-p))
 
       ;; Table non-terminals
       (insert
        (format
-        "(defconst\n%s-table-non-terminal-p"
-        namespace))
-      (print
-       parser-generator--table-non-terminal-p
-       (current-buffer))
-      (insert "\"Hash-table of valid non-terminals.\")\n\n")
+        "(defconst\n  %s-table-non-terminal-p\n  %s\n  \"Hash-table of valid non-terminals.\")\n\n"
+        namespace
+        parser-generator--table-non-terminal-p))
 
       ;; Table translations
       (insert
        (format
-        "(defconst\n%s-table-translations"
+        "(defconst\n  %s-table-translations\n  %s\n  \"Hash-table of translations.\")\n\n"
+        namespace
+        parser-generator--table-translations))
+
+      ;; Lex-Analyzer Get Function
+      (insert
+       (format
+        "(defconst\n  %s-lex-analyzer--get-function\n  (lambda %s %s)\n  \"Lex-Analyzer Get Function.\")\n\n"
+        namespace
+        (nth 2 parser-generator-lex-analyzer--get-function)
+        (nth 3 parser-generator-lex-analyzer--get-function)))
+
+      ;; Lex-Analyzer Function
+      (insert
+       (format
+        "(defconst\n  %s-lex-analyzer--function\n  (lambda %s %s)\n  \"Lex-Analyzer Function.\")\n\n"
+        namespace
+        (nth 2 parser-generator-lex-analyzer--function)
+        (nth 3 parser-generator-lex-analyzer--function)))
+
+      ;; Lex-Analyzer Reset Function
+      (insert
+       (format
+        "(defconst\n  %s-lex-analyzer--reset-function\n  "
         namespace))
-      (print
-       parser-generator--table-translations
-       (current-buffer))
-      (insert "\"Hash-table of translations.\")\n\n")
+      (if parser-generator-lex-analyzer--reset-function
+          (insert
+           (format
+            "(lambda %s %s)\n"
+            (nth 2 parser-generator-lex-analyzer--reset-function)
+            (nth 3 parser-generator-lex-analyzer--reset-function)))
+        (insert "nil\n"))
+      (insert "  \"Lex-Analyzer Reset Function.\")\n\n")
 
       ;; E-identifier
       (insert
        (format
-        "(defconst\n%s-e-identifier\n'%s\n\"e-identifier\")\n\n"
+        "(defconst\n  %s-e-identifier\n  '%s\n  \"e-identifier\")\n\n"
         namespace
        parser-generator--e-identifier))
 
       ;; EOF-identifier
       (insert
        (format
-        "(defconst\n%s-eof-identifier\n'%s\n\"EOF-identifier.\")\n\n"
+        "(defconst\n  %s-eof-identifier\n  '%s\n  \"EOF-identifier.\")\n\n"
         namespace
         parser-generator--eof-identifier))
 
       ;; Look-ahead number
       (insert
        (format
-        "(defconst\n%s-look-ahead-number"
-        namespace))
-      (print
-       parser-generator--look-ahead-number
-       (current-buffer))
-      (insert "\"Look-ahead number.\")\n\n")
+        "(defconst\n  %s-look-ahead-number\n  %s\n  \"Look-ahead number.\")\n\n"
+        namespace
+        parser-generator--look-ahead-number))
 
       (insert "\n;;; Variables:\n\n\n")
 
       ;; Lex-analyzer index
       (insert
        (format
-        "(defvar\n%s-lex-analyzer-index\n0\n\"Current index of lex-analyzer.\")\n\n"
+        "(defvar\n  %s-lex-analyzer-index\n  0\n  \"Current index of lex-analyzer.\")\n\n"
         namespace))
 
       (insert "\n;;; Functions:\n\n\n")
@@ -186,38 +192,29 @@
       ;; Lex-Analyzer Get Function
       (insert
        (format
-        "(defun\n%s-lex-analyzer-get\n(token)\n\"Get token information.\""
-        namespace))
-      (print
-       parser-generator-lex-analyzer--get-function
-       (current-buffer))
-      (insert ")\n\n")
-
-      ;; Lex-Analyzer Function
-      (insert
-       (format
-        "(defun\n%s-lex-analyzer\n()\n\"Get next token.\""
-        namespace))
-      (print
-       parser-generator-lex-analyzer--function
-       (current-buffer))
-      (insert ")\n\n")
-
-      ;; Lex-Analyzer Reset Function
-      (insert
-       (format
-        "(defun\n%s-lex-analyzer\n()\n\"Reset lex-analyzer.\"\n(setq\n%s-lex-analyzer--index\n1\n)"
+        "(defun
+%s-lex-analyzer-get-function (token)
+\"Get information about TOKEN.\"
+(unless %s-lex-analyzer--get-function
+(error \"Missing lex-analyzer get function!\"))
+(let ((meta-information))
+(condition-case error
+(progn
+(setq meta-information
+(funcall
+%s-lex-analyzer--get-function
+token)))\n"
+        namespace
         namespace
         namespace))
-      (when
-          parser-generator-lex-analyzer--reset-function
-        (insert "(funcall")
-        (print
-         parser-generator-lex-analyzer--reset-function
-         (current-buffer))
-        (insert ")\n"))
-      (insert ")\n\n")
-
+      (insert
+       "(error (error
+\"Lex-analyze failed to get token meta-data of %s, error: %s\"
+token
+(car (cdr error)))))
+(unless meta-information
+(error \"Could not find any token meta-information for: %s\" token))
+meta-information))\n\n")
 
       (insert "\n;;; Syntax-Analyzer / Parser:\n\n\n");
 
