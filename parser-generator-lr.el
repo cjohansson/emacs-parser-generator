@@ -64,49 +64,182 @@
   (unless parser-generator-lex-analyzer--function
     (error "Missing lex-analyzer function!"))
 
-  ;; TODO Extract some stuff as global
-  ;; 1. parse-function
-  ;; 2. parse variables
-  ;; 2. lex-functions
-  ;; 3. lex index
+  (let ((code))
+    (with-temp-buffer
+      (goto-char (point-min))
 
-  ;; TODO Export parser here
-  `(lambda
-    (&optional
-     input-tape-index
-     pushdown-list
-     output
-     translation
-     translation-symbol-table
-     history)
-    (let
-        ((action-tables
-          ,parser-generator-lr--action-tables)
-         (goto-tables
-          ,parser-generator-lr--goto-tables)
-         (table-productions-number
-          ,parser-generator--table-productions-number)
-         (table-look-aheads-p
-          ,parser-generator--table-look-aheads-p)
-         (look-ahead-number
-          ,parser-generator--look-ahead-number)
-         (e-identifier
-          ,parser-generator--e-identifier)
-         (eof-identifier
-          ,parser-generator--eof-identifier)
-         (table-non-terminal-p
-          ,parser-generator--table-non-terminal-p)
-         (table-terminal-p
-          ,parser-generator--table-terminal-p)
-         (table-translations
-          ,parser-generator--table-translations)
-         (lex-analyzer-get-function
-          ,parser-generator-lex-analyzer--get-function)
-         (lex-analyzer-function
-          ,parser-generator-lex-analyzer--function)
-         (lex-analyzer-reset-function
-          ,parser-generator-lex-analyzer--reset-function))
-      )))
+      ;; Header
+      (insert
+       (format
+        ";;; %s.el --- Exported Emacs Parser Generator -*- lexical-binding: t -*-\n\n\n"
+        namespace))
+      (insert ";;; Commentary:\n\n\n;;; Code:\n\n\n")
+
+      (insert ";;; Constants:\n\n\n")
+
+      ;; Action-tables
+      (insert
+       (format
+        "(defconst\n%s-action-tables"
+        namespace))
+      (print
+       parser-generator-lr--action-tables
+       (current-buffer))
+      (insert "\"Generated action-tables.\")\n\n")
+
+      ;; Goto-tables
+      (insert
+       (format
+        "(defconst\n%s-goto-tables"
+        namespace))
+      (print
+       parser-generator-lr--goto-tables
+       (current-buffer))
+      (insert "\"Generated goto-tables.\")\n\n")
+
+      ;; Table production-number
+      (insert
+       (format
+        "(defconst\n%s-table-productions-number"
+        namespace))
+      (print
+       parser-generator--table-productions-number
+       (current-buffer))
+      (insert "\"Hash-table of productions indexed by production-number.\")\n\n")
+
+      ;; Table look-aheads
+      (insert
+       (format
+        "(defconst\n%s-table-look-aheads"
+        namespace))
+      (print
+       parser-generator--table-look-aheads-p
+       (current-buffer))
+      (insert "\"Hash-table of valid look-aheads.\")\n\n")
+
+      ;; Table terminals
+      (insert
+       (format
+        "(defconst\n%s-table-terminal-p"
+        namespace))
+      (print
+       parser-generator--table-non-terminal-p
+       (current-buffer))
+      (insert "\"Hash-table of valid terminals.\")\n\n")
+
+      ;; Table non-terminals
+      (insert
+       (format
+        "(defconst\n%s-table-non-terminal-p"
+        namespace))
+      (print
+       parser-generator--table-non-terminal-p
+       (current-buffer))
+      (insert "\"Hash-table of valid non-terminals.\")\n\n")
+
+      ;; Table translations
+      (insert
+       (format
+        "(defconst\n%s-table-translations"
+        namespace))
+      (print
+       parser-generator--table-translations
+       (current-buffer))
+      (insert "\"Hash-table of translations.\")\n\n")
+
+      ;; E-identifier
+      (insert
+       (format
+        "(defconst\n%s-e-identifier\n'%s\n\"e-identifier\")\n\n"
+        namespace
+       parser-generator--e-identifier))
+
+      ;; EOF-identifier
+      (insert
+       (format
+        "(defconst\n%s-eof-identifier\n'%s\n\"EOF-identifier.\")\n\n"
+        namespace
+        parser-generator--eof-identifier))
+
+      ;; Look-ahead number
+      (insert
+       (format
+        "(defconst\n%s-look-ahead-number"
+        namespace))
+      (print
+       parser-generator--look-ahead-number
+       (current-buffer))
+      (insert "\"Look-ahead number.\")\n\n")
+
+      (insert "\n;;; Variables:\n\n\n")
+
+      ;; Lex-analyzer index
+      (insert
+       (format
+        "(defvar\n%s-lex-analyzer-index\n0\n\"Current index of lex-analyzer.\")\n\n"
+        namespace))
+
+      (insert "\n;;; Functions:\n\n\n")
+
+      (insert ";;; Lex-Analyzer:\n\n\n")
+
+      ;; Lex-Analyzer Get Function
+      (insert
+       (format
+        "(defun\n%s-lex-analyzer-get\n(token)\n\"Get token information.\""
+        namespace))
+      (print
+       parser-generator-lex-analyzer--get-function
+       (current-buffer))
+      (insert ")\n\n")
+
+      ;; Lex-Analyzer Function
+      (insert
+       (format
+        "(defun\n%s-lex-analyzer\n()\n\"Get next token.\""
+        namespace))
+      (print
+       parser-generator-lex-analyzer--function
+       (current-buffer))
+      (insert ")\n\n")
+
+      ;; Lex-Analyzer Reset Function
+      (insert
+       (format
+        "(defun\n%s-lex-analyzer\n()\n\"Reset lex-analyzer.\"\n(setq\n%s-lex-analyzer--index\n1\n)"
+        namespace
+        namespace))
+      (when
+          parser-generator-lex-analyzer--reset-function
+        (insert "(funcall")
+        (print
+         parser-generator-lex-analyzer--reset-function
+         (current-buffer))
+        (insert ")\n"))
+      (insert ")\n\n")
+
+
+      (insert "\n;;; Syntax-Analyzer / Parser:\n\n\n");
+
+      ;; TODO Functions
+
+
+      ;; Footer
+      (insert
+       (format
+        "\n(provide '%s)"
+        namespace))
+      (insert
+       (format
+        "\n\n;;; %s.el ends here"
+        namespace))
+
+      (setq
+       code
+       (buffer-substring-no-properties
+        (point-min)
+        (point-max))))
+      code))
 
 ;; Algorithm 5.11, p. 393
 (defun parser-generator-lr--generate-action-tables (table-lr-items)
