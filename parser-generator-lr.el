@@ -193,28 +193,50 @@
       (insert
        (format
         "(defun
-%s-lex-analyzer-get-function (token)
-\"Get information about TOKEN.\"
-(unless %s-lex-analyzer--get-function
-(error \"Missing lex-analyzer get function!\"))
-(let ((meta-information))
-(condition-case error
-(progn
-(setq meta-information
-(funcall
-%s-lex-analyzer--get-function
-token)))\n"
+  %s-lex-analyzer-get-function (token)
+  \"Get information about TOKEN.\"
+  (unless 
+    %s-lex-analyzer--get-function
+    (error \"Missing lex-analyzer get function!\"))
+  (let ((meta-information))
+    (condition-case 
+      error
+      (progn
+        (setq 
+          meta-information
+          (funcall
+            %s-lex-analyzer--get-function
+            token)))"
         namespace
         namespace
         namespace))
+      (insert "
+      (error 
+        (error
+          \"Lex-analyze failed to get token meta-data of %s, error: %s\"
+          token
+          (car (cdr error)))))
+    (unless meta-information
+      (error \"Could not find any token meta-information for: %s\" token))
+    meta-information))\n")
+
+      ;; Lex-Analyzer Reset Function
       (insert
-       "(error (error
-\"Lex-analyze failed to get token meta-data of %s, error: %s\"
-token
-(car (cdr error)))))
-(unless meta-information
-(error \"Could not find any token meta-information for: %s\" token))
-meta-information))\n\n")
+       (format "
+(defun
+  %s-lex-analyzer-reset
+  \"Reset Lex-Analyzer.\"
+  (setq 
+    %s-lex-analyzer--index 
+    1)
+  (when 
+    %s-lex-analyzer--reset-function
+    (funcall 
+      %s-lex-analyzer--reset-function)))\n\n"
+               namespace
+               namespace
+               namespace
+               namespace))
 
       (insert "\n;;; Syntax-Analyzer / Parser:\n\n\n");
 
