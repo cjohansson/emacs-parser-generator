@@ -43,8 +43,8 @@
     (error "Missing generated ACTION-tables!"))
   (unless parser-generator-lr--goto-tables
     (error "Missing generated GOTO-tables!"))
-  (unless parser-generator--table-productions-number
-    (error "Table for production-numbers is undefined!"))
+  (unless parser-generator--table-productions-number-reverse
+    (error "Table for reverse production-numbers is undefined!"))
   (unless parser-generator--table-look-aheads-p
     (error "Table for valid look-aheads is undefined!"))
   (unless parser-generator--look-ahead-number
@@ -94,9 +94,9 @@
       ;; Table production-number
       (insert
        (format
-        "(defconst\n  %s--table-productions-number\n  %s\n  \"Hash-table of productions indexed by production-number.\")\n\n"
+        "(defconst\n  %s--table-productions-number-reverse\n  %s\n  \"Hash-table indexed by production-number and value is production.\")\n\n"
         namespace
-        parser-generator--table-productions-number))
+        parser-generator--table-productions-number-reverse))
 
       ;; Table look-aheads
       (insert
@@ -193,7 +193,7 @@
       (insert
        (format
         "(defun
-  %s-lex-analyzer-get-function (token)
+  %s-lex-analyzer--get-function (token)
   \"Get information about TOKEN.\"
   (unless 
     %s-lex-analyzer--get-function
@@ -327,6 +327,85 @@
 
       (insert "\n;;; Syntax-Analyzer / Parser:\n\n\n");
 
+      ;; Get grammar production by number
+      (insert
+       (format "
+(defun
+  %s--get-grammar-production-by-number
+  (production-number)
+  \"If PRODUCTION-NUMBER exist, return it's production.\"
+  (gethash
+   production-number
+   %s--table-productions-number-reverse))\n\n"
+               namespace
+               namespace))
+
+      ;; Valid symbol p
+      (insert
+       (format "
+(defun 
+  %s--valid-symbol-p 
+  (symbol)
+  \"Return whether SYMBOL is valid or not.\"
+  (let ((is-valid t))
+    (unless (or
+             (%s--valid-e-p symbol)
+             (%s--valid-eof-p symbol)
+             (%s--valid-non-terminal-p symbol)
+             (%s--valid-terminal-p symbol))
+      (setq is-valid nil))
+    is-valid))\n\n"
+               namespace
+               namespace
+               namespace
+               namespace
+               namespace))
+
+      ;; Valid e-p
+      (insert
+       (format "
+(defun 
+  %s--valid-e-p
+  (symbol)
+  \"Return whether SYMBOL is the e identifier or not.\"
+  (eq
+   symbol
+   %s--e-identifier))\n\n"
+               namespace
+               namespace))
+
+      ;; Valid EOF-p
+      (insert
+       (format "
+(defun 
+  %s--valid-eof-p
+  (symbol)
+  \"Return whether SYMBOL is the EOF identifier or not.\"
+  (eq 
+    symbol 
+    %s--eof-identifier))\n\n"
+               namespace
+               namespace))
+
+      ;; TODO --valid-non-terminal-p
+      ;; TODO --valid-terminal-p
+
+      ;; Get grammar translation by number
+      (insert
+       (format "
+(defun 
+  %s--get-grammar-translation-by-number
+  (production-number)
+  \"If translation for PRODUCTION-NUMBER exist, return it.\"
+  (gethash 
+    production-number 
+    %s--table-translations))\n\n"
+               namespace
+               namespace))
+
+      ;; TODO Add simple parse and translate function
+
+      ;; Parse / translate function
       (insert
        (format "
 (defun 
