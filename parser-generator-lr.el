@@ -182,7 +182,7 @@
       ;; Lex-analyzer index
       (insert
        (format
-        "(defvar\n  %s-lex-analyzer-index\n  0\n  \"Current index of lex-analyzer.\")\n\n"
+        "(defvar\n  %s-lex-analyzer--index\n  0\n  \"Current index of lex-analyzer.\")\n\n"
         namespace))
 
       (insert "\n;;; Functions:\n\n\n")
@@ -225,6 +225,7 @@
        (format "
 (defun
   %s-lex-analyzer-reset
+  ()
   \"Reset Lex-Analyzer.\"
   (setq 
     %s-lex-analyzer--index 
@@ -237,6 +238,92 @@
                namespace
                namespace
                namespace))
+
+      ;; Lex-Analyzer Peek Next Look Ahead
+      (insert
+       (format "
+(defun
+  %s-lex-analyzer--peek-next-look-ahead
+  ()
+  \"Peek next look-ahead number of tokens via lex-analyzer.\"
+  (let ((look-ahead)
+        (look-ahead-length 0)
+        (index %s-lex-analyzer--index)
+        (k (max
+            1
+            %s-look-ahead-number)))
+    (while (<
+            look-ahead-length
+            k)
+      (condition-case error
+          (progn
+            (let ((next-look-ahead
+                   (funcall
+                    %s-lex-analyzer--function
+                    index)))
+              (if next-look-ahead
+                  (progn
+                    (unless (listp (car next-look-ahead))
+                      (setq next-look-ahead (list next-look-ahead)))
+                    (dolist (next-look-ahead-item next-look-ahead)
+                      (when (<
+                             look-ahead-length
+                             k)
+                        (push next-look-ahead-item look-ahead)
+                        (setq look-ahead-length (1+ look-ahead-length))
+                        (setq index (cdr (cdr next-look-ahead-item))))))
+                (push (list %s-eof-identifier) look-ahead)
+                (setq look-ahead-length (1+ look-ahead-length))
+                (setq index (1+ index)))))"
+               namespace
+               namespace
+               namespace
+               namespace
+               namespace))
+      (insert "
+        (error
+         (error
+          \"Lex-analyze failed to peek next look-ahead at %s, error: %s\"
+          index
+          (car (cdr error))))))
+    (nreverse look-ahead)))\n")
+
+      ;; Lex-Analyzer Pop Token
+      (insert
+       (format "
+(defun 
+  %s-lex-analyzer--pop-token ()
+  \"Pop next token via lex-analyzer.\"
+  (let ((iteration 0)
+        (tokens))
+    (while (< iteration 1)
+      (condition-case error
+          (progn
+            (let ((token
+                   (funcall
+                    %s-lex-analyzer--function
+                    %s-lex-analyzer--index)))
+              (when token
+                (unless (listp (car token))
+                  (setq token (list token)))
+                (let ((first-token (car token)))
+                  (setq
+                   %s-lex-analyzer--index
+                   (cdr (cdr first-token)))
+                  (push first-token tokens)))))"
+               namespace
+               namespace
+               namespace
+               namespace))
+      (insert "
+        (error (error
+                \"Lex-analyze failed to pop token at %s, error: %s\"")
+      (insert (format "
+                %s-lex-analyzer--index
+                (car (cdr error)))))
+      (setq iteration (1+ iteration)))
+    (nreverse tokens)))\n\n"
+                      namespace))
 
       (insert "\n;;; Syntax-Analyzer / Parser:\n\n\n");
 

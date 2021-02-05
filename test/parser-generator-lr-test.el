@@ -1183,7 +1183,7 @@
     '(2 2 2 1 1)
     (parser-generator-lr-parse)))
   (let ((export (parser-generator-lr--export-parser "e--")))
-    (message "export: %s" export))
+    (message "export:\n%s\n" export))
 
   (message "Passed tests for (parser-generator-lr--export-parser)"))
 
