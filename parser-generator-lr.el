@@ -195,14 +195,14 @@
         "(defun
   %s-lex-analyzer--get-function (token)
   \"Get information about TOKEN.\"
-  (unless 
+  (unless
     %s-lex-analyzer--get-function
     (error \"Missing lex-analyzer get function!\"))
   (let ((meta-information))
-    (condition-case 
+    (condition-case
       error
       (progn
-        (setq 
+        (setq
           meta-information
           (funcall
             %s-lex-analyzer--get-function
@@ -211,7 +211,7 @@
         namespace
         namespace))
       (insert "
-      (error 
+      (error
         (error
           \"Lex-analyze failed to get token meta-data of %s, error: %s\"
           token
@@ -227,12 +227,12 @@
   %s-lex-analyzer--reset
   ()
   \"Reset Lex-Analyzer.\"
-  (setq 
-    %s-lex-analyzer--index 
+  (setq
+    %s-lex-analyzer--index
     1)
-  (when 
+  (when
     %s-lex-analyzer--reset-function
-    (funcall 
+    (funcall
       %s-lex-analyzer--reset-function)))\n"
                namespace
                namespace
@@ -291,7 +291,7 @@
       ;; Lex-Analyzer Pop Token
       (insert
        (format "
-(defun 
+(defun
   %s-lex-analyzer--pop-token ()
   \"Pop next token via lex-analyzer.\"
   (let ((iteration 0)
@@ -336,15 +336,15 @@
   \"If PRODUCTION-NUMBER exist, return it's production.\"
   (gethash
    production-number
-   %s--table-productions-number-reverse))\n\n"
+   %s--table-productions-number-reverse))\n"
                namespace
                namespace))
 
       ;; Valid symbol p
       (insert
        (format "
-(defun 
-  %s--valid-symbol-p 
+(defun
+  %s--valid-symbol-p
   (symbol)
   \"Return whether SYMBOL is valid or not.\"
   (let ((is-valid t))
@@ -354,7 +354,7 @@
              (%s--valid-non-terminal-p symbol)
              (%s--valid-terminal-p symbol))
       (setq is-valid nil))
-    is-valid))\n\n"
+    is-valid))\n"
                namespace
                namespace
                namespace
@@ -364,53 +364,70 @@
       ;; Valid e-p
       (insert
        (format "
-(defun 
+(defun
   %s--valid-e-p
   (symbol)
   \"Return whether SYMBOL is the e identifier or not.\"
   (eq
    symbol
-   %s--e-identifier))\n\n"
+   %s--e-identifier))\n"
                namespace
                namespace))
 
       ;; Valid EOF-p
       (insert
        (format "
-(defun 
+(defun
   %s--valid-eof-p
   (symbol)
   \"Return whether SYMBOL is the EOF identifier or not.\"
-  (eq 
-    symbol 
-    %s--eof-identifier))\n\n"
+  (eq
+    symbol
+    %s--eof-identifier))\n"
                namespace
                namespace))
 
-      ;; TODO --valid-non-terminal-p
-      ;; TODO --valid-terminal-p
+      ;; Valid non-terminal-p
+      (insert
+       (format "
+(defun %s--valid-non-terminal-p (symbol)
+  \"Return whether SYMBOL is a non-terminal in grammar or not.\"
+  (gethash
+   symbol
+   %s--table-non-terminal-p))\n"
+               namespace
+               namespace))
+
+      ;; Valid terminal-p
+      (insert
+       (format "
+(defun %s--valid-terminal-p (symbol)
+  \"Return whether SYMBOL is a terminal in grammar or not.\"
+  (gethash
+   symbol
+   %s--table-terminal-p))\n"
+               namespace
+               namespace))
 
       ;; Get grammar translation by number
       (insert
        (format "
-(defun 
+(defun
   %s--get-grammar-translation-by-number
   (production-number)
   \"If translation for PRODUCTION-NUMBER exist, return it.\"
-  (gethash 
-    production-number 
-    %s--table-translations))\n\n"
+  (gethash
+    production-number
+    %s--table-translations))\n"
                namespace
                namespace))
-
-      ;; TODO Add simple parse and translate function
 
       ;; Parse / translate function
       (insert
        (format "
-(defun 
+(defun
   %s--parse
-  (&optional 
+  (&optional
     input-tape-index
     pushdown-list
     output
@@ -761,8 +778,51 @@
      output
      translation
      translation-symbol-table
-     history)))\n\n")
+     history)))\n")
 
+      ;; Parse
+      (insert
+       (format "
+(defun %s-parse
+    (&optional
+     input-tape-index
+     pushdown-list
+     output
+     translation
+     history)
+  \"Perform a LR-parse via lex-analyzer, optionally at INPUT-TAPE-INDEX with PUSHDOWN-LIST, OUTPUT, TRANSLATION and HISTORY.\"
+  (let ((result
+         (%s--parse
+          input-tape-index
+          pushdown-list
+          output
+          translation
+          history)))
+    (nth 0 result)))\n"
+               namespace
+               namespace))
+
+      ;; Translate
+      (insert
+       (format "
+(defun %s-translate
+    (&optional
+     input-tape-index
+     pushdown-list
+     output
+     translation
+     history)
+  \"Perform a LR-parse via lex-analyzer, optionally at INPUT-TAPE-INDEX with PUSHDOWN-LIST, OUTPUT, TRANSLATION and HISTORY.\"
+  (let ((result
+         (%s--parse
+          input-tape-index
+          pushdown-list
+          output
+          translation
+          history)))
+    (nth 1 result)))\n"
+               namespace
+               namespace))
 
       ;; Footer
       (insert

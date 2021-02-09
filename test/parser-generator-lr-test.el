@@ -1183,7 +1183,21 @@
     '(2 2 2 1 1)
     (parser-generator-lr-parse)))
   (let ((export (parser-generator-lr--export-parser "e--")))
-    (message "export:\n%s\n" export))
+
+    (with-temp-buffer
+      (insert export)
+      (eval-buffer)
+      (should
+       (equal
+        t
+        (fboundp 'e---parse)))
+
+      (when (fboundp 'e---parse)
+        (should
+         (equal
+          '(2 2 2 1 1)
+          (e---parse))))
+      (message "Passed parse for exported parser")))
 
   (message "Passed tests for (parser-generator-lr--export-parser)"))
 
