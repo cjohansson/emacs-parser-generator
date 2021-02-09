@@ -97,7 +97,7 @@
          (error
           "Lex-analyze failed to peek next look-ahead at %s, error: %s"
           index
-          (car (cdr error))))))
+          error))))
     (nreverse look-ahead)))
 
 (defun parser-generator-lex-analyzer--pop-token ()

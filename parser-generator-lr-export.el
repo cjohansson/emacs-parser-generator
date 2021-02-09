@@ -54,56 +54,56 @@
       ;; Action-tables
       (insert
        (format
-        "(defconst\n  %s--action-tables\n  %s\n  \"Generated action-tables.\")\n\n"
+        "(defconst\n  %s--action-tables\n  %S\n  \"Generated action-tables.\")\n\n"
         namespace
         parser-generator-lr--action-tables))
 
       ;; Goto-tables
       (insert
        (format
-        "(defconst\n  %s--goto-tables\n  %s\n  \"Generated goto-tables.\")\n\n"
+        "(defconst\n  %s--goto-tables\n  %S\n  \"Generated goto-tables.\")\n\n"
         namespace
         parser-generator-lr--goto-tables))
 
       ;; Table production-number
       (insert
        (format
-        "(defconst\n  %s--table-productions-number-reverse\n  %s\n  \"Hash-table indexed by production-number and value is production.\")\n\n"
+        "(defconst\n  %s--table-productions-number-reverse\n  %S\n  \"Hash-table indexed by production-number and value is production.\")\n\n"
         namespace
         parser-generator--table-productions-number-reverse))
 
       ;; Table look-aheads
       (insert
        (format
-        "(defconst\n  %s--table-look-aheads\n  %s\n  \"Hash-table of valid look-aheads.\")\n\n"
+        "(defconst\n  %s--table-look-aheads\n  %S\n  \"Hash-table of valid look-aheads.\")\n\n"
         namespace
         parser-generator--table-look-aheads-p))
 
       ;; Table terminals
       (insert
        (format
-        "(defconst\n  %s--table-terminal-p\n  %s\n  \"Hash-table of valid terminals.\")\n\n"
+        "(defconst\n  %s--table-terminal-p\n  %S\n  \"Hash-table of valid terminals.\")\n\n"
         namespace
         parser-generator--table-non-terminal-p))
 
       ;; Table non-terminals
       (insert
        (format
-        "(defconst\n  %s--table-non-terminal-p\n  %s\n  \"Hash-table of valid non-terminals.\")\n\n"
+        "(defconst\n  %s--table-non-terminal-p\n  %S\n  \"Hash-table of valid non-terminals.\")\n\n"
         namespace
         parser-generator--table-non-terminal-p))
 
       ;; Table translations
       (insert
        (format
-        "(defconst\n  %s--table-translations\n  %s\n  \"Hash-table of translations.\")\n\n"
+        "(defconst\n  %s--table-translations\n  %S\n  \"Hash-table of translations.\")\n\n"
         namespace
         parser-generator--table-translations))
 
       ;; Lex-Analyzer Get Function
       (insert
        (format
-        "(defconst\n  %s-lex-analyzer--get-function\n  (lambda %s %s)\n  \"Lex-Analyzer Get Function.\")\n\n"
+        "(defconst\n  %s-lex-analyzer--get-function\n  (lambda %S %S)\n  \"Lex-Analyzer Get Function.\")\n\n"
         namespace
         (nth 2 parser-generator-lex-analyzer--get-function)
         (nth 3 parser-generator-lex-analyzer--get-function)))
@@ -111,7 +111,7 @@
       ;; Lex-Analyzer Function
       (insert
        (format
-        "(defconst\n  %s-lex-analyzer--function\n  (lambda %s %s)\n  \"Lex-Analyzer Function.\")\n\n"
+        "(defconst\n  %s-lex-analyzer--function\n  (lambda %S %S)\n  \"Lex-Analyzer Function.\")\n\n"
         namespace
         (nth 2 parser-generator-lex-analyzer--function)
         (nth 3 parser-generator-lex-analyzer--function)))
@@ -124,7 +124,7 @@
       (if parser-generator-lex-analyzer--reset-function
           (insert
            (format
-            "(lambda %s %s)\n"
+            "(lambda %S %S)\n"
             (nth 2 parser-generator-lex-analyzer--reset-function)
             (nth 3 parser-generator-lex-analyzer--reset-function)))
         (insert "nil\n"))
@@ -133,21 +133,21 @@
       ;; E-identifier
       (insert
        (format
-        "(defconst\n  %s--e-identifier\n  '%s\n  \"e-identifier\")\n\n"
+        "(defconst\n  %s--e-identifier\n  '%S\n  \"e-identifier\")\n\n"
         namespace
         parser-generator--e-identifier))
 
       ;; EOF-identifier
       (insert
        (format
-        "(defconst\n  %s--eof-identifier\n  '%s\n  \"EOF-identifier.\")\n\n"
+        "(defconst\n  %s--eof-identifier\n  '%S\n  \"EOF-identifier.\")\n\n"
         namespace
         parser-generator--eof-identifier))
 
       ;; Look-ahead number
       (insert
        (format
-        "(defconst\n  %s--look-ahead-number\n  %s\n  \"Look-ahead number.\")\n\n"
+        "(defconst\n  %s--look-ahead-number\n  %S\n  \"Look-ahead number.\")\n\n"
         namespace
         parser-generator--look-ahead-number))
 
@@ -169,9 +169,6 @@
         "(defun
   %s-lex-analyzer--get-function (token)
   \"Get information about TOKEN.\"
-  (unless
-    %s-lex-analyzer--get-function
-    (error \"Missing lex-analyzer get function!\"))
   (let ((meta-information))
     (condition-case
       error
@@ -259,7 +256,7 @@
          (error
           \"Lex-analyze failed to peek next look-ahead at %s, error: %s\"
           index
-          (car (cdr error))))))
+          error))))
     (nreverse look-ahead)))\n")
 
       ;; Lex-Analyzer Pop Token
