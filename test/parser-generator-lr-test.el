@@ -1152,55 +1152,6 @@
 
   (message "Passed tests for (parser-generator-lr-translate)"))
 
-(defun parser-generator-lr-test-export-parser ()
-  "Test `parser-generator-lr--export-parser'."
-  (message "Started tests for (parser-generator-lr--export-parser)")
-
-  (parser-generator-set-grammar
-   '((Sp S) (a b) ((Sp S) (S (S a S b)) (S e)) Sp))
-  (parser-generator-set-look-ahead-number 1)
-  (parser-generator-process-grammar)
-  (parser-generator-lr-generate-parser-tables)
-  (setq
-   parser-generator-lex-analyzer--function
-   (lambda (index)
-     (let* ((string '((a 1 . 2) (a 2 . 3) (b 3 . 4) (b 4 . 5)))
-            (string-length (length string))
-            (max-index index)
-            (tokens))
-       (while (and
-               (< (1- index) string-length)
-               (< (1- index) max-index))
-         (push (nth (1- index) string) tokens)
-         (setq index (1+ index)))
-       (nreverse tokens))))
-  (setq
-   parser-generator-lex-analyzer--get-function
-   (lambda (token)
-     (car token)))
-  (should
-   (equal
-    '(2 2 2 1 1)
-    (parser-generator-lr-parse)))
-  (let ((export (parser-generator-lr--export-parser "e--")))
-
-    (with-temp-buffer
-      (insert export)
-      (eval-buffer)
-      (should
-       (equal
-        t
-        (fboundp 'e---parse)))
-
-      (when (fboundp 'e---parse)
-        (should
-         (equal
-          '(2 2 2 1 1)
-          (e---parse))))
-      (message "Passed parse for exported parser")))
-
-  (message "Passed tests for (parser-generator-lr--export-parser)"))
-
 (defun parser-generator-lr-test ()
   "Run test."
   ;; (setq debug-on-error t)
@@ -1212,8 +1163,7 @@
   (parser-generator-lr-test-parse)
   (parser-generator-lr-test-translate)
   (parser-generator-lr-test-parse-k-2)
-  (parser-generator-lr-test-parse-k-0)
-  (parser-generator-lr-test-export-parser))
+  (parser-generator-lr-test-parse-k-0))
 
 
 (provide 'parser-generator-lr-test)
