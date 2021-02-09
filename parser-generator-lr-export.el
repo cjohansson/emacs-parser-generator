@@ -156,7 +156,7 @@
       ;; Lex-analyzer index
       (insert
        (format
-        "(defvar\n  %s-lex-analyzer--index\n  0\n  \"Current index of lex-analyzer.\")\n\n"
+        "(defvar-local\n  %s-lex-analyzer--index\n  0\n  \"Current index of lex-analyzer.\")\n\n"
         namespace))
 
       (insert "\n;;; Functions:\n\n\n")

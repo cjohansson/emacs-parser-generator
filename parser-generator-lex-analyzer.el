@@ -23,7 +23,7 @@
   nil
   "Function used as lex-analyzer.  This function will be called and as result a list with structure '(a b . c) is expected where a is a string or symbol, if no more tokens can be found nil is expected, if it's not possible to proceed lex analysis an error-signal is expected.")
 
-(defvar
+(defvar-local
   parser-generator-lex-analyzer--index
   nil
   "Index in lex-analyzer.")
