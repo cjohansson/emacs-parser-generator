@@ -84,7 +84,7 @@
        (format
         "(defconst\n  %s--table-terminal-p\n  %S\n  \"Hash-table of valid terminals.\")\n\n"
         namespace
-        parser-generator--table-non-terminal-p))
+        parser-generator--table-terminal-p))
 
       ;; Table non-terminals
       (insert
@@ -178,7 +178,6 @@
           (funcall
             %s-lex-analyzer--get-function
             token)))"
-        namespace
         namespace
         namespace))
       (insert "
