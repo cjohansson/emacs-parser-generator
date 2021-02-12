@@ -44,33 +44,43 @@
 
     (should
      (equal
+      '(2 2 2 1 1)
+      (parser-generator-lr-parse)))
+    (should
+     (equal
       "bbaaba"
       (parser-generator-lr-translate)))
 
     ;; Export parser
-    (let ((export (parser-generator-lr-export-to-elisp "fa")))
+    (let ((export (parser-generator-lr-export-to-elisp "ba")))
+      (message "export:\n%s\n" export)
       (with-temp-buffer
         (insert export)
         (eval-buffer)
         (should
          (equal
           t
-          (fboundp 'fa-translate))))
+          (fboundp 'ba-translate))))
 
-      (when (fboundp 'fa-translate)
+      (when (fboundp 'pa-translate)
+        (should
+         (equal
+          '(2 2 2 1 1)
+          (ba-parse))))
+
+      (when (fboundp 'ba-translate)
         (should
          (equal
           "bbaaba"
-          (fa-translate))))))
+          (ba-translate))))))
 
   (should
    (equal
     t
-    (fboundp 'fa--parse)))
+    (fboundp 'ba--parse)))
 
-  (when (fboundp 'fa--parse)
-    (let ((regular-parse (fa--parse)))
-      ;; (message "regular-parse: %s" regular-parse)
+  (when (fboundp 'ba--parse)
+    (let ((regular-parse (ba--parse)))
       (let ((regular-parse-history (nth 3 regular-parse)))
         ;; (message "regular-parse-history: %s" regular-parse-history)
         (let ((history-length (length regular-parse-history))
@@ -86,14 +96,17 @@
                   (translation-symbol-table (nth 4 history))
                   (history-list iterated-history))
 
-              ;; (message "input-tape-index: %s" input-tape-index)
-              ;; (message "pushdown-list: %s" pushdown-list)
-              ;; (message "output: %s" output)
-              ;; (message "translation: %s" translation)
-              ;; (message "history-list: %s" history-list)
+              (message "\nIncremental %s" history-index)
+              (message "regular-parse: %s" regular-parse)
+              (message "input-tape-index: %s" input-tape-index)
+              (message "pushdown-list: %s" pushdown-list)
+              (message "output: %s" output)
+              (message "translation: %s" translation)
+              (message "translation-symbol-table: %s" translation-symbol-table)
+              (message "history-list: %s\n" history-list)
 
               (let ((incremental-parse
-                     (fa--parse
+                     (ba--parse
                       input-tape-index
                       pushdown-list
                       output

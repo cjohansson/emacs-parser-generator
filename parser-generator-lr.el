@@ -954,16 +954,27 @@
           (>
            parser-generator-lex-analyzer--index
            pre-index)
-        (push
-         `(,parser-generator-lex-analyzer--index
-           ,pushdown-list
-           ,output
-           ,translation
-           ,translation-symbol-table)
-         history)
-        (setq
-         pre-index
-         parser-generator-lex-analyzer--index))
+        ;; We make a copy of the hash-table here to avoid passing same
+        ;; hash-table every-time with pointer
+        (let ((translation-symbol-table-copy
+               (make-hash-table :test 'equal)))
+          (maphash
+           (lambda (key value)
+             (puthash
+              key
+              value
+              translation-symbol-table-copy))
+           translation-symbol-table)
+          (push
+           `(,parser-generator-lex-analyzer--index
+             ,pushdown-list
+             ,output
+             ,translation
+             ,translation-symbol-table-copy)
+           history)
+          (setq
+           pre-index
+           parser-generator-lex-analyzer--index)))
 
       ;; (1) The look-ahead string u, consisting of the next k input symbols, is determined.
       (let ((look-ahead
