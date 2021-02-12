@@ -60,9 +60,13 @@
         (should
          (equal
           t
+          (fboundp 'ba-parse)))
+        (should
+         (equal
+          t
           (fboundp 'ba-translate))))
 
-      (when (fboundp 'pa-translate)
+      (when (fboundp 'ba-parse)
         (should
          (equal
           '(2 2 2 1 1)
@@ -164,6 +168,7 @@
   ;; Export parser
   (let ((export (parser-generator-lr-export-to-elisp "e--")))
 
+    (message "export:\n%s\n" export)
     (with-temp-buffer
       (insert export)
       (eval-buffer)
