@@ -53,7 +53,8 @@
 
     ;; Export parser
     (let ((export (parser-generator-lr-export-to-elisp "ba")))
-      (message "export:\n%s\n" export)
+      (parser-generator--debug
+       (message "export:\n%s\n" export))
       (with-temp-buffer
         (insert export)
         (eval-buffer)
@@ -100,14 +101,15 @@
                   (translation-symbol-table (nth 4 history))
                   (history-list iterated-history))
 
-              (message "\nIncremental %s" history-index)
-              (message "regular-parse: %s" regular-parse)
-              (message "input-tape-index: %s" input-tape-index)
-              (message "pushdown-list: %s" pushdown-list)
-              (message "output: %s" output)
-              (message "translation: %s" translation)
-              (message "translation-symbol-table: %s" translation-symbol-table)
-              (message "history-list: %s\n" history-list)
+              (parser-generator--debug
+               (message "\nIncremental %s" history-index)
+               (message "regular-parse: %s" regular-parse)
+               (message "input-tape-index: %s" input-tape-index)
+               (message "pushdown-list: %s" pushdown-list)
+               (message "output: %s" output)
+               (message "translation: %s" translation)
+               (message "translation-symbol-table: %s" translation-symbol-table)
+               (message "history-list: %s\n" history-list))
 
               (let ((incremental-parse
                      (ba--parse
@@ -168,7 +170,8 @@
   ;; Export parser
   (let ((export (parser-generator-lr-export-to-elisp "e--")))
 
-    (message "export:\n%s\n" export)
+    (parser-generator--debug
+     (message "export:\n%s\n" export))
     (with-temp-buffer
       (insert export)
       (eval-buffer)
