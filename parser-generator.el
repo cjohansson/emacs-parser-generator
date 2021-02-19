@@ -821,11 +821,15 @@
                     (not expanded-all-second))
               ;; Make one iteration after everything has been expanded
               (when expanded-all
-                (setq expanded-all-second t))
+                (setq
+                 expanded-all-second
+                 t))
               (when (> i 1000)
                 (error "Endless loop!"))
               (parser-generator--debug (message "i = %s" i))
-              (setq expanded-all t)
+              (setq
+               expanded-all
+               t)
               (let ((f-set (make-hash-table :test 'equal)))
 
                 ;; Iterate all productions, set F_i
@@ -863,9 +867,15 @@
 
                             (unless (nth 0 f-set-return)
                               (parser-generator--debug
-                               (message "rhs-expanded-full flagged negative"))
-                              (setq rhs-expanded-full nil)
-                              (setq expanded-all nil))
+                               (message
+                                "Expanded-all negative set because f-set-return '%s' is not fully expanded"
+                                f-set-return))
+                              (setq
+                               rhs-expanded-full
+                               nil)
+                              (setq
+                               expanded-all
+                               nil))
 
                             (setq rhs-leading-terminals
                                   (nth 1 f-set-return))
@@ -880,7 +890,8 @@
                               rhs-leading-terminals))
                             (parser-generator--debug
                              (message
-                              "expanded-all: %s" expanded-all))
+                              "expanded-all: %s"
+                              expanded-all))
 
                             (when rhs-leading-terminals
                               (when (and
@@ -907,8 +918,16 @@
                           ;; If another set has not been fully expanded
                           ;; mark LHS as not fully expanded
                           (unless (nth 0 existing-f-set)
-                            (setq expanded-all nil)
-                            (setq rhs-expanded-full nil))
+                            (parser-generator--debug
+                             (message
+                              "Expanded-all negative set because a sub-set '%s' is not fully expanded"
+                              existing-f-set))
+                            (setq
+                             expanded-all
+                             nil)
+                            (setq
+                             rhs-expanded-full
+                             nil))
 
                           (setq f-p-set
                                 (append
@@ -1118,8 +1137,10 @@
                                (not (equal lhs (list rhs-element))))
                           (parser-generator--debug
                            (message
-                            "Expanded-all negative set 1 from %s" rhs-element))
-                          (setq expanded-all nil))
+                            "Expanded-all negative set because sub-terminals of '%s' has not been fully expanded" rhs-element))
+                          (setq
+                           expanded-all
+                           nil))
 
                         (if sub-terminal-sets
                             (progn
@@ -1284,9 +1305,13 @@
 
                     (parser-generator--debug
                      (message
-                      "Expanded-all negative set 2"))
-                    (setq expanded-all nil)
-                    (setq all-leading-terminals-p nil)))
+                      "Expanded-all negative set because symbol '%s' is a non-terminal and i is zero" rhs-element))
+                    (setq
+                     expanded-all
+                     nil)
+                    (setq
+                     all-leading-terminals-p
+                     nil)))
 
                  ((equal rhs-type 'E-IDENTIFIER)
                   (if disallow-e-first
@@ -1334,8 +1359,12 @@
                 (setq leading-terminals (list leading-terminals)))
               (parser-generator--debug
                (message "leading-terminals 5: %s" leading-terminals))
-              (push leading-terminals f-set))))))
-    (list expanded-all f-set)))
+              (push
+               leading-terminals
+               f-set))))))
+    (list
+     expanded-all
+     f-set)))
 
 ;; Algorithm 5.5, p. 357
 (defun parser-generator--first (β &optional disallow-e-first)
