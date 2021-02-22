@@ -824,7 +824,7 @@
                 (setq
                  expanded-all-second
                  t))
-              (when (> i 1000)
+              (when (> i 100)
                 (error "Endless loop!"))
               (parser-generator--debug (message "i = %s" i))
               (setq
@@ -915,12 +915,13 @@
                                 production-lhs
                                 f-set)))
 
-                          ;; If another set has not been fully expanded
+                          ;; If another RHS has not been fully expanded
                           ;; mark LHS as not fully expanded
                           (unless (nth 0 existing-f-set)
                             (parser-generator--debug
                              (message
-                              "Expanded-all negative set because a sub-set '%s' is not fully expanded"
+                              "Expanded-all negative set for LHS '%s' because a alternative RHS '%s' is not fully expanded"
+                              production-lhs
                               existing-f-set))
                             (setq
                              expanded-all
@@ -1137,7 +1138,9 @@
                                (not (equal lhs (list rhs-element))))
                           (parser-generator--debug
                            (message
-                            "Expanded-all negative set because sub-terminals of '%s' has not been fully expanded" rhs-element))
+                            "Expanded-all negative set for '%s' because sub-terminals of '%s' has not been fully expanded"
+                            lhs
+                            rhs-element))
                           (setq
                            expanded-all
                            nil))
@@ -1305,7 +1308,9 @@
 
                     (parser-generator--debug
                      (message
-                      "Expanded-all negative set because symbol '%s' is a non-terminal and i is zero" rhs-element))
+                      "Expanded-all negative set for '%s' because symbol '%s' is a non-terminal and i is zero"
+                      lhs
+                      rhs-element))
                     (setq
                      expanded-all
                      nil)

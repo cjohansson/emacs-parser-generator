@@ -383,6 +383,25 @@
     (parser-generator--first 'S)))
   (message "Passed first 9 with complex grammar with starting e-identifier variant 2")
 
+  (parser-generator-set-grammar
+   '(
+     (Sp S A B)
+     (a b c)
+     (
+      (Sp S)
+      (S A B)
+      (A (a b A) (B c))
+      (B S c)
+      )
+     Sp))
+  (parser-generator-set-look-ahead-number 1)
+  (parser-generator-process-grammar)
+  (should
+   (equal
+    '((a) (c))
+    (parser-generator--first 'Sp)))
+  (message "Passed first 10 with complex grammar that contains cyclic loops")
+
   (message "Passed tests for (parser-generator--first)"))
 
 (defun parser-generator-test--e-free-first ()
