@@ -370,7 +370,7 @@
   (parser-generator-process-grammar)
   (should
    (equal
-    '((a a a) (a a b) (a a e) (a b a) (a b e) (a e e) (e e e))
+    '((a a b) (a a e) (a b a) (a b e) (a e e) (e e e))
     (parser-generator--first 'S)))
   (message "Passed first 8 with complex grammar with starting e-identifier variant 2")
 
@@ -379,7 +379,7 @@
   (parser-generator-process-grammar)
   (should
    (equal
-    '((a a a b) (a a a e) (a a b a) (a a b b) (a a e e) (a b a a) (a b a b) (a b a e) (a b e e) (a e e e) (e e e e))
+    '((a a b b) (a a e e) (a b a a) (a b a b) (a b a e) (a b e e) (a e e e) (e e e e))
     (parser-generator--first 'S)))
   (message "Passed first 9 with complex grammar with starting e-identifier variant 2")
 

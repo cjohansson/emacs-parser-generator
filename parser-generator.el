@@ -801,16 +801,20 @@
   (unless (and
            parser-generator--f-sets
            parser-generator--f-free-sets)
-    (parser-generator--debug (message "(parser-generator--generate-f-sets)"))
-    (let ((productions (parser-generator--get-grammar-productions))
+    (parser-generator--debug
+     (message "(parser-generator--generate-f-sets)"))
+    (let ((productions
+           (parser-generator--get-grammar-productions))
           (k
            (max
             1
             parser-generator--look-ahead-number)))
       (let ((disallow-set '(nil t)))
-        (parser-generator--debug (message "disallow-set: %s" disallow-set))
+        (parser-generator--debug
+         (message "disallow-set: %s" disallow-set))
         (dolist (disallow-e-first disallow-set)
-          (parser-generator--debug (message "disallow-e-first: %s" disallow-e-first))
+          (parser-generator--debug
+           (message "disallow-e-first: %s" disallow-e-first))
           (let ((f-sets (make-hash-table :test 'equal))
                 (i 0)
                 (expanded-all nil)
@@ -826,7 +830,8 @@
                  t))
               (when (> i 100)
                 (error "Endless loop!"))
-              (parser-generator--debug (message "i = %s" i))
+              (parser-generator--debug
+               (message "i = %s" i))
               (setq
                expanded-all
                t)
@@ -859,6 +864,11 @@
                                     ,production-lhs)
                                   '((nil t 0)))))
 
+                            ;; TODO Need to pass which non-terminal that was not fully expanded
+                            ;; TODO to determine if we have cycles in grammar
+                            ;; TODO Check if non-terminal already has been processed in
+                            ;; TODO (gethash production-lhs f-set)
+
                             (parser-generator--debug
                              (message
                               "f-set-return: %s = %s"
@@ -866,19 +876,41 @@
                               f-set-return))
 
                             (unless (nth 0 f-set-return)
-                              (parser-generator--debug
-                               (message
-                                "Expanded-all negative set because f-set-return '%s' is not fully expanded"
-                                f-set-return))
-                              (setq
-                               rhs-expanded-full
-                               nil)
-                              (setq
-                               expanded-all
-                               nil))
+                              (let ((unexpanded-non-terminal
+                                     (nth 1 f-set-return)))
+                                (cond
+                                 ((equal
+                                   unexpanded-non-terminal
+                                   production-lhs)
+                                  (parser-generator--debug
+                                   (message
+                                    "Production '%s' unexpanded due to self-reference, ignore flag."
+                                    production-lhs)))
+                                 ((gethash
+                                   unexpanded-non-terminal
+                                   f-set)
+                                  (parser-generator--debug
+                                   (message
+                                    "Production '%s' is un-expanded due to reference to previously processed production '%s', ignore flag."
+                                    production-lhs
+                                    unexpanded-non-terminal
+                                    )))
+                                 (t
+                                  (parser-generator--debug
+                                   (message
+                                    "Expanded-all negative set because f-set-return '%s' is not fully expanded because '%s' is unexpanded"
+                                    f-set-return
+                                    (nth 1 f-set-return)))
+                                  (setq
+                                   rhs-expanded-full
+                                   nil)
+                                  (setq
+                                   expanded-all
+                                   nil)))))
 
-                            (setq rhs-leading-terminals
-                                  (nth 1 f-set-return))
+                            (setq
+                             rhs-leading-terminals
+                             (nth 2 f-set-return))
 
                             (parser-generator--debug
                              (message
@@ -938,7 +970,8 @@
                       ;; Make set distinct
                       (setq
                        f-p-set
-                       (parser-generator--distinct f-p-set))
+                       (parser-generator--distinct
+                        f-p-set))
                       (puthash
                        production-lhs
                        (list
@@ -1049,7 +1082,8 @@
         (f-sets (nth 2 state))
         (disallow-e-first (nth 3 state))
         (lhs (nth 4 state))
-        (expanded-all t))
+        (expanded-all t)
+        (unexpanded-non-terminal nil))
     (parser-generator--debug
      (message "disallow-3-first: %s" disallow-e-first)
      (message "input-tape-length: %s" input-tape-length)
@@ -1134,13 +1168,18 @@
                         ;; as not fully expanded either
                         (when (and
                                sub-terminal-data
-                               (not sub-terminal-expanded)
-                               (not (equal lhs (list rhs-element))))
+                               (not sub-terminal-expanded))
                           (parser-generator--debug
                            (message
                             "Expanded-all negative set for '%s' because sub-terminals of '%s' has not been fully expanded"
                             lhs
                             rhs-element))
+                          (setq
+                           unexpanded-non-terminal
+                           (list rhs-element))
+                          (setq
+                           all-leading-terminals-p
+                           nil)
                           (setq
                            expanded-all
                            nil))
@@ -1303,6 +1342,9 @@
                             rhs-element
                             (1- i)))
                           (setq
+                           unexpanded-non-terminal
+                           (list rhs-element))
+                          (setq
                            all-leading-terminals-p
                            nil)))
 
@@ -1314,6 +1356,9 @@
                     (setq
                      expanded-all
                      nil)
+                    (setq
+                     unexpanded-non-terminal
+                     (list rhs-element))
                     (setq
                      all-leading-terminals-p
                      nil)))
@@ -1369,6 +1414,7 @@
                f-set))))))
     (list
      expanded-all
+     unexpanded-non-terminal
      f-set)))
 
 ;; Algorithm 5.5, p. 357
