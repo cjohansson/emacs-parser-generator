@@ -11,6 +11,7 @@
 
 (defun parser-generator-lr-export-to-elisp (namespace)
   "Export parser with NAMESPACE."
+  (message "\nStarting generation of elips..\n")
 
   ;; Make sure all requisites are defined
   (unless parser-generator-lr--action-tables
@@ -831,6 +832,7 @@
        (buffer-substring-no-properties
         (point-min)
         (point-max))))
+    (message "\nCompleted generation of elips.\n")
     code))
 
 

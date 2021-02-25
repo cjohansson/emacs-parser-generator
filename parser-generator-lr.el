@@ -29,15 +29,18 @@
 
 (defun parser-generator-lr-generate-parser-tables ()
   "Generate parsing tables for grammar."
+  (message "\nStarting generation of parser-tables..\n")
   (let ((table-lr-items
          (parser-generator-lr--generate-goto-tables)))
     (parser-generator-lr--generate-action-tables
      table-lr-items)
+    (message "\nCompleted generation of parser-tables.\n")
     table-lr-items))
 
 ;; Algorithm 5.11, p. 393
 (defun parser-generator-lr--generate-action-tables (table-lr-items)
   "Generate action-tables for lr-grammar based on TABLE-LR-ITEMS."
+  (message "\nStarting generation of action-tables..\n")
   (let ((action-tables)
         (states '(shift reduce error))
         (added-actions (make-hash-table :test 'equal))
@@ -239,6 +242,10 @@
         (parser-generator--debug
          (message "%s actions %s" goto-index action-table))
         (when action-table
+          (message
+           "ACTION-TABLE (%d): %s\n"
+           goto-index
+           action-table)
           (push
            (list
             goto-index
@@ -256,11 +263,13 @@
          table-index
          (car (cdr (nth table-index action-tables)))
          parser-generator-lr--action-tables)
-        (setq table-index (1+ table-index))))))
+        (setq table-index (1+ table-index)))))
+  (message "\nCompleted generation of action-tables..\n"))
 
 ;; Algorithm 5.9, p. 389
 (defun parser-generator-lr--generate-goto-tables ()
   "Calculate set of valid LR(k) items for grammar and a GOTO-table."
+  (message "\nStarting generation of goto-tables..\n")
   (parser-generator--debug
    (message "(parser-generator-lr--generate-goto-tables)"))
   (let ((lr-item-set-new-index 0)
@@ -416,6 +425,10 @@
          (sort
           goto-table-table
           'parser-generator--sort-list))
+        (message
+         "GOTO-TABLE (%d): %s\n"
+         lr-item-set-index
+         goto-table-table)
         (push
          `(
            ,lr-item-set-index
@@ -444,6 +457,7 @@
           table-lr-items
           t))
       (error "Inconsistent grammar!"))
+    (message "\nCompleted generation of goto-tables.\n")
     table-lr-items))
 
 ;; Algorithm 5.10, p. 391
@@ -719,6 +733,7 @@
            (message "γ: %s" γ))
           prefix-previous)))))
 
+;; TODO Optimize this function 1. first and 2. sort
 (defun parser-generator-lr--items-for-goto (previous-lr-item x)
   "Calculate LR-items for GOTO(PREVIOUS-LR-ITEM, X)."
   (let ((lr-new-item)
@@ -812,7 +827,10 @@
 
                   (let ((lr-item-suffix-rest-first
                          (parser-generator--first
-                          lr-item-suffix-rest)))
+                          lr-item-suffix-rest
+                          nil
+                          t
+                          t)))
                     (parser-generator--debug
                      (message
                       "lr-item-suffix-rest-first (before): %s"
@@ -875,7 +893,7 @@
        lr-new-item
        (sort
         lr-new-item
-        'parser-generator--sort-list)))
+        'parser-generator--sort-list))) ;; TODO Optimize this
 
     lr-new-item))
 

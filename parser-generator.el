@@ -92,7 +92,8 @@
       (unless (gethash element processed)
         (puthash element t processed)
         (push element new-elements)))
-    (nreverse new-elements)))
+    (nreverse
+     new-elements)))
 
 (defun parser-generator--generate-list-of-symbol (k symbol)
   "Generate list of K number of SYMBOL."
@@ -437,6 +438,10 @@
                  (list
                   lhs
                   (reverse new-rhs)))
+                (message
+                 "Production %s: %s"
+                 production-index
+                 production)
                 (parser-generator--debug
                  (message
                   "Production %s: %s"
@@ -510,6 +515,7 @@
 
 (defun parser-generator-process-grammar ()
   "Process grammar."
+  (message "\nStarting process of grammar..\n")
   (parser-generator--clear-cache)
   (unless parser-generator--look-ahead-number
     (error "No look-ahead-number defined!"))
@@ -523,7 +529,8 @@
       (parser-generator--valid-grammar-p
        parser-generator--grammar)
     (error "Invalid grammar G!"))
-  (parser-generator--load-symbols))
+  (parser-generator--load-symbols)
+  (message "\nCompleted process of grammar\n"))
 
 (defun parser-generator--sort-list (a b)
   "Return non-nil if a element in A is greater than a element in B in lexicographic order."
@@ -1418,11 +1425,13 @@
      f-set)))
 
 ;; Algorithm 5.5, p. 357
-(defun parser-generator--first (β &optional disallow-e-first)
-  "For sentential-form Β, calculate first terminals, optionally DISALLOW-E-FIRST."
+(defun parser-generator--first (β &optional disallow-e-first ignore-validation skip-sorting)
+  "For sentential-form Β, calculate first terminals, optionally DISALLOW-E-FIRST, IGNORE-VALIDATION and SKIP-SORTING."
   (unless (listp β)
     (setq β (list β)))
-  (unless (parser-generator--valid-sentential-form-p β)
+  (unless (or
+           ignore-validation
+           (parser-generator--valid-sentential-form-p β))
     (error "Invalid sentential form β! %s" β))
   (let ((k
          (max
@@ -1432,7 +1441,8 @@
     ;; Generate F-sets only once per grammar
     (parser-generator--generate-f-sets)
 
-    (let ((first-list nil))
+    (let ((first-list nil)
+          (first-items (make-hash-table :test 'equal)))
       ;; Iterate each symbol in β using a PDA algorithm
       (let ((input-tape β)
             (input-tape-length (length β))
@@ -1534,7 +1544,7 @@
                               "stopped looking since non-terminal starts with e-identifier: %s"
                               symbol-f-set))
                             (setq keep-looking nil))
-                          
+                        
                         ;; Handle this scenario here were a non-terminal can result in different FIRST sets
                         (when (>
                                (length symbol-f-set)
@@ -1604,21 +1614,28 @@
                   (setq first (reverse first))
                   ;; (message "first-after-fill: %s" first)
                   )
-                (parser-generator--debug
-                 (message
-                  "push to first-list: %s to %s"
-                  first
-                  first-list))
-                (push
-                 first
-                 first-list))))))
-
-      (setq
-       first-list
-       (parser-generator--distinct first-list))
-      (setq
-       first-list
-       (sort first-list 'parser-generator--sort-list))
+                (unless
+                    (gethash
+                     first
+                     first-items)
+                  (parser-generator--debug
+                   (message
+                    "push to first-list: %s to %s"
+                    first
+                    first-list))
+                  (puthash
+                   first
+                   t
+                   first-items)
+                  (push
+                   first
+                   first-list)))))))
+      (unless skip-sorting
+        (setq
+         first-list
+         (sort
+          first-list
+          'parser-generator--sort-list)))
       first-list)))
 
 ;; Definition at p. 343

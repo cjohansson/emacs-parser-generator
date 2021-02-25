@@ -76,6 +76,31 @@
       (7 (((a) reduce 1) ((b) reduce 1))))
     (parser-generator--hash-to-list
      parser-generator-lr--action-tables)))
+  (message "Passed Example 5.32 p. 393")
+
+  ;; Cyclical grammar
+  (parser-generator-set-grammar
+   '(
+     (Sp S A B)
+     (a b c)
+     (
+      (Sp S)
+      (S A B)
+      (A (a b A) (a B))
+      (B (c S))
+      )
+     Sp))
+  (parser-generator-set-look-ahead-number 1)
+  (parser-generator-process-grammar)
+  (let ((table-lr-items
+         (parser-generator-lr--generate-goto-tables)))
+    ;; (message "cyclical lr-items: %s" table-lr-items)
+    (parser-generator-lr--generate-action-tables
+     table-lr-items)
+    ;; (message "cyclical goto-tables: %s" parser-generator-lr--goto-tables)
+    ;; (message "cyclical action-tables: %s" parser-generator-lr--action-tables)
+    )
+  (message "Passed cyclical grammar")
 
   (message "Passed tests for (parser-generator-lr--generate-action-tables)"))
 
