@@ -318,7 +318,9 @@
          lr-item-set-index
          lr-items
          table-lr-items)
-        (setq goto-table-table nil)
+        (setq
+         goto-table-table
+         nil)
 
         ;; Build list of possible next-symbols
         ;; here that follows current set
@@ -368,7 +370,7 @@
             (let ((prefix-lr-items
                    (parser-generator-lr--items-for-goto
                     lr-items
-                    symbol)))
+                    symbol))) ;; TODO Optimize this
 
               ;; If a' = GOTO(a, X) is nonempty
               (when prefix-lr-items
@@ -619,7 +621,10 @@
                         (let ((rhs-rest (append (cdr rhs) suffix)))
                           (let ((rhs-rest-first
                                  (parser-generator--first
-                                  rhs-rest)))
+                                  rhs-rest
+                                  nil
+                                  t
+                                  t)))
                             (parser-generator--debug
                              (message "is non-terminal")
                              (message "rhs-rest: %s from %s + %s" rhs-rest (cdr rhs) suffix)
