@@ -273,6 +273,8 @@
   (parser-generator--debug
    (message "(parser-generator-lr--generate-goto-tables)"))
   (let ((lr-item-set-new-index 0)
+        (marked-count 0)
+        (total-count 1)
         (goto-table)
         (unmarked-lr-item-sets)
         (marked-lr-item-sets
@@ -292,11 +294,12 @@
       (setq
        lr-item-set-new-index
        (1+ lr-item-set-new-index))
-      ;; Mark the initial set
-      (puthash
-       e-set
-       lr-item-set-new-index
-       marked-lr-item-sets))
+      (let ((e-set-hash-key (format "%s" e-set)))
+        ;; Mark the initial set
+        (puthash
+         e-set-hash-key
+         lr-item-set-new-index
+         marked-lr-item-sets)))
 
     ;; (2) If a set of items a in S is unmarked
     ;; (3) Repeat step (2) until all sets of items in S are marked.
@@ -306,9 +309,15 @@
           (goto-table-table))
       (while unmarked-lr-item-sets
 
-        (setq popped-item (pop unmarked-lr-item-sets))
-        (setq lr-item-set-index (car popped-item))
-        (setq lr-items (car (cdr popped-item)))
+        (setq
+         popped-item
+         (pop unmarked-lr-item-sets))
+        (setq
+         lr-item-set-index
+         (car popped-item))
+        (setq
+         lr-items
+         (car (cdr popped-item)))
         (parser-generator--debug
          (message "lr-item-set-index: %s" lr-item-set-index)
          (message "marked lr-items: %s" lr-items)
@@ -370,57 +379,64 @@
             (let ((prefix-lr-items
                    (parser-generator-lr--items-for-goto
                     lr-items
-                    symbol))) ;; TODO Optimize this
+                    symbol)))
 
               ;; If a' = GOTO(a, X) is nonempty
               (when prefix-lr-items
+                (let ((prefix-lr-items-hash-key
+                       (format
+                        "%s"
+                        prefix-lr-items)))
 
-                (parser-generator--debug
-                 (message
-                  "GOTO(%s, %s) = %s"
-                  lr-items
-                  symbol
-                  prefix-lr-items))
+                  (parser-generator--debug
+                   (message
+                    "GOTO(%s, %s) = %s"
+                    lr-items
+                    symbol
+                    prefix-lr-items))
 
-                ;; and is not already in S
-                (let ((goto
-                       (gethash
-                        prefix-lr-items
-                        marked-lr-item-sets)))
-                  (if goto
-                      (progn
-                        (parser-generator--debug
-                         (message
-                          "Set already exists in: %s set: %s"
-                          goto
-                          prefix-lr-items))
-                        (push
-                         `(,symbol ,goto)
-                         goto-table-table))
+                  ;; and is not already in S
+                  (let ((goto
+                         (gethash
+                          prefix-lr-items-hash-key
+                          marked-lr-item-sets)))
+                    (if goto
+                        (progn
+                          (parser-generator--debug
+                           (message
+                            "Set already exists in: %s set: %s"
+                            goto
+                            prefix-lr-items))
+                          (push
+                           `(,symbol ,goto)
+                           goto-table-table))
 
-                    (parser-generator--debug
-                     (message
-                      "Set is new: %s"
-                      prefix-lr-items))
+                      (parser-generator--debug
+                       (message
+                        "Set is new: %s"
+                        prefix-lr-items))
 
-                    ;; Note that GOTO(a, X) will always be empty if all items in a
-                    ;; have the dot at the right end of the production
+                      ;; Note that GOTO(a, X) will always be empty if all items in a
+                      ;; have the dot at the right end of the production
 
-                    ;; then add a' to S as an unmarked set of items
-                    (push
-                     `(,symbol ,lr-item-set-new-index)
-                     goto-table-table)
-                    (push
-                     `(,lr-item-set-new-index ,prefix-lr-items)
-                     unmarked-lr-item-sets)
-                    ;; (2) Mark a
-                    (puthash
-                     prefix-lr-items
-                     lr-item-set-new-index
-                     marked-lr-item-sets)
-                    (setq
-                     lr-item-set-new-index
-                     (1+ lr-item-set-new-index))))))))
+                      ;; then add a' to S as an unmarked set of items
+                      (push
+                       `(,symbol ,lr-item-set-new-index)
+                       goto-table-table)
+                      (push
+                       `(,lr-item-set-new-index ,prefix-lr-items)
+                       unmarked-lr-item-sets)
+                      (setq
+                       total-count
+                       (1+ total-count))
+                      ;; (2) Mark a
+                      (puthash
+                       prefix-lr-items-hash-key
+                       lr-item-set-new-index
+                       marked-lr-item-sets)
+                      (setq
+                       lr-item-set-new-index
+                       (1+ lr-item-set-new-index)))))))))
 
         (setq
          goto-table-table
@@ -435,7 +451,15 @@
          `(
            ,lr-item-set-index
            ,goto-table-table)
-         goto-table)))
+         goto-table)
+        (setq
+         marked-count
+         (1+ marked-count))
+        (message
+         "Progress: %s / %s = %d%%"
+         marked-count
+         total-count
+         (* 100 (/ (float marked-count) (float total-count))))))
 
     (setq
      goto-table
