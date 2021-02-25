@@ -456,7 +456,7 @@
          marked-count
          (1+ marked-count))
         (message
-         "Progress: %s / %s = %d%%"
+         "Progress: %s / %s = %d%%\n"
          marked-count
          total-count
          (* 100 (/ (float marked-count) (float total-count))))))
