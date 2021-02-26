@@ -452,10 +452,11 @@
          (sort
           goto-table-table
           'parser-generator--sort-list))
-        (message
-         "GOTO-TABLE (%d): %s\n"
-         lr-item-set-index
-         goto-table-table)
+        (when goto-table-table
+          (message
+           "GOTO-TABLE (%d): %s\n"
+           lr-item-set-index
+           goto-table-table))
         (push
          `(
            ,lr-item-set-index
