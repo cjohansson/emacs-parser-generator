@@ -14,6 +14,8 @@
 ;;; Variables:
 
 
+;; TODO Make sure all hash-table usages are safe
+
 (defvar
   parser-generator-lr--action-tables
   nil
@@ -201,10 +203,15 @@
 
                           (when (parser-generator--valid-look-ahead-p u)
                             (let ((hash-key
-                                   (format "%s-%s-%S" goto-index state u)))
-                              (unless (gethash
-                                       hash-key
-                                       added-actions)
+                                   (format
+                                    "%s-%s-%S"
+                                    goto-index
+                                    state
+                                    u)))
+                              (unless
+                                  (gethash
+                                   hash-key
+                                   added-actions)
                                 (puthash
                                  hash-key
                                  t
@@ -289,8 +296,10 @@
         (marked-lr-item-sets
          (make-hash-table :test 'equal))
         (next-symbols)
-        (next-symbols-found (make-hash-table :test 'equal))
-        (table-lr-items (make-hash-table :test 'equal)))
+        (next-symbols-found
+         (make-hash-table :test 'equal))
+        (table-lr-items
+         (make-hash-table :test 'equal)))
 
     (let ((e-set
            (parser-generator-lr--items-for-prefix
@@ -346,27 +355,30 @@
         (dolist (lr-item lr-items)
           (let ((symbols (nth 2 lr-item)))
             (when symbols
-              (let ((next-symbol (car symbols)))
-                (when
-                    (and
-                     (or
-                      (parser-generator--valid-terminal-p next-symbol)
-                      (parser-generator--valid-non-terminal-p next-symbol))
-                     (not
-                      (gethash
-                       (list
-                        lr-item-set-index
-                        next-symbol)
-                       next-symbols-found)))
-                  (push
-                   next-symbol
-                   next-symbols)
-                  (puthash
-                   (list
-                    lr-item-set-index
-                    next-symbol)
-                   t
-                   next-symbols-found))))
+              (let ((next-symbol
+                     (car symbols)))
+                (let ((temp-hash-key
+                       (format
+                        "%S"
+                        (list
+                         lr-item-set-index
+                         next-symbol))))
+                  (when
+                      (and
+                       (or
+                        (parser-generator--valid-terminal-p next-symbol)
+                        (parser-generator--valid-non-terminal-p next-symbol))
+                       (not
+                        (gethash
+                         temp-hash-key
+                         next-symbols-found)))
+                    (push
+                     next-symbol
+                     next-symbols)
+                    (puthash
+                     temp-hash-key
+                     t
+                     next-symbols-found)))))
 
             ;; Sort next-symbols for a more deterministic result
             (when next-symbols
@@ -454,7 +466,7 @@
           'parser-generator--sort-list))
         (when goto-table-table
           (message
-           "GOTO-TABLE (%d): %s\n"
+           "GOTO-TABLE (%d): %S\n"
            lr-item-set-index
            goto-table-table))
         (push
@@ -692,35 +704,43 @@
                                   (if (= parser-generator--look-ahead-number 0)
 
                                       ;; A dot look-ahead is only used for k >= 1
+                                      (let ((temp-hash-key
+                                             (format
+                                              "%S"
+                                              `(,e-list ,(list rhs-first) nil ,sub-rhs))))
+                                        (unless
+                                            (gethash
+                                             temp-hash-key
+                                             lr-item-exists)
+                                          (puthash
+                                           temp-hash-key
+                                           t
+                                           lr-item-exists)
+                                          (push
+                                           `(,(list rhs-first) nil ,sub-rhs)
+                                           lr-items-e)
+
+                                          ;; (c) Repeat (b) until no more items can be added to V(e)
+                                          (setq found-new t)))
+
+                                    (let ((temp-hash-key
+                                           (format
+                                            "%S"
+                                            `(,e-list ,(list rhs-first) nil ,sub-rhs ,f))))
                                       (unless
                                           (gethash
-                                           `(,e-list ,(list rhs-first) nil ,sub-rhs)
+                                           temp-hash-key
                                            lr-item-exists)
                                         (puthash
-                                         `(,e-list ,(list rhs-first) nil ,sub-rhs)
+                                         temp-hash-key
                                          t
                                          lr-item-exists)
                                         (push
-                                         `(,(list rhs-first) nil ,sub-rhs)
+                                         `(,(list rhs-first) nil ,sub-rhs ,f)
                                          lr-items-e)
 
                                         ;; (c) Repeat (b) until no more items can be added to V(e)
-                                        (setq found-new t))
-
-                                    (unless
-                                        (gethash
-                                         `(,e-list ,(list rhs-first) nil ,sub-rhs ,f)
-                                         lr-item-exists)
-                                      (puthash
-                                       `(,e-list ,(list rhs-first) nil ,sub-rhs ,f)
-                                       t
-                                       lr-item-exists)
-                                      (push
-                                       `(,(list rhs-first) nil ,sub-rhs ,f)
-                                       lr-items-e)
-
-                                      ;; (c) Repeat (b) until no more items can be added to V(e)
-                                      (setq found-new t))))))))
+                                        (setq found-new t)))))))))
                       (parser-generator--debug
                        (message "is not non-terminal")))))))))
 
@@ -912,22 +932,28 @@
                               (setq
                                lr-item-to-add
                                `(,(list lr-item-suffix-first) nil ,sub-rhs)))
-                            (unless
-                                (gethash
-                                 lr-item-to-add
+                            (let ((temp-hash-key
+                                   (format
+                                    "%S"
+                                    lr-item-to-add)))
+                              (unless
+                                  (gethash
+                                   temp-hash-key
+                                   lr-item-exists)
+                                (setq
+                                 added-new
+                                 t)
+                                (parser-generator--debug
+                                 (message
+                                  "lr-item-to-add: %s"
+                                  lr-item-to-add))
+                                (puthash
+                                 temp-hash-key
+                                 t
                                  lr-item-exists)
-                              (setq added-new t)
-                              (parser-generator--debug
-                               (message
-                                "lr-item-to-add: %s"
-                                lr-item-to-add))
-                              (puthash
-                               lr-item-to-add
-                               t
-                               lr-item-exists)
-                              (push
-                               lr-item-to-add
-                               lr-new-item)))))))))))))
+                                (push
+                                 lr-item-to-add
+                                 lr-new-item))))))))))))))
       (setq
        lr-new-item
        (sort
@@ -1248,20 +1274,24 @@
                                  (parser-generator-lex-analyzer--get-function
                                   popped-item)
                                  popped-items-meta-contents)
-                              (if (gethash
-                                   popped-item
-                                   translation-symbol-table)
+                              (let ((temp-hash-key
+                                     (format
+                                      "%S"
+                                      popped-item)))
+                                (if (gethash
+                                     temp-hash-key
+                                     translation-symbol-table)
+                                    (push
+                                     (gethash
+                                      temp-hash-key
+                                      translation-symbol-table)
+                                     popped-items-meta-contents)
+                                  (setq
+                                   all-expanded
+                                   nil)
                                   (push
-                                   (gethash
-                                    popped-item
-                                    translation-symbol-table)
-                                   popped-items-meta-contents)
-                                (setq
-                                 all-expanded
-                                 nil)
-                                (push
-                                 nil
-                                 popped-items-meta-contents))))
+                                   nil
+                                   popped-items-meta-contents)))))
                           (setq
                            popped-items-meta-contents
                            (nreverse popped-items-meta-contents))
@@ -1287,7 +1317,9 @@
                                   production-lhs
                                   partial-translation))
                                 (puthash
-                                 production-lhs
+                                 (format
+                                  "%S"
+                                  production-lhs)
                                  partial-translation
                                  translation-symbol-table)
                                 (setq
@@ -1304,7 +1336,9 @@
                                   production-lhs
                                   partial-translation))
                                 (puthash
-                                 production-lhs
+                                 (format
+                                  "%S"
+                                  production-lhs)
                                  partial-translation
                                  translation-symbol-table)
                                 (setq
