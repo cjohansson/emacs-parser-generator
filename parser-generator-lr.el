@@ -86,7 +86,8 @@
                           (when Cv
                             (let
                                 ((eff
-                                  (parser-generator--e-free-first Cv)))
+                                  (parser-generator--e-free-first
+                                   Cv)))
                               (parser-generator--debug
                                (message
                                 "E-FREE-FIRST %s = %s"
@@ -312,7 +313,8 @@
       (setq
        lr-item-set-new-index
        (1+ lr-item-set-new-index))
-      (let ((e-set-hash-key (format "%s" e-set)))
+      (let ((e-set-hash-key
+             (format "%S" e-set)))
         ;; Mark the initial set
         (puthash
          e-set-hash-key
@@ -576,7 +578,8 @@
                (append b-suffix b-follow))
               (setq
                b-suffix-follow-eff
-               (parser-generator--e-free-first b-suffix-follow))
+               (parser-generator--e-free-first
+                b-suffix-follow))
 
               (parser-generator--debug
                (message "b-suffix: %s" b-suffix)
@@ -796,12 +799,15 @@
 (defun parser-generator-lr--items-for-goto (previous-lr-item x)
   "Calculate LR-items for GOTO(PREVIOUS-LR-ITEM, X)."
   (let ((lr-new-item)
-        (lr-item-exists (make-hash-table :test 'equal))
-        (eof-list (parser-generator--generate-list-of-symbol
-                   parser-generator--look-ahead-number
-                   parser-generator--eof-identifier)))
+        (lr-item-exists
+         (make-hash-table :test 'equal))
+        (eof-list
+         (parser-generator--generate-list-of-symbol
+          parser-generator--look-ahead-number
+          parser-generator--eof-identifier)))
     (parser-generator--debug (message "x: %s" x))
 
+    ;; TODO Use caches to optimize this loop
     (dolist (lr-item previous-lr-item)
       (let ((lr-item-lhs (nth 0 lr-item))
             (lr-item-prefix (nth 1 lr-item))
@@ -836,7 +842,10 @@
                   lr-item-prefix
                   (list x))))
             (let ((lr-new-item-1))
-              (if (= parser-generator--look-ahead-number 0)
+              (if
+                  (=
+                   parser-generator--look-ahead-number
+                   0)
                   ;; Only k >= 1 needs dot look-ahead
                   (progn
                     (setq
@@ -863,6 +872,8 @@
       (let ((added-new t))
         (while added-new
           (setq added-new nil)
+
+          ;; TODO Use caches to optimize this loop
           (dolist (lr-item lr-new-item)
             (let ((lr-item-suffix (nth 2 lr-item)))
               (let ((lr-item-suffix-first
@@ -928,7 +939,9 @@
                                  `(,(list lr-item-suffix-first) nil ,sub-rhs ,f)))
                             ;; Only k >= 1 needs dot a look-ahead
                             (when
-                                (= parser-generator--look-ahead-number 0)
+                                (=
+                                 parser-generator--look-ahead-number
+                                 0)
                               (setq
                                lr-item-to-add
                                `(,(list lr-item-suffix-first) nil ,sub-rhs)))
@@ -958,7 +971,7 @@
        lr-new-item
        (sort
         lr-new-item
-        'parser-generator--sort-list))) ;; TODO Optimize this
+        'parser-generator--sort-list))) ;; TODO Optimize this?
 
     lr-new-item))
 
