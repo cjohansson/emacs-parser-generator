@@ -53,7 +53,9 @@
             (found-action nil)
             (action-table))
         (let ((lr-items
-               (gethash goto-index table-lr-items)))
+               (gethash
+                goto-index
+                table-lr-items)))
           (let ((lr-items-length (length lr-items)))
 
             ;; Where u is in (T U e)*k
@@ -109,13 +111,15 @@
                                            eff-item)
                                           (let
                                               ((hash-key
-                                                (format "%s-%s-%s" goto-index state eff-item)))
+                                                (format "%s-%s-%S" goto-index state eff-item)))
                                             (parser-generator--debug
                                              (message
                                               "Valid look-ahead: %s"
                                               eff-item
                                               ))
-                                            (if (gethash hash-key added-actions)
+                                            (if (gethash
+                                                 hash-key
+                                                 added-actions)
                                                 (parser-generator--debug
                                                  (message
                                                   "Duplicate action: %s"
@@ -197,9 +201,14 @@
 
                           (when (parser-generator--valid-look-ahead-p u)
                             (let ((hash-key
-                                   (format "%s-%s-%s" goto-index state u)))
-                              (unless (gethash hash-key added-actions)
-                                (puthash hash-key t added-actions)
+                                   (format "%s-%s-%S" goto-index state u)))
+                              (unless (gethash
+                                       hash-key
+                                       added-actions)
+                                (puthash
+                                 hash-key
+                                 t
+                                 added-actions)
                                 (let ((production (list A B)))
                                   (let
                                       ((production-number
@@ -385,7 +394,7 @@
               (when prefix-lr-items
                 (let ((prefix-lr-items-hash-key
                        (format
-                        "%s"
+                        "%S"
                         prefix-lr-items)))
 
                   (parser-generator--debug
