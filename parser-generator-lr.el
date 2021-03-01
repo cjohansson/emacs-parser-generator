@@ -13,8 +13,8 @@
 
 ;;; Variables:
 
-
-;; TODO Make sure all hash-table usages are safe
+;; TODO Move all unique goto-tables and action-tables to separate tables
+;; TODO Use only integer references in action and goto-tables
 
 (defvar
   parser-generator-lr--action-tables
@@ -510,11 +510,13 @@
          (car (cdr (nth table-index goto-table)))
          parser-generator-lr--goto-tables)
         (setq table-index (1+ table-index))))
-    (parser-generator-lr--items-valid-p
-     (parser-generator--hash-values-to-list
-      table-lr-items
-      t)
-     t)
+
+    ;; (parser-generator-lr--items-valid-p
+    ;;  (parser-generator--hash-values-to-list
+    ;;   table-lr-items
+    ;;   t)
+    ;;  t)
+
     (message "\nCompleted generation of goto-tables.\n")
     table-lr-items))
 
@@ -827,9 +829,10 @@
         (setq
          parser-generator-lr--table-lr-items-for-symbol
          (make-hash-table :test 'equal)))
-    (unless (gethash
+    (if (gethash
              lr-items-cache-key
              parser-generator-lr--table-lr-items-for-symbol)
+        (message "Cache-hit")
       (let ((lr-new-item)
             (lr-item-exists
              (make-hash-table :test 'equal))
