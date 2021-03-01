@@ -97,7 +97,7 @@
     ;; (message "cyclical lr-items: %s" table-lr-items)
     (parser-generator-lr--generate-action-tables
      table-lr-items)
-    ;; (message "cyclical goto-tables: %s" parser-generator-lr--goto-tables)
+    ;; (message "cyclical goto-tables: %s" (parser-generator-lr--get-expanded-goto-tables))
     ;; (message "cyclical action-tables: %s" parser-generator-lr--action-tables)
     )
   (message "Passed cyclical grammar")
@@ -119,8 +119,7 @@
     (parser-generator--debug
      (message
       "GOTO-table: %s"
-      (parser-generator--hash-to-list
-       parser-generator-lr--goto-tables)))
+      (parser-generator-lr--get-expanded-goto-tables)))
     (should
      (equal
       '((0 ((S 1)))
@@ -131,8 +130,7 @@
         (5 nil)
         (6 ((a 4) (b 7)))
         (7 nil))
-      (parser-generator--hash-to-list
-       parser-generator-lr--goto-tables)))
+      (parser-generator-lr--get-expanded-goto-tables)))
     (message "Passed GOTO-tables")
 
     (parser-generator--debug
@@ -165,7 +163,7 @@
   (let ((table-lr-items
          (parser-generator-lr--generate-goto-tables)))
 
-    ;; (message "GOTO-table: %s" (parser-generator--hash-to-list parser-generator-lr--goto-tables))
+    ;; (message "GOTO-table: %s" (parser-generator-lr--get-expanded-goto-tables))
     ;; (message "LR-items: %s" (parser-generator--hash-to-list parser-generator-lr--items))
 
     (should
@@ -178,8 +176,7 @@
         (5 nil)
         (6 (("a" 4) ("b" 7)))
         (7 nil))
-      (parser-generator--hash-to-list
-       parser-generator-lr--goto-tables)))
+      (parser-generator-lr--get-expanded-goto-tables)))
     (message "Passed GOTO-tables with tokens as strings")
 
     (should
@@ -368,7 +365,7 @@
      (message "lr-items: %s" (parser-generator--hash-values-to-list lr-items t)))
     )
   (parser-generator--debug
-   (message "goto-tables: %s" (parser-generator--hash-values-to-list parser-generator-lr--goto-tables t))
+   (message "goto-tables: %s" (parser-generator-lr--get-expanded-goto-tables))
    (message "action-tables: %s" (parser-generator--hash-values-to-list parser-generator-lr--action-tables t)))
   (setq
    parser-generator-lex-analyzer--function
@@ -564,9 +561,7 @@
 
     (parser-generator--debug
      (message "GOTO-tables k = 2: %s"
-              (parser-generator--hash-to-list
-               parser-generator-lr--goto-tables
-               t)))
+              (parser-generator-lr--get-expanded-goto-tables)))
 
     ;; state |  a  |  b  |  c  |  $  |  S  |  R  |  T
     ;; -------+-----+-----+-----+-----+-----+-----+-----
@@ -602,8 +597,7 @@
         (7 nil)
         (8 nil)
         (9 nil))
-      (parser-generator--hash-to-list
-       parser-generator-lr--goto-tables)))
+      (parser-generator-lr--get-expanded-goto-tables)))
     (message "Passed GOTO-tables k = 2")
 
     ;; state | aa | ab | ac | a$ | ba | bb | bc | b$ | ca | cb | cc | c$ | $$ 
@@ -847,9 +841,7 @@
     (parser-generator--debug
      (message
       "GOTO-tables k = 0: %s"
-      (parser-generator--hash-to-list
-       parser-generator-lr--goto-tables
-       t)))
+      (parser-generator-lr--get-expanded-goto-tables)))
 
     ;; 	* 	+ 	0 	1 	E 	B
     ;; 0 	  	  	1 	2 	3 	4
@@ -873,8 +865,7 @@
         (6 (("0" 1) ("1" 2) (B 7))) ;; 7-8
         (7 nil)
         (8 nil))
-      (parser-generator--hash-to-list
-       parser-generator-lr--goto-tables)))
+      (parser-generator-lr--get-expanded-goto-tables)))
     (message "Passed GOTO-tables k = 2")
 
     ;;   	*  	+  	0  	1  	$
