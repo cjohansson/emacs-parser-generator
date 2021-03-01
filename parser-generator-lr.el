@@ -26,12 +26,20 @@
   nil
   "Goto-tables for grammar.")
 
+(defvar
+  parser-generator-lr--table-lr-items-for-symbol
+  nil
+  "LR-items cache for symbol.")
+
 
 ;; Main Algorithms
 
 (defun parser-generator-lr-generate-parser-tables ()
   "Generate parsing tables for grammar."
   (message "\nStarting generation of parser-tables..\n")
+  (setq
+   parser-generator-lr--table-lr-items-for-symbol
+   (make-hash-table :test 'equal))
   (let ((table-lr-items
          (parser-generator-lr--generate-goto-tables)))
     (parser-generator-lr--generate-action-tables
@@ -368,8 +376,10 @@
                   (when
                       (and
                        (or
-                        (parser-generator--valid-terminal-p next-symbol)
-                        (parser-generator--valid-non-terminal-p next-symbol))
+                        (parser-generator--valid-terminal-p
+                         next-symbol)
+                        (parser-generator--valid-non-terminal-p
+                         next-symbol))
                        (not
                         (gethash
                          temp-hash-key
@@ -413,12 +423,12 @@
 
                   (parser-generator--debug
                    (message
-                    "GOTO(%s, %s) = %s"
+                    "GOTO(%S, %S) = %S"
                     lr-items
                     symbol
                     prefix-lr-items))
 
-                  ;; and is not already in S
+                  ;; and set is not already in S
                   (let ((goto
                          (gethash
                           prefix-lr-items-hash-key
@@ -466,11 +476,10 @@
          (sort
           goto-table-table
           'parser-generator--sort-list))
-        (when goto-table-table
-          (message
-           "GOTO-TABLE (%d): %S\n"
-           lr-item-set-index
-           goto-table-table))
+        (message
+         "GOTO-TABLE (%d): %S\n"
+         lr-item-set-index
+         goto-table-table)
         (push
          `(
            ,lr-item-set-index
@@ -501,18 +510,21 @@
          (car (cdr (nth table-index goto-table)))
          parser-generator-lr--goto-tables)
         (setq table-index (1+ table-index))))
-    (unless
-        (parser-generator-lr--items-valid-p
-         (parser-generator--hash-values-to-list
-          table-lr-items
-          t))
-      (error "Inconsistent grammar!"))
+    (parser-generator-lr--items-valid-p
+     (parser-generator--hash-values-to-list
+      table-lr-items
+      t)
+     t)
     (message "\nCompleted generation of goto-tables.\n")
     table-lr-items))
 
 ;; Algorithm 5.10, p. 391
-(defun parser-generator-lr--items-valid-p (lr-item-sets)
-  "Return whether the set collection LR-ITEM-SETS is valid or not."
+(defun parser-generator-lr--items-valid-p
+    (
+     lr-item-sets
+     &optional signal-on-false
+     )
+  "Return whether the set collection LR-ITEM-SETS is valid or not, optionally SIGNAL-ON-FALSE."
   (parser-generator--debug
    (message "lr-item-sets: %s" lr-item-sets))
   (let ((valid-p t)
@@ -589,8 +601,16 @@
 
               (dolist (b-suffix-follow-eff-item b-suffix-follow-eff)
                 (when (equal a-follow b-suffix-follow-eff-item)
-                  (parser-generator--debug
-                   (message "Inconsistent grammar! %s conflicts with %s" a b))
+                  (when
+                      signal-on-false
+                    (signal
+                     'error
+                     (format
+                      "Inconsistent grammar! %s (index: %d) conflicts with %s (index: %d)"
+                      a
+                      a-index
+                      b
+                      b-index)))
                   (setq valid-p nil))))
             (setq b-index (1+ b-index))))
         (setq a-index (1+ a-index)))
@@ -795,185 +815,206 @@
            (message "γ: %s" γ))
           prefix-previous)))))
 
-;; TODO Optimize this function 1. first and 2. sort
 (defun parser-generator-lr--items-for-goto (previous-lr-item x)
   "Calculate LR-items for GOTO(PREVIOUS-LR-ITEM, X)."
-  (let ((lr-new-item)
-        (lr-item-exists
-         (make-hash-table :test 'equal))
-        (eof-list
-         (parser-generator--generate-list-of-symbol
-          parser-generator--look-ahead-number
-          parser-generator--eof-identifier)))
-    (parser-generator--debug (message "x: %s" x))
-
-    ;; TODO Use caches to optimize this loop
-    (dolist (lr-item previous-lr-item)
-      (let ((lr-item-lhs (nth 0 lr-item))
-            (lr-item-prefix (nth 1 lr-item))
-            (lr-item-suffix (nth 2 lr-item))
-            (lr-item-look-ahead (nth 3 lr-item))
-            (lr-item-suffix-first)
-            (lr-item-suffix-rest))
+  (let ((lr-items-cache-key
+         (format
+          "%S-%S"
+          previous-lr-item
+          x)))
+    (unless
+        parser-generator-lr--table-lr-items-for-symbol
         (setq
-         lr-item-suffix-first
-         (car lr-item-suffix))
-        (setq
-         lr-item-suffix-rest
-         (cdr lr-item-suffix))
-
+         parser-generator-lr--table-lr-items-for-symbol
+         (make-hash-table :test 'equal)))
+    (unless (gethash
+             lr-items-cache-key
+             parser-generator-lr--table-lr-items-for-symbol)
+      (let ((lr-new-item)
+            (lr-item-exists
+             (make-hash-table :test 'equal))
+            (eof-list
+             (parser-generator--generate-list-of-symbol
+              parser-generator--look-ahead-number
+              parser-generator--eof-identifier)))
         (parser-generator--debug
-         (message "lr-item: %s" lr-item)
-         (message "lr-item-prefix: %s" lr-item-prefix)
-         (message "lr-item-suffix: %s" lr-item-suffix)
-         (message "lr-item-suffix-first: %s" lr-item-suffix-first)
-         (message "lr-item-suffix-rest: %s" lr-item-suffix-rest)
-         (message "lr-item-look-ahead: %s" lr-item-look-ahead))
+         (message "x: %s" x))
 
-        ;; (a) If [A -> a . XiB, u] is in V(X1,...,Xi-1)
-        (when
-            (equal
+        ;; TODO Use caches to optimize this loop
+        (dolist (lr-item previous-lr-item)
+          (let ((lr-item-lhs (nth 0 lr-item))
+                (lr-item-prefix (nth 1 lr-item))
+                (lr-item-suffix (nth 2 lr-item))
+                (lr-item-look-ahead (nth 3 lr-item))
+                (lr-item-suffix-first)
+                (lr-item-suffix-rest))
+            (setq
              lr-item-suffix-first
-             x)
+             (car lr-item-suffix))
+            (setq
+             lr-item-suffix-rest
+             (cdr lr-item-suffix))
 
-          ;; Add [A -> aXi . B, u] to V(X1,...,Xi)
-          (let ((combined-prefix
-                 (append
-                  lr-item-prefix
-                  (list x))))
-            (let ((lr-new-item-1))
-              (if
-                  (=
-                   parser-generator--look-ahead-number
-                   0)
-                  ;; Only k >= 1 needs dot look-ahead
-                  (progn
+            (parser-generator--debug
+             (message "lr-item: %s" lr-item)
+             (message "lr-item-prefix: %s" lr-item-prefix)
+             (message "lr-item-suffix: %s" lr-item-suffix)
+             (message "lr-item-suffix-first: %s" lr-item-suffix-first)
+             (message "lr-item-suffix-rest: %s" lr-item-suffix-rest)
+             (message "lr-item-look-ahead: %s" lr-item-look-ahead))
+
+            ;; (a) If [A -> a . XiB, u] is in V(X1,...,Xi-1)
+            (when
+                (equal
+                 lr-item-suffix-first
+                 x)
+
+              ;; Add [A -> aXi . B, u] to V(X1,...,Xi)
+              (let ((combined-prefix
+                     (append
+                      lr-item-prefix
+                      (list x))))
+                (let ((lr-new-item-1))
+                  (if
+                      (=
+                       parser-generator--look-ahead-number
+                       0)
+                      ;; Only k >= 1 needs dot look-ahead
+                      (progn
+                        (setq
+                         lr-new-item-1
+                         `(,lr-item-lhs
+                           ,combined-prefix
+                           ,lr-item-suffix-rest)))
                     (setq
                      lr-new-item-1
                      `(,lr-item-lhs
                        ,combined-prefix
-                       ,lr-item-suffix-rest)))
-                (setq
-                 lr-new-item-1
-                 `(,lr-item-lhs
-                   ,combined-prefix
-                   ,lr-item-suffix-rest
-                   ,lr-item-look-ahead)))
-              (parser-generator--debug
-               (message
-                "lr-new-item-1: %s"
-                lr-new-item-1))
-              (push
-               lr-new-item-1
-               lr-new-item))))))
+                       ,lr-item-suffix-rest
+                       ,lr-item-look-ahead)))
+                  (parser-generator--debug
+                   (message
+                    "lr-new-item-1: %s"
+                    lr-new-item-1))
+                  (push
+                   lr-new-item-1
+                   lr-new-item))))))
 
-    ;; (c) Repeat step (2b) until no more new items can be added to V(X1,...,Xi)
-    (when lr-new-item
-      (let ((added-new t))
-        (while added-new
-          (setq added-new nil)
+        ;; (c) Repeat step (2b) until no more new items can be added to V(X1,...,Xi)
+        (when lr-new-item
+          (let ((added-new t))
+            (while added-new
+              (setq added-new nil)
 
-          ;; TODO Use caches to optimize this loop
-          (dolist (lr-item lr-new-item)
-            (let ((lr-item-suffix (nth 2 lr-item)))
-              (let ((lr-item-suffix-first
-                     (car lr-item-suffix))
-                    (lr-item-suffix-rest
-                     (append
+              ;; TODO Use caches to optimize this loop
+              (dolist (lr-item lr-new-item)
+                (let ((lr-item-suffix (nth 2 lr-item)))
+                  (let ((lr-item-suffix-first
+                         (car lr-item-suffix))
+                        (lr-item-suffix-rest
+                         (append
+                          (cdr lr-item-suffix)
+                          (nth 3 lr-item))))
+                    (parser-generator--debug
+                     (message
+                      "lr-item-suffix-rest: %s from %s + %s"
+                      lr-item-suffix-rest
                       (cdr lr-item-suffix)
-                      (nth 3 lr-item))))
-                (parser-generator--debug
-                 (message
-                  "lr-item-suffix-rest: %s from %s + %s"
-                  lr-item-suffix-rest
-                  (cdr lr-item-suffix)
-                  (nth 3 lr-item)))
+                      (nth 3 lr-item)))
 
-                ;; (b) If [A -> a . Bb, u] has been placed in V(X1,...,Xi)
-                ;; and B -> D is in P
-                (when
-                    (parser-generator--valid-non-terminal-p
-                     lr-item-suffix-first)
+                    ;; (b) If [A -> a . Bb, u] has been placed in V(X1,...,Xi)
+                    ;; and B -> D is in P
+                    (when
+                        (parser-generator--valid-non-terminal-p
+                         lr-item-suffix-first)
 
-                  (let ((lr-item-suffix-rest-first
-                         (parser-generator--first
-                          lr-item-suffix-rest
-                          nil
-                          t
-                          t)))
-                    (parser-generator--debug
-                     (message
-                      "lr-item-suffix-rest-first (before): %s"
-                      lr-item-suffix-rest-first))
+                      (let ((lr-item-suffix-rest-first
+                             (parser-generator--first
+                              lr-item-suffix-rest
+                              nil
+                              t
+                              t)))
+                        (parser-generator--debug
+                         (message
+                          "lr-item-suffix-rest-first (before): %s"
+                          lr-item-suffix-rest-first))
 
-                    ;; EOF-markers are always a possible look-ahead
-                    (unless lr-item-suffix-rest-first
-                      (setq
-                       lr-item-suffix-rest-first
-                       (list eof-list)))
+                        ;; EOF-markers are always a possible look-ahead
+                        (unless lr-item-suffix-rest-first
+                          (setq
+                           lr-item-suffix-rest-first
+                           (list eof-list)))
 
-                    (parser-generator--debug
-                     (message
-                      "lr-item-suffix-rest-first (after): %s"
-                      lr-item-suffix-rest-first))
-                    (let ((sub-production
-                           (parser-generator--get-grammar-rhs
-                            lr-item-suffix-first)))
+                        (parser-generator--debug
+                         (message
+                          "lr-item-suffix-rest-first (after): %s"
+                          lr-item-suffix-rest-first))
+                        (let ((sub-production
+                               (parser-generator--get-grammar-rhs
+                                lr-item-suffix-first)))
 
-                      ;; For each production with B as LHS
-                      (dolist (sub-rhs sub-production)
+                          ;; For each production with B as LHS
+                          (dolist (sub-rhs sub-production)
 
-                        ;; Transform e-productions into nil
-                        (when (and
-                               (= (length sub-rhs) 1)
-                               (parser-generator--valid-e-p
-                                (car sub-rhs)))
-                          (setq sub-rhs nil))
+                            ;; Transform e-productions into nil
+                            (when (and
+                                   (= (length sub-rhs) 1)
+                                   (parser-generator--valid-e-p
+                                    (car sub-rhs)))
+                              (setq sub-rhs nil))
 
-                        ;; For each x in FIRST(αu)
-                        (dolist (f lr-item-suffix-rest-first)
+                            ;; For each x in FIRST(αu)
+                            (dolist (f lr-item-suffix-rest-first)
 
-                          ;; then add [B -> . D, x] to V(X1,...,Xi) for each x in FIRST(bu)
-                          ;; provided it is not already there
-                          (let ((lr-item-to-add
-                                 `(,(list lr-item-suffix-first) nil ,sub-rhs ,f)))
-                            ;; Only k >= 1 needs dot a look-ahead
-                            (when
-                                (=
-                                 parser-generator--look-ahead-number
-                                 0)
-                              (setq
-                               lr-item-to-add
-                               `(,(list lr-item-suffix-first) nil ,sub-rhs)))
-                            (let ((temp-hash-key
-                                   (format
-                                    "%S"
-                                    lr-item-to-add)))
-                              (unless
-                                  (gethash
-                                   temp-hash-key
-                                   lr-item-exists)
-                                (setq
-                                 added-new
-                                 t)
-                                (parser-generator--debug
-                                 (message
-                                  "lr-item-to-add: %s"
-                                  lr-item-to-add))
-                                (puthash
-                                 temp-hash-key
-                                 t
-                                 lr-item-exists)
-                                (push
-                                 lr-item-to-add
-                                 lr-new-item))))))))))))))
-      (setq
-       lr-new-item
-       (sort
-        lr-new-item
-        'parser-generator--sort-list))) ;; TODO Optimize this?
+                              ;; then add [B -> . D, x] to V(X1,...,Xi) for each x in FIRST(bu)
+                              ;; provided it is not already there
+                              (let ((lr-item-to-add
+                                     `(,(list lr-item-suffix-first) nil ,sub-rhs ,f)))
+                                ;; Only k >= 1 needs dot a look-ahead
+                                (when
+                                    (=
+                                     parser-generator--look-ahead-number
+                                     0)
+                                  (setq
+                                   lr-item-to-add
+                                   `(,(list lr-item-suffix-first) nil ,sub-rhs)))
+                                (let ((temp-hash-key
+                                       (format
+                                        "%S"
+                                        lr-item-to-add)))
+                                  (unless
+                                      (gethash
+                                       temp-hash-key
+                                       lr-item-exists)
+                                    (setq
+                                     added-new
+                                     t)
+                                    (parser-generator--debug
+                                     (message
+                                      "lr-item-to-add: %s"
+                                      lr-item-to-add))
+                                    (puthash
+                                     temp-hash-key
+                                     t
+                                     lr-item-exists)
+                                    (push
+                                     lr-item-to-add
+                                     lr-new-item))))))))))))))
 
-    lr-new-item))
+          ;; Sort result for a more deterministic result
+          (setq
+           lr-new-item
+           (sort
+            lr-new-item
+            'parser-generator--sort-list))) ;; TODO Optimize this?
+
+        (puthash
+         lr-items-cache-key
+         lr-new-item
+         parser-generator-lr--table-lr-items-for-symbol)))
+    (gethash
+     lr-items-cache-key
+     parser-generator-lr--table-lr-items-for-symbol)))
 
 (defun parser-generator-lr-parse
     (&optional
