@@ -302,6 +302,7 @@
 
 (defun parser-generator-lr-export-test ()
   "Run test."
+  ;; (setq debug-on-error t)
   (parser-generator-lr-export-test-parse)
   (parser-generator-lr-export-test-translate)
   (parser-generator-lr-export-test-incremental))

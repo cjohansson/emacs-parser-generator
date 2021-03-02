@@ -16,8 +16,12 @@
   ;; Make sure all requisites are defined
   (unless parser-generator-lr--action-tables
     (error "Missing generated ACTION-tables!"))
+  (unless parser-generator-lr--distinct-action-tables
+    (error "Missing generated distinct ACTION-tables!"))
   (unless parser-generator-lr--goto-tables
     (error "Missing generated GOTO-tables!"))
+  (unless parser-generator-lr--distinct-goto-tables
+    (error "Missing generated distinct GOTO-tables!"))
   (unless parser-generator--table-productions-number-reverse
     (error "Table for reverse production-numbers is undefined!"))
   (unless parser-generator--table-look-aheads-p
@@ -58,6 +62,11 @@
         "(defconst\n  %s--action-tables\n  %S\n  \"Generated action-tables.\")\n\n"
         namespace
         parser-generator-lr--action-tables))
+      (insert
+       (format
+        "(defconst\n  %s--distinct-action-tables\n  %S\n  \"Generated distinct action-tables.\")\n\n"
+        namespace
+        parser-generator-lr--distinct-action-tables))
 
       ;; Goto-tables
       (insert
@@ -65,6 +74,11 @@
         "(defconst\n  %s--goto-tables\n  %S\n  \"Generated goto-tables.\")\n\n"
         namespace
         parser-generator-lr--goto-tables))
+      (insert
+       (format
+        "(defconst\n  %s--distinct-goto-tables\n  %S\n  \"Generated distinct goto-tables.\")\n\n"
+        namespace
+        parser-generator-lr--distinct-goto-tables))
 
       ;; Table production-number
       (insert
@@ -183,10 +197,9 @@
         namespace))
       (insert "
       (error
-        (error
-          \"Lex-analyze failed to get token meta-data of %s, error: %s\"
-          token
-          (car (cdr error)))))
+        \"Lex-analyze failed to get token meta-data of %s, error: %s\"
+        token
+        (car (cdr error))))
     (unless meta-information
       (error \"Could not find any token meta-information for: %s\" token))
     meta-information))\n")
@@ -361,7 +374,8 @@
       ;; Valid non-terminal-p
       (insert
        (format "
-(defun %s--valid-non-terminal-p (symbol)
+(defun
+  %s--valid-non-terminal-p (symbol)
   \"Return whether SYMBOL is a non-terminal in grammar or not.\"
   (gethash
    symbol
@@ -372,7 +386,8 @@
       ;; Valid terminal-p
       (insert
        (format "
-(defun %s--valid-terminal-p (symbol)
+(defun
+  %s--valid-terminal-p (symbol)
   \"Return whether SYMBOL is a terminal in grammar or not.\"
   (gethash
    symbol
@@ -475,10 +490,15 @@
 
           (let ((table-index
                  (car pushdown-list)))
-            (let ((action-table
+            (let ((action-table-distinct-index
                    (gethash
                     table-index
-                    %s--action-tables)))"
+                    %s--action-tables)))
+              (let ((action-table
+                     (gethash
+                      action-table-distinct-index
+                      %s--distinct-action-tables)))"
+               namespace
                namespace
                namespace
                namespace
@@ -562,10 +582,14 @@
 
                   (let ((a (list (car look-ahead)))
                         (a-full (list (car look-ahead-full))))
-                    (let ((goto-table
-                           (gethash
-                            table-index
-                            %s--goto-tables)))
+                      (let ((goto-table-distinct-index
+                             (gethash
+                              table-index
+                              %s--goto-tables)))
+                        (let ((goto-table
+                               (gethash
+                                goto-table-distinct-index
+                                %s--distinct-goto-tables)))
                       (let ((goto-table-length (length goto-table))
                             (goto-index 0)
                             (searching-match t)
@@ -589,6 +613,7 @@
                           (setq goto-index (1+ goto-index)))"
                       namespace
                       namespace
+                      namespace
                       namespace))
 
       (insert "
@@ -604,7 +629,7 @@
                         ;; Maybe push both tokens here?
                         (push (car a-full) pushdown-list)
                         (push next-index pushdown-list)
-                        (%s-lex-analyzer--pop-token)))))
+                        (%s-lex-analyzer--pop-token))))))
 
                  ((equal (car action-match) 'reduce)
                   ;; (b) If f(u) = reduce i and production i is A -> a,
@@ -702,10 +727,14 @@
                                  partial-translation)))))
 
                         (let ((new-table-index (car pushdown-list)))
-                          (let ((goto-table
-                                 (gethash
-                                  new-table-index
-                                  %s--goto-tables)))
+                            (let ((goto-table-distinct-index
+                                   (gethash
+                                    new-table-index
+                                    %s--goto-tables)))
+                              (let ((goto-table
+                                     (gethash
+                                      goto-table-distinct-index
+                                      %s--distinct-goto-tables)))
                             (let ((goto-table-length
                                    (length goto-table))
                                   (goto-index 0)
@@ -729,7 +758,7 @@
 
                               (when next-index
                                 (push production-lhs pushdown-list)
-                                (push next-index pushdown-list)))))))))
+                                (push next-index pushdown-list))))))))))
 
                  ((equal action-match '(accept))
                   ;;    (d) If f(u) = accept, we halt and declare the string
@@ -745,12 +774,13 @@
                namespace
                namespace
                namespace
+               namespace
                namespace))
 
       (insert "
                  (t (error
                      \"Invalid action-match: %s!\"
-                     action-match))))))))
+                     action-match)))))))))
       (unless accept
         (error
          \"Parsed entire string without getting accepting! Output: %s\"

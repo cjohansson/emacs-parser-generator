@@ -74,8 +74,7 @@
       (5 ((($) reduce 1) ((a) reduce 1)))
       (6 (((a) shift) ((b) shift)))
       (7 (((a) reduce 1) ((b) reduce 1))))
-    (parser-generator--hash-to-list
-     parser-generator-lr--action-tables)))
+    (parser-generator-lr--get-expanded-action-tables)))
   (message "Passed Example 5.32 p. 393")
 
   ;; Cyclical grammar
@@ -98,7 +97,7 @@
     (parser-generator-lr--generate-action-tables
      table-lr-items)
     ;; (message "cyclical goto-tables: %s" (parser-generator-lr--get-expanded-goto-tables))
-    ;; (message "cyclical action-tables: %s" parser-generator-lr--action-tables)
+    ;; (message "cyclical action-tables: %s" (parser-generator-lr--get-expanded-action-tables))
     )
   (message "Passed cyclical grammar")
 
@@ -366,7 +365,7 @@
     )
   (parser-generator--debug
    (message "goto-tables: %s" (parser-generator-lr--get-expanded-goto-tables))
-   (message "action-tables: %s" (parser-generator--hash-values-to-list parser-generator-lr--action-tables t)))
+   (message "action-tables: %s" (parser-generator-lr--get-expanded-action-tables)))
   (setq
    parser-generator-lex-analyzer--function
    (lambda (index)
@@ -627,7 +626,7 @@
     (parser-generator--debug
      (message
       "Action-tables k = 2: %s"
-      (parser-generator--hash-to-list parser-generator-lr--action-tables)))
+      (parser-generator-lr--get-expanded-action-tables)))
 
     (should
      (equal
@@ -643,8 +642,7 @@
         (8 ((($ $) reduce 4) ((a b) reduce 4)))
         (9 ((($ $) reduce 1)))
         )
-      (parser-generator--hash-to-list
-       parser-generator-lr--action-tables)))
+      (parser-generator-lr--get-expanded-action-tables)))
     (message "Passed ACTION-tables k = 2")
 
     )
@@ -884,8 +882,7 @@
     (parser-generator--debug
      (message
       "Action-tables k = 0: %s"
-      (parser-generator--hash-to-list
-       parser-generator-lr--action-tables)))
+      (parser-generator-lr--get-expanded-action-tables)))
 
     (should
      (equal
@@ -899,8 +896,7 @@
         (6 ((("0") shift) (("1") shift)))
         (7 ((nil reduce 2)))
         (8 ((nil reduce 1))))
-      (parser-generator--hash-to-list
-       parser-generator-lr--action-tables)))
+      (parser-generator-lr--get-expanded-action-tables)))
     (message "Passed ACTION-tables k = 0"))
 
   (let ((buffer (generate-new-buffer "*a*")))

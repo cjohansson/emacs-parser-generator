@@ -13,8 +13,6 @@
 
 ;;; Variables:
 
-;; TODO Move all unique goto-tables and action-tables to separate tables
-;; TODO Use only integer references in action and goto-tables
 
 (defvar
   parser-generator-lr--action-tables
@@ -49,6 +47,23 @@
     (message "\nCompleted generation of parser-tables.\n")
     table-lr-items))
 
+(defun parser-generator-lr--get-expanded-action-tables ()
+  "Get expanded ACTION-tables."
+  (let ((distinct-indexes
+         (parser-generator--hash-to-list
+          parser-generator-lr--action-tables))
+        (action-tables))
+    (dolist (action-row distinct-indexes)
+      (let ((action-index (car action-row))
+            (distinct-index (car (cdr action-row))))
+        (push
+         `(,action-index
+           ,(gethash
+              distinct-index
+              parser-generator-lr--distinct-action-tables))
+         action-tables)))
+    (reverse action-tables)))
+
 (defun parser-generator-lr--get-expanded-goto-tables ()
   "Get expanded GOTO-tables."
   (let ((distinct-indexes
@@ -59,9 +74,10 @@
       (let ((goto-index (car goto-row))
             (distinct-index (car (cdr goto-row))))
         (push
-         `(,goto-index .  (,(gethash
-                            distinct-index
-                            parser-generator-lr--distinct-goto-tables)))
+         `(,goto-index
+           .  (,(gethash
+                 distinct-index
+                 parser-generator-lr--distinct-goto-tables)))
          goto-tables)))
     (reverse goto-tables)))
 
@@ -308,16 +324,46 @@
     (unless found-accept
       (error "Failed to find an accept action in the generated action-tables!"))
     (setq action-tables (nreverse action-tables))
-    (setq parser-generator-lr--action-tables
-          (make-hash-table :test 'equal))
+    (setq
+     parser-generator-lr--action-tables
+     (make-hash-table :test 'equal))
+    (setq
+     parser-generator-lr--distinct-action-tables
+     (make-hash-table :test 'equal))
     (let ((table-length (length action-tables))
-          (table-index 0))
+          (table-index 0)
+          (action-table-to-distinct-index
+           (make-hash-table :test 'equal)))
       (while (< table-index table-length)
-        (puthash
+        (let ((action-table
+               (car (cdr (nth table-index action-tables)))))
+          (let ((action-table-hash
+                 (format
+                  "%S"
+                  action-table)))
+            (unless
+                (gethash
+                 action-table-hash
+                 action-table-to-distinct-index)
+              (puthash
+               action-table-hash
+               table-index
+               action-table-to-distinct-index)
+              (puthash
+               table-index
+               action-table
+               parser-generator-lr--distinct-action-tables))
+            (let ((action-table-index
+                   (gethash
+                    action-table-hash
+                    action-table-to-distinct-index)))
+              (puthash
+               table-index
+               action-table-index
+               parser-generator-lr--action-tables))))
+        (setq
          table-index
-         (car (cdr (nth table-index action-tables)))
-         parser-generator-lr--action-tables)
-        (setq table-index (1+ table-index)))))
+         (1+ table-index)))))
   (message "\nCompleted generation of action-tables..\n"))
 
 ;; Algorithm 5.9, p. 389
@@ -1129,8 +1175,12 @@
     ;; Make sure tables exists
     (unless parser-generator-lr--action-tables
       (error "Missing action-tables for grammar!"))
+    (unless parser-generator-lr--distinct-action-tables
+      (error "Missing distinct GOTO-tables for grammar!"))
     (unless parser-generator-lr--goto-tables
       (error "Missing GOTO-tables for grammar!"))
+    (unless parser-generator-lr--distinct-goto-tables
+      (error "Missing distinct GOTO-tables for grammar!"))
 
     (let ((accept)
           (pre-index 0))
@@ -1183,322 +1233,326 @@
 
           (let ((table-index
                  (car pushdown-list)))
-            (let ((action-table
+            (let ((action-table-distinct-index
                    (gethash
                     table-index
                     parser-generator-lr--action-tables)))
+              (let ((action-table
+                     (gethash
+                      action-table-distinct-index
+                      parser-generator-lr--distinct-action-tables)))
 
-              (unless action-table
-                (error
-                 "Action-table with index %s is empty! Push-down-list: %s"
-                 table-index
-                 pushdown-list))
-
-              (parser-generator--debug
-               (message
-                "Action-table %d: %s"
-                table-index
-                action-table))
-
-              (let ((action-match nil)
-                    (action-table-length (length action-table))
-                    (action-index 0)
-                    (possible-look-aheads))
-
-                ;; (2) The parsing action f of the table on top of the pushdown list is applied to the lookahead string u.
-                (while (and
-                        (not action-match)
-                        (< action-index action-table-length))
-                  (let ((action (nth action-index action-table)))
-                    (let ((action-look-ahead (car action)))
-                      (push
-                       action-look-ahead
-                       possible-look-aheads)
-                      (when
-                          (equal
-                           action-look-ahead
-                           look-ahead)
-                        (setq
-                         action-match
-                         (cdr action)))
-                      (when
-                          (and
-                           (=
-                            parser-generator--look-ahead-number
-                            0)
-                           (not
-                            action-look-ahead))
-                        ;; LR(0) reduce actions occupy entire row
-                        ;; and is applied regardless of look-ahead
-                        (setq
-                         action-match
-                         (cdr action))))
-                    (setq
-                     action-index
-                     (1+ action-index))))
-
-                (unless action-match
-                  ;; (c) If f(u) = error, we halt parsing (and, in practice
-                  ;; transfer to an error recovery routine).
-
+                (unless action-table
                   (error
-                   (format
-                    "Invalid syntax! Expected one of %s found %s at %s"
-                    possible-look-aheads
-                    look-ahead
-                    parser-generator-lex-analyzer--index)
-                   possible-look-aheads
-                   look-ahead
-                   parser-generator-lex-analyzer--index))
+                   "Action-table with index %s is empty! Push-down-list: %s"
+                   table-index
+                   pushdown-list))
 
                 (parser-generator--debug
-                 (message "action-table: %s" action-table)
-                 (message "action-match: %s" action-match))
+                 (message
+                  "Action-table %d: %s"
+                  table-index
+                  action-table))
 
-                (cond
+                (let ((action-match nil)
+                      (action-table-length (length action-table))
+                      (action-index 0)
+                      (possible-look-aheads))
 
-                 ((equal action-match '(shift))
-                  ;; (a) If f(u) = shift, then the next input symbol, say a
-                  ;; is removed from the input and shifted onto the pushdown list.
-                  ;; The goto function g of the table on top of the pushdown list
-                  ;; is applied to a to determine the new table to be placed on
-                  ;; top of the pushdown list. We then return to step(1). If
-                  ;; there is no next input symbol or g(a) is undefined, halt
-                  ;; and declare error.
+                  ;; (2) The parsing action f of the table on top of the pushdown list is applied to the lookahead string u.
+                  (while (and
+                          (not action-match)
+                          (< action-index action-table-length))
+                    (let ((action (nth action-index action-table)))
+                      (let ((action-look-ahead (car action)))
+                        (push
+                         action-look-ahead
+                         possible-look-aheads)
+                        (when
+                            (equal
+                             action-look-ahead
+                             look-ahead)
+                          (setq
+                           action-match
+                           (cdr action)))
+                        (when
+                            (and
+                             (=
+                              parser-generator--look-ahead-number
+                              0)
+                             (not
+                              action-look-ahead))
+                          ;; LR(0) reduce actions occupy entire row
+                          ;; and is applied regardless of look-ahead
+                          (setq
+                           action-match
+                           (cdr action))))
+                      (setq
+                       action-index
+                       (1+ action-index))))
 
-                  (let ((a (list (car look-ahead)))
-                        (a-full (list (car look-ahead-full))))
-                    (parser-generator--debug
-                     (message "shift a: %s" a)
-                     (message "shift a-full: %s" a-full))
-                    (let ((goto-table-distinct-index
-                           (gethash
-                            table-index
-                            parser-generator-lr--goto-tables)))
-                      (let ((goto-table
+                  (unless action-match
+                    ;; (c) If f(u) = error, we halt parsing (and, in practice
+                    ;; transfer to an error recovery routine).
+
+                    (error
+                     (format
+                      "Invalid syntax! Expected one of %s found %s at %s"
+                      possible-look-aheads
+                      look-ahead
+                      parser-generator-lex-analyzer--index)
+                     possible-look-aheads
+                     look-ahead
+                     parser-generator-lex-analyzer--index))
+
+                  (parser-generator--debug
+                   (message "action-table: %s" action-table)
+                   (message "action-match: %s" action-match))
+
+                  (cond
+
+                   ((equal action-match '(shift))
+                    ;; (a) If f(u) = shift, then the next input symbol, say a
+                    ;; is removed from the input and shifted onto the pushdown list.
+                    ;; The goto function g of the table on top of the pushdown list
+                    ;; is applied to a to determine the new table to be placed on
+                    ;; top of the pushdown list. We then return to step(1). If
+                    ;; there is no next input symbol or g(a) is undefined, halt
+                    ;; and declare error.
+
+                    (let ((a (list (car look-ahead)))
+                          (a-full (list (car look-ahead-full))))
+                      (parser-generator--debug
+                       (message "shift a: %s" a)
+                       (message "shift a-full: %s" a-full))
+                      (let ((goto-table-distinct-index
                              (gethash
-                              goto-table-distinct-index
-                              parser-generator-lr--distinct-goto-tables)))
-                        (let ((goto-table-length
-                               (length goto-table))
-                              (goto-index 0)
-                              (searching-match t)
-                              (next-index)
-                              (possible-look-aheads))
+                              table-index
+                              parser-generator-lr--goto-tables)))
+                        (let ((goto-table
+                               (gethash
+                                goto-table-distinct-index
+                                parser-generator-lr--distinct-goto-tables)))
+                          (let ((goto-table-length
+                                 (length goto-table))
+                                (goto-index 0)
+                                (searching-match t)
+                                (next-index)
+                                (possible-look-aheads))
 
-                          (while (and
-                                  searching-match
-                                  (< goto-index goto-table-length))
-                            (let ((goto-item (nth goto-index goto-table)))
-                              (let ((goto-item-symbol (list (car goto-item)))
-                                    (goto-item-next-index (car (cdr goto-item))))
-                                (push goto-item-symbol possible-look-aheads)
+                            (while (and
+                                    searching-match
+                                    (< goto-index goto-table-length))
+                              (let ((goto-item (nth goto-index goto-table)))
+                                (let ((goto-item-symbol (list (car goto-item)))
+                                      (goto-item-next-index (car (cdr goto-item))))
+                                  (push goto-item-symbol possible-look-aheads)
 
-                                (parser-generator--debug
-                                 (message "shift goto-item: %s" goto-item)
-                                 (message "shift goto-item-symbol: %s" goto-item-symbol))
+                                  (parser-generator--debug
+                                   (message "shift goto-item: %s" goto-item)
+                                   (message "shift goto-item-symbol: %s" goto-item-symbol))
 
-                                (when (equal
-                                       goto-item-symbol
-                                       a)
-                                  (setq next-index goto-item-next-index)
-                                  (setq searching-match nil))))
+                                  (when (equal
+                                         goto-item-symbol
+                                         a)
+                                    (setq next-index goto-item-next-index)
+                                    (setq searching-match nil))))
 
-                            (setq goto-index (1+ goto-index)))
+                              (setq goto-index (1+ goto-index)))
 
+                            (parser-generator--debug
+                             (message "shift next-index: %s" next-index))
+
+                            (unless next-index
+                              (error
+                               "In shift, found no GOTO-item for %s at %s, expected one of %s"
+                               a
+                               parser-generator-lex-analyzer--index
+                               possible-look-aheads))
+
+                            ;; Maybe push both tokens here?
+                            (push (car a-full) pushdown-list)
+                            (push next-index pushdown-list)
+                            (parser-generator-lex-analyzer--pop-token))))))
+
+                   ((equal (car action-match) 'reduce)
+                    ;; (b) If f(u) = reduce i and production i is A -> a,
+                    ;; then 2|a| symbols are removed from the top of the pushdown
+                    ;; list, and production number i is placed in the output
+                    ;; buffer. A new table T' is then exposed as the top table
+                    ;; of the pushdown list, and the goto function of T' is applied
+                    ;; to A to determine the next table to be placed on top of the
+                    ;; pushdown list. We place A and this new table on top of the
+                    ;; the pushdown list and return to step (1)
+
+                    (let ((production-number (car (cdr action-match))))
+
+                      (let ((production
+                             (parser-generator--get-grammar-production-by-number
+                              production-number)))
+                        (let ((production-lhs (car production))
+                              (production-rhs (car (cdr production)))
+                              (popped-items-contents))
                           (parser-generator--debug
-                           (message "shift next-index: %s" next-index))
+                           (message "production-lhs: %s" production-lhs)
+                           (message "production-rhs: %s" production-rhs))
+                          (unless (equal
+                                   production-rhs
+                                   (list parser-generator--e-identifier))
+                            (let ((pop-items (* 2 (length production-rhs)))
+                                  (popped-items 0)
+                                  (popped-item))
+                              (while (< popped-items pop-items)
+                                (setq popped-item (pop pushdown-list))
+                                (parser-generator--debug
+                                 (message "popped-item: %s" popped-item))
+                                (when (and
+                                       (listp popped-item)
+                                       (parser-generator--valid-symbol-p
+                                        (car popped-item)))
+                                  (push
+                                   popped-item
+                                   popped-items-contents))
+                                (setq popped-items (1+ popped-items)))))
+                          (push production-number output)
 
-                          (unless next-index
-                            (error
-                             "In shift, found no GOTO-item for %s at %s, expected one of %s"
-                             a
-                             parser-generator-lex-analyzer--index
-                             possible-look-aheads))
-
-                          ;; Maybe push both tokens here?
-                          (push (car a-full) pushdown-list)
-                          (push next-index pushdown-list)
-                          (parser-generator-lex-analyzer--pop-token))))))
-
-                 ((equal (car action-match) 'reduce)
-                  ;; (b) If f(u) = reduce i and production i is A -> a,
-                  ;; then 2|a| symbols are removed from the top of the pushdown
-                  ;; list, and production number i is placed in the output
-                  ;; buffer. A new table T' is then exposed as the top table
-                  ;; of the pushdown list, and the goto function of T' is applied
-                  ;; to A to determine the next table to be placed on top of the
-                  ;; pushdown list. We place A and this new table on top of the
-                  ;; the pushdown list and return to step (1)
-
-                  (let ((production-number (car (cdr action-match))))
-
-                    (let ((production
-                           (parser-generator--get-grammar-production-by-number
-                            production-number)))
-                      (let ((production-lhs (car production))
-                            (production-rhs (car (cdr production)))
-                            (popped-items-contents))
-                        (parser-generator--debug
-                         (message "production-lhs: %s" production-lhs)
-                         (message "production-rhs: %s" production-rhs))
-                        (unless (equal
-                                 production-rhs
-                                 (list parser-generator--e-identifier))
-                          (let ((pop-items (* 2 (length production-rhs)))
-                                (popped-items 0)
-                                (popped-item))
-                            (while (< popped-items pop-items)
-                              (setq popped-item (pop pushdown-list))
+                          (let ((popped-items-meta-contents)
+                                (all-expanded t))
+                            ;; Collect arguments for translation
+                            (dolist (popped-item popped-items-contents)
                               (parser-generator--debug
-                               (message "popped-item: %s" popped-item))
-                              (when (and
-                                     (listp popped-item)
-                                     (parser-generator--valid-symbol-p
-                                      (car popped-item)))
-                                (push
-                                 popped-item
-                                 popped-items-contents))
-                              (setq popped-items (1+ popped-items)))))
-                        (push production-number output)
-
-                        (let ((popped-items-meta-contents)
-                              (all-expanded t))
-                          ;; Collect arguments for translation
-                          (dolist (popped-item popped-items-contents)
+                               (message
+                                "popped-item: %s"
+                                popped-item))
+                              (if (and
+                                   (listp popped-item)
+                                   (cdr popped-item))
+                                  ;; If item is a terminal, use it's literal value
+                                  (push
+                                   (parser-generator-lex-analyzer--get-function
+                                    popped-item)
+                                   popped-items-meta-contents)
+                                (let ((temp-hash-key
+                                       (format
+                                        "%S"
+                                        popped-item)))
+                                  (if (gethash
+                                       temp-hash-key
+                                       translation-symbol-table)
+                                      (push
+                                       (gethash
+                                        temp-hash-key
+                                        translation-symbol-table)
+                                       popped-items-meta-contents)
+                                    (setq
+                                     all-expanded
+                                     nil)
+                                    (push
+                                     nil
+                                     popped-items-meta-contents)))))
+                            (setq
+                             popped-items-meta-contents
+                             (nreverse popped-items-meta-contents))
                             (parser-generator--debug
                              (message
-                              "popped-item: %s"
-                              popped-item))
-                            (if (and
-                                 (listp popped-item)
-                                 (cdr popped-item))
-                                ;; If item is a terminal, use it's literal value
-                                (push
-                                 (parser-generator-lex-analyzer--get-function
-                                  popped-item)
-                                 popped-items-meta-contents)
-                              (let ((temp-hash-key
-                                     (format
-                                      "%S"
-                                      popped-item)))
-                                (if (gethash
-                                     temp-hash-key
-                                     translation-symbol-table)
-                                    (push
-                                     (gethash
-                                      temp-hash-key
-                                      translation-symbol-table)
-                                     popped-items-meta-contents)
+                              "Production arguments: %s -> %s = %s"
+                              production-lhs
+                              production-rhs
+                              popped-items-meta-contents))
+
+                            ;; Perform translation at reduction if specified
+                            (if
+                                (parser-generator--get-grammar-translation-by-number
+                                 production-number)
+                                (let ((partial-translation
+                                       (funcall
+                                        (parser-generator--get-grammar-translation-by-number
+                                         production-number)
+                                        popped-items-meta-contents)))
+                                  (parser-generator--debug
+                                   (message
+                                    "translation-symbol-table: %s = %s"
+                                    production-lhs
+                                    partial-translation))
+                                  (puthash
+                                   (format
+                                    "%S"
+                                    production-lhs)
+                                   partial-translation
+                                   translation-symbol-table)
                                   (setq
-                                   all-expanded
-                                   nil)
-                                  (push
-                                   nil
-                                   popped-items-meta-contents)))))
-                          (setq
-                           popped-items-meta-contents
-                           (nreverse popped-items-meta-contents))
-                          (parser-generator--debug
-                           (message
-                            "Production arguments: %s -> %s = %s"
-                            production-lhs
-                            production-rhs
-                            popped-items-meta-contents))
+                                   translation
+                                   partial-translation))
 
-                          ;; Perform translation at reduction if specified
-                          (if
-                              (parser-generator--get-grammar-translation-by-number
-                               production-number)
-                              (let ((partial-translation
-                                     (funcall
-                                      (parser-generator--get-grammar-translation-by-number
-                                       production-number)
-                                      popped-items-meta-contents)))
-                                (parser-generator--debug
-                                 (message
-                                  "translation-symbol-table: %s = %s"
-                                  production-lhs
-                                  partial-translation))
-                                (puthash
-                                 (format
-                                  "%S"
-                                  production-lhs)
-                                 partial-translation
-                                 translation-symbol-table)
-                                (setq
-                                 translation
-                                 partial-translation))
+                              ;; When no translation is specified just use arguments as translation
+                              (when all-expanded
+                                (let ((partial-translation
+                                       popped-items-meta-contents))
+                                  (parser-generator--debug
+                                   (message
+                                    "translation-symbol-table: %s = %s (generic)"
+                                    production-lhs
+                                    partial-translation))
+                                  (puthash
+                                   (format
+                                    "%S"
+                                    production-lhs)
+                                   partial-translation
+                                   translation-symbol-table)
+                                  (setq
+                                   translation
+                                   partial-translation)))))
 
-                            ;; When no translation is specified just use arguments as translation
-                            (when all-expanded
-                              (let ((partial-translation
-                                     popped-items-meta-contents))
-                                (parser-generator--debug
-                                 (message
-                                  "translation-symbol-table: %s = %s (generic)"
-                                  production-lhs
-                                  partial-translation))
-                                (puthash
-                                 (format
-                                  "%S"
-                                  production-lhs)
-                                 partial-translation
-                                 translation-symbol-table)
-                                (setq
-                                 translation
-                                 partial-translation)))))
-
-                        (let ((new-table-index (car pushdown-list)))
-                          (let ((goto-table-distinct-index
-                                 (gethash
-                                  new-table-index
-                                  parser-generator-lr--goto-tables)))
-                            (let ((goto-table
+                          (let ((new-table-index (car pushdown-list)))
+                            (let ((goto-table-distinct-index
                                    (gethash
-                                    goto-table-distinct-index
-                                    parser-generator-lr--distinct-goto-tables)))
-                              (let ((goto-table-length
-                                     (length goto-table))
-                                    (goto-index 0)
-                                    (searching-match t)
-                                    (next-index))
+                                    new-table-index
+                                    parser-generator-lr--goto-tables)))
+                              (let ((goto-table
+                                     (gethash
+                                      goto-table-distinct-index
+                                      parser-generator-lr--distinct-goto-tables)))
+                                (let ((goto-table-length
+                                       (length goto-table))
+                                      (goto-index 0)
+                                      (searching-match t)
+                                      (next-index))
 
-                                (while (and
-                                        searching-match
-                                        (< goto-index goto-table-length))
-                                  (let ((goto-item (nth goto-index goto-table)))
-                                    (let ((goto-item-symbol (list (car goto-item)))
-                                          (goto-item-next-index (car (cdr goto-item))))
-                                      (parser-generator--debug
-                                       (message "reduce goto-item: %s" goto-item)
-                                       (message "reduce goto-item-symbol: %s" goto-item-symbol))
+                                  (while (and
+                                          searching-match
+                                          (< goto-index goto-table-length))
+                                    (let ((goto-item (nth goto-index goto-table)))
+                                      (let ((goto-item-symbol (list (car goto-item)))
+                                            (goto-item-next-index (car (cdr goto-item))))
+                                        (parser-generator--debug
+                                         (message "reduce goto-item: %s" goto-item)
+                                         (message "reduce goto-item-symbol: %s" goto-item-symbol))
 
-                                      (when (equal
-                                             goto-item-symbol
-                                             production-lhs)
-                                        (setq next-index goto-item-next-index)
-                                        (setq searching-match nil))))
+                                        (when (equal
+                                               goto-item-symbol
+                                               production-lhs)
+                                          (setq next-index goto-item-next-index)
+                                          (setq searching-match nil))))
 
-                                  (setq goto-index (1+ goto-index)))
+                                    (setq goto-index (1+ goto-index)))
 
-                                (parser-generator--debug
-                                 (message "reduce next-index: %s" next-index))
+                                  (parser-generator--debug
+                                   (message "reduce next-index: %s" next-index))
 
-                                (when next-index
-                                  (push production-lhs pushdown-list)
-                                  (push next-index pushdown-list))))))))))
+                                  (when next-index
+                                    (push production-lhs pushdown-list)
+                                    (push next-index pushdown-list))))))))))
 
-                 ((equal action-match '(accept))
-                  ;;    (d) If f(u) = accept, we halt and declare the string
-                  ;;    in the output buffer to be the right parse of the original
-                  ;;    input string.
+                   ((equal action-match '(accept))
+                    ;;    (d) If f(u) = accept, we halt and declare the string
+                    ;;    in the output buffer to be the right parse of the original
+                    ;;    input string.
 
-                  (setq accept t))
+                    (setq accept t))
 
-                 (t (error
-                     "Invalid action-match: %s!"
-                     action-match))))))))
+                   (t (error
+                       "Invalid action-match: %s!"
+                       action-match)))))))))
       (unless accept
         (error
          "Parsed entire string without getting accepting! Output: %s"
