@@ -389,6 +389,10 @@
            (parser-generator-lr--items-for-prefix
             parser-generator--e-identifier)))
 
+      (parser-generator-lr--items-valid-p
+       (list e-set)
+       t)
+
       ;;(1) Place V(e) in S. The set V(e) is initially unmarked.
       (push
        `(,lr-item-set-new-index ,e-set)
@@ -524,6 +528,10 @@
                         "Set is new: %s"
                         prefix-lr-items))
 
+                      (parser-generator-lr--items-valid-p
+                       (list prefix-lr-items)
+                       t)
+
                       ;; Note that GOTO(a, X) will always be empty if all items in a
                       ;; have the dot at the right end of the production
 
@@ -618,13 +626,6 @@
              goto-table-index
              parser-generator-lr--goto-tables))))
         (setq table-index (1+ table-index))))
-
-    ;; (parser-generator-lr--items-valid-p
-    ;;  (parser-generator--hash-values-to-list
-    ;;   table-lr-items
-    ;;   t)
-    ;;  t)
-
     (message "\nCompleted generation of goto-tables.\n")
     table-lr-items))
 
