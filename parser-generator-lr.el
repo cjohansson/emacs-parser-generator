@@ -714,14 +714,15 @@
                 (when (equal a-follow b-suffix-follow-eff-item)
                   (when
                       signal-on-false
-                    (signal
-                     'error
-                     (format
-                      "Inconsistent grammar! %s (index: %d) conflicts with %s (index: %d)"
-                      a
-                      a-index
-                      b
-                      b-index)))
+                    (error
+                     "Inconsistent grammar! %S (index: %d) with look-ahead %S conflicts with %S (index: %d) with look-ahead %S in sets: %S"
+                     a
+                     a-index
+                     a-follow
+                     b
+                     b-index
+                     b-suffix-follow-eff-item
+                     lr-item-sets))
                   (setq valid-p nil))))
             (setq b-index (1+ b-index))))
         (setq a-index (1+ a-index)))
