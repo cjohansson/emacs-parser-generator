@@ -640,11 +640,6 @@
         (unless
             (parser-generator--valid-attribute-p
              element)
-          (message "'%S' is not valid in '%S' from '%S' index: '%S'"
-                   element
-                   parser-generator--table-attributes-p
-                   attributes
-                   index)
           (setq
            is-valid
            nil)))
@@ -687,7 +682,8 @@
           (while (and
                   valid-p
                   (< non-terminal-index non-terminal-count))
-            (let ((non-terminal (nth non-terminal-index non-terminals)))
+            (let ((non-terminal
+                   (nth non-terminal-index non-terminals)))
               (unless
                   (or
                    (symbolp non-terminal)
@@ -717,8 +713,13 @@
               (production-index 0))
           (while (and
                   valid-p
-                  (< production-index production-count))
-            (let ((production (nth production-index productions)))
+                  (<
+                   production-index
+                   production-count))
+            (let ((production
+                   (nth
+                    production-index
+                    productions)))
               (unless
                   (parser-generator--valid-production-p
                    production)
@@ -753,6 +754,8 @@
   "Return whether SYMBOL is a non-terminal in grammar or not."
   (unless parser-generator--table-non-terminal-p
     (error "Table for non-terminals is undefined!"))
+  (when (listp symbol)
+    (setq symbol (car symbol)))
   (gethash
    symbol
    parser-generator--table-non-terminal-p))
@@ -765,11 +768,12 @@
     (when (and is-valid
                (not (> (length production) 1)))
       (setq is-valid nil))
-    (when (and is-valid
-               (not (or
-                     (stringp (car production))
-                     (symbolp (car production))
-                     (listp (car production)))))
+    (when (and
+           is-valid
+           (not (or
+                 (stringp (car production))
+                 (symbolp (car production))
+                 (listp (car production)))))
       (setq is-valid nil))
 
     ;; Validate left-hand-side (LHS) of production
@@ -801,8 +805,9 @@
       (let ((rhs (cdr production)))
         (let ((rhs-index 0)
               (rhs-length (length rhs)))
-          (while (and is-valid
-                      (< rhs-index rhs-length))
+          (while (and
+                  is-valid
+                  (< rhs-index rhs-length))
             (let ((rhs-element (nth rhs-index rhs)))
               (cond
                ((stringp rhs-element))
@@ -815,24 +820,70 @@
                 (let ((rhs-sub-index 0)
                       (rhs-sub-element)
                       (rhs-sub-length (length rhs-element)))
-                  (while (and is-valid
-                              (< rhs-sub-index rhs-sub-length))
+                  (while (and
+                          is-valid
+                          (< rhs-sub-index rhs-sub-length))
                     (setq rhs-sub-element (nth rhs-sub-index rhs-element))
                     (cond
                      ((and
                        (listp rhs-sub-element)
                        (not (functionp rhs-sub-element)))
-                      (unless (and
-                               (or (stringp (car rhs-sub-element))
-                                   (symbolp (car rhs-sub-element)))
-                               (functionp (car (cdr rhs-sub-element))))
-                        (setq is-valid nil)))
-                     ((and (functionp rhs-sub-element)
-                           (= rhs-sub-index (1- rhs-sub-length))))
-                     ((or (stringp rhs-sub-element)
-                          (symbolp rhs-sub-element)))
-                     (t (setq is-valid nil)))
-                    (setq rhs-sub-index (1+ rhs-sub-index)))))
+                      (unless
+                          (and
+                           (or (stringp (car rhs-sub-element))
+                               (symbolp (car rhs-sub-element)))
+                           (or
+                            (functionp (car (cdr rhs-sub-element)))
+                            (listp (car (cdr rhs-sub-element)))))
+                        (setq
+                         is-valid
+                         nil))
+
+                      ;; Support symbol attributes here
+                      (when (listp (car (cdr rhs-sub-element)))
+                        (if (and
+                             (= (length rhs-sub-element) 2)
+                             (listp (car (cdr rhs-sub-element)))
+                             (= (mod (length (car (cdr rhs-sub-element))) 2) 0))
+                            (let ((attributes (car (cdr rhs-sub-element))))
+                              (let ((attribute-index 0)
+                                    (attribute-count (length attributes)))
+                                (while (and
+                                        is-valid
+                                        (<
+                                         attribute-index
+                                         attribute-count))
+                                  (let ((attribute-key
+                                         (nth
+                                          attribute-index
+                                          attributes))
+                                        (attribute-value
+                                         (nth
+                                          (1+ attribute-index)
+                                          attributes)))
+                                    (unless (or
+                                             (stringp attribute-key)
+                                             (symbolp attribute-key))
+                                      (setq
+                                       is-valid
+                                       nil))
+                                    (unless
+                                        (or
+                                         (stringp attribute-value)
+                                         (symbolp attribute-value)
+                                         (numberp attribute-value))
+                                      (setq
+                                       is-valid
+                                       nil))
+                                    (setq
+                                     attribute-index
+                                     (+ attribute-index 2)))))))))
+                    ((and (functionp rhs-sub-element)
+                          (= rhs-sub-index (1- rhs-sub-length))))
+                    ((or (stringp rhs-sub-element)
+                         (symbolp rhs-sub-element)))
+                    (t (setq is-valid nil)))
+                  (setq rhs-sub-index (1+ rhs-sub-index)))))
                (t (setq is-valid nil)))
               (setq rhs-index (1+ rhs-index)))))))
     is-valid))
@@ -866,6 +917,8 @@
   "Return whether SYMBOL is a terminal in grammar or not."
   (unless parser-generator--table-terminal-p
     (error "Table for terminals is undefined!"))
+  (when (listp symbol)
+    (setq symbol (car symbol)))
   (gethash
    symbol
    parser-generator--table-terminal-p))

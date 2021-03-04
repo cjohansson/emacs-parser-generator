@@ -481,7 +481,7 @@
   (should
    (equal
     t
-    (parser-generator--valid-grammar-p '((A B C) ("a" "b" "c") ((A ("a" (%prec 1)))) A))))
+    (parser-generator--valid-grammar-p '((A B C) ("a" "b" "c") ((A (("a" (%prec 1))))) A))))
 
   (should
    (equal
