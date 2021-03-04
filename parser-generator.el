@@ -10,63 +10,88 @@
 ;;; Variables:
 
 
-(defvar parser-generator--debug
+(defvar
+  parser-generator--attributes
+  nil
+  "List of valid attributes.")
+
+(defvar
+  parser-generator--debug
   nil
   "Whether to print debug messages or not.")
 
-(defvar parser-generator--e-identifier
+(defvar
+  parser-generator--e-identifier
   'e
   "The identifier used for ε-symbol.  Default value 'e.")
 
-(defvar parser-generator--eof-identifier
+(defvar
+  parser-generator--eof-identifier
   '$
   "The identifier used for end of file identifier.  Default value is '$.")
 
-(defvar parser-generator--grammar
+(defvar
+  parser-generator--grammar
   nil
   "Current grammar used in parser.")
 
-(defvar parser-generator--f-sets
+(defvar
+  parser-generator--f-sets
   nil
   "Generated F-sets for grammar.")
 
-(defvar parser-generator--f-free-sets
+(defvar
+  parser-generator--f-free-sets
   nil
   "Generated e-free F-sets for grammar.")
 
-(defvar parser-generator--look-ahead-number
+(defvar
+  parser-generator--look-ahead-number
   nil
   "Current look-ahead number used.")
 
-(defvar parser-generator--table-firsts
+(defvar
+  parser-generator--table-firsts
   nil
   "Hash-table of calculated firsts for quicker parser generation.")
 
-(defvar parser-generator--table-look-aheads-p
+(defvar
+  parser-generator--table-attributes-p
+  nil
+  "Hash-table of attributes.")
+
+(defvar
+  parser-generator--table-look-aheads-p
   nil
   "Hash-table of look-aheads for quick checking.")
 
-(defvar parser-generator--table-non-terminal-p
+(defvar
+  parser-generator--table-non-terminal-p
   nil
   "Hash-table of terminals for quick checking.")
 
-(defvar parser-generator--table-productions-rhs
+(defvar
+  parser-generator--table-productions-rhs
   nil
   "Hash-table of productions RHS indexed by LHS for quick retrieving.")
 
-(defvar parser-generator--table-productions-number
+(defvar
+  parser-generator--table-productions-number
   nil
   "Hash-table indexed by production and value is production-number.")
 
-(defvar parser-generator--table-productions-number-reverse
+(defvar
+  parser-generator--table-productions-number-reverse
   nil
   "Hash-table indexed by production-number and value is production.")
 
-(defvar parser-generator--table-terminal-p
+(defvar
+  parser-generator--table-terminal-p
   nil
   "Hash-table of non-terminals for quick checking.")
 
-(defvar parser-generator--table-translations
+(defvar
+  parser-generator--table-translations
   nil
   "Hash-table indexed by production-number and value is translation function.")
 
@@ -501,6 +526,15 @@
         parser-generator--grammar)
        new-productions)))
 
+  (setq
+   parser-generator--table-attributes-p
+   (make-hash-table :test 'equal))
+  (dolist (attribute parser-generator--attributes)
+    (puthash
+     attribute
+     t
+     parser-generator--table-attributes-p))
+
   (let ((look-aheads
          (parser-generator--get-grammar-look-aheads)))
     (setq
@@ -584,6 +618,38 @@
               (setq continue nil)))))
       (setq index (1+ index)))
     response))
+
+(defun parser-generator--valid-attribute-p (attribute)
+  "Check if ATTRIBUTE is valid."
+  (gethash
+   attribute
+   parser-generator--table-attributes-p))
+
+(defun parser-generator--valid-attributes-p (attributes)
+  "Check if all ATTRIBUTES are valid."
+  (let ((is-valid t)
+        (length (length attributes))
+        (index 0))
+    (unless (listp attributes)
+      (setq is-valid nil))
+    (while (and
+            is-valid
+            (< index length))
+      (let ((element
+             (nth index attributes)))
+        (unless
+            (parser-generator--valid-attribute-p
+             element)
+          (message "'%S' is not valid in '%S' from '%S' index: '%S'"
+                   element
+                   parser-generator--table-attributes-p
+                   attributes
+                   index)
+          (setq
+           is-valid
+           nil)))
+      (setq index (+ index 2)))
+    is-valid))
 
 (defun parser-generator--valid-e-p (symbol)
   "Return whether SYMBOL is the e identifier or not."

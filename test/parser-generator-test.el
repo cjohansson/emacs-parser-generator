@@ -480,6 +480,11 @@
 
   (should
    (equal
+    t
+    (parser-generator--valid-grammar-p '((A B C) ("a" "b" "c") ((A ("a" (%prec 1)))) A))))
+
+  (should
+   (equal
     nil
     (parser-generator--valid-grammar-p '((A B C) ("a" "b" "c") ((A "a")) (A)))))
 
@@ -573,7 +578,7 @@
 
 (defun parser-generator-test--valid-sentential-form-p ()
   "Test `parser-generator--valid-sentential-form-p'."
-  (message "Starting tests  for (parser-generator--valid-sentential-form-p)")
+  (message "Starting tests for (parser-generator--valid-sentential-form-p)")
 
   (parser-generator-set-grammar '((S A B) ("a" "b") ((S A) (A ("b" "a")) (B ("b" (lambda(b) (message "Was here: %s" b))))) S))
   (parser-generator-process-grammar)
@@ -598,7 +603,7 @@
 
 (defun parser-generator-test--valid-production-p ()
   "Test `parser-generator--valid-production-p'."
-  (message "Starting tests  for (parser-generator--valid-production-p)")
+  (message "Starting tests for (parser-generator--valid-production-p)")
 
   (should (equal
            t
@@ -628,11 +633,11 @@
            t
            (parser-generator--valid-production-p '(A (a (lambda(a) (message "Here 3 %s"))) b))))
 
-  (message "Passed tests  for (parser-generator--valid-production-p)"))
+  (message "Passed tests for (parser-generator--valid-production-p)"))
 
 (defun parser-generator-test--get-grammar-rhs ()
   "Test `parser-generator--get-grammar-rhs'."
-  (message "Started tests  for (parser-generator--get-grammar-rhs)")
+  (message "Started tests for (parser-generator--get-grammar-rhs)")
 
   (parser-generator-set-grammar
    '((S A B) ("a" "b") ((S A) (A ("b" "a")) (B ("b" (lambda(b) (message "Was here: %s" b))))) S))
@@ -667,19 +672,26 @@
 
   (parser-generator-process-grammar)
 
-  (message "Passed tests  for (parser-generator--get-grammar-rhs)"))
+  (message "Passed tests for (parser-generator--get-grammar-rhs)"))
 
 (defun parser-generator-test--valid-non-terminal-p ()
   "Test `parser-generator--valid-non-terminal-p'."
-  (message "Starting tests  for (parser-generator--valid-non-terminal-p)")
+  (message "Starting tests for (parser-generator--valid-non-terminal-p)")
 
   (parser-generator-set-grammar '((S A B) ("a" "b") ((S A) (S (B)) (B "a") (A "a") (A ("b" "a"))) S))
+  (setq
+   parser-generator--attributes
+   '(%prec))
   (parser-generator-process-grammar)
 
   (should
    (equal
     t
     (parser-generator--valid-non-terminal-p 'S)))
+  (should
+   (equal
+    t
+    (parser-generator--valid-non-terminal-p '(S (%prec 1)))))
   (should
    (equal
     t
@@ -697,19 +709,75 @@
     nil
     (parser-generator--valid-non-terminal-p "a")))
 
-  (message "Passed tests  for (parser-generator--valid-non-terminal-p)"))
+  (message "Passed tests for (parser-generator--valid-non-terminal-p)"))
+
+(defun parser-generator-test--valid-attribute-p ()
+  "Test `parser-generator--valid-attribute-p'."
+  (message "Starting tests for (parser-generator--valid-attribute-p)")
+
+  (parser-generator-set-grammar '((S A B) ("a" "b") ((S A) (S (B)) (B "a") (A "a") (A ("b" "a"))) S))
+  (setq
+   parser-generator--attributes
+   '(%abc depth length))
+  (parser-generator-process-grammar)
+
+  (parser-generator--valid-attribute-p
+     '%abc)
+  
+  (should
+   (equal
+    t
+    (parser-generator--valid-attribute-p
+     '%abc)))
+  (should
+   (equal
+    nil
+    (parser-generator--valid-attribute-p
+     '%prec)))
+
+  (message "Passed tests for (parser-generator--valid-attribute-p)"))
+
+(defun parser-generator-test--valid-attributes-p ()
+  "Test `parser-generator--valid-attributes-p'."
+  (message "Starting tests for (parser-generator--valid-attributes-p)")
+
+  (parser-generator-set-grammar '((S A B) ("a" "b") ((S A) (S (B)) (B "a") (A "a") (A ("b" "a"))) S))
+  (setq
+   parser-generator--attributes
+   '(%abc depth length))
+  (parser-generator-process-grammar)
+
+  (should
+   (equal
+    t
+    (parser-generator--valid-attributes-p
+     '(%abc 1 depth 0 length 3))))
+  (should
+   (equal
+    nil
+    (parser-generator--valid-attributes-p
+     '(%prec 0))))
+
+  (message "Passed tests for (parser-generator--valid-attributes-p)"))
 
 (defun parser-generator-test--valid-terminal-p ()
   "Test `parser-generator--valid-terminal-p'."
-  (message "Starting tests  for (parser-generator--valid-terminal-p)")
+  (message "Starting tests for (parser-generator--valid-terminal-p)")
 
   (parser-generator-set-grammar '((S A B) ("a" "b") ((S A) (S (B)) (B "a") (A "a") (A ("b" "a"))) S))
+  (setq
+   parser-generator--attributes
+   '(%prec))
   (parser-generator-process-grammar)
 
   (should
    (equal
     t
     (parser-generator--valid-terminal-p "a")))
+  (should
+   (equal
+    t
+    (parser-generator--valid-terminal-p '("a" (%prec 1)))))
   (should
    (equal
     t
@@ -727,11 +795,11 @@
     nil
     (parser-generator--valid-terminal-p 'A)))
 
-  (message "Passed tests  for (parser-generator--valid-terminal-p)"))
+  (message "Passed tests for (parser-generator--valid-terminal-p)"))
 
 (defun parser-generator-test--merge-max-terminals ()
   "Test `parser-generator--merge-max-terminals'."
-  (message "Starting tests  for (parser-generator--merge-max-terminals)")
+  (message "Starting tests for (parser-generator--merge-max-terminals)")
 
   (should
    (equal
@@ -749,11 +817,11 @@
      '(b e)
      3)))
 
-  (message "Passed tests  for (parser-generator--merge-max-terminals)"))
+  (message "Passed tests for (parser-generator--merge-max-terminals)"))
 
 (defun parser-generator-test--get-list-permutations ()
   "Test `parser-generator--get-list-permutations'."
-  (message "Starting tests  for (parser-generator--get-list-permutations)")
+  (message "Starting tests for (parser-generator--get-list-permutations)")
 
   (parser-generator-set-look-ahead-number 1)
   (parser-generator-set-grammar '((S A B) ("a" "b") ((S A) (S (B)) (B "a") (A "a") (A ("b" "a"))) S))
@@ -825,6 +893,8 @@
   (parser-generator-test--get-list-permutations)
   (parser-generator-test--merge-max-terminals)
   (parser-generator-test--sort-list)
+  (parser-generator-test--valid-attribute-p)
+  (parser-generator-test--valid-attributes-p)
   (parser-generator-test--valid-grammar-p)
   (parser-generator-test--valid-look-ahead-number-p)
   (parser-generator-test--valid-look-ahead-p)
