@@ -756,6 +756,10 @@
     (error "Table for look-aheads is undefined!"))
   (unless (listp symbol)
     (setq symbol (list symbol)))
+  (setq
+   symbol
+   (parser-generator--get-symbols-without-attributes
+    symbol))
   (gethash
    symbol
    parser-generator--table-look-aheads-p))

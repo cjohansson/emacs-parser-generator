@@ -149,6 +149,8 @@
 
   (let ((table-lr-items
          (parser-generator-lr--generate-goto-tables)))
+
+    ;; TODO Should be a conflict in state 5
     (message
      "conflict-lr-items: %S"
      table-lr-items)
@@ -158,7 +160,11 @@
     (parser-generator-lr--generate-action-tables
      table-lr-items)
     (message
-     "conflicted action-tables: %s" (parser-generator-lr--get-expanded-action-tables)))
+     "conflict-action-tables: %s" (parser-generator-lr--get-expanded-action-tables))
+    (should
+     (equal
+      '((0 (((a) shift))) (1 (((c) shift))) (2 ((($) reduce 2))) (3 ((($) accept))) (4 (((b) shift))) (5 ((((c (%prec 1))) shift))) (6 ((($) reduce 1))))
+      (parser-generator-lr--get-expanded-action-tables))))
 
   (message "Passed tests for (parser-generator-lr--generate-action-tables)"))
 
