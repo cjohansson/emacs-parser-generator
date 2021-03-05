@@ -134,24 +134,31 @@
      Sp))
   (parser-generator-set-look-ahead-number 1)
   (parser-generator-process-grammar)
-
-  (let ((table-lr-items
-         (parser-generator-lr--generate-goto-tables)))
-    (message "conflict-lr-items: %S" table-lr-items)
-    (message "conflict-goto-tables: %S" (parser-generator-lr--get-expanded-goto-tables)))
-
   (should-error
    (parser-generator-lr-generate-parser-tables))
+  (message "Conflicted grammar caused expected exception 2")
+
+  (setq
+   parser-generator-lr--precedence-attribute
+   '%prec)
+  (setq
+   parser-generator-lr--precedence-comparison-function
+   #'<)
+  (parser-generator-lr-generate-parser-tables)
+  (message "Grammar not conflicting anymore")
 
   (let ((table-lr-items
          (parser-generator-lr--generate-goto-tables)))
-    (message "conflicted lr-items: %s" table-lr-items)
+    (message
+     "conflict-lr-items: %S"
+     table-lr-items)
+    (message
+     "conflict-goto-tables: %S"
+     (parser-generator-lr--get-expanded-goto-tables))
     (parser-generator-lr--generate-action-tables
      table-lr-items)
-    (message "conflicted goto-tables: %s" (parser-generator-lr--get-expanded-goto-tables))
-    (message "conflicted action-tables: %s" (parser-generator-lr--get-expanded-action-tables))
-    )
-  (message "Passed conflicted grammar")
+    (message
+     "conflicted action-tables: %s" (parser-generator-lr--get-expanded-action-tables)))
 
   (message "Passed tests for (parser-generator-lr--generate-action-tables)"))
 

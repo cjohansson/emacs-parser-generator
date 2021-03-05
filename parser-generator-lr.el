@@ -34,6 +34,16 @@
   nil
   "Goto-tables for grammar.")
 
+(defvar
+  parser-generator-lr--precedence-attribute
+  nil
+  "Attribute used for precedence.")
+
+(defvar
+  parser-generator-lr--precedence-comparison-function
+  nil
+  "Function used for resolving precedence.")
+
 
 ;; Main Algorithms
 
@@ -766,18 +776,36 @@
                 (when (equal
                        a-follow
                        b-suffix-follow-eff-item)
-                  (when
-                      signal-on-false
-                    (error
-                     "Inconsistent grammar! %S (index: %d) with look-ahead %S conflicts with %S (index: %d) with look-ahead %S in sets: %S"
-                     a
-                     a-index
-                     a-follow-full
-                     b
-                     b-index
-                     b-suffix-follow-eff-item-full
-                     lr-item-sets))
-                  (setq valid-p nil))))
+
+                  ;; If it's the same symbol but we have a precedence
+                  ;; attribute on any of them, or both, pass anyway
+                  (unless
+                      (and
+                       parser-generator-lr--precedence-attribute
+                       parser-generator-lr--precedence-comparison-function
+                       (or
+                        (and
+                         (listp (car a-follow-full))
+                         (plist-get
+                          (car (cdr (car a-follow-full)))
+                          parser-generator-lr--precedence-attribute))
+                        (and
+                         (listp (car b-suffix-follow-eff-item-full))
+                         (plist-get
+                          (car (cdr (car b-suffix-follow-eff-item-full)))
+                          parser-generator-lr--precedence-attribute))))
+                    (when
+                        signal-on-false
+                      (error
+                       "Inconsistent grammar! %S (index: %d) with look-ahead %S conflicts with %S (index: %d) with look-ahead %S in sets: %S"
+                       a
+                       a-index
+                       a-follow-full
+                       b
+                       b-index
+                       b-suffix-follow-eff-item-full
+                       lr-item-sets))
+                    (setq valid-p nil)))))
             (setq b-index (1+ b-index))))
         (setq a-index (1+ a-index)))
       (setq set-index (1+ set-index)))
