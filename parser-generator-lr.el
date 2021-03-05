@@ -103,7 +103,8 @@
                (gethash
                 goto-index
                 table-lr-items)))
-          (let ((lr-items-length (length lr-items)))
+          (let ((lr-items-length
+                 (length lr-items)))
 
             ;; Where u is in (T U e)*k
             (dolist (state states)
@@ -473,6 +474,14 @@
             (when symbols
               (let ((next-symbol
                      (car symbols)))
+
+                ;; Convert symbols with attributes to simple symbols
+                (when
+                    (listp next-symbol)
+                  (setq
+                   next-symbol
+                   (car next-symbol)))
+
                 (let ((temp-hash-key
                        (format
                         "%S"
@@ -673,12 +682,14 @@
         (a)
         (a-look-ahead)
         (a-follow)
+        (a-follow-full)
         (a-index 0)
         (b)
         (b-suffix)
         (b-follow)
         (b-suffix-follow)
         (b-suffix-follow-eff)
+        (b-suffix-follow-eff-item)
         (b-index 0))
 
     ;; Iterate each set
@@ -707,7 +718,13 @@
         (when (and
                (nth 1 a)
                (not a-look-ahead))
-          (setq a-follow (nth 3 a))
+          (setq
+           a-follow-full
+           (nth 3 a))
+          (setq
+           a-follow
+           (parser-generator--get-symbols-without-attributes
+            a-follow-full))
 
           (parser-generator--debug
            (message "a-follow: %s" a-follow))
@@ -721,11 +738,15 @@
               (parser-generator--debug
                (message "b: %s" b))
 
-              (setq b-suffix (nth 2 b))
-              (setq b-follow (nth 3 b))
+              (setq
+               b-suffix (nth 2 b))
+              (setq
+               b-follow (nth 3 b))
               (setq
                b-suffix-follow
-               (append b-suffix b-follow))
+               (append
+                b-suffix
+                b-follow))
               (setq
                b-suffix-follow-eff
                (parser-generator--e-free-first
@@ -737,18 +758,24 @@
                (message "b-suffix-follow: %s" b-suffix-follow)
                (message "b-suffix-follow-eff: %s" b-suffix-follow-eff))
 
-              (dolist (b-suffix-follow-eff-item b-suffix-follow-eff)
-                (when (equal a-follow b-suffix-follow-eff-item)
+              (dolist (b-suffix-follow-eff-item-full b-suffix-follow-eff)
+                (setq
+                 b-suffix-follow-eff-item
+                 (parser-generator--get-symbols-without-attributes
+                  b-suffix-follow-eff-item-full))
+                (when (equal
+                       a-follow
+                       b-suffix-follow-eff-item)
                   (when
                       signal-on-false
                     (error
                      "Inconsistent grammar! %S (index: %d) with look-ahead %S conflicts with %S (index: %d) with look-ahead %S in sets: %S"
                      a
                      a-index
-                     a-follow
+                     a-follow-full
                      b
                      b-index
-                     b-suffix-follow-eff-item
+                     b-suffix-follow-eff-item-full
                      lr-item-sets))
                   (setq valid-p nil))))
             (setq b-index (1+ b-index))))

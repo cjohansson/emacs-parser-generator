@@ -1,4 +1,4 @@
-;;; parser-generator-lr-test.el --- Tests for LR(k) Parser Generator -*- lexical-binding: t -*-
+;; parser-generator-lr-test.el --- Tests for LR(k) Parser Generator -*- lexical-binding: t -*-
 
 
 ;;; Commentary:
@@ -100,6 +100,58 @@
     ;; (message "cyclical action-tables: %s" (parser-generator-lr--get-expanded-action-tables))
     )
   (message "Passed cyclical grammar")
+
+  ;; Grammar with conflicts that can be resolved using precedence attributes
+  (parser-generator-set-grammar
+   '(
+     (Sp S A B)
+     (a b c)
+     (
+      (Sp S)
+      (S (A c) B)
+      (A (a b))
+      (B (a b c))
+      )
+     Sp))
+  (parser-generator-set-look-ahead-number 1)
+  (parser-generator-process-grammar)
+  (should-error
+   (parser-generator-lr-generate-parser-tables))
+  (message "Conflicted grammar caused expected exception")
+
+  ;; Inconsistent grammar! ((A) (a b) nil (c)) (index: 0) with look-ahead (c) conflicts with ((B) (a b) (c) ($)) (index: 1) with look-ahead (c) in sets: ((((A) (a b) nil (c)) ((B) (a b) (c) ($))))
+
+  (parser-generator-set-grammar
+   '(
+     (Sp S A B)
+     (a b c)
+     (
+      (Sp S)
+      (S (A c) B)
+      (A (a b))
+      (B (a b (c (%prec 1))))
+      )
+     Sp))
+  (parser-generator-set-look-ahead-number 1)
+  (parser-generator-process-grammar)
+
+  (let ((table-lr-items
+         (parser-generator-lr--generate-goto-tables)))
+    (message "conflict-lr-items: %S" table-lr-items)
+    (message "conflict-goto-tables: %S" (parser-generator-lr--get-expanded-goto-tables)))
+
+  (should-error
+   (parser-generator-lr-generate-parser-tables))
+
+  (let ((table-lr-items
+         (parser-generator-lr--generate-goto-tables)))
+    (message "conflicted lr-items: %s" table-lr-items)
+    (parser-generator-lr--generate-action-tables
+     table-lr-items)
+    (message "conflicted goto-tables: %s" (parser-generator-lr--get-expanded-goto-tables))
+    (message "conflicted action-tables: %s" (parser-generator-lr--get-expanded-action-tables))
+    )
+  (message "Passed conflicted grammar")
 
   (message "Passed tests for (parser-generator-lr--generate-action-tables)"))
 
