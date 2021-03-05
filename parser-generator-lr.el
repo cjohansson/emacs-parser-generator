@@ -146,7 +146,10 @@
                                   (let ((eff-index 0)
                                         (eff-item)
                                         (eff-length (length eff)))
-                                    (while (< eff-index eff-length)
+                                    (while
+                                        (<
+                                         eff-index
+                                         eff-length)
                                       (setq
                                        eff-item
                                        (parser-generator--first-to-lookahead
@@ -161,7 +164,11 @@
                                            eff-item)
                                           (let
                                               ((hash-key
-                                                (format "%s-%s-%S" goto-index state eff-item)))
+                                                (format
+                                                 "%s-%s-%S"
+                                                 goto-index
+                                                 state
+                                                 eff-item)))
                                             (parser-generator--debug
                                              (message
                                               "Valid look-ahead: %s"
@@ -195,7 +202,9 @@
                                                   ;; An extra column for '$' (end of input) is added to the action table that contains acc for every item set that contains an item of the form S → w • eof.
                                                   (progn
                                                     (push
-                                                     (list eff-item 'accept)
+                                                     (list
+                                                      eff-item
+                                                      'accept)
                                                      action-table)
                                                     (setq
                                                      found-accept
@@ -203,8 +212,7 @@
                                                 (push
                                                  (list
                                                   eff-item
-                                                  'shift
-                                                  )
+                                                  'shift)
                                                  action-table)))
                                             (setq
                                              found-action
@@ -228,7 +236,10 @@
                             (B (nth 1 lr-item))
                             (u (nth 3 lr-item)))
                         (unless B
-                          (setq B (list parser-generator--e-identifier)))
+                          (setq
+                           B
+                           (list
+                            parser-generator--e-identifier)))
                         (if
                             (=
                              parser-generator--look-ahead-number
@@ -251,9 +262,10 @@
                                    (message "production: %s (%s)" production production-number)
                                    (message "u: %s" u))
 
-                                  (push (list nil 'reduce production-number) action-table)
-                                  (setq found-action t)
-                                  (setq continue-loop nil))))
+                                  (push
+                                   (list nil 'reduce production-number)
+                                   action-table)
+                                  (setq found-action t))))
 
                           (when (parser-generator--valid-look-ahead-p u)
                             (let ((hash-key
@@ -293,13 +305,19 @@
                                         (progn
                                           ;; Reduction by first production
                                           ;; of empty look-ahead means grammar has been accepted
-                                          (push (list u 'accept) action-table)
+                                          (push
+                                           (list u 'accept)
+                                           action-table)
                                           (setq found-accept t)
                                           (setq found-action t))
 
                                       ;; save reduction action in action table
-                                      (push (list u 'reduce production-number) action-table)
-                                      (setq found-action t)))))))))))
+                                      (push
+                                       (list u 'reduce production-number)
+                                       action-table)
+                                      (setq
+                                       found-action
+                                       t)))))))))))
 
                    ((eq state 'error)
                     (unless found-action
@@ -307,8 +325,17 @@
                        "Failed to find any action in set %d: %s"
                        goto-index
                        lr-items))
-                    (setq continue-loop nil)))
-                  (setq lr-item-index (1+ lr-item-index)))))))
+                    (setq
+                     continue-loop
+                     nil)))
+                  (setq
+                   lr-item-index
+                   (1+ lr-item-index)))
+
+                ;; TODO Handle case here were we have a conflict
+                ;; TODO shift/reduce or reduce/reduce
+
+                ))))
         (parser-generator--debug
          (message "%s actions %s" goto-index action-table))
         (when action-table
@@ -939,7 +966,7 @@
     (parser-generator--debug
      (message "x: %s" x))
 
-    ;; TODO Use caches to optimize this loop
+    ;; TODO Use caches to optimize this loop?
     (dolist (lr-item previous-lr-item)
       (let ((lr-item-lhs (nth 0 lr-item))
             (lr-item-prefix (nth 1 lr-item))
@@ -1005,7 +1032,7 @@
         (while added-new
           (setq added-new nil)
 
-          ;; TODO Use caches to optimize this loop
+          ;; TODO Use caches to optimize this loop?
           (dolist (lr-item lr-new-item)
             (let ((lr-item-suffix (nth 2 lr-item)))
               (let ((lr-item-suffix-first
