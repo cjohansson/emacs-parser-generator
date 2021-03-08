@@ -114,7 +114,8 @@
                 goto-index
                 table-lr-items)))
           (let ((lr-items-length
-                 (length lr-items)))
+                 (length lr-items))
+                (index-symbols))
 
             ;; Where u is in (T U e)*k
             (dolist (state states)
@@ -168,8 +169,7 @@
                                       (parser-generator--debug
                                        (message
                                         "eff-item: %s"
-                                        eff-item
-                                        ))
+                                        eff-item))
                                       (if
                                           (parser-generator--valid-look-ahead-p
                                            eff-item)
@@ -183,21 +183,18 @@
                                             (parser-generator--debug
                                              (message
                                               "Valid look-ahead: %s"
-                                              eff-item
-                                              ))
+                                              eff-item))
                                             (if (gethash
                                                  hash-key
                                                  added-actions)
                                                 (parser-generator--debug
                                                  (message
                                                   "Duplicate action: %s"
-                                                  hash-key
-                                                  ))
+                                                  hash-key))
                                               (parser-generator--debug
                                                (message
                                                 "New action: %s"
-                                                hash-key
-                                                ))
+                                                hash-key))
                                               (puthash
                                                hash-key
                                                t
@@ -276,33 +273,36 @@
                                   (push
                                    (list nil 'reduce production-number)
                                    action-table)
-                                  (setq found-action t))))
+                                  (setq
+                                   found-action
+                                   t))))
 
                           (when (parser-generator--valid-look-ahead-p u)
-                            (let ((hash-key
-                                   (format
-                                    "%s-%s-%S"
-                                    goto-index
-                                    state
-                                    u)))
-                              (unless
-                                  (gethash
-                                   hash-key
-                                   added-actions)
-                                (puthash
-                                 hash-key
-                                 t
-                                 added-actions)
-                                (let ((production (list A B)))
-                                  (let
-                                      ((production-number
-                                        (parser-generator--get-grammar-production-number
-                                         production)))
-                                    (unless production-number
-                                      (error
-                                       "Expecting production number for %s from LR-item %s!"
-                                       production
-                                       lr-item))
+                            (let ((production (list A B)))
+                              (let
+                                  ((production-number
+                                    (parser-generator--get-grammar-production-number
+                                     production)))
+                                (unless production-number
+                                  (error
+                                   "Expecting production number for %s from LR-item %s!"
+                                   production
+                                   lr-item))
+                                (let ((hash-key
+                                       (format
+                                        "%s-%s-%S-%s"
+                                        goto-index
+                                        state
+                                        u
+                                        production-number)))
+                                  (unless
+                                      (gethash
+                                       hash-key
+                                       added-actions)
+                                    (puthash
+                                     hash-key
+                                     t
+                                     added-actions)
 
                                     (parser-generator--debug
                                      (message "production: %s (%s)" production production-number)
