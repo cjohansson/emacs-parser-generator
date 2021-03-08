@@ -143,7 +143,7 @@
    '%prec)
   (setq
    parser-generator-lr--precedence-comparison-function
-   #'<)
+   #'>)
   (parser-generator-lr-generate-parser-tables)
   (message "Grammar not conflicting anymore")
 
@@ -163,7 +163,13 @@
      "conflict-action-tables: %s" (parser-generator-lr--get-expanded-action-tables))
     (should
      (equal
-      '((0 (((a) shift))) (1 (((c) shift))) (2 ((($) reduce 2))) (3 ((($) accept))) (4 (((b) shift))) (5 ((((c (%prec 1))) shift))) (6 ((($) reduce 1))))
+      '((0 (((a) shift)))
+        (1 (((c) shift)))
+        (2 ((($) reduce 2)))
+        (3 ((($) accept)))
+        (4 (((b) shift)))
+        (5 (((c) shift)))
+        (6 ((($) reduce 1))))
       (parser-generator-lr--get-expanded-action-tables))))
 
   (message "Passed tests for (parser-generator-lr--generate-action-tables)"))

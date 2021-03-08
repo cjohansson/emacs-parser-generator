@@ -778,22 +778,11 @@
                        b-suffix-follow-eff-item)
 
                   ;; If it's the same symbol but we have a precedence
-                  ;; attribute on any of them, or both, pass anyway
+                  ;; attributes on any of them, or both, pass anyway
                   (unless
-                      (and
-                       parser-generator-lr--precedence-attribute
-                       parser-generator-lr--precedence-comparison-function
-                       (or
-                        (and
-                         (listp (car a-follow-full))
-                         (plist-get
-                          (car (cdr (car a-follow-full)))
-                          parser-generator-lr--precedence-attribute))
-                        (and
-                         (listp (car b-suffix-follow-eff-item-full))
-                         (plist-get
-                          (car (cdr (car b-suffix-follow-eff-item-full)))
-                          parser-generator-lr--precedence-attribute))))
+                      (parser-generator-lr--conflict-can-be-resolved-by-attributes
+                       (car a-follow-full)
+                       (car b-suffix-follow-eff-item-full))
                     (when
                         signal-on-false
                       (error
@@ -811,6 +800,73 @@
       (setq set-index (1+ set-index)))
 
     valid-p))
+
+(defun parser-generator-lr--conflict-can-be-resolved-by-attributes (a b)
+  "Return whether a conflict between A and B can be resolved by attributes."
+  (let ((can-be-resolved nil))
+    (when
+        (and
+         parser-generator-lr--precedence-attribute
+         parser-generator-lr--precedence-comparison-function
+         (functionp
+          parser-generator-lr--precedence-comparison-function)
+         (or (listp a)
+             (listp b)))
+      (cond
+       ((and
+         (listp a)
+         (listp b))
+        (let ((a-value
+               (plist-get
+                (car (cdr a))
+                parser-generator-lr--precedence-attribute))
+              (b-value
+               (plist-get
+                (car (cdr b))
+                parser-generator-lr--precedence-attribute)))
+          (condition-case
+              errors
+              (let ((comparison1
+                     (funcall
+                      parser-generator-lr--precedence-comparison-function
+                      a-value
+                      b-value))
+                    (comparison2
+                     (funcall
+                      parser-generator-lr--precedence-comparison-function
+                      b-value
+                      a-value)))
+                (unless
+                    (eq
+                     comparison1
+                     comparison2)
+                  (setq
+                   can-be-resolved
+                   t)))
+            (error
+             (error
+              "Trying to compare '%S' with '%S' resulted in error: '%S'!"
+              a-value
+              b-value
+              errors)))))
+       ((listp a)
+        (when
+            (plist-get
+             (car (cdr a))
+             parser-generator-lr--precedence-attribute)
+          (setq
+           can-be-resolved
+           t)))
+       ((listp b)
+        (when
+            (plist-get
+             (car (cdr b))
+             parser-generator-lr--precedence-attribute)
+          (setq
+           can-be-resolved
+           t)
+          ))))
+    can-be-resolved))
 
 ;; Algorithm 5.8, p. 386
 (defun parser-generator-lr--items-for-prefix (γ)
