@@ -100,6 +100,8 @@
          '(shift reduce error))
         (added-actions
          (make-hash-table :test 'equal))
+        (index-symbols
+         (make-hash-table :test 'equal))
         (goto-tables
          (parser-generator--hash-to-list
           parser-generator-lr--goto-tables
@@ -114,8 +116,7 @@
                 goto-index
                 table-lr-items)))
           (let ((lr-items-length
-                 (length lr-items))
-                (index-symbols))
+                 (length lr-items)))
 
             ;; Where u is in (T U e)*k
             (dolist (state states)
@@ -208,20 +209,57 @@
                                                     eff-item
                                                     `(,parser-generator--eof-identifier)))
                                                   ;; An extra column for '$' (end of input) is added to the action table that contains acc for every item set that contains an item of the form S → w • eof.
-                                                  (progn
+                                                  (let ((action-item
+                                                         (list
+                                                          (parser-generator--get-symbols-without-attributes
+                                                          eff-item)
+                                                          'accept)))
+                                                    ;; Add symbol to hash-table to
+                                                    ;; enable conflict resolution
+                                                    (let ((index-hash-key
+                                                           (format
+                                                            "%s-%S"
+                                                            goto-index
+                                                            (parser-generator--get-symbols-without-attributes
+                                                             eff-item))))
+                                                      (unless
+                                                          (gethash
+                                                           index-hash-key
+                                                           index-symbols)
+                                                        (puthash
+                                                         index-hash-key
+                                                         action-item
+                                                         index-symbols)))
                                                     (push
-                                                     (list
-                                                      eff-item
-                                                      'accept)
+                                                     action-item
                                                      action-table)
                                                     (setq
                                                      found-accept
                                                      t))
-                                                (push
-                                                 (list
-                                                  eff-item
-                                                  'shift)
-                                                 action-table)))
+                                                (let ((action-item
+                                                       (list
+                                                        (parser-generator--get-symbols-without-attributes
+                                                         eff-item)
+                                                        'shift)))
+                                                  ;; Add symbol to hash-table to
+                                                  ;; enable conflict resolution
+                                                  (let ((index-hash-key
+                                                         (format
+                                                          "%s-%S"
+                                                          goto-index
+                                                          (parser-generator--get-symbols-without-attributes
+                                                           eff-item))))
+                                                    (unless
+                                                        (gethash
+                                                         index-hash-key
+                                                         index-symbols)
+                                                      (puthash
+                                                       index-hash-key
+                                                       action-item
+                                                       index-symbols)))
+                                                  (push
+                                                   action-item
+                                                   action-table))))
                                             (setq
                                              found-action
                                              t))
@@ -229,7 +267,9 @@
                                          (message
                                           "Not valid look-ahead: %s"
                                           eff-item)))
-                                      (setq eff-index (1+ eff-index))))
+                                      (setq
+                                       eff-index
+                                       (1+ eff-index))))
                                 (parser-generator--debug
                                  (message
                                   "E-FREE-FIRST is empty for %s"
@@ -269,9 +309,11 @@
                                   (parser-generator--debug
                                    (message "production: %s (%s)" production production-number)
                                    (message "u: %s" u))
-
                                   (push
-                                   (list nil 'reduce production-number)
+                                   (list
+                                    nil
+                                    'reduce
+                                    production-number)
                                    action-table)
                                   (setq
                                    found-action
@@ -288,47 +330,125 @@
                                    "Expecting production number for %s from LR-item %s!"
                                    production
                                    lr-item))
-                                (let ((hash-key
+                                (let ((skip-symbol)
+                                      (hash-key
                                        (format
                                         "%s-%s-%S-%s"
                                         goto-index
                                         state
                                         u
                                         production-number)))
-                                  (unless
-                                      (gethash
+
+                                  ;; Add symbol to hash-table to
+                                  ;; enable conflict resolution
+                                  (let ((index-hash-key
+                                         (format
+                                          "%s-%S"
+                                          goto-index
+                                          (parser-generator--get-symbols-without-attributes
+                                           u))))
+                                    (when
+                                        (gethash
+                                         index-hash-key
+                                         index-symbols)
+                                        (let ((a u)
+                                              (b
+                                               (gethash
+                                                index-hash-key
+                                                index-symbols)))
+                                          (if
+                                              (parser-generator-lr--symbol-takes-precedence-p
+                                               (car a)
+                                               (car b))
+                                              (progn
+                                                (parser-generator--debug
+                                                 (message
+                                                  "'%s' takes precedence over '%s'"
+                                                  a
+                                                  b))
+                                                ;; Remove b from added-actions
+                                                (let ((new-action-table))
+                                                  (dolist (action-item action-table)
+                                                    (unless
+                                                        (equal
+                                                         action-item
+                                                         b)
+                                                      (push
+                                                       action-item
+                                                       new-action-table)))
+                                                  (setq
+                                                   action-table
+                                                   (reverse
+                                                    new-action-table))))
+                                            (parser-generator--debug
+                                             (message
+                                              "'%s' takes precedence over '%s'"
+                                              b
+                                              a))
+                                            ;; Skip rest of this iteration
+                                            (setq
+                                             skip-symbol
+                                             t))))
+
+                                    (unless
+                                        (or
+                                         skip-symbol
+                                         (gethash
+                                          hash-key
+                                          added-actions))
+                                      (puthash
                                        hash-key
+                                       t
                                        added-actions)
-                                    (puthash
-                                     hash-key
-                                     t
-                                     added-actions)
 
-                                    (parser-generator--debug
-                                     (message "production: %s (%s)" production production-number)
-                                     (message "u: %s" u))
+                                      (parser-generator--debug
+                                       (message "production: %s (%s)" production production-number)
+                                       (message "u: %s" u))
 
-                                    (if (and
-                                         (= production-number 0)
-                                         (>= (length u) 1)
-                                         (parser-generator--valid-eof-p
-                                          (nth (1- (length u)) u)))
-                                        (progn
-                                          ;; Reduction by first production
-                                          ;; of empty look-ahead means grammar has been accepted
+                                      (if (and
+                                           (= production-number 0)
+                                           (>= (length u) 1)
+                                           (parser-generator--valid-eof-p
+                                            (nth (1- (length u)) u)))
+                                          (let ((action-item
+                                                 (list
+                                                  (parser-generator--get-symbols-without-attributes
+                                                   u)
+                                                  'accept)))
+                                            (puthash
+                                             index-hash-key
+                                             action-item
+                                             index-symbols)
+
+                                            ;; Reduction by first production
+                                            ;; of empty look-ahead means grammar has been accepted
+                                            (push
+                                             action-item
+                                             action-table)
+                                            (setq
+                                             found-accept
+                                             t)
+                                            (setq
+                                             found-action
+                                             t))
+
+                                        ;; save reduction action in action table
+                                        (let ((action-item
+                                               (list
+                                                (parser-generator--get-symbols-without-attributes
+                                                 u)
+                                                'reduce
+                                                production-number)))
+                                          (puthash
+                                           index-hash-key
+                                           action-item
+                                           index-symbols)
                                           (push
-                                           (list u 'accept)
+                                           action-item
                                            action-table)
-                                          (setq found-accept t)
-                                          (setq found-action t))
-
-                                      ;; save reduction action in action table
-                                      (push
-                                       (list u 'reduce production-number)
-                                       action-table)
-                                      (setq
-                                       found-action
-                                       t)))))))))))
+                                          (setq
+                                           found-action
+                                           t)))))))))))))
 
                    ((eq state 'error)
                     (unless found-action
@@ -801,9 +921,58 @@
 
     valid-p))
 
+(defun parser-generator-lr--symbol-takes-precedence-p (a b)
+  "Return t if A takes precedence over B, otherwise nil."
+  (let ((takes-precedence))
+    (cond
+     ((and
+       (listp a)
+       (listp b))
+      (let ((a-value
+             (plist-get
+              (car (cdr a))
+              parser-generator-lr--precedence-attribute))
+            (b-value
+             (plist-get
+              (car (cdr b))
+              parser-generator-lr--precedence-attribute)))
+        (condition-case
+            errors
+            (let ((comparison
+                   (funcall
+                    parser-generator-lr--precedence-comparison-function
+                    a-value
+                    b-value)))
+              (setq
+               takes-precedence
+               comparison))
+          (error
+           (error
+            "Trying to compare '%S' with '%S' resulted in error: '%S'!"
+            a-value
+            b-value
+            errors)))))
+     ((listp a)
+      (when
+          (plist-get
+           (car (cdr a))
+           parser-generator-lr--precedence-attribute)
+        (setq
+         takes-precedence
+         t)))
+     ((listp b)
+      (when
+          (plist-get
+           (car (cdr b))
+           parser-generator-lr--precedence-attribute)
+        (setq
+         takes-precedence
+         nil))))
+    takes-precedence))
+
 (defun parser-generator-lr--conflict-can-be-resolved-by-attributes (a b)
   "Return whether a conflict between A and B can be resolved by attributes."
-  (let ((can-be-resolved nil))
+  (let ((can-be-resolved))
     (when
         (and
          parser-generator-lr--precedence-attribute
@@ -812,60 +981,30 @@
           parser-generator-lr--precedence-comparison-function)
          (or (listp a)
              (listp b)))
-      (cond
-       ((and
-         (listp a)
-         (listp b))
-        (let ((a-value
-               (plist-get
-                (car (cdr a))
-                parser-generator-lr--precedence-attribute))
-              (b-value
-               (plist-get
-                (car (cdr b))
-                parser-generator-lr--precedence-attribute)))
-          (condition-case
-              errors
-              (let ((comparison1
-                     (funcall
-                      parser-generator-lr--precedence-comparison-function
-                      a-value
-                      b-value))
-                    (comparison2
-                     (funcall
-                      parser-generator-lr--precedence-comparison-function
-                      b-value
-                      a-value)))
-                (unless
-                    (eq
-                     comparison1
-                     comparison2)
-                  (setq
-                   can-be-resolved
-                   t)))
-            (error
-             (error
-              "Trying to compare '%S' with '%S' resulted in error: '%S'!"
-              a-value
-              b-value
-              errors)))))
-       ((listp a)
-        (when
-            (plist-get
-             (car (cdr a))
-             parser-generator-lr--precedence-attribute)
+      (if
+          (parser-generator-lr--symbol-takes-precedence-p
+           a
+           b)
+          (if
+              (parser-generator-lr--symbol-takes-precedence-p
+               b
+               a)
+              (setq
+               can-be-resolved
+               nil)
+            (setq
+             can-be-resolved
+             t))
+        (if
+            (parser-generator-lr--symbol-takes-precedence-p
+             b
+             a)
+            (setq
+             can-be-resolved
+             t)
           (setq
            can-be-resolved
-           t)))
-       ((listp b)
-        (when
-            (plist-get
-             (car (cdr b))
-             parser-generator-lr--precedence-attribute)
-          (setq
-           can-be-resolved
-           t)
-          ))))
+           nil))))
     can-be-resolved))
 
 ;; Algorithm 5.8, p. 386
