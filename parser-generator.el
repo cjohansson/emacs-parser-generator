@@ -491,14 +491,9 @@
                   lhs
                   (reverse new-rhs)))
                 (message
-                 "Production %s: %s"
+                 "Production %s: %S"
                  production-index
                  production)
-                (parser-generator--debug
-                 (message
-                  "Production %s: %s"
-                  production-index
-                  production))
                 (push
                  (reverse new-rhs)
                  new-value)
@@ -1036,14 +1031,14 @@
                                    production-lhs)
                                   (parser-generator--debug
                                    (message
-                                    "Production '%s' unexpanded due to self-reference, ignore flag."
+                                    "Production '%S' unexpanded due to self-reference, ignore flag."
                                     production-lhs)))
                                  ((gethash
                                    unexpanded-non-terminal
                                    f-set)
                                   (parser-generator--debug
                                    (message
-                                    "Production '%s' is un-expanded due to reference to previously processed production '%s', ignore flag."
+                                    "Production '%S' is un-expanded due to reference to previously processed production '%S', ignore flag."
                                     production-lhs
                                     unexpanded-non-terminal
                                     )))

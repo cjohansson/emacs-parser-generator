@@ -471,7 +471,7 @@
          (message "%s actions %s" goto-index action-table))
         (when action-table
           (message
-           "ACTION-TABLE (%d): %s\n"
+           "ACTION-TABLE (%d): %S\n"
            goto-index
            action-table)
           (push
