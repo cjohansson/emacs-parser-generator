@@ -831,14 +831,24 @@
        (message "set: %s" set))
 
       ;; Iterate each set
-      (setq a-index 0)
-      (setq b-index 0)
-      (setq set-length (length set))
+      (setq
+       a-index
+       0)
+      (setq
+       b-index
+       0)
+      (setq
+       set-length
+       (length set))
       (while (and
               valid-p
               (< a-index set-length))
-        (setq a (nth a-index set))
-        (setq a-look-ahead (nth 2 a))
+        (setq
+         a
+         (nth a-index set))
+        (setq
+         a-look-ahead
+         (nth 2 a))
 
         (parser-generator--debug
          (message "a: %s" a)
@@ -864,14 +874,18 @@
                   valid-p
                   (< b-index set-length))
             (unless (= a-index b-index)
-              (setq b (nth b-index set))
+              (setq
+               b
+               (nth b-index set))
               (parser-generator--debug
                (message "b: %s" b))
 
               (setq
-               b-suffix (nth 2 b))
+               b-suffix
+               (nth 2 b))
               (setq
-               b-follow (nth 3 b))
+               b-follow
+               (nth 3 b))
               (setq
                b-suffix-follow
                (append
@@ -906,7 +920,7 @@
                     (when
                         signal-on-false
                       (error
-                       "Inconsistent grammar! %S (index: %d) with look-ahead %S conflicts with %S (index: %d) with look-ahead %S in sets: %S"
+                       "Inconsistent grammar! '%S' (index: %d) with look-ahead '%S' conflicts with '%S' (index: %d) with look-ahead '%S' in sets:\n%S"
                        a
                        a-index
                        a-follow-full
