@@ -472,6 +472,10 @@
 (defun parser-generator-test--valid-grammar-p ()
   "Test function `parser-generator--valid-grammar-p'."
   (message "Starting tests for (parser-generator--valid-grammar-p)")
+  (setq
+   parser-generator--context-sensitive-attributes
+   '(%prec))
+  (parser-generator-process-grammar)
 
   (should
    (equal
@@ -690,6 +694,10 @@
     (parser-generator--valid-non-terminal-p 'S)))
   (should
    (equal
+    nil
+    (parser-generator--valid-non-terminal-p '(S (%proc 1)))))
+  (should
+   (equal
     t
     (parser-generator--valid-non-terminal-p '(S (%prec 1)))))
   (should
@@ -784,7 +792,11 @@
   (should
    (equal
     t
-    (parser-generator--valid-terminal-p '("a" (%prec 1)))))
+    (parser-generator--valid-terminal-p '("a" (%prec 3)))))
+  (should
+   (equal
+    nil
+    (parser-generator--valid-terminal-p '("a" (%proc 3)))))
   (should
    (equal
     t
@@ -909,9 +921,6 @@
   (parser-generator-test--valid-production-p)
   (parser-generator-test--valid-sentential-form-p)
   (parser-generator-test--valid-terminal-p)
-
-  ;; TODO Add tests for process-grammar that validates
-  ;; signals thrown with invalid symbols or attributes
 
   ;; Algorithms
   (parser-generator-test--first)

@@ -124,7 +124,7 @@
 
   (setq
    parser-generator--context-sensitive-attributes
-   nil)
+   '(%prec))
   (parser-generator-set-grammar
    '(
      (Sp S A B)

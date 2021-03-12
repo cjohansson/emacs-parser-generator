@@ -36,6 +36,11 @@
   "List of valid global attributes.")
 
 (defvar
+  parser-generator--global-declaration
+  nil
+  "Global declaration for grammar.")
+
+(defvar
   parser-generator--grammar
   nil
   "Current grammar used in parser.")
@@ -59,6 +64,11 @@
   parser-generator--table-context-sensitive-attributes-p
   nil
   "Hash-table of context-sensitive-attributes.")
+
+(defvar
+  parser-generator--table-global-attributes-p
+  nil
+  "Hash-table of global-attributes.")
 
 (defvar
   parser-generator--table-firsts
@@ -397,6 +407,41 @@
        t
        parser-generator--table-non-terminal-p)))
 
+  ;; Build hash-tables of attributes
+  (setq
+   parser-generator--table-context-sensitive-attributes-p
+   (make-hash-table :test 'equal))
+  (dolist
+      (attribute
+       parser-generator--context-sensitive-attributes)
+    (puthash
+     attribute
+     t
+     parser-generator--table-context-sensitive-attributes-p))
+  (setq
+   parser-generator--table-global-attributes-p
+   (make-hash-table :test 'equal))
+  (dolist
+      (attribute
+       parser-generator--global-attributes)
+    (puthash
+     attribute
+     t
+     parser-generator--table-global-attributes-p))
+
+  ;; Validate declaration
+  (when
+      parser-generator--global-declaration
+    (dolist
+        (item
+         parser-generator--global-declaration)
+      (unless
+          (parser-generator--valid-global-attribute-p
+           (car item))
+        (error
+         "Invalid declaration '%S' in grammar!"
+         item))))
+
   (let ((productions
          (parser-generator--get-grammar-productions)))
 
@@ -422,9 +467,6 @@
     (setq
      parser-generator--table-translations
      (make-hash-table :test 'equal))
-
-    ;; TODO Should produce hash-tables of valid attributes here
-    ;; TODO and valid global and context-sensitive attributes
 
     (let ((production-index 0)
           (new-productions))
@@ -545,17 +587,6 @@
         parser-generator--grammar)
        new-productions)))
 
-  (setq
-   parser-generator--table-context-sensitive-attributes-p
-   (make-hash-table :test 'equal))
-  (dolist
-      (attribute
-       parser-generator--context-sensitive-attributes)
-    (puthash
-     attribute
-     t
-     parser-generator--table-context-sensitive-attributes-p))
-
   (let ((look-aheads
          (parser-generator--get-grammar-look-aheads)))
     (setq
@@ -660,6 +691,33 @@
              (nth index attributes)))
         (unless
             (parser-generator--valid-context-sensitive-attribute-p
+             element)
+          (setq
+           is-valid
+           nil)))
+      (setq index (+ index 2)))
+    is-valid))
+
+(defun parser-generator--valid-global-attribute-p (attribute)
+  "Check if ATTRIBUTE is a valid global attribute."
+  (gethash
+   attribute
+   parser-generator--table-global-attributes-p))
+
+(defun parser-generator--valid-global-attributes-p (attributes)
+  "Check if all ATTRIBUTES are valid global attributes."
+  (let ((is-valid t)
+        (length (length attributes))
+        (index 0))
+    (unless (listp attributes)
+      (setq is-valid nil))
+    (while (and
+            is-valid
+            (< index length))
+      (let ((element
+             (nth index attributes)))
+        (unless
+            (parser-generator--valid-global-attribute-p
              element)
           (setq
            is-valid
@@ -777,13 +835,24 @@
 
 (defun parser-generator--valid-non-terminal-p (symbol)
   "Return whether SYMBOL is a non-terminal in grammar or not."
-  (unless parser-generator--table-non-terminal-p
-    (error "Table for non-terminals is undefined!"))
-  (when (listp symbol)
-    (setq symbol (car symbol)))
-  (gethash
-   symbol
-   parser-generator--table-non-terminal-p))
+  (let ((valid-attribute t))
+    (unless parser-generator--table-non-terminal-p
+      (error "Table for non-terminals is undefined!"))
+    (when (listp symbol)
+      (unless
+          (or
+           (functionp symbol)
+           (parser-generator--valid-context-sensitive-attribute-p
+            (car (car (cdr symbol)))))
+        (setq
+         valid-attribute
+         nil))
+      (setq symbol (car symbol)))
+    (and
+     valid-attribute
+     (gethash
+      symbol
+      parser-generator--table-non-terminal-p))))
 
 (defun parser-generator--valid-production-p (production)
   "Return whether PRODUCTION is valid or not."
@@ -940,13 +1009,24 @@
 
 (defun parser-generator--valid-terminal-p (symbol)
   "Return whether SYMBOL is a terminal in grammar or not."
-  (unless parser-generator--table-terminal-p
-    (error "Table for terminals is undefined!"))
-  (when (listp symbol)
-    (setq symbol (car symbol)))
-  (gethash
-   symbol
-   parser-generator--table-terminal-p))
+  (let ((valid-attribute t))
+    (unless parser-generator--table-terminal-p
+      (error "Table for terminals is undefined!"))
+    (when (listp symbol)
+      (unless
+          (or
+           (functionp symbol)
+           (parser-generator--valid-context-sensitive-attribute-p
+            (car (car (cdr symbol)))))
+        (setq
+         valid-attribute
+         nil))
+      (setq symbol (car symbol)))
+    (and
+     valid-attribute
+     (gethash
+      symbol
+      parser-generator--table-terminal-p))))
 
 
 ;; Main Algorithms
