@@ -16,12 +16,12 @@
 (defvar
   parser-generator-lex-analyzer--get-function
   nil
-  "Get token information function.  This function will be called when building token meta-information before calling optional syntax-directed translation / semantic-actions.  Anything other than nil is expected.")
+  "Get token contents.  Anything other than nil is expected.")
 
 (defvar
   parser-generator-lex-analyzer--function
   nil
-  "Function used as lex-analyzer.  This function will be called and as result a list with structure '(a b . c) is expected where a is a string or symbol, if no more tokens can be found nil is expected, if it's not possible to proceed lex analysis an error-signal is expected.")
+  "Get next token like '(a b . c) or nil, expects signal if input-tape is invalid.")
 
 (defvar-local
   parser-generator-lex-analyzer--index
