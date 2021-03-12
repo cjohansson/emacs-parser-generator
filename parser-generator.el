@@ -11,9 +11,9 @@
 
 
 (defvar
-  parser-generator--attributes
+  parser-generator--context-sensitive-attributes
   nil
-  "List of valid attributes.")
+  "List of valid context-sensitive attributes.")
 
 (defvar
   parser-generator--debug
@@ -29,6 +29,11 @@
   parser-generator--eof-identifier
   '$
   "The identifier used for end of file identifier.  Default value is '$.")
+
+(defvar
+  parser-generator--global-attributes
+  nil
+  "List of valid global attributes.")
 
 (defvar
   parser-generator--grammar
@@ -51,14 +56,14 @@
   "Current look-ahead number used.")
 
 (defvar
+  parser-generator--table-context-sensitive-attributes-p
+  nil
+  "Hash-table of context-sensitive-attributes.")
+
+(defvar
   parser-generator--table-firsts
   nil
   "Hash-table of calculated firsts for quicker parser generation.")
-
-(defvar
-  parser-generator--table-attributes-p
-  nil
-  "Hash-table of attributes.")
 
 (defvar
   parser-generator--table-look-aheads-p
@@ -418,6 +423,9 @@
      parser-generator--table-translations
      (make-hash-table :test 'equal))
 
+    ;; TODO Should produce hash-tables of valid attributes here
+    ;; TODO and valid global and context-sensitive attributes
+
     (let ((production-index 0)
           (new-productions))
       (dolist (p productions)
@@ -538,13 +546,15 @@
        new-productions)))
 
   (setq
-   parser-generator--table-attributes-p
+   parser-generator--table-context-sensitive-attributes-p
    (make-hash-table :test 'equal))
-  (dolist (attribute parser-generator--attributes)
+  (dolist
+      (attribute
+       parser-generator--context-sensitive-attributes)
     (puthash
      attribute
      t
-     parser-generator--table-attributes-p))
+     parser-generator--table-context-sensitive-attributes-p))
 
   (let ((look-aheads
          (parser-generator--get-grammar-look-aheads)))
@@ -630,14 +640,14 @@
       (setq index (1+ index)))
     response))
 
-(defun parser-generator--valid-attribute-p (attribute)
-  "Check if ATTRIBUTE is valid."
+(defun parser-generator--valid-context-sensitive-attribute-p (attribute)
+  "Check if ATTRIBUTE is a valid context-sensitive attribute."
   (gethash
    attribute
-   parser-generator--table-attributes-p))
+   parser-generator--table-context-sensitive-attributes-p))
 
-(defun parser-generator--valid-attributes-p (attributes)
-  "Check if all ATTRIBUTES are valid."
+(defun parser-generator--valid-context-sensitive-attributes-p (attributes)
+  "Check if all ATTRIBUTES are valid context-sensitive attributes."
   (let ((is-valid t)
         (length (length attributes))
         (index 0))
@@ -649,7 +659,7 @@
       (let ((element
              (nth index attributes)))
         (unless
-            (parser-generator--valid-attribute-p
+            (parser-generator--valid-context-sensitive-attribute-p
              element)
           (setq
            is-valid

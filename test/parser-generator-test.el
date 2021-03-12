@@ -680,7 +680,7 @@
 
   (parser-generator-set-grammar '((S A B) ("a" "b") ((S A) (S (B)) (B "a") (A "a") (A ("b" "a"))) S))
   (setq
-   parser-generator--attributes
+   parser-generator--context-sensitive-attributes
    '(%prec))
   (parser-generator-process-grammar)
 
@@ -711,54 +711,61 @@
 
   (message "Passed tests for (parser-generator--valid-non-terminal-p)"))
 
-(defun parser-generator-test--valid-attribute-p ()
-  "Test `parser-generator--valid-attribute-p'."
-  (message "Starting tests for (parser-generator--valid-attribute-p)")
+(defun parser-generator-test--valid-context-sensitive-attribute-p ()
+  "Test `parser-generator--valid-context-sensitive-attribute-p'."
+  (message "Starting tests for (parser-generator--valid-context-sensitive-attribute-p)")
 
-  (parser-generator-set-grammar '((S A B) ("a" "b") ((S A) (S (B)) (B "a") (A "a") (A ("b" "a"))) S))
+  (parser-generator-set-grammar
+   '((S A B) ("a" "b") ((S A) (S (B)) (B "a") (A "a") (A ("b" "a"))) S))
   (setq
-   parser-generator--attributes
+   parser-generator--context-sensitive-attributes
    '(%abc depth length))
   (parser-generator-process-grammar)
 
-  (parser-generator--valid-attribute-p
-     '%abc)
-  
   (should
    (equal
     t
-    (parser-generator--valid-attribute-p
+    (parser-generator--valid-context-sensitive-attribute-p
+     'depth)))
+
+  (should
+   (equal
+    t
+    (parser-generator--valid-context-sensitive-attribute-p
      '%abc)))
+
   (should
    (equal
     nil
-    (parser-generator--valid-attribute-p
+    (parser-generator--valid-context-sensitive-attribute-p
      '%prec)))
 
-  (message "Passed tests for (parser-generator--valid-attribute-p)"))
+  (message "Passed tests for (parser-generator--valid-context-sensitive-attribute-p)"))
 
-(defun parser-generator-test--valid-attributes-p ()
-  "Test `parser-generator--valid-attributes-p'."
-  (message "Starting tests for (parser-generator--valid-attributes-p)")
+(defun parser-generator-test--valid-context-sensitive-attributes-p ()
+  "Test `parser-generator--valid-context-sensitive-attributes-p'."
+  (message "Starting tests for (parser-generator--valid-context-sensitive-attributes-p)")
 
-  (parser-generator-set-grammar '((S A B) ("a" "b") ((S A) (S (B)) (B "a") (A "a") (A ("b" "a"))) S))
+  (parser-generator-set-grammar
+   '((S A B) ("a" "b") ((S A) (S (B)) (B "a") (A "a") (A ("b" "a"))) S))
+
   (setq
-   parser-generator--attributes
+   parser-generator--context-sensitive-attributes
    '(%abc depth length))
   (parser-generator-process-grammar)
 
   (should
    (equal
     t
-    (parser-generator--valid-attributes-p
+    (parser-generator--valid-context-sensitive-attributes-p
      '(%abc 1 depth 0 length 3))))
   (should
    (equal
     nil
-    (parser-generator--valid-attributes-p
+    (parser-generator--valid-context-sensitive-attributes-p
      '(%prec 0))))
 
-  (message "Passed tests for (parser-generator--valid-attributes-p)"))
+  (message "Passed tests for (parser-generator--valid-context-sensitive-attributes-p)"))
 
 (defun parser-generator-test--valid-terminal-p ()
   "Test `parser-generator--valid-terminal-p'."
@@ -766,7 +773,7 @@
 
   (parser-generator-set-grammar '((S A B) ("a" "b") ((S A) (S (B)) (B "a") (A "a") (A ("b" "a"))) S))
   (setq
-   parser-generator--attributes
+   parser-generator--context-sensitive-attributes
    '(%prec))
   (parser-generator-process-grammar)
 
@@ -893,8 +900,8 @@
   (parser-generator-test--get-list-permutations)
   (parser-generator-test--merge-max-terminals)
   (parser-generator-test--sort-list)
-  (parser-generator-test--valid-attribute-p)
-  (parser-generator-test--valid-attributes-p)
+  (parser-generator-test--valid-context-sensitive-attribute-p)
+  (parser-generator-test--valid-context-sensitive-attributes-p)
   (parser-generator-test--valid-grammar-p)
   (parser-generator-test--valid-look-ahead-number-p)
   (parser-generator-test--valid-look-ahead-p)
@@ -902,6 +909,9 @@
   (parser-generator-test--valid-production-p)
   (parser-generator-test--valid-sentential-form-p)
   (parser-generator-test--valid-terminal-p)
+
+  ;; TODO Add tests for process-grammar that validates
+  ;; signals thrown with invalid symbols or attributes
 
   ;; Algorithms
   (parser-generator-test--first)

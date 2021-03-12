@@ -58,7 +58,8 @@
   (message "Starting tests for (parser-generator-lr--generate-action-tables)")
 
   ;; Example 5.32 p. 393
-  (parser-generator-set-grammar '((Sp S) (a b) ((Sp S) (S (S a S b)) (S e)) Sp))
+  (parser-generator-set-grammar
+   '((Sp S) (a b) ((Sp S) (S (S a S b)) (S e)) Sp))
   (parser-generator-set-look-ahead-number 1)
   (parser-generator-process-grammar)
   (parser-generator-lr-generate-parser-tables)
@@ -121,6 +122,9 @@
 
   ;; Inconsistent grammar! ((A) (a b) nil (c)) (index: 0) with look-ahead (c) conflicts with ((B) (a b) (c) ($)) (index: 1) with look-ahead (c) in sets: ((((A) (a b) nil (c)) ((B) (a b) (c) ($))))
 
+  (setq
+   parser-generator--context-sensitive-attributes
+   nil)
   (parser-generator-set-grammar
    '(
      (Sp S A B)
@@ -149,18 +153,8 @@
 
   (let ((table-lr-items
          (parser-generator-lr--generate-goto-tables)))
-
-    ;; TODO Should be a conflict in state 5
-    (message
-     "conflict-lr-items: %S"
-     table-lr-items)
-    (message
-     "conflict-goto-tables: %S"
-     (parser-generator-lr--get-expanded-goto-tables))
     (parser-generator-lr--generate-action-tables
      table-lr-items)
-    (message
-     "conflict-action-tables: %s" (parser-generator-lr--get-expanded-action-tables))
     (should
      (equal
       '((0 (((a) shift)))
