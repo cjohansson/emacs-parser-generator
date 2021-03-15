@@ -429,7 +429,7 @@
      t
      parser-generator--table-global-attributes-p))
 
-  ;; Validate declaration
+  ;; Validate global declaration
   (when
       parser-generator--global-declaration
     (dolist
