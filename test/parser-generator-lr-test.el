@@ -484,6 +484,70 @@
   (parser-generator-lr-test--parse-incremental-vs-regular)
   (message "Passed incremental-tests")
 
+  ;; TODO Test grammar that requires global and context-sensitive precedence here
+  ;; https://www.gnu.org/software/bison/manual/html_node/Infix-Calc.html
+  (setq
+   parser-generator--e-identifier
+   '%empty)
+  (parser-generator-set-look-ahead-number 1)
+  (parser-generator-set-grammar
+   '(
+     (start input line exp)
+     ("+" "-" "*" "/" "^" "(" ")" "\n" NUM)
+     (
+      (start input)
+      (input
+       %empty
+       (input line))
+      (line
+       "\n"
+       (exp "\n" (lambda(args) (message "%s" args))))
+      (exp
+       NUM
+       (exp "+" exp (lambda(args) (+ (nth 0 args) (nth 2 args))))
+       (exp "-" exp (lambda(args) (- (nth 0 args) (nth 2 args))))
+       (exp "*" exp (lambda(args) (* (nth 0 args) (nth 2 args))))
+       (exp "/" exp (lambda(args) (/ (nth 0 args) (nth 2 args))))
+       ("-" (exp (%prec NEG)) (lambda(args) (- (nth 1 args))))
+       (exp "^" exp (lambda(args) (expt (nth 0 args) (nth 2 args))))
+       ("(" exp ")" (lambda(args) (nth 1)))))
+     start))
+  (setq
+   parser-generator-lex-analyzer--function
+   (lambda (index)
+     (with-current-buffer "*buffer*"
+       (let ((token))
+         (goto-char index)
+         (cond
+          ((looking-at "[0-9]+")
+           (setq
+            token
+            `(NUM ,(match-beginning 0) ,(match-end 0))))
+          ((looking-at "\\(\\+\\|\-\\|\*\\|\/\\|\\^\\|)\\|(\\|\n\\)")
+           (let ((symbol
+                  (buffer-substring-no-properties
+                   (match-beginning 0)
+                   (match-end 0))))
+             (setq
+              token
+              `(,symbol ,(match-beginning 0) ,(match-end 0)))))
+          (t (error "Unexpected input at %d!" index)))
+         token))))
+  (setq
+   parser-generator-lex-analyzer--get-function
+   (lambda (token)
+     (car token)))
+  (parser-generator-process-grammar)
+  (parser-generator-lr-generate-parser-tables)
+  (let ((buffer (generate-new-buffer "*buffer*")))
+    (switch-to-buffer buffer)
+    (kill-region (point-min) (point-max))
+    (insert "5+5\n")
+    (should
+     (equal
+      10
+      (parser-generator-lr-translate))))
+
   (message "Passed tests for (parser-generator-lr--parse)"))
 
 (defun parser-generator-lr-test-parse-k-2 ()
@@ -1064,6 +1128,9 @@
 
     (parser-generator-set-grammar '((Sp S) ("a" "b") ((Sp S) (S (S "a" S "b" (lambda(args) (let ((list "")) (dolist (item args) (when item (setq list (format "%s%s" item list)))) list)))) (S e)) Sp))
     (parser-generator-set-look-ahead-number 1)
+    (setq
+     parser-generator--e-identifier
+     'e)
     (parser-generator-process-grammar)
     (parser-generator-lr-generate-parser-tables)
 
