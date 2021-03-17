@@ -501,14 +501,14 @@
        (input line))
       (line
        "\n"
-       (exp "\n" (lambda(args) (message "%s" args))))
+       (exp "+" (lambda(args) (message "%s" args))))
       (exp
        NUM
        (exp "+" exp (lambda(args) (+ (nth 0 args) (nth 2 args))))
        (exp "-" exp (lambda(args) (- (nth 0 args) (nth 2 args))))
        (exp "*" exp (lambda(args) (* (nth 0 args) (nth 2 args))))
        (exp "/" exp (lambda(args) (/ (nth 0 args) (nth 2 args))))
-       ("-" (exp (%prec NEG)) (lambda(args) (- (nth 1 args))))
+       ("-" exp (lambda(args) (- (nth 1 args))))
        (exp "^" exp (lambda(args) (expt (nth 0 args) (nth 2 args))))
        ("(" exp ")" (lambda(args) (nth 1)))))
      start))
