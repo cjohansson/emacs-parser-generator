@@ -514,7 +514,9 @@
                    (nth
                     sub-rhs-element-index
                     rhs-element))
-                  (if (functionp sub-rhs-element)
+                  (if (and
+                       (listp sub-rhs-element)
+                       (functionp sub-rhs-element))
                       (setq
                        translation
                        sub-rhs-element)
@@ -906,7 +908,8 @@
               (cond
                ((stringp rhs-element))
                ((symbolp rhs-element))
-               ((and (functionp rhs-element)
+               ((and (listp rhs-element)
+                     (functionp rhs-element)
                      (= rhs-index (1- rhs-length))))
                ((and
                  (listp rhs-element)
@@ -927,7 +930,6 @@
                            (or (stringp (car rhs-sub-element))
                                (symbolp (car rhs-sub-element)))
                            (or
-                            (functionp (car (cdr rhs-sub-element)))
                             (listp (car (cdr rhs-sub-element)))))
                         (setq
                          is-valid
@@ -972,8 +974,9 @@
                                     (setq
                                      attribute-index
                                      (+ attribute-index 2)))))))))
-                    ((and (functionp rhs-sub-element)
-                          (= rhs-sub-index (1- rhs-sub-length))))
+                     ((and (listp rhs-sub-element)
+                           (functionp rhs-sub-element)
+                           (= rhs-sub-index (1- rhs-sub-length))))
                     ((or (stringp rhs-sub-element)
                          (symbolp rhs-sub-element)))
                     (t (setq is-valid nil)))
