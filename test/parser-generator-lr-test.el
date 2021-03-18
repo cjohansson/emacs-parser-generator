@@ -489,7 +489,8 @@
   (setq
    parser-generator--e-identifier
    '%empty)
-  (parser-generator-set-look-ahead-number 1)
+  (parser-generator-set-look-ahead-number
+   1)
   (parser-generator-set-grammar
    '(
      (start input line exp)
@@ -535,13 +536,57 @@
          token))))
   (setq
    parser-generator-lex-analyzer--get-function
-   (lambda (token)
-     (car token)))
+   (lambda (token) (car token)))
+
   (parser-generator-process-grammar)
   (should-error
    (parser-generator-lr-generate-parser-tables))
   (message "Grammar caused expected error")
 
+  ;; Add precedence to resolve conflicts
+  (setq
+   parser-generator--context-sensitive-attributes
+   '(%prec))
+  (setq
+   parser-generator--global-attributes
+   '(%left %precedence %right))
+  (setq
+   parser-generator--global-declaration
+   '(
+     (%left "-" "+")
+     (%left "*" "/")
+     (%precedence NEG)
+     (%right "^")
+     ))
+  (parser-generator-set-grammar
+   '(
+     (start input line exp)
+     ("+" "-" "*" "/" "^" "(" ")" "\n" NUM)
+     (
+      (start input)
+      (input
+       %empty
+       (input line))
+      (line
+       "\n"
+       (exp "+" (lambda(args) (message "%s" args))))
+      (exp
+       NUM
+       (exp "+" exp (lambda(args) (+ (nth 0 args) (nth 2 args))))
+       (exp "-" exp (lambda(args) (- (nth 0 args) (nth 2 args))))
+       (exp "*" exp (lambda(args) (* (nth 0 args) (nth 2 args))))
+       (exp "/" exp (lambda(args) (/ (nth 0 args) (nth 2 args))))
+       ("-" (exp (%prec NEG)) (lambda(args) (- (nth 1 args))))
+       (exp "^" exp (lambda(args) (expt (nth 0 args) (nth 2 args))))
+       ("(" exp ")" (lambda(args) (nth 1)))))
+     start))
+  (parser-generator-process-grammar)
+
+  ;; TODO Should work now
+  (parser-generator-lr-generate-parser-tables)
+  (message "Grammar now passes thanks to precedence rules")
+
+  ;; TODO Test functionality here (then move to translate test)
   (let ((buffer (generate-new-buffer "*buffer*")))
     (switch-to-buffer buffer)
     (kill-region (point-min) (point-max))
