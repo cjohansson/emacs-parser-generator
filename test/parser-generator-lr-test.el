@@ -538,7 +538,10 @@
    (lambda (token)
      (car token)))
   (parser-generator-process-grammar)
-  (parser-generator-lr-generate-parser-tables)
+  (should-error
+   (parser-generator-lr-generate-parser-tables))
+  (message "Grammar caused expected error")
+
   (let ((buffer (generate-new-buffer "*buffer*")))
     (switch-to-buffer buffer)
     (kill-region (point-min) (point-max))
