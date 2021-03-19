@@ -35,21 +35,84 @@
   "Goto-tables for grammar.")
 
 (defvar
-  parser-generator-lr--precedence-attribute
+  parser-generator-lr--context-sensitive-precedence-attribute
   nil
-  "Attribute used for precedence.")
+  "Attribute used for context-sensitive-precedence.")
 
 (defvar
-  parser-generator-lr--precedence-comparison-function
+  parser-generator-lr--context-sensitive-precedence-comparison-function
   nil
-  "Function used for resolving precedence.")
+  "Function used for resolving context-sensitive precedence.")
+
+(defvar
+  parser-generator-lr--global-precedence-attribute-left
+  nil
+  "Global precedence attribute to left symbol.")
+
+(defvar
+  parser-generator-lr--global-precedence-attribute-right
+  nil
+  "Global precedence attribute to right symbol.")
+
+(defvar
+  parser-generator-lr--global-precedence-attribute-general
+  nil
+  "Global precedence attribute for general precedence.")
+
+(defvar
+  parser-generator-lr--global-precedence-table
+  nil
+  "Hash-table for fast look-up of global precedence symbols.")
 
 
 ;; Main Algorithms
 
+(defun parser-generator-lr--prepare-global-declaration ()
+  "Prepare global declaration for parsing."
+  (setq
+   parser-generator-lr--global-precedence-table
+   (make-hash-table :test 'equal))
+  (when (or
+         parser-generator-lr--global-precedence-attribute-left
+         parser-generator-lr--global-precedence-attribute-right
+         parser-generator-lr--global-precedence-attribute-general)
+    (let ((line-index 0))
+      (dolist (line parser-generator--global-declaration)
+        (let ((attribute (car line))
+              (items (cdr line)))
+          (cond
+           ((eq
+             attribute
+             parser-generator-lr--global-precedence-attribute-left)
+            (dolist (item items)
+              (puthash
+               item
+               `(left ,line-index)
+               parser-generator-lr--global-precedence-table)))
+           ((eq
+             attribute
+             parser-generator-lr--global-precedence-attribute-right)
+            (dolist (item items)
+              (puthash
+               item
+               `(right ,line-index)
+               parser-generator-lr--global-precedence-table)))
+           ((eq
+             attribute
+             parser-generator-lr--global-precedence-attribute-general)
+            (dolist (item items)
+              (puthash
+               item
+               `(general ,line-index)
+               parser-generator-lr--global-precedence-table)))))
+        (setq
+         line-index
+         (1+ line-index))))))
+
 (defun parser-generator-lr-generate-parser-tables ()
   "Generate parsing tables for grammar."
   (message "\nStarting generation of parser-tables..\n")
+  (parser-generator-lr--prepare-global-declaration)
   (let ((table-lr-items
          (parser-generator-lr--generate-goto-tables)))
     (parser-generator-lr--generate-action-tables
@@ -945,16 +1008,16 @@
       (let ((a-value
              (plist-get
               (car (cdr a))
-              parser-generator-lr--precedence-attribute))
+              parser-generator-lr--context-sensitive-precedence-attribute))
             (b-value
              (plist-get
               (car (cdr b))
-              parser-generator-lr--precedence-attribute)))
+              parser-generator-lr--context-sensitive-precedence-attribute)))
         (condition-case
             errors
             (let ((comparison
                    (funcall
-                    parser-generator-lr--precedence-comparison-function
+                    parser-generator-lr--context-sensitive-precedence-comparison-function
                     a-value
                     b-value)))
               (setq
@@ -970,7 +1033,7 @@
       (when
           (plist-get
            (car (cdr a))
-           parser-generator-lr--precedence-attribute)
+           parser-generator-lr--context-sensitive-precedence-attribute)
         (setq
          takes-precedence
          t)))
@@ -978,7 +1041,7 @@
       (when
           (plist-get
            (car (cdr b))
-           parser-generator-lr--precedence-attribute)
+           parser-generator-lr--context-sensitive-precedence-attribute)
         (setq
          takes-precedence
          nil))))
@@ -989,10 +1052,10 @@
   (let ((can-be-resolved))
     (when
         (and
-         parser-generator-lr--precedence-attribute
-         parser-generator-lr--precedence-comparison-function
+         parser-generator-lr--context-sensitive-precedence-attribute
+         parser-generator-lr--context-sensitive-precedence-comparison-function
          (functionp
-          parser-generator-lr--precedence-comparison-function)
+          parser-generator-lr--context-sensitive-precedence-comparison-function)
          (or (listp a)
              (listp b)))
       (if

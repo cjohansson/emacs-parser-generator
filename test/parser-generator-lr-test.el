@@ -143,10 +143,10 @@
   (message "Conflicted grammar caused expected exception 2")
 
   (setq
-   parser-generator-lr--precedence-attribute
+   parser-generator-lr--context-sensitive-precedence-attribute
    '%prec)
   (setq
-   parser-generator-lr--precedence-comparison-function
+   parser-generator-lr--context-sensitive-precedence-comparison-function
    #'>)
   (parser-generator-lr-generate-parser-tables)
   (message "Grammar not conflicting anymore")
@@ -544,6 +544,15 @@
   (message "Grammar caused expected error")
 
   ;; Add precedence to resolve conflicts
+  (setq
+   parser-generator-lr--global-precedence-attribute-left
+   '%left)
+  (setq
+   parser-generator-lr--global-precedence-attribute-right
+   '%right)
+  (setq
+   parser-generator-lr--global-precedence-attribute-general
+   '%precedence)
   (setq
    parser-generator--context-sensitive-attributes
    '(%prec))
@@ -1346,7 +1355,7 @@
 
 (defun parser-generator-lr-test ()
   "Run test."
-  ;; (setq debug-on-error t)
+  ;; (setq debug-on-error nil)
 
   (parser-generator-lr-test--items-for-prefix)
   (parser-generator-lr-test--items-valid-p)
