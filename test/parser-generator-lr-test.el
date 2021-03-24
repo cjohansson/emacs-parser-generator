@@ -641,7 +641,12 @@
   (parser-generator-process-grammar)
 
   ;; TODO Should work now
-  (parser-generator-lr-generate-parser-tables)
+  (parser-generator-lr--prepare-global-declaration)
+  (let ((table-lr-items
+         (parser-generator-lr--generate-goto-tables)))
+    (message "table-lr-items(4): %S" (gethash 4 table-lr-items))
+    (parser-generator-lr--generate-action-tables
+     table-lr-items))
   (message "Grammar now passes thanks to precedence rules")
 
   ;; TODO Test functionality here (then move to translate test)
