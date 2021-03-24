@@ -547,7 +547,7 @@
                    (match-end 0))))
              (setq
               token
-              `(,symbol ,(match-beginning 0) ,(match-end 0)))))
+              `(,symbol ,(match-beginning 0) . ,(match-end 0)))))
           (t (error "Unexpected input at %d!" index)))
          token))))
   (setq
