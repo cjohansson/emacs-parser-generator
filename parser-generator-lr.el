@@ -983,7 +983,6 @@
 
 (defun parser-generator-lr--symbol-takes-precedence-p (a b)
   "Return t if A takes precedence over B, otherwise nil."
-  (message "(parser-generator-lr--symbol-takes-precedence-p %S %S) table %S" a b parser-generator-lr--global-precedence-table)
   (let ((takes-precedence)
         (a-global-reference)
         (a-precedence)

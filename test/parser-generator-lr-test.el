@@ -157,7 +157,6 @@
   (setq
    parser-generator-lr--precedence-comparison-function
    (lambda(a b)
-     (message "LAMBDA %S %S" a b)
      (cond
       ((and a b)
        (string> a b))
