@@ -557,24 +557,57 @@
   (parser-generator-process-grammar)
   (should-error
    (parser-generator-lr-generate-parser-tables))
-  (message "Grammar caused expected error")
+  (message "Infix calculator grammar caused expected error")
 
   ;; Add precedence to resolve conflicts
-  (setq
-   parser-generator-lr--global-precedence-attribute-left
-   '%left)
-  (setq
-   parser-generator-lr--global-precedence-attribute-right
-   '%right)
-  (setq
-   parser-generator-lr--global-precedence-attribute-general
-   '%precedence)
   (setq
    parser-generator--context-sensitive-attributes
    '(%prec))
   (setq
    parser-generator--global-attributes
    '(%left %precedence %right))
+  (setq
+   parser-generator-lr--global-precedence-attributes
+   '(%left %precedence %right))
+  (setq
+   parser-generator-lr--context-sensitive-precedence-attribute
+   '%prec)
+  (setq
+   parser-generator-lr--precedence-comparison-function
+   (lambda(a b)
+     (cond
+      ((and a b)
+       (let ((a-op (car a))
+             (a-value (car (cdr a)))
+             (b-op (car b))
+             (b-value (car (cdr b))))
+         (cond
+          ((>= a-value b-value)
+           (cond
+            ((eq a-op '%left)
+             t)
+            ((eq a-op '%right)
+             nil)
+            ((eq a-op '%precedence)
+             t)))
+          ((> b-value a-value)
+           (cond
+            ((eq b-op '%left)
+             nil)
+            ((eq b-op '%right)
+             t)
+            ((eq b-op '%precedence)
+             nil))))))
+      (a
+       (cond
+        ((eq (car a) '%left)
+         t)
+        ((eq (car a) '%right)
+         nil)
+        ((eq (car a) '%precedence)
+         t)))
+      (t
+       nil))))
   (setq
    parser-generator--global-declaration
    '(

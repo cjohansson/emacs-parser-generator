@@ -1009,24 +1009,24 @@
     (if
         (listp a)
         (setq
-         a-precendence
+         a-precedence
          (gethash
           (car a)
           parser-generator-lr--global-precedence-table))
       (setq
-       a-precendence
+       a-precedence
        (gethash
         a
         parser-generator-lr--global-precedence-table)))
     (if
         (listp b)
         (setq
-         b-precendence
+         b-precedence
          (gethash
           (car b)
           parser-generator-lr--global-precedence-table))
       (setq
-       b-precendence
+       b-precedence
        (gethash
         b
         parser-generator-lr--global-precedence-table)))
@@ -1094,26 +1094,16 @@
           (parser-generator-lr--symbol-takes-precedence-p
            a
            b)
-          (if
-              (parser-generator-lr--symbol-takes-precedence-p
-               b
-               a)
-              (setq
-               can-be-resolved
-               nil)
-            (setq
-             can-be-resolved
-             t))
-        (if
+          (setq
+           can-be-resolved
+           t)
+        (when
             (parser-generator-lr--symbol-takes-precedence-p
              b
              a)
             (setq
              can-be-resolved
-             t)
-          (setq
-           can-be-resolved
-           nil))))
+             t))))
     can-be-resolved))
 
 ;; Algorithm 5.8, p. 386
