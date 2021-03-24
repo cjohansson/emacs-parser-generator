@@ -640,13 +640,7 @@
      start))
   (parser-generator-process-grammar)
 
-  ;; TODO Should work now
-  (parser-generator-lr--prepare-global-declaration)
-  (let ((table-lr-items
-         (parser-generator-lr--generate-goto-tables)))
-    (message "table-lr-items(4): %S" (gethash 4 table-lr-items))
-    (parser-generator-lr--generate-action-tables
-     table-lr-items))
+  (parser-generator-lr-generate-parser-tables)
   (message "Grammar now passes thanks to precedence rules")
 
   ;; TODO Test functionality here (then move to translate test)
@@ -654,6 +648,7 @@
     (switch-to-buffer buffer)
     (kill-region (point-min) (point-max))
     (insert "5+5\n")
+    (parser-generator-lr-translate)
     (should
      (equal
       10

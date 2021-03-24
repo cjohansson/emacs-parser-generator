@@ -191,6 +191,10 @@
                             C
                             v))
                           (when Cv
+                            (setq
+                             Cv
+                             (parser-generator--get-symbols-without-attributes
+                              Cv))
                             (let
                                 ((eff
                                   (parser-generator--e-free-first
