@@ -84,10 +84,11 @@
               (gethash
                attribute
                parser-generator-lr--global-precedence-attributes-table)
-            (puthash
-             item
-             `(,attribute ,line-index)
-             parser-generator-lr--global-precedence-table)))
+            (dolist (item items)
+              (puthash
+               item
+               `(,attribute ,line-index)
+               parser-generator-lr--global-precedence-table))))
         (setq
          line-index
          (1+ line-index))))))
@@ -982,6 +983,7 @@
 
 (defun parser-generator-lr--symbol-takes-precedence-p (a b)
   "Return t if A takes precedence over B, otherwise nil."
+  (message "(parser-generator-lr--symbol-takes-precedence-p %S %S) table %S" a b parser-generator-lr--global-precedence-table)
   (let ((takes-precedence)
         (a-global-reference)
         (a-precedence)

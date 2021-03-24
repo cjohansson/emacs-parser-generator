@@ -127,7 +127,7 @@
    '(%precedence))
   (setq
    parser-generator-lr--global-precedence-attributes
-   '(FIRST))
+   '(%precedence))
   (setq
    parser-generator--global-declaration
    '((%precedence FIRST)))
