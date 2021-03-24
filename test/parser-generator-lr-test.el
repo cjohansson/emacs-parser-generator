@@ -123,6 +123,15 @@
   ;; Inconsistent grammar! ((A) (a b) nil (c)) (index: 0) with look-ahead (c) conflicts with ((B) (a b) (c) ($)) (index: 1) with look-ahead (c) in sets: ((((A) (a b) nil (c)) ((B) (a b) (c) ($))))
 
   (setq
+   parser-generator--global-attributes
+   '(%precedence))
+  (setq
+   parser-generator-lr--global-precedence-attributes
+   '(FIRST))
+  (setq
+   parser-generator--global-declaration
+   '((%precedence FIRST)))
+  (setq
    parser-generator--context-sensitive-attributes
    '(%prec))
   (parser-generator-set-grammar
@@ -133,7 +142,7 @@
       (Sp S)
       (S (A c) B)
       (A (a b))
-      (B (a b (c (%prec 1))))
+      (B (a b (c (%prec FIRST))))
       )
      Sp))
   (parser-generator-set-look-ahead-number 1)
@@ -146,8 +155,16 @@
    parser-generator-lr--context-sensitive-precedence-attribute
    '%prec)
   (setq
-   parser-generator-lr--context-sensitive-precedence-comparison-function
-   #'>)
+   parser-generator-lr--precedence-comparison-function
+   (lambda(a b)
+     (message "LAMBDA %S %S" a b)
+     (cond
+      ((and a b)
+       (string> a b))
+      (a
+       t)
+      (t
+       nil))))
   (parser-generator-lr-generate-parser-tables)
   (message "Grammar not conflicting anymore")
 

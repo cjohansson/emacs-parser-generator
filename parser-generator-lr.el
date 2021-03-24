@@ -40,29 +40,24 @@
   "Attribute used for context-sensitive-precedence.")
 
 (defvar
-  parser-generator-lr--context-sensitive-precedence-comparison-function
+  parser-generator-lr--global-precedence-attributes
   nil
-  "Function used for resolving context-sensitive precedence.")
+  "Global precedence attributes.")
 
 (defvar
-  parser-generator-lr--global-precedence-attribute-left
+  parser-generator-lr--global-precedence-attributes-table
   nil
-  "Global precedence attribute to left symbol.")
-
-(defvar
-  parser-generator-lr--global-precedence-attribute-right
-  nil
-  "Global precedence attribute to right symbol.")
-
-(defvar
-  parser-generator-lr--global-precedence-attribute-general
-  nil
-  "Global precedence attribute for general precedence.")
+  "Table of global precedence attributes.")
 
 (defvar
   parser-generator-lr--global-precedence-table
   nil
   "Hash-table for fast look-up of global precedence symbols.")
+
+(defvar
+  parser-generator-lr--precedence-comparison-function
+  nil
+  "Function to calculate precedence.")
 
 
 ;; Main Algorithms
@@ -72,39 +67,27 @@
   (setq
    parser-generator-lr--global-precedence-table
    (make-hash-table :test 'equal))
-  (when (or
-         parser-generator-lr--global-precedence-attribute-left
-         parser-generator-lr--global-precedence-attribute-right
-         parser-generator-lr--global-precedence-attribute-general)
+  (setq
+   parser-generator-lr--global-precedence-attributes-table
+   (make-hash-table :test 'equal))
+  (when parser-generator-lr--global-precedence-attributes
+    (dolist (item parser-generator-lr--global-precedence-attributes)
+      (puthash
+       item
+       t
+       parser-generator-lr--global-precedence-attributes-table))
     (let ((line-index 0))
       (dolist (line parser-generator--global-declaration)
         (let ((attribute (car line))
               (items (cdr line)))
-          (cond
-           ((eq
-             attribute
-             parser-generator-lr--global-precedence-attribute-left)
-            (dolist (item items)
-              (puthash
-               item
-               `(left ,line-index)
-               parser-generator-lr--global-precedence-table)))
-           ((eq
-             attribute
-             parser-generator-lr--global-precedence-attribute-right)
-            (dolist (item items)
-              (puthash
-               item
-               `(right ,line-index)
-               parser-generator-lr--global-precedence-table)))
-           ((eq
-             attribute
-             parser-generator-lr--global-precedence-attribute-general)
-            (dolist (item items)
-              (puthash
-               item
-               `(general ,line-index)
-               parser-generator-lr--global-precedence-table)))))
+          (when
+              (gethash
+               attribute
+               parser-generator-lr--global-precedence-attributes-table)
+            (puthash
+             item
+             `(,attribute ,line-index)
+             parser-generator-lr--global-precedence-table)))
         (setq
          line-index
          (1+ line-index))))))
@@ -995,56 +978,87 @@
             (setq b-index (1+ b-index))))
         (setq a-index (1+ a-index)))
       (setq set-index (1+ set-index)))
-
     valid-p))
 
 (defun parser-generator-lr--symbol-takes-precedence-p (a b)
   "Return t if A takes precedence over B, otherwise nil."
-  (let ((takes-precedence))
-    (cond
-     ((and
-       (listp a)
-       (listp b))
-      (let ((a-value
-             (plist-get
-              (car (cdr a))
-              parser-generator-lr--context-sensitive-precedence-attribute))
-            (b-value
-             (plist-get
-              (car (cdr b))
-              parser-generator-lr--context-sensitive-precedence-attribute)))
-        (condition-case
-            errors
-            (let ((comparison
-                   (funcall
-                    parser-generator-lr--context-sensitive-precedence-comparison-function
-                    a-value
-                    b-value)))
-              (setq
-               takes-precedence
-               comparison))
-          (error
-           (error
-            "Trying to compare '%S' with '%S' resulted in error: '%S'!"
-            a-value
-            b-value
-            errors)))))
-     ((listp a)
-      (when
-          (plist-get
-           (car (cdr a))
-           parser-generator-lr--context-sensitive-precedence-attribute)
+  (let ((takes-precedence)
+        (a-global-reference)
+        (a-precedence)
+        (b-global-reference)
+        (b-precedence))
+    (unless
+        parser-generator-lr--precedence-comparison-function
+      (error
+       "Missing function to compare precedence!"))
+    (when
+        (listp a)
+      (setq
+       a-global-reference
+       (plist-get
+        (car (cdr a))
+        parser-generator-lr--context-sensitive-precedence-attribute)))
+    (when
+        (listp b)
+      (setq
+       b-global-reference
+       (plist-get
+        (car (cdr b))
+        parser-generator-lr--context-sensitive-precedence-attribute)))
+    (if
+        (listp a)
         (setq
-         takes-precedence
-         t)))
-     ((listp b)
-      (when
-          (plist-get
-           (car (cdr b))
-           parser-generator-lr--context-sensitive-precedence-attribute)
+         a-precendence
+         (gethash
+          (car a)
+          parser-generator-lr--global-precedence-table))
+      (setq
+       a-precendence
+       (gethash
+        a
+        parser-generator-lr--global-precedence-table)))
+    (if
+        (listp b)
         (setq
-         takes-precedence
-         nil))))
+         b-precendence
+         (gethash
+          (car b)
+          parser-generator-lr--global-precedence-table))
+      (setq
+       b-precendence
+       (gethash
+        b
+        parser-generator-lr--global-precedence-table)))
+    (when
+        a-global-reference
+      (setq
+       a-precedence
+       (gethash
+        a-global-reference
+        parser-generator-lr--global-precedence-table)))
+    (when
+        b-global-reference
+      (setq
+       b-precedence
+       (gethash
+        b-global-reference
+        parser-generator-lr--global-precedence-table)))
+    (condition-case
+        errors
+        (let ((comparison
+               (funcall
+                parser-generator-lr--precedence-comparison-function
+                a-precedence
+                b-precedence)))
+          (setq
+           takes-precedence
+           comparison))
+      (error
+       (error
+        "Trying to compare '%S' with '%S' resulted in error: '%S'!"
+        a-precedence
+        b-precedence
+        errors)))
     takes-precedence))
 
 (defun parser-generator-lr--conflict-can-be-resolved-by-attributes (a b)
@@ -1052,12 +1066,29 @@
   (let ((can-be-resolved))
     (when
         (and
-         parser-generator-lr--context-sensitive-precedence-attribute
-         parser-generator-lr--context-sensitive-precedence-comparison-function
+         parser-generator-lr--precedence-comparison-function
          (functionp
-          parser-generator-lr--context-sensitive-precedence-comparison-function)
-         (or (listp a)
-             (listp b)))
+          parser-generator-lr--precedence-comparison-function)
+         (or
+          (and
+           parser-generator-lr--global-precedence-attributes
+           (or
+            (and
+             (not
+              (listp a))
+             (gethash
+              a
+              parser-generator-lr--global-precedence-table))
+            (and
+             (not
+              (listp b))
+             (gethash
+              b
+              parser-generator-lr--global-precedence-table))))
+          (and
+           parser-generator-lr--context-sensitive-precedence-attribute
+           (or (listp a)
+               (listp b)))))
       (if
           (parser-generator-lr--symbol-takes-precedence-p
            a
