@@ -1011,7 +1011,7 @@
 
     (should
      (equal
-      '(("begin" "test" "end"))
+      '("begin" "test" "end")
       (parser-generator-lr-translate)))
 
     (message "Passed translation k=2")
@@ -1236,7 +1236,21 @@
     (insert "1+1")
 
     (parser-generator-set-grammar
-     '((S E B) ("*" "+" "0" "1") ((S (E $)) (E (E "*" B (lambda(args) (let ((ret (list (nth 0 args)))) (when (nth 2 args) (setq ret (append ret `(" x " ,(nth 2 args))))) ret))) (E "+" B (lambda(args) (let ((ret (list (nth 0 args)))) (when (nth 2 args) (setq ret (append ret `(" . " ,(nth 2 args))))) ret))) (B)) (B ("0") ("1"))) S))
+     '(
+       (S E B)
+       ("*" "+" "0" "1")
+       (
+        (S (E $))
+        (E
+         (E "*" B (lambda(args) (let ((ret (nth 0 args))) (when (nth 2 args) (setq ret (append ret `(" x " ,(nth 2 args))))) ret)))
+         (E "+" B (lambda(args) (let ((ret (nth 0 args))) (when (nth 2 args) (setq ret (append ret `(" . " ,(nth 2 args))))) ret)))
+         (B)
+         )
+        (B
+         ("0")
+         ("1"))
+        )
+       S))
     (parser-generator-set-look-ahead-number 0)
     (parser-generator-process-grammar)
     (parser-generator-lr-generate-parser-tables)
@@ -1246,7 +1260,7 @@
      parser-generator-lex-analyzer--function
      (lambda (index)
        (with-current-buffer buffer
-         (when (<= (+ index 1) (point-max))
+         (when (< index (point-max))
            (let ((start index)
                  (end (+ index 1)))
              (let ((token (buffer-substring-no-properties start end)))
@@ -1260,6 +1274,7 @@
            (when (<= end (point-max))
              (buffer-substring-no-properties start end))))))
 
+    (parser-generator-lr-translate)
     (should
      (equal
       '((("1")) " . " ("1"))
@@ -1308,7 +1323,7 @@
 
     (should
      (equal
-      "bbaaba"
+      "bbaa"
       (parser-generator-lr-translate)))
 
     (kill-buffer buffer))
