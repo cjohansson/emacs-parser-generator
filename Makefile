@@ -32,4 +32,4 @@ test-lr-export:
 	$(EMACS_CMD) -l test/parser-generator-lr-export-test.el -f "parser-generator-lr-export-test"
 
 .PHONY: tests
-tests: test test-lex-analyzer test-lr test-lr-export
+tests: test test-lex-analyzer test-lr #test-lr-export
