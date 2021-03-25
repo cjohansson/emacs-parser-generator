@@ -1242,8 +1242,8 @@
        (
         (S (E $))
         (E
-         (E "*" B (lambda(args) (let ((ret (nth 0 args))) (when (nth 2 args) (setq ret (append ret `(" x " ,(nth 2 args))))) ret)))
-         (E "+" B (lambda(args) (let ((ret (nth 0 args))) (when (nth 2 args) (setq ret (append ret `(" . " ,(nth 2 args))))) ret)))
+         (E "*" B (lambda(args) (let ((ret (list (nth 0 args)))) (when (nth 2 args) (setq ret (append ret `(" x " ,(nth 2 args))))) ret)))
+         (E "+" B (lambda(args) (let ((ret (list (nth 0 args)))) (when (nth 2 args) (setq ret (append ret `(" . " ,(nth 2 args))))) ret)))
          (B)
          )
         (B
@@ -1274,10 +1274,9 @@
            (when (<= end (point-max))
              (buffer-substring-no-properties start end))))))
 
-    (parser-generator-lr-translate)
     (should
      (equal
-      '((("1")) " . " ("1"))
+      '("1" " . " "1")
       (parser-generator-lr-translate)))
     (message "Passed translation k=0")
     (kill-buffer))
