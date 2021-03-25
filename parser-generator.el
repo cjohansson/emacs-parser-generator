@@ -17,7 +17,7 @@
 
 (defvar
   parser-generator--debug
-  nil
+  t
   "Whether to print debug messages or not.")
 
 (defvar
@@ -473,8 +473,7 @@
       (dolist (p productions)
         (let ((lhs (car p))
               (rhs (cdr p))
-              (production)
-              (translation))
+              (production))
           (unless (listp lhs)
             (setq lhs (list lhs)))
           (let ((new-value
@@ -488,98 +487,99 @@
                 (<
                  rhs-element-index
                  rhs-length)
-              (setq
-               rhs-element
-               (nth
-                rhs-element-index
-                rhs))
-              (when (functionp rhs-element)
-                (error
-                 "Unexpected function element %s in RHS %s of LHS %s"
-                 rhs-element
-                 rhs
-                 lhs))
-              (unless (listp rhs-element)
-                (setq rhs-element (list rhs-element)))
-              (let ((sub-rhs-element-index 0)
-                    (sub-rhs-element-length (length rhs-element))
-                    (sub-rhs-element)
-                    (new-rhs))
-                (while
-                    (<
-                     sub-rhs-element-index
-                     sub-rhs-element-length)
-                  (setq
-                   sub-rhs-element
-                   (nth
-                    sub-rhs-element-index
-                    rhs-element))
-                  (if (and
-                       (listp sub-rhs-element)
-                       (functionp sub-rhs-element))
-                      (setq
-                       translation
-                       sub-rhs-element)
-                    (unless
-                        (or
-                         (parser-generator--valid-terminal-p sub-rhs-element)
-                         (parser-generator--valid-non-terminal-p sub-rhs-element)
-                         (parser-generator--valid-e-p sub-rhs-element)
-                         (parser-generator--valid-eof-p sub-rhs-element))
-                      (error
-                       "Element %s in RHS %s of production %s is not a valid terminal, non-terminal, e-identifier or EOF-identifier!"
-                       sub-rhs-element
-                       rhs-element
-                       lhs))
-                    (push
-                     sub-rhs-element
-                     new-rhs))
-                  (setq
-                   sub-rhs-element-index
-                   (1+ sub-rhs-element-index)))
+              (let ((translation))
                 (setq
+                 rhs-element
+                 (nth
+                  rhs-element-index
+                  rhs))
+                (when (functionp rhs-element)
+                  (error
+                   "Unexpected function element %s in RHS %s of LHS %s"
+                   rhs-element
+                   rhs
+                   lhs))
+                (unless (listp rhs-element)
+                  (setq rhs-element (list rhs-element)))
+                (let ((sub-rhs-element-index 0)
+                      (sub-rhs-element-length (length rhs-element))
+                      (sub-rhs-element)
+                      (new-rhs))
+                  (while
+                      (<
+                       sub-rhs-element-index
+                       sub-rhs-element-length)
+                    (setq
+                     sub-rhs-element
+                     (nth
+                      sub-rhs-element-index
+                      rhs-element))
+                    (if (and
+                         (listp sub-rhs-element)
+                         (functionp sub-rhs-element))
+                        (setq
+                         translation
+                         sub-rhs-element)
+                      (unless
+                          (or
+                           (parser-generator--valid-terminal-p sub-rhs-element)
+                           (parser-generator--valid-non-terminal-p sub-rhs-element)
+                           (parser-generator--valid-e-p sub-rhs-element)
+                           (parser-generator--valid-eof-p sub-rhs-element))
+                        (error
+                         "Element %s in RHS %s of production %s is not a valid terminal, non-terminal, e-identifier or EOF-identifier!"
+                         sub-rhs-element
+                         rhs-element
+                         lhs))
+                      (push
+                       sub-rhs-element
+                       new-rhs))
+                    (setq
+                     sub-rhs-element-index
+                     (1+ sub-rhs-element-index)))
+                  (setq
+                   production
+                   (list
+                    lhs
+                    (reverse new-rhs)))
+                  (message
+                   "Production %s: %S"
+                   production-index
+                   production)
+                  (push
+                   (reverse new-rhs)
+                   new-value)
+                  (puthash
+                   lhs
+                   (reverse new-value)
+                   parser-generator--table-productions-rhs))
+                (setq
+                 rhs-element-index
+                 (1+ rhs-element-index))
+                (puthash
                  production
-                 (list
-                  lhs
-                  (reverse new-rhs)))
-                (message
-                 "Production %s: %S"
                  production-index
-                 production)
+                 parser-generator--table-productions-number)
+                (puthash
+                 production-index
+                 production
+                 parser-generator--table-productions-number-reverse)
                 (push
-                 (reverse new-rhs)
-                 new-value)
-                (puthash
-                 lhs
-                 (reverse new-value)
-                 parser-generator--table-productions-rhs))
-              (setq
-               rhs-element-index
-               (1+ rhs-element-index))
-              (puthash
-               production
-               production-index
-               parser-generator--table-productions-number)
-              (puthash
-               production-index
-               production
-               parser-generator--table-productions-number-reverse)
-              (push
-               production
-               new-productions)
-              (when translation
-                (parser-generator--debug
-                 (message
-                  "Translation %s: %s"
-                  production-index
-                  translation))
-                (puthash
+                 production
+                 new-productions)
+                (when translation
+                  (parser-generator--debug
+                   (message
+                    "Translation %S: %S"
+                    production-index
+                    translation))
+                  (puthash
+                   production-index
+                   translation
+                   parser-generator--table-translations))
+                (setq
                  production-index
-                 translation
-                 parser-generator--table-translations))
-              (setq
-               production-index
-               (1+ production-index))))))
+                 (1+ production-index)))))))
       (setq
        new-productions
        (nreverse new-productions))
