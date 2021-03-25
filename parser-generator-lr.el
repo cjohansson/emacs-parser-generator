@@ -1803,33 +1803,47 @@
                             (dolist (popped-item popped-items-contents)
                               (parser-generator--debug
                                (message
-                                "popped-item: %s"
+                                "popped-item: %s (for translation)"
                                 popped-item))
                               (if (and
                                    (listp popped-item)
                                    (cdr popped-item))
+
                                   ;; If item is a terminal, use it's literal value
                                   (push
                                    (parser-generator-lex-analyzer--get-function
                                     popped-item)
                                    popped-items-meta-contents)
+
+                                ;; If item is a non-terminal
                                 (let ((temp-hash-key
                                        (format
                                         "%S"
                                         popped-item)))
+
+                                  ;; If we have a translation for symbol, pop one
+                                  ;; otherwise push nil on translation argument stack
                                   (if (gethash
                                        temp-hash-key
                                        translation-symbol-table)
-                                      (push
-                                       (gethash
-                                        temp-hash-key
-                                        translation-symbol-table)
-                                       popped-items-meta-contents)
+                                      (let ((symbol-translations
+                                             (gethash
+                                              temp-hash-key
+                                              translation-symbol-table)))
+                                        (let ((symbol-translation
+                                               (pop symbol-translations)))
+                                          (push
+                                           symbol-translation
+                                           popped-items-meta-contents)
+                                          (puthash
+                                           temp-hash-key
+                                           symbol-translations
+                                           translation-symbol-table)))
                                     (push
                                      nil
                                      popped-items-meta-contents)))))
 
-                            ;; If we just have one argument, pass it as a scalar
+                            ;; If we just have one argument, pass it as a instead of a list
                             (if (= (length popped-items-meta-contents) 1)
                                 (setq
                                  popped-items-meta-contents
@@ -1859,17 +1873,26 @@
                                     "translation-symbol-table: %s = %s"
                                     production-lhs
                                     partial-translation))
-                                  (puthash
-                                   (format
-                                    "%S"
-                                    production-lhs)
-                                   partial-translation
-                                   translation-symbol-table)
-                                  (setq
-                                   translation
-                                   partial-translation))
+                                  (let ((symbol-translations
+                                         (gethash
+                                          (format
+                                           "%S"
+                                           production-lhs)
+                                          translation-symbol-table)))
+                                    (push
+                                     partial-translation
+                                     symbol-translations)
+                                    (puthash
+                                     (format
+                                      "%S"
+                                      production-lhs)
+                                     (reverse symbol-translations)
+                                     translation-symbol-table)
+                                    (setq
+                                     translation
+                                     partial-translation)))
 
-                              ;; When no translation is specified just use partial-translation as translation
+                              ;; When no translation is specified just use popped contents as translation
                               (let ((partial-translation
                                      popped-items-meta-contents))
                                 (parser-generator--debug
@@ -1877,15 +1900,24 @@
                                   "translation-symbol-table: %s = %s (generic)"
                                   production-lhs
                                   partial-translation))
-                                (puthash
-                                 (format
-                                  "%S"
-                                  production-lhs)
-                                 partial-translation
-                                 translation-symbol-table)
-                                (setq
-                                 translation
-                                 partial-translation))))
+                                (let ((symbol-translations
+                                       (gethash
+                                        (format
+                                         "%S"
+                                         production-lhs)
+                                        translation-symbol-table)))
+                                  (push
+                                   partial-translation
+                                   symbol-translations)
+                                  (puthash
+                                   (format
+                                    "%S"
+                                    production-lhs)
+                                   (reverse symbol-translations)
+                                   translation-symbol-table)
+                                  (setq
+                                   translation
+                                   partial-translation)))))
 
                           (let ((new-table-index (car pushdown-list)))
                             (let ((goto-table-distinct-index

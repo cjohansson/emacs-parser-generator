@@ -684,12 +684,21 @@
     (switch-to-buffer buffer)
     (kill-region (point-min) (point-max))
     (insert "7-3\n")
-    (message "7-3=%S" (parser-generator-lr-translate))
     (should
      (equal
       4
       (parser-generator-lr-translate)))
     (message "7-3=4\n")
+
+    (switch-to-buffer buffer)
+    (kill-region (point-min) (point-max))
+    (insert "3+4+5-6\n")
+    (should
+     (equal
+      6
+      (parser-generator-lr-translate)))
+    (message "3+4+5-6=6\n")
+
     (kill-buffer))
 
   (message "Passed tests for (parser-generator-lr--parse)"))
