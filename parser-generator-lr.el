@@ -1798,8 +1798,7 @@
                                 (setq popped-items (1+ popped-items)))))
                           (push production-number output)
 
-                          (let ((popped-items-meta-contents)
-                                (all-expanded t))
+                          (let ((popped-items-meta-contents))
                             ;; Collect arguments for translation
                             (dolist (popped-item popped-items-contents)
                               (parser-generator--debug
@@ -1826,15 +1825,19 @@
                                         temp-hash-key
                                         translation-symbol-table)
                                        popped-items-meta-contents)
-                                    (setq
-                                     all-expanded
-                                     nil)
                                     (push
                                      nil
                                      popped-items-meta-contents)))))
-                            (setq
-                             popped-items-meta-contents
-                             (nreverse popped-items-meta-contents))
+
+                            ;; If we just have one argument, pass it as a scalar
+                            (if (= (length popped-items-meta-contents) 1)
+                                (setq
+                                 popped-items-meta-contents
+                                 (car popped-items-meta-contents))
+                              (setq
+                               popped-items-meta-contents
+                               (nreverse popped-items-meta-contents)))
+
                             (parser-generator--debug
                              (message
                               "Production arguments: %s -> %s = %s"
@@ -1866,24 +1869,23 @@
                                    translation
                                    partial-translation))
 
-                              ;; When no translation is specified just use arguments as translation
-                              (when all-expanded
-                                (let ((partial-translation
-                                       popped-items-meta-contents))
-                                  (parser-generator--debug
-                                   (message
-                                    "translation-symbol-table: %s = %s (generic)"
-                                    production-lhs
-                                    partial-translation))
-                                  (puthash
-                                   (format
-                                    "%S"
-                                    production-lhs)
-                                   partial-translation
-                                   translation-symbol-table)
-                                  (setq
-                                   translation
-                                   partial-translation)))))
+                              ;; When no translation is specified just use partial-translation as translation
+                              (let ((partial-translation
+                                     popped-items-meta-contents))
+                                (parser-generator--debug
+                                 (message
+                                  "translation-symbol-table: %s = %s (generic)"
+                                  production-lhs
+                                  partial-translation))
+                                (puthash
+                                 (format
+                                  "%S"
+                                  production-lhs)
+                                 partial-translation
+                                 translation-symbol-table)
+                                (setq
+                                 translation
+                                 partial-translation))))
 
                           (let ((new-table-index (car pushdown-list)))
                             (let ((goto-table-distinct-index

@@ -573,7 +573,7 @@
 
   (parser-generator-process-grammar)
   ;; (should-error
-  ;;  (parser-generator-lr-generate-parser-tables))
+  ;;   (parser-generator-lr-generate-parser-tables))
   (message "Infix calculator grammar caused expected error")
 
   ;; Add precedence to resolve conflicts
@@ -641,19 +641,19 @@
       (start input)
       (input
        %empty
-       (input line))
+       (input line (lambda(args) (nth 1 args))))
       (line
        "\n"
-       (exp "\n"))
+       (exp "\n" (lambda(args) (nth 0 args))))
       (exp
        NUM
-       (exp "+" exp (lambda(args) (+ (car (nth 0 args)) (car (nth 2 args)))))
-       (exp "-" exp (lambda(args) (- (car (nth 0 args)) (car (nth 2 args)))))
-       (exp "*" exp (lambda(args) (* (car (nth 0 args)) (car (nth 2 args)))))
-       (exp "/" exp (lambda(args) (/ (car (nth 0 args)) (car (nth 2 args)))))
-       ("-" (exp (%prec NEG)) (lambda(args) (- (car (nth 1 args)))))
-       (exp "^" exp (lambda(args) (expt (car (nth 0 args)) (car (nth 2 args)))))
-       ("(" exp ")" (lambda(args) (car (nth 1 args))))))
+       (exp "+" exp (lambda(args) (+ (nth 0 args) (nth 2 args))))
+       (exp "-" exp (lambda(args) (- (nth 0 args) (nth 2 args))))
+       (exp "*" exp (lambda(args) (* (nth 0 args) (nth 2 args))))
+       (exp "/" exp (lambda(args) (/ (nth 0 args) (nth 2 args))))
+       ("-" (exp (%prec NEG)) (lambda(args) (- (nth 1 args))))
+       (exp "^" exp (lambda(args) (expt (nth 0 args) (nth 2 args))))
+       ("(" exp ")" (lambda(args) (nth 1 args)))))
      start))
   (parser-generator-process-grammar)
 
@@ -662,21 +662,34 @@
 
   ;; TODO Test functionality here (then move to translate test)
   (let ((buffer (generate-new-buffer "*buffer*")))
+
     (switch-to-buffer buffer)
     (kill-region (point-min) (point-max))
     (insert "5+5\n")
     (should
      (equal
       10
-      (car (parser-generator-lr-translate))))
+      (parser-generator-lr-translate)))
+    (message "5+5=10\n")
+
+    (switch-to-buffer buffer)
+    (kill-region (point-min) (point-max))
+    (insert "5+4\n")
+    (should
+     (equal
+      9
+      (parser-generator-lr-translate)))
+    (message "5+4=9\n")
 
     (switch-to-buffer buffer)
     (kill-region (point-min) (point-max))
     (insert "7-3\n")
+    (message "7-3=%S" (parser-generator-lr-translate))
     (should
      (equal
       4
       (parser-generator-lr-translate)))
+    (message "7-3=4\n")
     (kill-buffer))
 
   (message "Passed tests for (parser-generator-lr--parse)"))
