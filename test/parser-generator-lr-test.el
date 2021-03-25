@@ -699,6 +699,43 @@
       (parser-generator-lr-translate)))
     (message "3+4+5-6=6\n")
 
+    (switch-to-buffer buffer)
+    (kill-region (point-min) (point-max))
+    (insert "3*4*5\n")
+    (should
+     (equal
+      60
+      (parser-generator-lr-translate)))
+    (message "3*4*5=60\n")
+
+    (switch-to-buffer buffer)
+    (kill-region (point-min) (point-max))
+    (insert "10/5\n")
+    (should
+     (equal
+      2
+      (parser-generator-lr-translate)))
+    (message "10/5=2\n")
+
+    (switch-to-buffer buffer)
+    (kill-region (point-min) (point-max))
+    (insert "10^2\n")
+    (should
+     (equal
+      100
+      (parser-generator-lr-translate)))
+    (message "10^2=100\n")
+
+    (switch-to-buffer buffer)
+    (kill-region (point-min) (point-max))
+    (insert "3+4*5\n")
+    (should
+     (equal
+      23
+      (parser-generator-lr-translate)))
+    (message "3+4*5=23\n")
+
+
     (kill-buffer))
 
   (message "Passed tests for (parser-generator-lr--parse)"))
