@@ -500,7 +500,6 @@
   (parser-generator-lr-test--parse-incremental-vs-regular)
   (message "Passed incremental-tests")
 
-  ;; TODO Test grammar that requires global and context-sensitive precedence here
   ;; https://www.gnu.org/software/bison/manual/html_node/Infix-Calc.html
   (setq
    parser-generator--e-identifier
@@ -515,10 +514,10 @@
       (start input)
       (input
        %empty
-       (input line))
+       (input line (lambda(args) (nth 1 args))))
       (line
        "\n"
-       (exp "\n"))
+       (exp "\n" (lambda(args) (nth 0 args))))
       (exp
        NUM
        (exp "+" exp (lambda(args) (+ (nth 0 args) (nth 2 args))))
@@ -527,7 +526,7 @@
        (exp "/" exp (lambda(args) (/ (nth 0 args) (nth 2 args))))
        ("-" exp (lambda(args) (- (nth 1 args))))
        (exp "^" exp (lambda(args) (expt (nth 0 args) (nth 2 args))))
-       ("(" exp ")" (lambda(args) (nth 1)))))
+       ("(" exp ")" (lambda(args) (nth 1 args)))))
      start))
   (setq
    parser-generator-lex-analyzer--function
@@ -572,11 +571,96 @@
              symbol))))))
 
   (parser-generator-process-grammar)
-  ;; (should-error
-  ;;   (parser-generator-lr-generate-parser-tables))
-  (message "Infix calculator grammar caused expected error")
+  (parser-generator-lr-generate-parser-tables)
 
-  ;; Add precedence to resolve conflicts
+  ;; TODO Test functionality here (then move to translate test)
+  (let ((buffer (generate-new-buffer "*buffer*")))
+    (switch-to-buffer buffer)
+    (kill-region (point-min) (point-max))
+    (insert "5+5\n")
+    (should
+     (equal
+      10
+      (parser-generator-lr-translate)))
+    (message "Passed 5+5")
+
+    (switch-to-buffer buffer)
+    (kill-region (point-min) (point-max))
+    (insert "5+4\n")
+    (should
+     (equal
+      9
+      (parser-generator-lr-translate)))
+    (message "Passed 5+4")
+
+    (switch-to-buffer buffer)
+    (kill-region (point-min) (point-max))
+    (insert "7-3\n")
+    (should
+     (equal
+      4
+      (parser-generator-lr-translate)))
+    (message "Passed 7-3")
+
+    (switch-to-buffer buffer)
+    (kill-region (point-min) (point-max))
+    (insert "3*4*5\n")
+    (should
+     (equal
+      60
+      (parser-generator-lr-translate)))
+    (message "Passed 3*4*5")
+
+    (switch-to-buffer buffer)
+    (kill-region (point-min) (point-max))
+    (insert "10/5\n")
+    (should
+     (equal
+      2
+      (parser-generator-lr-translate)))
+    (message "Passed 10/5")
+
+    (switch-to-buffer buffer)
+    (kill-region (point-min) (point-max))
+    (insert "10^2\n")
+    (should
+     (equal
+      100
+      (parser-generator-lr-translate)))
+    (message "Passed 10^2")
+
+    (switch-to-buffer buffer)
+    (kill-region (point-min) (point-max))
+    (insert "-33\n")
+    (should
+     (equal
+      -33
+      (parser-generator-lr-translate)))
+    (message "Passed -33")
+
+    (switch-to-buffer buffer)
+    (kill-region (point-min) (point-max))
+    (insert "3+4*5\n")
+    (should
+     (equal
+      37
+      (parser-generator-lr-translate)))
+    (message "Passed 3+4*5 with expected wrong associativity")
+
+    (switch-to-buffer buffer)
+    (kill-region (point-min) (point-max))
+    (insert "3+4+5-6\n")
+    (should
+     (equal
+      12
+      (parser-generator-lr-translate)))
+    (message "Passed 3+4+5-6 with expected wrong result")
+
+    (kill-buffer))
+
+  (message "Infix calculator grammar caused expected wrong calculations")
+
+  ;; Add precedence to fix associativity
   (setq
    parser-generator--context-sensitive-attributes
    '(%prec))
@@ -656,75 +740,9 @@
        ("(" exp ")" (lambda(args) (nth 1 args)))))
      start))
   (parser-generator-process-grammar)
-
   (parser-generator-lr-generate-parser-tables)
-  (message "Grammar now passes thanks to precedence rules")
 
-  ;; TODO Test functionality here (then move to translate test)
   (let ((buffer (generate-new-buffer "*buffer*")))
-
-    (switch-to-buffer buffer)
-    (kill-region (point-min) (point-max))
-    (insert "5+5\n")
-    (should
-     (equal
-      10
-      (parser-generator-lr-translate)))
-    (message "5+5=10\n")
-
-    (switch-to-buffer buffer)
-    (kill-region (point-min) (point-max))
-    (insert "5+4\n")
-    (should
-     (equal
-      9
-      (parser-generator-lr-translate)))
-    (message "5+4=9\n")
-
-    (switch-to-buffer buffer)
-    (kill-region (point-min) (point-max))
-    (insert "7-3\n")
-    (should
-     (equal
-      4
-      (parser-generator-lr-translate)))
-    (message "7-3=4\n")
-
-    (switch-to-buffer buffer)
-    (kill-region (point-min) (point-max))
-    (insert "3+4+5-6\n")
-    (should
-     (equal
-      6
-      (parser-generator-lr-translate)))
-    (message "3+4+5-6=6\n")
-
-    (switch-to-buffer buffer)
-    (kill-region (point-min) (point-max))
-    (insert "3*4*5\n")
-    (should
-     (equal
-      60
-      (parser-generator-lr-translate)))
-    (message "3*4*5=60\n")
-
-    (switch-to-buffer buffer)
-    (kill-region (point-min) (point-max))
-    (insert "10/5\n")
-    (should
-     (equal
-      2
-      (parser-generator-lr-translate)))
-    (message "10/5=2\n")
-
-    (switch-to-buffer buffer)
-    (kill-region (point-min) (point-max))
-    (insert "10^2\n")
-    (should
-     (equal
-      100
-      (parser-generator-lr-translate)))
-    (message "10^2=100\n")
 
     (switch-to-buffer buffer)
     (kill-region (point-min) (point-max))
@@ -733,8 +751,16 @@
      (equal
       23
       (parser-generator-lr-translate)))
-    (message "3+4*5=23\n")
+    (message "Passed 3+4*5 with correct result")
 
+    (switch-to-buffer buffer)
+    (kill-region (point-min) (point-max))
+    (insert "3+4+5-6\n")
+    (should
+     (equal
+      6
+      (parser-generator-lr-translate)))
+    (message "Passed 3+4+5-6 with correct result")
 
     (kill-buffer))
 

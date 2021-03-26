@@ -1881,6 +1881,11 @@
                                            (gethash
                                             temp-hash-key
                                             translation-symbol-table)))
+                                      (when
+                                          symbol-translations
+                                        (setq
+                                         symbol-translations
+                                         (reverse symbol-translations)))
                                       (push
                                        partial-translation
                                        symbol-translations)
@@ -1908,6 +1913,11 @@
                                          (gethash
                                           temp-hash-key
                                           translation-symbol-table)))
+                                    (when
+                                        symbol-translations
+                                      (setq
+                                       symbol-translations
+                                       (reverse symbol-translations)))
                                     (push
                                      partial-translation
                                      symbol-translations)
