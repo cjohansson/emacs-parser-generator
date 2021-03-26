@@ -695,21 +695,21 @@
 
     (switch-to-buffer buffer)
     (kill-region (point-min) (point-max))
-    (insert "-33+5\n")
-    (should
-     (equal
-      -38
-      (parser-generator-lr-translate)))
-    (message "Passed -33+5 with expected wrong associativity")
-
-    (switch-to-buffer buffer)
-    (kill-region (point-min) (point-max))
     (insert "10^2+3\n")
     (should
      (equal
       100000
       (parser-generator-lr-translate)))
     (message "Passed 10^2+3 with expected wrong associativity")
+
+    (switch-to-buffer buffer)
+    (kill-region (point-min) (point-max))
+    (insert "-33+5\n")
+    (should
+     (equal
+      -38
+      (parser-generator-lr-translate)))
+    (message "Passed -33+5 with expected wrong associativity")
 
     (kill-buffer))
 
@@ -801,21 +801,39 @@
 
     (switch-to-buffer buffer)
     (kill-region (point-min) (point-max))
-    (insert "3+4*5\n")
+    (insert "4*5+3\n")
     (should
      (equal
       23
       (parser-generator-lr-translate)))
-    (message "Passed 3+4*5 with correct result")
+    (message "Passed 4*5+3 with correct result")
 
     (switch-to-buffer buffer)
     (kill-region (point-min) (point-max))
-    (insert "3+4+5-6\n")
+    (insert "10/1+1\n")
     (should
      (equal
-      6
+      11
       (parser-generator-lr-translate)))
-    (message "Passed 3+4+5-6 with correct result")
+    (message "Passed 10/1+1 with correct result")
+
+    (switch-to-buffer buffer)
+    (kill-region (point-min) (point-max))
+    (insert "10^2+3\n")
+    (should
+     (equal
+      103
+      (parser-generator-lr-translate)))
+    (message "Passed 10^2+3 with correct result")
+
+    (switch-to-buffer buffer)
+    (kill-region (point-min) (point-max))
+    (insert "-33+5\n")
+    (should
+     (equal
+      -28
+      (parser-generator-lr-translate)))
+    (message "Passed -33+5 with correct result")
 
     (kill-buffer))
 
