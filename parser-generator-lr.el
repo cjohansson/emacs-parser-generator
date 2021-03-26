@@ -1610,7 +1610,7 @@
           (setq look-ahead (nreverse look-ahead))
 
           (parser-generator--debug
-           (message "look-ahead: %s" look-ahead)
+           (message "\nlook-ahead: %s" look-ahead)
            (message "look-ahead-full: %s" look-ahead-full))
 
           (let ((table-index
@@ -1787,7 +1787,7 @@
                               (while (< popped-items pop-items)
                                 (setq popped-item (pop pushdown-list))
                                 (parser-generator--debug
-                                 (message "popped-item: %s" popped-item))
+                                 (message "popped-item-from-pushdownlist-list: %s" popped-item))
                                 (when (and
                                        (listp popped-item)
                                        (parser-generator--valid-symbol-p
@@ -1799,6 +1799,9 @@
                           (push production-number output)
 
                           (let ((popped-items-meta-contents))
+                            (setq
+                             popped-items-contents
+                             (reverse popped-items-contents))
                             ;; Collect arguments for translation
                             (dolist (popped-item popped-items-contents)
                               (parser-generator--debug
@@ -1844,13 +1847,10 @@
                                      popped-items-meta-contents)))))
 
                             ;; If we just have one argument, pass it as a instead of a list
-                            (if (= (length popped-items-meta-contents) 1)
-                                (setq
-                                 popped-items-meta-contents
-                                 (car popped-items-meta-contents))
+                            (when (= (length popped-items-meta-contents) 1)
                               (setq
                                popped-items-meta-contents
-                               (nreverse popped-items-meta-contents)))
+                               (car popped-items-meta-contents)))
 
                             (parser-generator--debug
                              (message
@@ -1881,17 +1881,12 @@
                                            (gethash
                                             temp-hash-key
                                             translation-symbol-table)))
-                                      (when
-                                          symbol-translations
-                                        (setq
-                                         symbol-translations
-                                         (reverse symbol-translations)))
                                       (push
                                        partial-translation
                                        symbol-translations)
                                       (puthash
                                        temp-hash-key
-                                       (reverse symbol-translations)
+                                       symbol-translations
                                        translation-symbol-table)
                                       (setq
                                        translation
@@ -1913,17 +1908,12 @@
                                          (gethash
                                           temp-hash-key
                                           translation-symbol-table)))
-                                    (when
-                                        symbol-translations
-                                      (setq
-                                       symbol-translations
-                                       (reverse symbol-translations)))
                                     (push
                                      partial-translation
                                      symbol-translations)
                                     (puthash
                                      temp-hash-key
-                                     (reverse symbol-translations)
+                                     symbol-translations
                                      translation-symbol-table)
                                     (setq
                                      translation
