@@ -1329,7 +1329,7 @@
             (lr-item-suffix-rest))
         (setq
          lr-item-suffix-first
-         (car lr-item-suffix))
+          (car lr-item-suffix))
         (setq
          lr-item-suffix-rest
          (cdr lr-item-suffix))
@@ -1345,7 +1345,7 @@
         ;; (a) If [A -> a . XiB, u] is in V(X1,...,Xi-1)
         (when
             (equal
-             lr-item-suffix-first
+              lr-item-suffix-first
              x)
 
           ;; Add [A -> aXi . B, u] to V(X1,...,Xi)
