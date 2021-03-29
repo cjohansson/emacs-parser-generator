@@ -179,7 +179,8 @@
         (3 ((($) accept)))
         (4 (((b) shift)))
         (5 (((c) shift)))
-        (6 ((($) reduce 1))))
+        (6 ((($) reduce 4)))
+        (7 ((($) reduce 1))))
       (parser-generator-lr--get-expanded-action-tables))))
 
   (message "Passed tests for (parser-generator-lr--generate-action-tables)"))

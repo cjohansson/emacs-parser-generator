@@ -1326,6 +1326,7 @@
             (lr-item-suffix (nth 2 lr-item))
             (lr-item-look-ahead (nth 3 lr-item))
             (lr-item-suffix-first)
+            (lr-item-suffix-first-wo-attributes)
             (lr-item-suffix-rest))
         (setq
          lr-item-suffix-first
@@ -1334,25 +1335,36 @@
          lr-item-suffix-rest
          (cdr lr-item-suffix))
 
+        ;; Remove potential attributes from symbol for comparison
+        (if
+            (listp lr-item-suffix-first)
+            (setq
+             lr-item-suffix-first-wo-attributes
+             (car lr-item-suffix-first))
+          (setq
+           lr-item-suffix-first-wo-attributes
+           lr-item-suffix-first))
+
         (parser-generator--debug
          (message "lr-item: %s" lr-item)
          (message "lr-item-prefix: %s" lr-item-prefix)
          (message "lr-item-suffix: %s" lr-item-suffix)
          (message "lr-item-suffix-first: %s" lr-item-suffix-first)
+         (message "lr-item-suffix-first-wo-attributes: %s" lr-item-suffix-first-wo-attributes)
          (message "lr-item-suffix-rest: %s" lr-item-suffix-rest)
          (message "lr-item-look-ahead: %s" lr-item-look-ahead))
 
         ;; (a) If [A -> a . XiB, u] is in V(X1,...,Xi-1)
         (when
             (equal
-              lr-item-suffix-first
+              lr-item-suffix-first-wo-attributes
              x)
 
           ;; Add [A -> aXi . B, u] to V(X1,...,Xi)
           (let ((combined-prefix
                  (append
                   lr-item-prefix
-                  (list x))))
+                  (list lr-item-suffix-first))))
             (let ((lr-new-item-1))
               (if
                   (=
