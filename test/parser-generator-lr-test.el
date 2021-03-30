@@ -796,7 +796,12 @@
        ("(" exp ")" (lambda(args) (nth 1 args)))))
      start))
   (parser-generator-process-grammar)
-  (parser-generator-lr-generate-parser-tables)
+
+  ;; TODO What we want is that after - exp there is a reduce action
+  (let ((lr-item-sets (parser-generator-lr-generate-parser-tables)))
+    (message "")
+    (message "RAMBO: %S" lr-item-sets)
+    (message ""))
 
   (let ((buffer (generate-new-buffer "*buffer*")))
 
