@@ -791,18 +791,13 @@
        (exp "-" exp (lambda(args) (- (nth 0 args) (nth 2 args))))
        (exp "*" exp (lambda(args) (* (nth 0 args) (nth 2 args))))
        (exp "/" exp (lambda(args) (/ (nth 0 args) (nth 2 args))))
-       ("-" (exp (%prec NEG)) (lambda(args) (- (nth 1 args))))
+       ("-" exp (lambda(args) (- (nth 1 args))))
        (exp "^" exp (lambda(args) (expt (nth 0 args) (nth 2 args))))
        ("(" exp ")" (lambda(args) (nth 1 args)))))
      start))
   (parser-generator-process-grammar)
 
-  ;; TODO What we want is that after - exp there is a reduce action
-  (let ((lr-item-sets (parser-generator-lr-generate-parser-tables)))
-    (message "")
-    (message "RAMBO: %S" lr-item-sets)
-    (message ""))
-
+  (parser-generator-lr-generate-parser-tables)
   (let ((buffer (generate-new-buffer "*buffer*")))
 
     (switch-to-buffer buffer)
@@ -840,6 +835,15 @@
       -28
       (parser-generator-lr-translate)))
     (message "Passed -33+5 with correct result")
+
+    (switch-to-buffer buffer)
+    (kill-region (point-min) (point-max))
+    (insert "-33-3\n")
+    (should
+     (equal
+      -36
+      (parser-generator-lr-translate)))
+    (message "Passed -33-3 with correct result")
 
     (kill-buffer))
 

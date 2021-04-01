@@ -17,7 +17,7 @@
 
 (defvar
   parser-generator--debug
-  t
+  nil
   "Whether to print debug messages or not.")
 
 (defvar
@@ -849,7 +849,9 @@
         (setq
          valid-attribute
          nil))
-      (setq symbol (car symbol)))
+      (setq
+       symbol
+       (car symbol)))
     (and
      valid-attribute
      (gethash

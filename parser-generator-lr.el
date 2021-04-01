@@ -653,16 +653,10 @@
         (dolist (lr-item lr-items)
           (let ((symbols (nth 2 lr-item)))
             (when symbols
+              ;; Convert symbols in grammar with attributes to simple symbols
               (let ((next-symbol
-                     (car symbols)))
-
-                ;; Convert symbols with attributes to simple symbols
-                (when
-                    (listp next-symbol)
-                  (setq
-                   next-symbol
-                   (car next-symbol)))
-
+                     (parser-generator--get-symbol-without-attributes
+                      (car symbols))))
                 (let ((temp-hash-key
                        (format
                         "%S"
@@ -1335,15 +1329,11 @@
          lr-item-suffix-rest
          (cdr lr-item-suffix))
 
-        ;; Remove potential attributes from symbol for comparison
-        (if
-            (listp lr-item-suffix-first)
-            (setq
-             lr-item-suffix-first-wo-attributes
-             (car lr-item-suffix-first))
-          (setq
-           lr-item-suffix-first-wo-attributes
-           lr-item-suffix-first))
+        ;; NOTE x is always without attributes
+        (setq
+         lr-item-suffix-first-wo-attributes
+         (parser-generator--get-symbol-without-attributes
+          lr-item-suffix-first))
 
         (parser-generator--debug
          (message "lr-item: %s" lr-item)
@@ -1364,7 +1354,8 @@
           (let ((combined-prefix
                  (append
                   lr-item-prefix
-                  (list lr-item-suffix-first))))
+                  (list
+                   lr-item-suffix-first))))
             (let ((lr-new-item-1))
               (if
                   (=
@@ -1397,9 +1388,9 @@
         (while added-new
           (setq added-new nil)
 
-          ;; TODO Use caches to optimize this loop?
           (dolist (lr-item lr-new-item)
-            (let ((lr-item-suffix (nth 2 lr-item)))
+            (let ((lr-item-suffix
+                   (nth 2 lr-item)))
               (let ((lr-item-suffix-first
                      (car lr-item-suffix))
                     (lr-item-suffix-rest
@@ -1407,6 +1398,10 @@
                       (cdr lr-item-suffix)
                       (nth 3 lr-item))))
                 (parser-generator--debug
+                 (message
+                  "lr-item-suffix-first: %s from %s"
+                  lr-item-suffix-first
+                  lr-item-suffix)
                  (message
                   "lr-item-suffix-rest: %s from %s + %s"
                   lr-item-suffix-rest
@@ -1416,8 +1411,10 @@
                 ;; (b) If [A -> a . Bb, u] has been placed in V(X1,...,Xi)
                 ;; and B -> D is in P
                 (when
-                    (parser-generator--valid-non-terminal-p
-                     lr-item-suffix-first)
+                    (and
+                     lr-item-suffix-first
+                     (parser-generator--valid-non-terminal-p
+                      lr-item-suffix-first))
 
                   (let ((lr-item-suffix-rest-first
                          (parser-generator--first
