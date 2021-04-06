@@ -584,12 +584,12 @@
   (let ((buffer (generate-new-buffer "*buffer*")))
     (switch-to-buffer buffer)
     (kill-region (point-min) (point-max))
-    (insert "5+5\n")
+    (insert "5 + 5\n")
     (should
      (equal
       10
       (parser-generator-lr-translate)))
-    (message "Passed 5+5")
+    (message "Passed 5 + 5")
 
     (switch-to-buffer buffer)
     (kill-region (point-min) (point-max))
@@ -849,6 +849,24 @@
       -36
       (parser-generator-lr-translate)))
     (message "Passed -33-3 with correct result")
+
+    (switch-to-buffer buffer)
+    (kill-region (point-min) (point-max))
+    (insert "3 ^ 2")
+    (should
+     (equal
+      9
+      (parser-generator-lr-translate)))
+    (message "Passed 3 ^ 2")
+
+    (switch-to-buffer buffer)
+    (kill-region (point-min) (point-max))
+    (insert "-56 + 2")
+    (should
+     (equal
+      -54
+      (parser-generator-lr-translate)))
+    (message "Passed -56 + 2")
 
     (switch-to-buffer buffer)
     (kill-region (point-min) (point-max))
