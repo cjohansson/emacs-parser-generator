@@ -540,8 +540,15 @@
               (point-max))
            (goto-char
             index)
+
+           ;; Skip white-space(s)
+           (when (looking-at-p "[\t ]+")
+             (when
+                 (search-forward-regexp "[^\t ]" nil t)
+               (forward-char -1)))
+
            (cond
-            ((looking-at "[0-9]+")
+            ((looking-at "\\([0-9]+\\.[0-9]+\\|[0-9]+\\)")
              (setq
               token
               `(NUM ,(match-beginning 0) . ,(match-end 0))))
@@ -565,7 +572,7 @@
            (let ((symbol
                   (buffer-substring-no-properties start end)))
              (when
-                 (string-match-p "^[0-9]+$" symbol)
+                 (string-match-p "^\\([0-9]+\\.[0-9]+\\|[0-9]+\\)$" symbol)
                (setq
                 symbol
                 (string-to-number symbol)))
@@ -574,7 +581,6 @@
   (parser-generator-process-grammar)
   (parser-generator-lr-generate-parser-tables)
 
-  ;; TODO Test functionality here (then move to translate test)
   (let ((buffer (generate-new-buffer "*buffer*")))
     (switch-to-buffer buffer)
     (kill-region (point-min) (point-max))
@@ -620,7 +626,6 @@
       2
       (parser-generator-lr-translate)))
     (message "Passed 10/5")
-
 
     (switch-to-buffer buffer)
     (kill-region (point-min) (point-max))
@@ -844,6 +849,15 @@
       -36
       (parser-generator-lr-translate)))
     (message "Passed -33-3 with correct result")
+
+    (switch-to-buffer buffer)
+    (kill-region (point-min) (point-max))
+    (insert "4 + 4.5 - (34/(8*3+-3))")
+    (should
+     (equal
+      6.880952381
+      (parser-generator-lr-translate)))
+    (message "Passed 4 + 4.5 - (34/(8*3+-3)) with correct result")
 
     (kill-buffer))
 
