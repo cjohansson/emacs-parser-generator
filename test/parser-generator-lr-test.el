@@ -501,6 +501,11 @@
   (parser-generator-lr-test--parse-incremental-vs-regular)
   (message "Passed incremental-tests")
 
+  (message "Passed tests for (parser-generator-lr--parse)"))
+
+(defun parser-generator-lr-test-infix-calculator ()
+  "Test infix calculator example."
+
   ;; https://www.gnu.org/software/bison/manual/html_node/Infix-Calc.html
   (setq
    parser-generator--e-identifier
@@ -843,12 +848,12 @@
 
     (switch-to-buffer buffer)
     (kill-region (point-min) (point-max))
-    (insert "-33-3\n")
+    (insert "- 33 - 3\n")
     (should
      (equal
       -36
       (parser-generator-lr-translate)))
-    (message "Passed -33-3 with correct result")
+    (message "Passed - 33 - 3 with correct result")
 
     (switch-to-buffer buffer)
     (kill-region (point-min) (point-max))
@@ -878,8 +883,7 @@
     (message "Passed 4 + 4.5 - (34/(8*3+-3)) with correct result")
 
     (kill-buffer))
-
-  (message "Passed tests for (parser-generator-lr--parse)"))
+  )
 
 (defun parser-generator-lr-test-parse-k-2 ()
   "Test `parser-generator-lr-parse' with k = 2."
@@ -1645,6 +1649,7 @@
   "Run test."
   ;; (setq debug-on-error nil)
 
+  (parser-generator-lr-test-infix-calculator)
   (parser-generator-lr-test--items-for-prefix)
   (parser-generator-lr-test--items-valid-p)
   (parser-generator-lr-test--generate-goto-tables)
