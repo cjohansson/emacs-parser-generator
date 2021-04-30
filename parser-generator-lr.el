@@ -960,8 +960,8 @@
                   ;; attributes on any of them, or both, pass anyway
                   (unless
                       (parser-generator-lr--conflict-can-be-resolved-by-attributes
-                       (car a-follow-full)
-                       (car b-suffix-follow-eff-item-full))
+                       a-follow-full
+                       b-suffix-follow-eff-item-full)
                     (when
                         signal-on-false
                       (error

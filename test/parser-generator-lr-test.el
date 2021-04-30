@@ -534,6 +534,8 @@
        (exp "^" exp (lambda(args) (expt (nth 0 args) (nth 2 args))))
        ("(" exp ")" (lambda(args) (nth 1 args)))))
      start))
+
+  ;; Lex-analyzer
   (setq
    parser-generator-lex-analyzer--function
    (lambda (index)
@@ -584,7 +586,15 @@
              symbol))))))
 
   (parser-generator-process-grammar)
-  (parser-generator-lr-generate-parser-tables)
+
+  ;; TODO Should error here at GOTO-table generation
+  (should-error
+   (parser-generator-lr-generate-parser-tables))
+
+  ;; TODO Add global precedence and grammar should now pass
+  ;; TODO Refactor context-sensitive grammar to apply to entire rule instead of specific element
+
+  (message "Generated parser")
 
   (let ((buffer (generate-new-buffer "*buffer*")))
     (switch-to-buffer buffer)
