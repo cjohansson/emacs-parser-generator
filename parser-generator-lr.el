@@ -398,48 +398,61 @@
                                           goto-index
                                           (parser-generator--get-symbols-without-attributes
                                            u))))
+
                                     (when
                                         (gethash
                                          index-hash-key
                                          index-symbols)
-                                        (let ((a u)
-                                              (b
+                                      (if
+                                          parser-generator-lr--precedence-comparison-function
+                                          (let ((a u)
+                                                (b
+                                                 (gethash
+                                                  index-hash-key
+                                                  index-symbols)))
+                                            (if
+                                                (parser-generator-lr--symbol-takes-precedence-p
+                                                 (car a)
+                                                 (car b))
+                                                (progn
+                                                  (parser-generator--debug
+                                                   (message
+                                                    "'%s' takes precedence over '%s'"
+                                                    a
+                                                    b))
+                                                  ;; Remove b from added-actions
+                                                  (let ((new-action-table))
+                                                    (dolist (action-item action-table)
+                                                      (unless
+                                                          (equal
+                                                           action-item
+                                                           b)
+                                                        (push
+                                                         action-item
+                                                         new-action-table)))
+                                                    (setq
+                                                     action-table
+                                                     (reverse
+                                                      new-action-table))))
+                                              (parser-generator--debug
+                                               (message
+                                                "'%s' takes precedence over '%s'"
+                                                b
+                                                a))
+                                              ;; Skip rest of this iteration
+                                              (setq
+                                               skip-symbol
+                                               t)))
+                                        (let ((conflicted-item
                                                (gethash
                                                 index-hash-key
                                                 index-symbols)))
-                                          (if
-                                              (parser-generator-lr--symbol-takes-precedence-p
-                                               (car a)
-                                               (car b))
-                                              (progn
-                                                (parser-generator--debug
-                                                 (message
-                                                  "'%s' takes precedence over '%s'"
-                                                  a
-                                                  b))
-                                                ;; Remove b from added-actions
-                                                (let ((new-action-table))
-                                                  (dolist (action-item action-table)
-                                                    (unless
-                                                        (equal
-                                                         action-item
-                                                         b)
-                                                      (push
-                                                       action-item
-                                                       new-action-table)))
-                                                  (setq
-                                                   action-table
-                                                   (reverse
-                                                    new-action-table))))
-                                            (parser-generator--debug
-                                             (message
-                                              "'%s' takes precedence over '%s'"
-                                              b
-                                              a))
-                                            ;; Skip rest of this iteration
-                                            (setq
-                                             skip-symbol
-                                             t))))
+                                          (error
+                                           "Reduce/%S conflict for %S in state %S"
+                                           (car (cdr conflicted-item))
+                                           u
+                                           goto-index
+                                           ))))
 
                                     (unless
                                         (or
