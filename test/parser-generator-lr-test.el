@@ -584,14 +584,66 @@
                 symbol
                 (string-to-number symbol)))
              symbol))))))
-
   (parser-generator-process-grammar)
 
-  ;; TODO Should error here at GOTO-table generation
+  (parser-generator-lr-generate-parser-tables)
+
+  ;; LR-items set 14:
+;;   (
+;; ((exp) (exp) ("*" exp) ("
+;; "))
+;; ((exp) (exp) ("*" exp) ("*"))
+;; ((exp) (exp) ("*" exp) ("+"))
+;; ((exp) (exp) ("*" exp) ("-"))
+;; ((exp) (exp) ("*" exp) ("/"))
+;; ((exp) (exp) ("*" exp) ("^"))
+;; ((exp) (exp) ("+" exp) ("
+;; "))
+;; ((exp) (exp) ("+" exp) ("*"))
+;; ((exp) (exp) ("+" exp) ("+"))
+;; ((exp) (exp) ("+" exp) ("-"))
+;; ((exp) (exp) ("+" exp) ("/"))
+;; ((exp) (exp) ("+" exp) ("^"))
+;; ((exp) (exp) ("-" exp) ("
+;; "))
+;; ((exp) (exp) ("-" exp) ("*"))
+;; ((exp) (exp) ("-" exp) ("+"))
+;; ((exp) (exp) ("-" exp) ("-"))
+;; ((exp) (exp) ("-" exp) ("/"))
+;; ((exp) (exp) ("-" exp) ("^"))
+;; ((exp) (exp) ("/" exp) ("
+;; "))
+;; ((exp) (exp) ("/" exp) ("*"))
+;; ((exp) (exp) ("/" exp) ("+"))
+;; ((exp) (exp) ("/" exp) ("-"))
+;; ((exp) (exp) ("/" exp) ("/"))
+;; ((exp) (exp) ("/" exp) ("^"))
+;; ((exp) (exp) ("^" exp) ("
+;; "))
+;; ((exp) (exp) ("^" exp) ("*"))
+;; ((exp) (exp) ("^" exp) ("+"))
+;; ((exp) (exp) ("^" exp) ("-"))
+;; ((exp) (exp) ("^" exp) ("/"))
+;; ((exp) (exp) ("^" exp) ("^"))
+;; ((exp) (exp "^" exp) nil ("
+;; "))
+;; ((exp) (exp "^" exp) nil ("*"))
+;; ((exp) (exp "^" exp) nil ("+"))
+;; ((exp) (exp "^" exp) nil ("-"))
+;; ((exp) (exp "^" exp) nil ("/"))
+;; ((exp) (exp "^" exp) nil ("^"))
+;; )
+
+  ;; TODO Should error here in state 14 of GOTO-table generation
   (should-error
-   (parser-generator-lr-generate-parser-tables))
+   (progn
+     (parser-generator-lr--prepare-global-declaration)
+     (parser-generator-lr--generate-goto-tables)))
 
   ;; TODO Add global precedence and grammar should now pass
+
+
+
   ;; TODO Refactor context-sensitive grammar to apply to entire rule instead of specific element
 
   (message "Generated parser")

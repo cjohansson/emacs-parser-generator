@@ -648,8 +648,8 @@
          lr-items
          (car (cdr popped-item)))
         (parser-generator--debug
-         (message "lr-item-set-index: %s" lr-item-set-index)
-         (message "marked lr-items: %s" lr-items)
+         (message "lr-item-set-index: %S" lr-item-set-index)
+         (message "marked lr-items: %S" lr-items)
          (message "popped-item: %s" popped-item))
 
         (puthash
@@ -960,7 +960,9 @@
                (message "b-suffix-follow: %s" b-suffix-follow)
                (message "b-suffix-follow-eff: %s" b-suffix-follow-eff))
 
-              (dolist (b-suffix-follow-eff-item-full b-suffix-follow-eff)
+              (dolist
+                  (b-suffix-follow-eff-item-full
+                   b-suffix-follow-eff)
                 (setq
                  b-suffix-follow-eff-item
                  (parser-generator--get-symbols-without-attributes
