@@ -110,6 +110,11 @@
   nil
   "Hash-table indexed by production-number and value is translation function.")
 
+(defvar
+  parser-generator--table-productions-attributes
+  nil
+  "Hash-table of attributes related to productions.")
+
 
 ;; Macros
 
@@ -407,7 +412,7 @@
        t
        parser-generator--table-non-terminal-p)))
 
-  ;; Build hash-tables of attributes
+  ;; Build hash-tables of context-sensitive attributes
   (setq
    parser-generator--table-context-sensitive-attributes-p
    (make-hash-table :test 'equal))
@@ -418,6 +423,8 @@
      attribute
      t
      parser-generator--table-context-sensitive-attributes-p))
+
+  ;; Build hash-table of global attributes
   (setq
    parser-generator--table-global-attributes-p
    (make-hash-table :test 'equal))
@@ -439,7 +446,7 @@
           (parser-generator--valid-global-attribute-p
            (car item))
         (error
-         "Invalid declaration '%S' in grammar!"
+         "Invalid global declaration '%S' in grammar!"
          item))))
 
   (let ((productions
@@ -467,9 +474,14 @@
     (setq
      parser-generator--table-translations
      (make-hash-table :test 'equal))
+    (setq
+     parser-generator--table-productions-attributes
+     (make-hash-table :test 'equal))
 
     (let ((production-index 0)
           (new-productions))
+
+      ;; Iterate each production
       (dolist (p productions)
         (let ((lhs (car p))
               (rhs (cdr p))
@@ -482,7 +494,10 @@
                   parser-generator--table-productions-rhs))
                 (rhs-element-index 0)
                 (rhs-length (length rhs))
-                (rhs-element))
+                (rhs-element)
+                (production-attributes))
+
+            ;; Iterate each symbol in RHS
             (while
                 (<
                  rhs-element-index
@@ -499,12 +514,17 @@
                    rhs-element
                    rhs
                    lhs))
+
+                ;; Potentially each symbol in RHS could be a separate RHS
                 (unless (listp rhs-element)
                   (setq rhs-element (list rhs-element)))
+
                 (let ((sub-rhs-element-index 0)
                       (sub-rhs-element-length (length rhs-element))
                       (sub-rhs-element)
                       (new-rhs))
+
+                  ;; Iterate each symbol in SUB-RHS
                   (while
                       (<
                        sub-rhs-element-index
@@ -525,15 +545,21 @@
                            (parser-generator--valid-terminal-p sub-rhs-element)
                            (parser-generator--valid-non-terminal-p sub-rhs-element)
                            (parser-generator--valid-e-p sub-rhs-element)
-                           (parser-generator--valid-eof-p sub-rhs-element))
+                           (parser-generator--valid-eof-p sub-rhs-element)
+                           (parser-generator--valid-context-sensitive-attribute-p sub-rhs-element))
                         (error
-                         "Element %s in RHS %s of production %s is not a valid terminal, non-terminal, e-identifier or EOF-identifier!"
+                         "Symbol %s in RHS %s of production %s is not a valid terminal, non-terminal, context-sensitive attribute, e-identifier or EOF-identifier!"
                          sub-rhs-element
                          rhs-element
                          lhs))
-                      (push
-                       sub-rhs-element
-                       new-rhs))
+                      (if (parser-generator--valid-context-sensitive-attribute-p
+                           sub-rhs-element)
+                          (push
+                           sub-rhs-element
+                           production-attributes)
+                        (push
+                         sub-rhs-element
+                         new-rhs)))
                     (setq
                      sub-rhs-element-index
                      (1+ sub-rhs-element-index)))
@@ -564,6 +590,10 @@
                  production-index
                  production
                  parser-generator--table-productions-number-reverse)
+                (puthash
+                 production-index
+                 production-attributes
+                 parser-generator--table-productions-attributes)
                 (push
                  production
                  new-productions)
@@ -837,26 +867,11 @@
 
 (defun parser-generator--valid-non-terminal-p (symbol)
   "Return whether SYMBOL is a non-terminal in grammar or not."
-  (let ((valid-attribute t))
-    (unless parser-generator--table-non-terminal-p
+  (unless parser-generator--table-non-terminal-p
       (error "Table for non-terminals is undefined!"))
-    (when (listp symbol)
-      (unless
-          (or
-           (functionp symbol)
-           (parser-generator--valid-context-sensitive-attribute-p
-            (car (car (cdr symbol)))))
-        (setq
-         valid-attribute
-         nil))
-      (setq
-       symbol
-       (car symbol)))
-    (and
-     valid-attribute
-     (gethash
-      symbol
-      parser-generator--table-non-terminal-p))))
+  (gethash
+   symbol
+   parser-generator--table-non-terminal-p))
 
 (defun parser-generator--valid-production-p (production)
   "Return whether PRODUCTION is valid or not."
@@ -1014,24 +1029,11 @@
 
 (defun parser-generator--valid-terminal-p (symbol)
   "Return whether SYMBOL is a terminal in grammar or not."
-  (let ((valid-attribute t))
-    (unless parser-generator--table-terminal-p
-      (error "Table for terminals is undefined!"))
-    (when (listp symbol)
-      (unless
-          (or
-           (functionp symbol)
-           (parser-generator--valid-context-sensitive-attribute-p
-            (car (car (cdr symbol)))))
-        (setq
-         valid-attribute
-         nil))
-      (setq symbol (car symbol)))
-    (and
-     valid-attribute
-     (gethash
-      symbol
-      parser-generator--table-terminal-p))))
+  (unless parser-generator--table-terminal-p
+    (error "Table for terminals is undefined!"))
+  (gethash
+   symbol
+   parser-generator--table-terminal-p))
 
 
 ;; Main Algorithms
