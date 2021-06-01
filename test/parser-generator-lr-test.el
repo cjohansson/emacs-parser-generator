@@ -863,7 +863,7 @@
        (exp "-" exp (lambda(args) (- (nth 0 args) (nth 2 args))))
        (exp "*" exp (lambda(args) (* (nth 0 args) (nth 2 args))))
        (exp "/" exp (lambda(args) (/ (nth 0 args) (nth 2 args))))
-       ("-" exp (lambda(args) (- (nth 1 args))))
+       ("-" exp %prec NEG (lambda(args) (- (nth 1 args))))
        (exp "^" exp (lambda(args) (expt (nth 0 args) (nth 2 args))))
        ("(" exp ")" (lambda(args) (nth 1 args)))))
      start))
