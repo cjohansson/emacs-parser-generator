@@ -481,11 +481,13 @@
    (equal
     t
     (parser-generator--valid-grammar-p '((A B C) ("a" "b" "c") ((A "a")) A))))
+  (message "Passed valid grammar 1")
 
   (should
    (equal
     t
-    (parser-generator--valid-grammar-p '((A B C) ("a" "b" "c") ((A (("a" (%prec 1))))) A))))
+    (parser-generator--valid-grammar-p '((A B C) ("a" "b" "c") ((A ("a" %prec 1))) A))))
+  (message "Passed valid grammar 2 with context-sensitive attribute")
 
   (should
    (equal
@@ -698,7 +700,7 @@
     (parser-generator--valid-non-terminal-p '(S (%proc 1)))))
   (should
    (equal
-    t
+    nil
     (parser-generator--valid-non-terminal-p '(S (%prec 1)))))
   (should
    (equal
@@ -791,7 +793,7 @@
     (parser-generator--valid-terminal-p "a")))
   (should
    (equal
-    t
+    nil
     (parser-generator--valid-terminal-p '("a" (%prec 3)))))
   (should
    (equal

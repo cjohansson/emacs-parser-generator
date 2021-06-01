@@ -272,6 +272,12 @@
    production-number
    parser-generator--table-productions-number-reverse))
 
+(defun parser-generator--get-grammar-context-sensitive-attributes-by-production-number (production-number)
+  "Get context-sensitive attributes by PRODUCTION-NUMBER, if any."
+  (gethash
+   production-number
+   parser-generator--table-productions-attributes))
+
 (defun parser-generator--get-grammar-productions (&optional G)
   "Return productions of grammar G."
   (unless G
@@ -494,15 +500,15 @@
                   parser-generator--table-productions-rhs))
                 (rhs-element-index 0)
                 (rhs-length (length rhs))
-                (rhs-element)
-                (production-attributes))
+                (rhs-element))
 
             ;; Iterate each symbol in RHS
             (while
                 (<
                  rhs-element-index
                  rhs-length)
-              (let ((translation))
+              (let ((translation)
+                   (production-attributes))
                 (setq
                  rhs-element
                  (nth
@@ -554,9 +560,21 @@
                          lhs))
                       (if (parser-generator--valid-context-sensitive-attribute-p
                            sub-rhs-element)
-                          (push
-                           sub-rhs-element
-                           production-attributes)
+                          (progn
+                            (when (=
+                                   sub-rhs-element-index
+                                   (1- sub-rhs-element-length)
+                                   (error "Expecting value for context-sensitive attribute!")))
+                            (let ((attribute-value
+                                   (nth
+                                    (1+ sub-rhs-element-index)
+                                    rhs-element)))
+                              (push
+                               `(,sub-rhs-element ,attribute-value)
+                               production-attributes)
+                              (setq
+                               sub-rhs-element-index
+                               (1+ sub-rhs-element-index))))
                         (push
                          sub-rhs-element
                          new-rhs)))
@@ -579,6 +597,7 @@
                    lhs
                    (reverse new-value)
                    parser-generator--table-productions-rhs))
+
                 (setq
                  rhs-element-index
                  (1+ rhs-element-index))
@@ -800,7 +819,9 @@
                    (symbolp non-terminal)
                    (stringp non-terminal))
                 (setq valid-p nil)))
-            (setq non-terminal-index (1+ non-terminal-index)))))
+            (setq
+             non-terminal-index
+             (1+ non-terminal-index)))))
 
       ;; Check every terminal
       (let ((terminals (nth 1 G)))
@@ -816,7 +837,9 @@
                    (symbolp terminal)
                    (stringp terminal))
                 (setq valid-p nil)))
-            (setq terminal-index (1+ terminal-index)))))
+            (setq
+             terminal-index
+             (1+ terminal-index)))))
 
       ;; Check every production
       (let ((productions (nth 2 G)))
@@ -835,7 +858,9 @@
                   (parser-generator--valid-production-p
                    production)
                 (setq valid-p nil)))
-            (setq production-index (1+ production-index)))))
+            (setq
+             production-index
+             (1+ production-index)))))
 
       ;; Check start
       (let ((start (nth 3 G)))
@@ -904,13 +929,13 @@
                 (setq is-valid nil)))
             (setq lhs-index (1+ lhs-index))))))
 
-    ;; Validate that RHS is a list or symbol or a string
+    ;; Validate that RHS is a list or symbol or a string or a number
     (when (and is-valid
                (not (or
                      (listp (car (cdr production)))
                      (symbolp (car (cdr production)))
-                     (stringp (car (cdr production))))))
-      (message "RHS is invalid")
+                     (stringp (car (cdr production)))
+                     (numberp (car (cdr production))))))
       (setq is-valid nil))
 
     ;; Validate right-hand-side (RHS) of production
@@ -931,73 +956,27 @@
                ((and
                  (listp rhs-element)
                  (not (functionp rhs-element)))
+
                 (let ((rhs-sub-index 0)
                       (rhs-sub-element)
                       (rhs-sub-length (length rhs-element)))
                   (while (and
                           is-valid
                           (< rhs-sub-index rhs-sub-length))
-                    (setq rhs-sub-element (nth rhs-sub-index rhs-element))
-                    (cond
-                     ((and
-                       (listp rhs-sub-element)
-                       (not (functionp rhs-sub-element)))
-                      (unless
-                          (and
-                           (or (stringp (car rhs-sub-element))
-                               (symbolp (car rhs-sub-element)))
-                           (or
-                            (listp (car (cdr rhs-sub-element)))))
-                        (setq
-                         is-valid
-                         nil))
+                    (setq
+                     rhs-sub-element
+                     (nth rhs-sub-index rhs-element))
 
-                      ;; Support symbol attributes here
-                      (when (listp (car (cdr rhs-sub-element)))
-                        (if (and
-                             (= (length rhs-sub-element) 2)
-                             (listp (car (cdr rhs-sub-element)))
-                             (= (mod (length (car (cdr rhs-sub-element))) 2) 0))
-                            (let ((attributes (car (cdr rhs-sub-element))))
-                              (let ((attribute-index 0)
-                                    (attribute-count (length attributes)))
-                                (while (and
-                                        is-valid
-                                        (<
-                                         attribute-index
-                                         attribute-count))
-                                  (let ((attribute-key
-                                         (nth
-                                          attribute-index
-                                          attributes))
-                                        (attribute-value
-                                         (nth
-                                          (1+ attribute-index)
-                                          attributes)))
-                                    (unless (or
-                                             (stringp attribute-key)
-                                             (symbolp attribute-key))
-                                      (setq
-                                       is-valid
-                                       nil))
-                                    (unless
-                                        (or
-                                         (stringp attribute-value)
-                                         (symbolp attribute-value)
-                                         (numberp attribute-value))
-                                      (setq
-                                       is-valid
-                                       nil))
-                                    (setq
-                                     attribute-index
-                                     (+ attribute-index 2)))))))))
+                    (cond
                      ((and (listp rhs-sub-element)
                            (functionp rhs-sub-element)
                            (= rhs-sub-index (1- rhs-sub-length))))
-                    ((or (stringp rhs-sub-element)
-                         (symbolp rhs-sub-element)))
-                    (t (setq is-valid nil)))
-                  (setq rhs-sub-index (1+ rhs-sub-index)))))
+                     ((or (stringp rhs-sub-element)
+                          (symbolp rhs-sub-element)
+                          (numberp rhs-sub-element)))
+                     (t (setq is-valid nil)))
+
+                    (setq rhs-sub-index (1+ rhs-sub-index)))))
                (t (setq is-valid nil)))
               (setq rhs-index (1+ rhs-index)))))))
     is-valid))
