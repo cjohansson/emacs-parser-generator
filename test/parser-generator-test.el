@@ -469,6 +469,42 @@
 
   (message "Passed tests for (parser-generator--empty-free-first)"))
 
+(defun parser-generator-test--get-grammar-context-sensitive-attributes-by-production-number ()
+  "Test `parser-generator--get-grammar-context-sensitive-attributes-by-production-number'."
+  (message "Starting tests for (parser-generator--get-grammar-context-sensitive-attributes-by-production-number)")
+  (setq
+   parser-generator--context-sensitive-attributes
+   '(%prec))
+  (parser-generator-set-grammar '((A B C) ("a" "b" "c") ((A ("a" %prec 1) ("b" "c" %prec D))) A))
+  (parser-generator-process-grammar)
+
+  (should
+   (equal
+    '((%prec 1))
+    (parser-generator--get-grammar-context-sensitive-attributes-by-production-number 0)))
+  (should
+   (equal
+    '((A) ("a"))
+    (parser-generator--get-grammar-production-by-number 0)))
+  (should
+   (equal
+    '((%prec D))
+    (parser-generator--get-grammar-context-sensitive-attributes-by-production-number 1)))
+  (should
+   (equal
+    '((A) ("b" "c"))
+    (parser-generator--get-grammar-production-by-number 1)))
+  (should
+   (equal
+    nil
+    (parser-generator--get-grammar-context-sensitive-attributes-by-production-number 2)))
+  (should
+   (equal
+    nil
+    (parser-generator--get-grammar-production-by-number 2)))
+
+  (message "Passed tests for (parser-generator--get-grammar-context-sensitive-attributes-by-production-number)"))
+
 (defun parser-generator-test--valid-grammar-p ()
   "Test function `parser-generator--valid-grammar-p'."
   (message "Starting tests for (parser-generator--valid-grammar-p)")
@@ -917,6 +953,7 @@
   (parser-generator-test--valid-context-sensitive-attribute-p)
   (parser-generator-test--valid-context-sensitive-attributes-p)
   (parser-generator-test--valid-grammar-p)
+  (parser-generator-test--get-grammar-context-sensitive-attributes-by-production-number)
   (parser-generator-test--valid-look-ahead-number-p)
   (parser-generator-test--valid-look-ahead-p)
   (parser-generator-test--valid-non-terminal-p)

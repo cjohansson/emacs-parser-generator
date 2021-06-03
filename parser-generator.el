@@ -563,8 +563,8 @@
                           (progn
                             (when (=
                                    sub-rhs-element-index
-                                   (1- sub-rhs-element-length)
-                                   (error "Expecting value for context-sensitive attribute!")))
+                                   (1- sub-rhs-element-length))
+                              (error "Expecting value for context-sensitive attribute %S!" sub-rhs-element))
                             (let ((attribute-value
                                    (nth
                                     (1+ sub-rhs-element-index)
