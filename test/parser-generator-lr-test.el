@@ -142,7 +142,7 @@
       (Sp S)
       (S (A c) B)
       (A (a b))
-      (B (a b (c (%prec FIRST))))
+      (B (a b c  %prec FIRST))
       )
      Sp))
   (parser-generator-set-look-ahead-number 1)
@@ -1711,7 +1711,7 @@
   "Run test."
   ;; (setq debug-on-error nil)
 
-  (parser-generator-lr-test-infix-calculator)
+  ;; (parser-generator-lr-test-infix-calculator)
   (parser-generator-lr-test--items-for-prefix)
   (parser-generator-lr-test--items-valid-p)
   (parser-generator-lr-test--generate-goto-tables)

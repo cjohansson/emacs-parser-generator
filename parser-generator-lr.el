@@ -994,6 +994,7 @@
       (setq set-index (1+ set-index)))
     valid-p))
 
+;; TODO Need to consider production-numbers as well
 (defun parser-generator-lr--symbol-takes-precedence-p (a b)
   "Return t if A takes precedence over B, otherwise nil."
   (let ((takes-precedence)
@@ -1075,6 +1076,7 @@
         errors)))
     takes-precedence))
 
+;; TODO Must consider production-numbers
 (defun parser-generator-lr--conflict-can-be-resolved-by-attributes (a b)
   "Return whether a conflict between A and B can be resolved by attributes."
   (let ((can-be-resolved))
