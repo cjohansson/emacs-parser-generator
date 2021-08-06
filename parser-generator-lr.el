@@ -191,10 +191,6 @@
                             C
                             v))
                           (when Cv
-                            (setq
-                             Cv
-                             (parser-generator--get-symbols-without-attributes
-                              Cv))
                             (let
                                 ((eff
                                   (parser-generator--e-free-first
@@ -262,8 +258,7 @@
                                                   ;; An extra column for '$' (end of input) is added to the action table that contains acc for every item set that contains an item of the form S → w • eof.
                                                   (let ((action-item
                                                          (list
-                                                          (parser-generator--get-symbols-without-attributes
-                                                          eff-item)
+                                                          eff-item
                                                           'accept)))
                                                     ;; Add symbol to hash-table to
                                                     ;; enable conflict resolution
@@ -271,8 +266,7 @@
                                                            (format
                                                             "%s-%S"
                                                             goto-index
-                                                            (parser-generator--get-symbols-without-attributes
-                                                             eff-item))))
+                                                            eff-item)))
                                                       (unless
                                                           (gethash
                                                            index-hash-key
@@ -289,8 +283,7 @@
                                                      t))
                                                 (let ((action-item
                                                        (list
-                                                        (parser-generator--get-symbols-without-attributes
-                                                         eff-item)
+                                                         eff-item
                                                         'shift)))
                                                   ;; Add symbol to hash-table to
                                                   ;; enable conflict resolution
@@ -298,8 +291,7 @@
                                                          (format
                                                           "%s-%S"
                                                           goto-index
-                                                          (parser-generator--get-symbols-without-attributes
-                                                           eff-item))))
+                                                           eff-item)))
                                                     (unless
                                                         (gethash
                                                          index-hash-key
@@ -396,8 +388,7 @@
                                          (format
                                           "%s-%S"
                                           goto-index
-                                          (parser-generator--get-symbols-without-attributes
-                                           u))))
+                                           u)))
 
                                     (when
                                         (gethash
@@ -476,8 +467,7 @@
                                             (nth (1- (length u)) u)))
                                           (let ((action-item
                                                  (list
-                                                  (parser-generator--get-symbols-without-attributes
-                                                   u)
+                                                   u
                                                   'accept)))
                                             (puthash
                                              index-hash-key
@@ -499,8 +489,7 @@
                                         ;; save reduction action in action table
                                         (let ((action-item
                                                (list
-                                                (parser-generator--get-symbols-without-attributes
-                                                 u)
+                                                 u
                                                 'reduce
                                                 production-number)))
                                           (puthash
@@ -668,8 +657,7 @@
             (when symbols
               ;; Convert symbols in grammar with attributes to simple symbols
               (let ((next-symbol
-                     (parser-generator--get-symbol-without-attributes
-                      (car symbols))))
+                     (car symbols)))
                 (let ((temp-hash-key
                        (format
                         "%S"
@@ -872,13 +860,17 @@
         (a-follow)
         (a-follow-full)
         (a-index 0)
+        (a-production)
+        (a-production-number)
         (b)
         (b-suffix)
         (b-follow)
         (b-suffix-follow)
         (b-suffix-follow-eff)
         (b-suffix-follow-eff-item)
-        (b-index 0))
+        (b-index 0)
+        (b-production)
+        (b-production-number))
 
     ;; Iterate each set
     (while (and
@@ -909,29 +901,39 @@
          (nth 2 a))
 
         (parser-generator--debug
-         (message "a: %s" a)
+         (message "a: %S" a)
          (message "a-look-ahead: %s" a-look-ahead))
 
         ;; The only sets of LR items which need to be tested are those that contain a dot at the right end of a production
+        ;; these states are points of reduction
         (when (and
                (nth 1 a)
                (not a-look-ahead))
           (setq
-           a-follow-full
+           a-follow
            (nth 3 a))
           (setq
-           a-follow
-           (parser-generator--get-symbols-without-attributes
-            a-follow-full))
+           a-production
+           (list
+            (nth 0 a)
+            (nth 1 a)))
+          (setq
+           a-production-number
+           (parser-generator--get-grammar-production-number
+            a-production))
 
           (parser-generator--debug
-           (message "a-follow: %s" a-follow))
+           (message "a-follow: %s" a-follow)
+           (message "a-production: %S" a-production)
+           (message "a-production-number: %S" a-production-number))
 
           ;; Iterate each set again
           (while (and
                   valid-p
                   (< b-index set-length))
-            (unless (= a-index b-index)
+            ;; Make sure it's not the same rule
+            (unless
+                (= a-index b-index)
               (setq
                b
                (nth b-index set))
@@ -954,29 +956,65 @@
                (parser-generator--e-free-first
                 b-suffix-follow))
 
+              ;; If b is at a point of reduction,
+              ;; calculate production and production-number
+              (if (not b-suffix)
+                  (progn
+                    (setq
+                     b-production
+                     (list
+                      (nth 0 b)
+                      (nth 1 b)))
+                    (setq
+                     b-production-number
+                     (parser-generator--get-grammar-production-number
+                      b-production)))
+                (setq
+                 b-production
+                 nil)
+                (setq
+                 b-production-number
+                 nil))
+
               (parser-generator--debug
+               (message "b-production: %S" b-production)
+               (message "b-production-number: %S" b-production)
                (message "b-suffix: %s" b-suffix)
                (message "b-follow: %s" b-follow)
                (message "b-suffix-follow: %s" b-suffix-follow)
                (message "b-suffix-follow-eff: %s" b-suffix-follow-eff))
 
               (dolist
-                  (b-suffix-follow-eff-item-full
+                  (b-suffix-follow-eff-item
                    b-suffix-follow-eff)
-                (setq
-                 b-suffix-follow-eff-item
-                 (parser-generator--get-symbols-without-attributes
-                  b-suffix-follow-eff-item-full))
                 (when (equal
                        a-follow
                        b-suffix-follow-eff-item)
-
-                  ;; If it's the same symbol but we have a precedence
-                  ;; attributes on any of them, or both, pass anyway
-                  (unless
-                      (parser-generator-lr--conflict-can-be-resolved-by-attributes
-                       a-follow-full
-                       b-suffix-follow-eff-item-full)
+                  (if
+                      ;; If it's the same following symbol but we have
+                      ;; any production-number we might be able to continue
+                      ;; if there are precedence rules
+                      (or
+                       a-production-number
+                       b-production-number)
+                      (progn
+                        (unless
+                            (parser-generator-lr--conflict-can-be-resolved-by-attributes
+                             a-follow-full
+                             a-production-number
+                             b-production-number)
+                          (when
+                              signal-on-false
+                            (error
+                             "Inconsistent grammar! '%S' (index: %d) with look-ahead '%S' conflicts with '%S' (index: %d) with look-ahead '%S' in sets:\n%S"
+                             a
+                             a-index
+                             a-follow-full
+                             b
+                             b-index
+                             b-suffix-follow-eff-item
+                             lr-item-sets))
+                          (setq valid-p nil)))
                     (when
                         signal-on-false
                       (error
@@ -986,7 +1024,7 @@
                        a-follow-full
                        b
                        b-index
-                       b-suffix-follow-eff-item-full
+                       b-suffix-follow-eff-item
                        lr-item-sets))
                     (setq valid-p nil)))))
             (setq b-index (1+ b-index))))
@@ -995,8 +1033,8 @@
     valid-p))
 
 ;; TODO Need to consider production-numbers as well
-(defun parser-generator-lr--symbol-takes-precedence-p (a b)
-  "Return t if A takes precedence over B, otherwise nil."
+(defun parser-generator-lr--symbol-takes-precedence-p (a b &optional a-production-number b-production-number)
+  "Return t if A takes precedence over B, otherwise nil.  Optionally check for predence rules related to A-PRODUCTION-NUMBER and B-PRODUCTION-NUMBER."
   (let ((takes-precedence)
         (a-global-reference)
         (a-precedence)
@@ -1076,50 +1114,21 @@
         errors)))
     takes-precedence))
 
-;; TODO Must consider production-numbers
-(defun parser-generator-lr--conflict-can-be-resolved-by-attributes (a b)
-  "Return whether a conflict between A and B can be resolved by attributes."
+(defun parser-generator-lr--conflict-can-be-resolved-by-attributes (symbol &optional a-production-number b-production-number)
+  "Return whether a conflict at SYMBOL can be resolved by precedence-attributes.  Optionally with A-PRODUCTION-NUMBER and B-PRODUCTION-NUMBER."
   (let ((can-be-resolved))
     (when
-        (and
-         parser-generator-lr--precedence-comparison-function
-         (functionp
-          parser-generator-lr--precedence-comparison-function)
-         (or
-          (and
-           parser-generator-lr--global-precedence-attributes
-           (or
-            (and
-             (not
-              (listp a))
-             (gethash
-              a
-              parser-generator-lr--global-precedence-table))
-            (and
-             (not
-              (listp b))
-             (gethash
-              b
-              parser-generator-lr--global-precedence-table))))
-          (and
-           parser-generator-lr--context-sensitive-precedence-attribute
-           (or (listp a)
-               (listp b)))))
-      (if
-          (parser-generator-lr--symbol-takes-precedence-p
-           a
-           b)
-          (setq
-           can-be-resolved
-           t)
-        (when
-            (parser-generator-lr--symbol-takes-precedence-p
-             b
-             a)
-            (setq
-             can-be-resolved
-             t))))
-    can-be-resolved))
+        ;; Precedence comparison function exists?
+        ;; (and
+        ;;  parser-generator-lr--precedence-comparison-function
+        ;;  (functionp
+        ;;   parser-generator-lr--precedence-comparison-function)
+        ;;  parser-generator-lr--global-precedence-attributes
+        ;;  (or
+        ;;   (gethash
+        ;;    symbol
+        ;;    parser-generator-lr--global-precedence-table)
+        can-be-resolved)))
 
 ;; Algorithm 5.8, p. 386
 (defun parser-generator-lr--items-for-prefix (γ)
@@ -1337,7 +1346,6 @@
             (lr-item-suffix (nth 2 lr-item))
             (lr-item-look-ahead (nth 3 lr-item))
             (lr-item-suffix-first)
-            (lr-item-suffix-first-wo-attributes)
             (lr-item-suffix-rest))
         (setq
          lr-item-suffix-first
@@ -1346,25 +1354,18 @@
          lr-item-suffix-rest
          (cdr lr-item-suffix))
 
-        ;; NOTE x is always without attributes
-        (setq
-         lr-item-suffix-first-wo-attributes
-         (parser-generator--get-symbol-without-attributes
-          lr-item-suffix-first))
-
         (parser-generator--debug
          (message "lr-item: %s" lr-item)
          (message "lr-item-prefix: %s" lr-item-prefix)
          (message "lr-item-suffix: %s" lr-item-suffix)
          (message "lr-item-suffix-first: %s" lr-item-suffix-first)
-         (message "lr-item-suffix-first-wo-attributes: %s" lr-item-suffix-first-wo-attributes)
          (message "lr-item-suffix-rest: %s" lr-item-suffix-rest)
          (message "lr-item-look-ahead: %s" lr-item-look-ahead))
 
         ;; (a) If [A -> a . XiB, u] is in V(X1,...,Xi-1)
         (when
             (equal
-              lr-item-suffix-first-wo-attributes
+              lr-item-suffix-first
              x)
 
           ;; Add [A -> aXi . B, u] to V(X1,...,Xi)

@@ -349,22 +349,6 @@
         (setq i (1+ i))))
     (sort permutations 'parser-generator--sort-list)))
 
-(defun parser-generator--get-symbol-without-attributes (symbol)
-  "Get SYMBOL without attributes."
-  (if (listp symbol)
-      (car symbol)
-    symbol))
-
-(defun parser-generator--get-symbols-without-attributes (symbols)
-  "Get list of SYMBOLS without attributes."
-  (let ((new-symbols))
-    (dolist (symbol symbols)
-      (push
-       (parser-generator--get-symbol-without-attributes
-        symbol)
-       new-symbols))
-    (reverse new-symbols)))
-
 (defun parser-generator--hash-to-list (hash-table &optional un-sorted)
   "Return a list that represent the HASH-TABLE.  Each element is a list: (list key value), optionally UN-SORTED."
   (let (result)
@@ -876,10 +860,6 @@
     (error "Table for look-aheads is undefined!"))
   (unless (listp symbol)
     (setq symbol (list symbol)))
-  (setq
-   symbol
-   (parser-generator--get-symbols-without-attributes
-    symbol))
   (gethash
    symbol
    parser-generator--table-look-aheads-p))
