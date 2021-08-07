@@ -402,6 +402,10 @@
                                                  (gethash
                                                   index-hash-key
                                                   index-symbols)))
+                                            ;; TODO Here need to pass production-number of reduction
+                                            ;; and symbol of conflict
+                                            ;; and production-number of B
+                                            ;; if it's a reduction
                                             (if
                                                 (parser-generator-lr--production-takes-precedence-p
                                                  (car (cdr a))
@@ -440,7 +444,7 @@
                                                 index-hash-key
                                                 index-symbols)))
                                           (error
-                                           "Reduce/%S conflict for %S in state %S"
+                                           "Reduce/%S conflict for %S in state %S, %S vs %S"
                                            (car (cdr conflicted-item))
                                            u
                                            goto-index

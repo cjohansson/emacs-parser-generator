@@ -587,7 +587,7 @@
              (setq
               token
               `(NUM ,(match-beginning 0) . ,(match-end 0))))
-            ((looking-at "\\(\\+\\|\-\\|\*\\|\/\\|\\^\\|)\\|(\\|\n\\)")
+            ((looking-at "\\(\\+\\|-\\|*\\|/\\|\\^\\|)\\|(\\|\n\\)")
              (let ((symbol
                     (buffer-substring-no-properties
                      (match-beginning 0)
@@ -613,66 +613,51 @@
                 (string-to-number symbol)))
              symbol))))))
   (parser-generator-process-grammar)
-
-  (parser-generator-lr-generate-parser-tables)
-
-  ;; LR-items set 14:
-;;   (
-;; ((exp) (exp) ("*" exp) ("
-;; "))
-;; ((exp) (exp) ("*" exp) ("*"))
-;; ((exp) (exp) ("*" exp) ("+"))
-;; ((exp) (exp) ("*" exp) ("-"))
-;; ((exp) (exp) ("*" exp) ("/"))
-;; ((exp) (exp) ("*" exp) ("^"))
-;; ((exp) (exp) ("+" exp) ("
-;; "))
-;; ((exp) (exp) ("+" exp) ("*"))
-;; ((exp) (exp) ("+" exp) ("+"))
-;; ((exp) (exp) ("+" exp) ("-"))
-;; ((exp) (exp) ("+" exp) ("/"))
-;; ((exp) (exp) ("+" exp) ("^"))
-;; ((exp) (exp) ("-" exp) ("
-;; "))
-;; ((exp) (exp) ("-" exp) ("*"))
-;; ((exp) (exp) ("-" exp) ("+"))
-;; ((exp) (exp) ("-" exp) ("-"))
-;; ((exp) (exp) ("-" exp) ("/"))
-;; ((exp) (exp) ("-" exp) ("^"))
-;; ((exp) (exp) ("/" exp) ("
-;; "))
-;; ((exp) (exp) ("/" exp) ("*"))
-;; ((exp) (exp) ("/" exp) ("+"))
-;; ((exp) (exp) ("/" exp) ("-"))
-;; ((exp) (exp) ("/" exp) ("/"))
-;; ((exp) (exp) ("/" exp) ("^"))
-;; ((exp) (exp) ("^" exp) ("
-;; "))
-;; ((exp) (exp) ("^" exp) ("*"))
-;; ((exp) (exp) ("^" exp) ("+"))
-;; ((exp) (exp) ("^" exp) ("-"))
-;; ((exp) (exp) ("^" exp) ("/"))
-;; ((exp) (exp) ("^" exp) ("^"))
-;; ((exp) (exp "^" exp) nil ("
-;; "))
-;; ((exp) (exp "^" exp) nil ("*"))
-;; ((exp) (exp "^" exp) nil ("+"))
-;; ((exp) (exp "^" exp) nil ("-"))
-;; ((exp) (exp "^" exp) nil ("/"))
-;; ((exp) (exp "^" exp) nil ("^"))
-;; )
-
-  ;; TODO Should error here in state 14 of GOTO-table generation
   (should-error
-   (progn
-     (parser-generator-lr--prepare-global-declaration)
-     (parser-generator-lr--generate-goto-tables)))
+   (parser-generator-lr-generate-parser-tables))
+  (message "Expected shift/reduce conflict in state 14")
 
-  ;; TODO Add global precedence and grammar should now pass
-
-
-
-  ;; TODO Refactor context-sensitive grammar to apply to entire rule instead of specific element
+  ;; TODO Add global precedence and context-sensitive precedence and grammar should now pass without conflicts
+  (setq
+   parser-generator--global-attributes
+   '(%left %precedence %right))
+  (setq
+   parser-generator-lr--global-precedence-attributes
+   '(%left %precedence %right))
+  (setq
+   parser-generator--global-declaration
+   '(
+     (%left "-" "+")
+     (%left "*" "/")
+     (%precedence NEG)
+     (%right "^")))
+  (setq
+   parser-generator--context-sensitive-attributes
+   '(%prec))
+  (parser-generator-set-grammar
+   '(
+     (start input line exp)
+     ("+" "-" "*" "/" "^" "(" ")" "\n" NUM)
+     (
+      (start input)
+      (input
+       %empty
+       (input line (lambda(args) (nth 1 args))))
+      (line
+       "\n"
+       (exp "\n" (lambda(args) (nth 0 args))))
+      (exp
+       NUM
+       (exp "+" exp (lambda(args) (+ (nth 0 args) (nth 2 args))))
+       (exp "-" exp (lambda(args) (- (nth 0 args) (nth 2 args))))
+       (exp "*" exp (lambda(args) (* (nth 0 args) (nth 2 args))))
+       (exp "/" exp (lambda(args) (/ (nth 0 args) (nth 2 args))))
+       ("-" exp %prec NEG (lambda(args) (- (nth 1 args))))
+       (exp "^" exp (lambda(args) (expt (nth 0 args) (nth 2 args))))
+       ("(" exp ")" (lambda(args) (nth 1 args)))))
+     start))
+  (parser-generator-process-grammar)
+  (parser-generator-lr-generate-parser-tables)
 
   (message "Generated parser")
 
@@ -1739,7 +1724,7 @@
   "Run test."
   ;; (setq debug-on-error nil)
 
-  ;; (parser-generator-lr-test-infix-calculator)
+  (parser-generator-lr-test-infix-calculator)
   (parser-generator-lr-test--items-for-prefix)
   (parser-generator-lr-test--items-valid-p)
   (parser-generator-lr-test--generate-goto-tables)
