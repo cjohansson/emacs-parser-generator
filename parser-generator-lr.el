@@ -390,6 +390,7 @@
                                           goto-index
                                            u)))
 
+                                    ;; Check if we have an action on this symbol already
                                     (when
                                         (gethash
                                          index-hash-key
@@ -402,9 +403,9 @@
                                                   index-hash-key
                                                   index-symbols)))
                                             (if
-                                                (parser-generator-lr--symbol-takes-precedence-p
-                                                 (car a)
-                                                 (car b))
+                                                (parser-generator-lr--production-takes-precedence-p
+                                                 (car (cdr a))
+                                                 (car (cdr b)))
                                                 (progn
                                                   (parser-generator--debug
                                                    (message
@@ -992,8 +993,7 @@
                        b-production-number)
                       (progn
                         (unless
-                            (parser-generator-lr--conflict-can-be-resolved-by-attributes
-                             a-follow-full
+                            (parser-generator-lr--conflict-can-be-resolved-by-context
                              a-production-number
                              b-production-number)
                           (when
@@ -1025,90 +1025,50 @@
       (setq set-index (1+ set-index)))
     valid-p))
 
-;; TODO Need to consider production-numbers as well
-(defun parser-generator-lr--symbol-takes-precedence-p (a b &optional a-production-number b-production-number)
-  "Return t if A takes precedence over B, otherwise nil.  Optionally check for predence rules related to A-PRODUCTION-NUMBER and B-PRODUCTION-NUMBER."
-  (let ((takes-precedence)
-        (a-global-reference)
-        (a-precedence)
-        (b-global-reference)
-        (b-precedence))
-    (unless
-        parser-generator-lr--precedence-comparison-function
-      (error
-       "Missing function to compare precedence!"))
-    (when
-        (listp a)
-      (setq
-       a-global-reference
-       (plist-get
-        (car (cdr a))
-        parser-generator-lr--context-sensitive-precedence-attribute)))
-    (when
-        (listp b)
-      (setq
-       b-global-reference
-       (plist-get
-        (car (cdr b))
-        parser-generator-lr--context-sensitive-precedence-attribute)))
-    (if
-        (listp a)
-        (setq
-         a-precedence
-         (gethash
-          (car a)
-          parser-generator-lr--global-precedence-table))
-      (setq
-       a-precedence
-       (gethash
-        a
-        parser-generator-lr--global-precedence-table)))
-    (if
-        (listp b)
-        (setq
-         b-precedence
-         (gethash
-          (car b)
-          parser-generator-lr--global-precedence-table))
-      (setq
-       b-precedence
-       (gethash
-        b
-        parser-generator-lr--global-precedence-table)))
-    (when
-        a-global-reference
-      (setq
-       a-precedence
-       (gethash
-        a-global-reference
-        parser-generator-lr--global-precedence-table)))
-    (when
-        b-global-reference
-      (setq
-       b-precedence
-       (gethash
-        b-global-reference
-        parser-generator-lr--global-precedence-table)))
-    (condition-case
-        errors
-        (let ((comparison
-               (funcall
-                parser-generator-lr--precedence-comparison-function
-                a-precedence
-                b-precedence)))
-          (setq
-           takes-precedence
-           comparison))
-      (error
-       (error
-        "Trying to compare '%S' with '%S' resulted in error: '%S'!"
-        a-precedence
-        b-precedence
-        errors)))
-    takes-precedence))
+(defun parser-generator-lr--production-takes-precedence-p (a-production-number b-production-number)
+  "Return t if A-PRODUCTION-NUMBER takes precedence over B-PRODUCTION-NUMBER, otherwise nil."
+  (let ((a-precedence-value)
+        (b-precedence-value))
 
-(defun parser-generator-lr--conflict-can-be-resolved-by-attributes (symbol &optional a-production-number b-production-number)
-  "Return whether a conflict at SYMBOL can be resolved by context-sensitive precedence-attributes.  Optionally with A-PRODUCTION-NUMBER and B-PRODUCTION-NUMBER."
+    (let ((a-attributes
+           (gethash
+            a-production-number
+            parser-generator--table-productions-attributes)))
+      (when a-attributes
+        (let ((a-precedence-symbol
+               (plist-get
+                a-attributes
+                parser-generator-lr--context-sensitive-precedence-attribute)))
+          (when a-precedence-symbol
+            (setq
+             a-precedence-value
+             (gethash
+              a-precedence-symbol
+              parser-generator-lr--global-precedence-table))))))
+
+    (let ((b-attributes
+           (gethash
+            b-production-number
+            parser-generator--table-productions-attributes)))
+      (when b-attributes
+        (let ((b-precedence-symbol
+               (plist-get
+                b-attributes
+                parser-generator-lr--context-sensitive-precedence-attribute)))
+          (when b-precedence-symbol
+            (setq
+             b-precedence-value
+             (gethash
+              b-precedence-symbol
+              parser-generator-lr--global-precedence-table))))))
+
+    (funcall
+     parser-generator-lr--precedence-comparison-function
+     a-precedence-value
+     b-precedence-value)))
+
+(defun parser-generator-lr--conflict-can-be-resolved-by-context (a-production-number b-production-number)
+  "Return whether a conflict can be solved by context between A-PRODUCTION-NUMBER and B-PRODUCTION-NUMBER."
   (let ((can-be-resolved)
         (a-precedence-value)
         (b-precedence-value))
