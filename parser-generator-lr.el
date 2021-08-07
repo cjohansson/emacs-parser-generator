@@ -1039,8 +1039,6 @@
           symbol
           parser-generator-lr--global-precedence-table))
         (b-precedence-value))
-    (message "parser-generator-lr--reduce-takes-precedence-p: %S %S %S" symbol a-production-number b-production-number)
-    (message "a-precedence-value: %S from %S" a-precedence-value parser-generator-lr--global-precedence-table)
 
     ;; Context-sensitive precedence takes precedence over
     ;; global precedence
@@ -1076,8 +1074,6 @@
                (gethash
                 b-precedence-symbol
                 parser-generator-lr--global-precedence-table)))))))
-
-    ;; TODO Need to pass action type of A and B to comparison function
 
     (funcall
      parser-generator-lr--precedence-comparison-function

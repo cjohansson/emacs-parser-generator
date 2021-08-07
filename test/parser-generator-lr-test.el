@@ -856,35 +856,59 @@
    (lambda(a b)
      (cond
       ((and a b)
-       (let ((a-op (car a))
-             (a-value (car (cdr a)))
-             (b-op (car b))
-             (b-value (car (cdr b))))
+       (let ((a-left (plist-get a '%left))
+             (a-precedence (plist-get a '%precedence))
+             (a-right (plist-get a '%right))
+             (b-left (plist-get b '%left))
+             (b-precedence (plist-get b '%precedence))
+             (b-right (plist-get b '%right)))
+         (message "a-left: %S a-precedence: %S a-right: %S" a-left a-precedence a-right)
          (cond
-          ((>= a-value b-value)
+          (a-left
            (cond
-            ((eq a-op '%left)
-             t)
-            ((eq a-op '%right)
-             nil)
-            ((eq a-op '%precedence)
-             t)))
-          ((> b-value a-value)
+            ((and
+              b-left
+              (> a-left b-left)
+              t)
+             nil)))
+          (a-right
            (cond
-            ((eq b-op '%left)
-             nil)
-            ((eq b-op '%right)
-             t)
-            ((eq b-op '%precedence)
-             nil))))))
+            ((and
+              a-right
+              (> a-right b-right))
+             nil
+             (t
+              t))))
+          (a-precedence
+           ((cond
+             ((and
+               a-precedence
+               (> a-precedence b-precedence))
+              t)
+             (t
+              nil)))))))
       (a
-       (cond
-        ((eq (car a) '%left)
-         t)
-        ((eq (car a) '%right)
-         nil)
-        ((eq (car a) '%precedence)
-         t)))
+       (let ((a-left (plist-get a '%left))
+             (a-precedence (plist-get a '%precedence))
+             (a-right (plist-get a '%right)))
+         (cond
+          ((or
+            a-left
+            a-precedence)
+           t)
+          (t
+           nil))))
+      (b
+       (let ((b-left (plist-get b '%left))
+             (b-precedence (plist-get b '%precedence))
+             (b-right (plist-get b '%right)))
+         (cond
+          ((or
+            b-left
+            b-precedence)
+           nil)
+          (t
+           t))))
       (t
        nil))))
   (setq
