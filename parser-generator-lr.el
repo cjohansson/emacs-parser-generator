@@ -867,7 +867,6 @@
         (b-follow)
         (b-suffix-follow)
         (b-suffix-follow-eff)
-        (b-suffix-follow-eff-item)
         (b-index 0)
         (b-production)
         (b-production-number))
@@ -956,29 +955,23 @@
                (parser-generator--e-free-first
                 b-suffix-follow))
 
-              ;; If b is at a point of reduction,
-              ;; calculate production and production-number
-              (if (not b-suffix)
-                  (progn
-                    (setq
-                     b-production
-                     (list
-                      (nth 0 b)
-                      (nth 1 b)))
-                    (setq
-                     b-production-number
-                     (parser-generator--get-grammar-production-number
-                      b-production)))
-                (setq
-                 b-production
-                 nil)
-                (setq
-                 b-production-number
-                 nil))
+              (let ((b-lhs)
+                    (b-rhs))
+                (if (listp (nth 0 b))
+                    (setq b-lhs (nth 0 b))
+                  (setq b-lhs (list (nth 0 b))))
+                (if (nth 2 b)
+                    (setq b-rhs (append (nth 1 b) (nth 2 b)))
+                  (setq b-rhs (nth 1 b)))
+                (setq b-production (list b-lhs b-rhs)))
+              (setq
+               b-production-number
+               (parser-generator--get-grammar-production-number
+                b-production))
 
               (parser-generator--debug
                (message "b-production: %S" b-production)
-               (message "b-production-number: %S" b-production)
+               (message "b-production-number: %S" b-production-number)
                (message "b-suffix: %s" b-suffix)
                (message "b-follow: %s" b-follow)
                (message "b-suffix-follow: %s" b-suffix-follow)
@@ -1119,16 +1112,53 @@
   (let ((can-be-resolved))
     (when
         ;; Precedence comparison function exists?
-        ;; (and
-        ;;  parser-generator-lr--precedence-comparison-function
-        ;;  (functionp
-        ;;   parser-generator-lr--precedence-comparison-function)
-        ;;  parser-generator-lr--global-precedence-attributes
-        ;;  (or
-        ;;   (gethash
-        ;;    symbol
-        ;;    parser-generator-lr--global-precedence-table)
-        can-be-resolved)))
+        (and
+         parser-generator-lr--precedence-comparison-function
+         (functionp
+          parser-generator-lr--precedence-comparison-function)
+         parser-generator-lr--global-precedence-attributes
+         parser-generator-lr--context-sensitive-precedence-attribute)
+
+      ;; Try to find precedence data for A
+      (when a-production-number
+        (let ((a-attributes
+               (gethash
+                a-production-number
+                parser-generator--table-productions-attributes)))
+          (when a-attributes
+            (let ((a-attribute-value
+                   (plist-get
+                    a-attributes
+                    parser-generator-lr--context-sensitive-precedence-attribute)))
+              (when a-attribute-value
+                (let ((a-precedence
+                       (gethash
+                        a-attribute-value
+                        parser-generator-lr--global-precedence-table)))
+                  (when a-attribute-value
+                    (setq can-be-resolved t))))))))
+
+      ;; Try to find precedence data for B
+      (when (and
+             (not can-be-resolved)
+             b-production-number)
+        (let ((b-attributes
+               (gethash
+                b-production-number
+                parser-generator--table-productions-attributes)))
+          (when b-attributes
+            (let ((b-attribute-value
+                   (plist-get
+                    b-attributes
+                    parser-generator-lr--context-sensitive-precedence-attribute)))
+              (when b-attribute-value
+                (let ((b-precedence
+                       (gethash
+                        b-attribute-value
+                        parser-generator-lr--global-precedence-table)))
+                  (when b-precedence
+                    (setq can-be-resolved t)))))))))
+    can-be-resolved))
 
 ;; Algorithm 5.8, p. 386
 (defun parser-generator-lr--items-for-prefix (γ)

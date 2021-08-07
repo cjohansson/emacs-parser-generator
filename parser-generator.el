@@ -17,7 +17,7 @@
 
 (defvar
   parser-generator--debug
-  t
+  nil
   "Whether to print debug messages or not.")
 
 (defvar
@@ -553,9 +553,18 @@
                                    (nth
                                     (1+ sub-rhs-element-index)
                                     rhs-element)))
-                              (push
-                               `(,sub-rhs-element ,attribute-value)
-                               production-attributes)
+                              (if production-attributes
+                                  (setq
+                                   production-attributes
+                                   (append
+                                    production-attributes
+                                    sub-rhs-element
+                                    attribute-value))
+                                (setq
+                                 production-attributes
+                                 (list
+                                  sub-rhs-element
+                                  attribute-value)))
                               (setq
                                sub-rhs-element-index
                                (1+ sub-rhs-element-index))))

@@ -480,7 +480,7 @@
 
   (should
    (equal
-    '((%prec 1))
+    '(%prec 1)
     (parser-generator--get-grammar-context-sensitive-attributes-by-production-number 0)))
   (should
    (equal
@@ -488,7 +488,7 @@
     (parser-generator--get-grammar-production-by-number 0)))
   (should
    (equal
-    '((%prec D))
+    '(%prec D)
     (parser-generator--get-grammar-context-sensitive-attributes-by-production-number 1)))
   (should
    (equal

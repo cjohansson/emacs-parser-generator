@@ -164,13 +164,8 @@
        t)
       (t
        nil))))
-  ;; TODO Should add tests for (parser-generator-lr--prepare-global-declaration)
-  (parser-generator-lr--prepare-global-declaration)
-  (message "parser-generator-lr--global-precedence-attributes-table: %S" parser-generator-lr--global-precedence-attributes-table)
-  (message "parser-generator-lr--global-precedence-attributes: %S" parser-generator-lr--global-precedence-attributes)
-  (message "parser-generator-lr--global-precedence-table: %S" parser-generator-lr--global-precedence-table)
+
   (parser-generator-lr-generate-parser-tables)
-  
   (message "Grammar not conflicting anymore")
 
   (let ((table-lr-items
