@@ -399,15 +399,12 @@
                                           (and
                                            parser-generator-lr--precedence-comparison-function
                                            parser-generator-lr--global-precedence-table)
-                                          (let ((a u)
+                                          (let ((a
+                                                 (list u 'reduce production-number))
                                                 (b
                                                  (gethash
                                                   index-hash-key
                                                   index-symbols)))
-                                            ;; TODO Here need to pass production-number of reduction
-                                            ;; and symbol of conflict
-                                            ;; and production-number of B
-                                            ;; if it's a reduction
                                             (if
                                                 (parser-generator-lr--reduce-takes-precedence-p
                                                  (car u)
@@ -1034,11 +1031,11 @@
 
 (defun parser-generator-lr--reduce-takes-precedence-p (symbol a-production-number &optional b-production-number)
   "Return t if reduction of SYMBOL at A-PRODUCTION-NUMBER takes precedence over other action.  If other action is a reduction then it is at B-PRODUCTION-NUMBER."
-  (let ((a-precedence-value
+  (let* ((a-precedence-value
          (gethash
           symbol
           parser-generator-lr--global-precedence-table))
-        (b-precedence-value))
+        (b-precedence-value a-precedence-value))
 
     ;; Context-sensitive precedence takes precedence over
     ;; global precedence
@@ -1731,7 +1728,7 @@
 
                     (error
                      (format
-                      "Invalid syntax! Expected one of %s found %s at %s"
+                      "Invalid syntax! Expected one of %S found %S at position %S"
                       possible-look-aheads
                       look-ahead
                       parser-generator-lex-analyzer--index)

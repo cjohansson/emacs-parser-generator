@@ -854,63 +854,67 @@
   (setq
    parser-generator-lr--precedence-comparison-function
    (lambda(a b)
-     (cond
-      ((and a b)
-       (let ((a-left (plist-get a '%left))
-             (a-precedence (plist-get a '%precedence))
-             (a-right (plist-get a '%right))
-             (b-left (plist-get b '%left))
-             (b-precedence (plist-get b '%precedence))
-             (b-right (plist-get b '%right)))
-         (message "a-left: %S a-precedence: %S a-right: %S" a-left a-precedence a-right)
-         (cond
-          (a-left
+     (let ((max-op)
+           (max-value))
+       (when a
+         (let ((a-left (plist-get a '%left))
+               (a-precedence (plist-get a '%precedence))
+               (a-right (plist-get a '%right)))
+           (when (and
+                  a-left
+                  (or
+                   (not max-value)
+                   (> a-left max-value)))
+             (setq max-op '%left)
+             (setq max-value a-left))
+           (when (and
+                  a-precedence
+                  (or
+                   (not max-value)
+                   (> a-precedence max-value)))
+             (setq max-op '%precedence)
+             (setq max-value a-precedence))
+           (when (and
+                  a-right
+                  (or
+                   (not max-value)
+                   (> a-right max-value)))
+             (setq max-op '%right)
+             (setq max-value a-right))))
+       (when b
+         (let ((b-left (plist-get b '%left))
+               (b-precedence (plist-get b '%precedence))
+               (b-right (plist-get b '%right)))
+           (when (and
+                  b-left
+                  (or
+                   (not max-value)
+                   (> b-left max-value)))
+             (setq max-op '%left)
+             (setq max-value b-left))
+           (when (and
+                  b-precedence
+                  (or
+                   (not max-value)
+                   (> b-precedence max-value)))
+             (setq max-op '%precedence)
+             (setq max-value b-precedence))
+           (when (and
+                  b-right
+                  (or
+                   (not max-value)
+                   (> b-right max-value)))
+             (setq max-op '%right)
+             (setq max-value b-right))))
+       (if max-op
            (cond
-            ((and
-              b-left
-              (> a-left b-left)
-              t)
-             nil)))
-          (a-right
-           (cond
-            ((and
-              a-right
-              (> a-right b-right))
-             nil
-             (t
-              t))))
-          (a-precedence
-           ((cond
-             ((and
-               a-precedence
-               (> a-precedence b-precedence))
-              t)
-             (t
-              nil)))))))
-      (a
-       (let ((a-left (plist-get a '%left))
-             (a-precedence (plist-get a '%precedence))
-             (a-right (plist-get a '%right)))
-         (cond
-          ((or
-            a-left
-            a-precedence)
-           t)
-          (t
-           nil))))
-      (b
-       (let ((b-left (plist-get b '%left))
-             (b-precedence (plist-get b '%precedence))
-             (b-right (plist-get b '%right)))
-         (cond
-          ((or
-            b-left
-            b-precedence)
-           nil)
-          (t
-           t))))
-      (t
-       nil))))
+            ((equal max-op '%left)
+             t)
+            ((equal max-op '%precedence)
+             t)
+            ((equal max-op '%right)
+             nil))
+         nil))))
   (setq
    parser-generator--global-declaration
    '(
@@ -993,25 +997,34 @@
 
     (switch-to-buffer buffer)
     (kill-region (point-min) (point-max))
-    (insert "3 ^ 2")
+    (insert "3 ^ 2\n")
     (should
      (equal
       9
       (parser-generator-lr-translate)))
-    (message "Passed 3 ^ 2")
+    (message "Passed 3 ^ 2 with correct result")
 
     (switch-to-buffer buffer)
     (kill-region (point-min) (point-max))
-    (insert "-56 + 2")
+    (insert "-56 + 2\n")
     (should
      (equal
       -54
       (parser-generator-lr-translate)))
-    (message "Passed -56 + 2")
+    (message "Passed -56 + 2 with correct result")
 
     (switch-to-buffer buffer)
     (kill-region (point-min) (point-max))
-    (insert "4 + 4.5 - (34/(8*3+-3))")
+    (insert "4+5*3\n")
+    (should
+     (equal
+      19
+      (parser-generator-lr-translate)))
+    (message "Passed 4+5*3 with correct result")
+
+    (switch-to-buffer buffer)
+    (kill-region (point-min) (point-max))
+    (insert "4 + 4.5 - (34/(8*3+-3))\n")
     (should
      (equal
       6.880952381
