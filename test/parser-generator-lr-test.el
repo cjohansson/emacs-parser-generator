@@ -634,6 +634,43 @@
   (setq
    parser-generator--context-sensitive-attributes
    '(%prec))
+  (setq
+   parser-generator-lr--precedence-comparison-function
+   (lambda(a b)
+     (if (and
+          (not a)
+          (not b))
+         nil
+       (let ((a-precedence)
+             (b-precedence))
+         (when a
+           (setq
+            a-precedence
+            (plist-get
+             a
+             '%precedence)))
+         (when b
+           (setq
+            b-precedence
+            (plist-get
+             b
+             '%precedence)))
+         (cond
+          ((and
+            a-precedence
+            (not b-precedence))
+           t)
+          ((and
+            b-precedence
+            (not a-precedence))
+           nil)
+          ((and
+            a-precedence
+            b-precedence)
+           (>
+            a-precedence
+            b-precedence))
+          (t nil))))))
   (parser-generator-set-grammar
    '(
      (start input line exp)
