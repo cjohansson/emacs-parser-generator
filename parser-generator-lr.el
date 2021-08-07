@@ -1108,8 +1108,10 @@
     takes-precedence))
 
 (defun parser-generator-lr--conflict-can-be-resolved-by-attributes (symbol &optional a-production-number b-production-number)
-  "Return whether a conflict at SYMBOL can be resolved by precedence-attributes.  Optionally with A-PRODUCTION-NUMBER and B-PRODUCTION-NUMBER."
-  (let ((can-be-resolved))
+  "Return whether a conflict at SYMBOL can be resolved by context-sensitive precedence-attributes.  Optionally with A-PRODUCTION-NUMBER and B-PRODUCTION-NUMBER."
+  (let ((can-be-resolved)
+        (a-precedence-value)
+        (b-precedence-value))
     (when
         ;; Precedence comparison function exists?
         (and
@@ -1126,38 +1128,58 @@
                 a-production-number
                 parser-generator--table-productions-attributes)))
           (when a-attributes
-            (let ((a-attribute-value
+            (let ((a-precedence-symbol
                    (plist-get
                     a-attributes
                     parser-generator-lr--context-sensitive-precedence-attribute)))
-              (when a-attribute-value
-                (let ((a-precedence
-                       (gethash
-                        a-attribute-value
-                        parser-generator-lr--global-precedence-table)))
-                  (when a-attribute-value
-                    (setq can-be-resolved t))))))))
+              (when a-precedence-symbol
+                (setq
+                 a-precedence-value
+                 (gethash
+                  a-precedence-symbol
+                  parser-generator-lr--global-precedence-table)))))))
 
       ;; Try to find precedence data for B
-      (when (and
-             (not can-be-resolved)
-             b-production-number)
+      (when b-production-number
         (let ((b-attributes
                (gethash
                 b-production-number
                 parser-generator--table-productions-attributes)))
           (when b-attributes
-            (let ((b-attribute-value
+            (let ((b-precedence-symbol
                    (plist-get
                     b-attributes
                     parser-generator-lr--context-sensitive-precedence-attribute)))
-              (when b-attribute-value
-                (let ((b-precedence
-                       (gethash
-                        b-attribute-value
-                        parser-generator-lr--global-precedence-table)))
-                  (when b-precedence
-                    (setq can-be-resolved t)))))))))
+              (when b-precedence-symbol
+                (setq
+                 b-precedence-value
+                 (gethash
+                  b-precedence-symbol
+                  parser-generator-lr--global-precedence-table)))))))
+
+      (when (or
+             a-precedence-value
+             b-precedence-value)
+        (let (
+              (comparison-a-b
+               (funcall
+                parser-generator-lr--precedence-comparison-function
+                a-precedence-value
+                b-precedence-value))
+              (comparison-b-a
+               (funcall
+                parser-generator-lr--precedence-comparison-function
+                b-precedence-value
+                a-precedence-value)))
+          (unless
+              (equal
+               comparison-a-b
+               comparison-b-a)
+            (setq
+             can-be-resolved
+             t))))
+
+      )
     can-be-resolved))
 
 ;; Algorithm 5.8, p. 386

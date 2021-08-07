@@ -157,13 +157,40 @@
   (setq
    parser-generator-lr--precedence-comparison-function
    (lambda(a b)
-     (cond
-      ((and a b)
-       (string> a b))
-      (a
-       t)
-      (t
-       nil))))
+     (if (and
+          (not a)
+          (not b))
+         nil
+       (let ((a-precedence)
+             (b-precedence))
+         (when a
+           (setq
+            a-precedence
+            (plist-get
+             a
+             '%precedence)))
+         (when b
+           (setq
+            b-precedence
+            (plist-get
+             b
+             '%precedence)))
+         (cond
+          ((and
+            a-precedence
+            (not b-precedence))
+           t)
+          ((and
+            b-precedence
+            (not a-precedence))
+           nil)
+          ((and
+            a-precedence
+            b-precedence)
+           (>
+            a-precedence
+            b-precedence))
+          (t nil))))))
 
   (parser-generator-lr-generate-parser-tables)
   (message "Grammar not conflicting anymore")
