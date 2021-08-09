@@ -1801,7 +1801,6 @@
                                parser-generator-lex-analyzer--index
                                possible-look-aheads))
 
-                            ;; Maybe push both tokens here?
                             (push (car a-full) pushdown-list)
                             (push next-index pushdown-list)
                             (parser-generator-lex-analyzer--pop-token))))))

@@ -125,6 +125,7 @@
   (setq
    parser-generator--context-sensitive-attributes
    '(%prec))
+  (parser-generator-set-look-ahead-number 1)
   (parser-generator-set-grammar
    '(
      (Sp S A B)
@@ -136,7 +137,6 @@
       (B (a b c  %prec FIRST))
       )
      Sp))
-  (parser-generator-set-look-ahead-number 1)
   (parser-generator-process-grammar)
   (should-error
    (parser-generator-lr-generate-parser-tables))
@@ -183,33 +183,53 @@
             b-precedence))
           (t nil))))))
   (parser-generator-lr-generate-parser-tables)
-  ;; TODO Verify generated action-table here
   (should
    (equal
-    '(1 2 3)
+    '((0 ((A 1) (B 2) (S 3) (a 4))) (1 ((c 7))) (2 nil) (3 nil) (4 ((b 5))) (5 ((c 6))) (6 nil) (7 nil))
     (parser-generator-lr--get-expanded-goto-tables)))
   (should
    (equal
     '((0 (((a) shift))) (1 (((c) shift))) (2 ((($) reduce 2))) (3 ((($) accept))) (4 (((b) shift))) (5 (((c) shift))) (6 ((($) reduce 4))) (7 ((($) reduce 1))))
     (parser-generator-lr--get-expanded-action-tables)))
-  (message "Grammar not conflicting anymore")
-  (error "Quit here")
+  (message "Grammar not conflicting anymore solution #1")
 
-  (let ((table-lr-items
-         (parser-generator-lr--generate-goto-tables)))
-    (parser-generator-lr--generate-action-tables
-     table-lr-items)
-    (should
-     (equal
-      '((0 (((a) shift)))
-        (1 (((c) shift)))
-        (2 ((($) reduce 2)))
-        (3 ((($) accept)))
-        (4 (((b) shift)))
-        (5 (((c) shift)))
-        (6 ((($) reduce 4)))
-        (7 ((($) reduce 1))))
-      (parser-generator-lr--get-expanded-action-tables))))
+  ;; Make a new context-sensitive precedence that
+  ;; makes production 1 take precedence over production 4
+  (parser-generator-set-grammar
+   '(
+     (Sp S A B)
+     (a b c)
+     (
+      (Sp S)
+      (S (A c) B)
+      (A (a b %prec FIRST))
+      (B (a b c))
+      )
+     Sp))
+  (parser-generator-process-grammar)
+  (parser-generator-lr-generate-parser-tables)
+  (should
+   (equal
+    '((0 ((A 1) (B 2) (S 3) (a 4))) (1 ((c 7))) (2 nil) (3 nil) (4 ((b 5))) (5 ((c 6))) (6 nil) (7 nil))
+    (parser-generator-lr--get-expanded-goto-tables)))
+  (should
+   (equal
+    '((0 (((a) shift))) (1 (((c) shift))) (2 ((($) reduce 2))) (3 ((($) accept))) (4 (((b) shift))) (5 (((c) reduce 3))) (6 ((($) reduce 4))) (7 ((($) reduce 1))))
+    (parser-generator-lr--get-expanded-action-tables)))
+  (message "Grammar not conflicting anymore solution #2")
+  ;; Parse "a b c"
+  ;; stack 0
+  ;; a -> action shift, goto 4
+  ;; stack a 4
+  ;; b -> action shift, goto 5
+  ;; stack a 4 b 5
+  ;; c -> reduce 3 -> pop 4 = A, goto 1
+  ;; stack 0 A 1
+  ;; c -> shift, goto 7
+  ;; stack 0 A 1 c 7
+  ;; $ -> reduce 1 -> pop 4 = S, goto 3
+  ;; stack 0 S 3
+  ;; $ -> accept
 
   (message "Passed tests for (parser-generator-lr--generate-action-tables)"))
 
