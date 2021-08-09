@@ -192,6 +192,19 @@
     '((0 (((a) shift))) (1 (((c) shift))) (2 ((($) reduce 2))) (3 ((($) accept))) (4 (((b) shift))) (5 (((c) shift))) (6 ((($) reduce 4))) (7 ((($) reduce 1))))
     (parser-generator-lr--get-expanded-action-tables)))
   (message "Grammar not conflicting anymore solution #1")
+  ;; Example parse "a b c"
+  ;; stack: 0
+  ;; a -> action shift, goto 4
+  ;; stack: 0 a 4
+  ;; b -> action shift, goto 5
+  ;; stack: 0 a 4 b 5
+  ;; c -> shift, goto 6
+  ;; stack: 0 a 4 b 5 c 6
+  ;; $ -> reduce 4 -> pop 6, new-stack: 0 B, goto 2
+  ;; stack: 0 B 2
+  ;; $ -> reduce 2, pop 2, new-stack: 0 S, goto 3
+  ;; stack: 0 S 3
+  ;; $ -> accept
 
   ;; Make a new context-sensitive precedence that
   ;; makes production 1 take precedence over production 4
@@ -217,18 +230,18 @@
     '((0 (((a) shift))) (1 (((c) shift))) (2 ((($) reduce 2))) (3 ((($) accept))) (4 (((b) shift))) (5 (((c) reduce 3))) (6 ((($) reduce 4))) (7 ((($) reduce 1))))
     (parser-generator-lr--get-expanded-action-tables)))
   (message "Grammar not conflicting anymore solution #2")
-  ;; Parse "a b c"
-  ;; stack 0
+  ;; Example parse "a b c"
+  ;; stack: 0
   ;; a -> action shift, goto 4
-  ;; stack a 4
+  ;; stack: 0 a 4
   ;; b -> action shift, goto 5
-  ;; stack a 4 b 5
-  ;; c -> reduce 3 -> pop 4 = A, goto 1
-  ;; stack 0 A 1
+  ;; stack: 0 a 4 b 5
+  ;; c -> reduce 3 -> pop 4, new-stack: 0, goto 1
+  ;; stack: 0 A 1
   ;; c -> shift, goto 7
-  ;; stack 0 A 1 c 7
-  ;; $ -> reduce 1 -> pop 4 = S, goto 3
-  ;; stack 0 S 3
+  ;; stack: 0 A 1 c 7
+  ;; $ -> reduce 1 -> pop 4, new-stack: 0, goto 3
+  ;; stack: 0 S 3
   ;; $ -> accept
 
   (message "Passed tests for (parser-generator-lr--generate-action-tables)"))
@@ -1387,7 +1400,7 @@
       (parser-generator-lr-translate)))
 
     (message "Passed translation k=2")
-     
+    
     (kill-buffer))
 
 
