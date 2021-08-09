@@ -95,7 +95,8 @@
   (parser-generator-lr-generate-parser-tables)
   (message "Passed cyclical grammar")
 
-  ;; Grammar with conflicts that can be resolved using precedence attributes
+  ;; Grammar with conflicts that can be resolved
+  ;; using context-sensitive precedence attributes
   (parser-generator-set-grammar
    '(
      (Sp S A B)
@@ -243,6 +244,8 @@
   ;; $ -> reduce 1 -> pop 4, new-stack: 0, goto 3
   ;; stack: 0 S 3
   ;; $ -> accept
+
+  ;; TODO Test grammar that can be solved by using global attributes here
 
   (message "Passed tests for (parser-generator-lr--generate-action-tables)"))
 
@@ -568,34 +571,6 @@
   "Test infix calculator example."
 
   ;; https://www.gnu.org/software/bison/manual/html_node/Infix-Calc.html
-  (setq
-   parser-generator--e-identifier
-   '%empty)
-  (parser-generator-set-look-ahead-number
-   1)
-  (parser-generator-set-grammar
-   '(
-     (start input line exp)
-     ("+" "-" "*" "/" "^" "(" ")" "\n" NUM)
-     (
-      (start input)
-      (input
-       %empty
-       (input line (lambda(args) (nth 1 args))))
-      (line
-       "\n"
-       (exp "\n" (lambda(args) (nth 0 args))))
-      (exp
-       NUM
-       (exp "+" exp (lambda(args) (+ (nth 0 args) (nth 2 args))))
-       (exp "-" exp (lambda(args) (- (nth 0 args) (nth 2 args))))
-       (exp "*" exp (lambda(args) (* (nth 0 args) (nth 2 args))))
-       (exp "/" exp (lambda(args) (/ (nth 0 args) (nth 2 args))))
-       ("-" exp (lambda(args) (- (nth 1 args))))
-       (exp "^" exp (lambda(args) (expt (nth 0 args) (nth 2 args))))
-       ("(" exp ")" (lambda(args) (nth 1 args)))))
-     start))
-
   ;; Lex-analyzer
   (setq
    parser-generator-lex-analyzer--function
@@ -645,13 +620,6 @@
                 symbol
                 (string-to-number symbol)))
              symbol))))))
-  (parser-generator-process-grammar)
-  (should-error
-   (parser-generator-lr-generate-parser-tables))
-  (message "Expected shift/reduce conflict in state 14")
-
-  ;; Add global symbol precedence and also
-  ;; context-sensitive precedence and grammar should now pass without conflicts
   (setq
    parser-generator--global-attributes
    '(%left %precedence %right))
@@ -747,152 +715,15 @@
        (exp "^" exp (lambda(args) (expt (nth 0 args) (nth 2 args))))
        ("(" exp ")" (lambda(args) (nth 1 args)))))
      start))
-  (parser-generator-process-grammar)
-  (parser-generator-lr-generate-parser-tables)
 
-  (message "Generated parser")
+  (setq
+   parser-generator--e-identifier
+   '%empty)
+  (parser-generator-set-look-ahead-number
+   1)
 
-  (let ((buffer (generate-new-buffer "*buffer*")))
-    (switch-to-buffer buffer)
-    (kill-region (point-min) (point-max))
-    (insert "5 + 5\n")
-    (should
-     (equal
-      10
-      (parser-generator-lr-translate)))
-    (message "Passed 5 + 5")
-
-    (switch-to-buffer buffer)
-    (kill-region (point-min) (point-max))
-    (insert "5+4\n")
-    (should
-     (equal
-      9
-      (parser-generator-lr-translate)))
-    (message "Passed 5+4")
-
-    (switch-to-buffer buffer)
-    (kill-region (point-min) (point-max))
-    (insert "7-3\n")
-    (should
-     (equal
-      4
-      (parser-generator-lr-translate)))
-    (message "Passed 7-3")
-
-    (switch-to-buffer buffer)
-    (kill-region (point-min) (point-max))
-    (insert "3*4*5\n")
-    (should
-     (equal
-      60
-      (parser-generator-lr-translate)))
-    (message "Passed 3*4*5")
-
-    (switch-to-buffer buffer)
-    (kill-region (point-min) (point-max))
-    (insert "10/5\n")
-    (should
-     (equal
-      2
-      (parser-generator-lr-translate)))
-    (message "Passed 10/5")
-
-    (switch-to-buffer buffer)
-    (kill-region (point-min) (point-max))
-    (insert "8+10/5\n")
-    (should
-     (equal
-      10
-      (parser-generator-lr-translate)))
-    (message "Passed 8+10/5")
-
-    (switch-to-buffer buffer)
-    (kill-region (point-min) (point-max))
-    (insert "10^2\n")
-    (should
-     (equal
-      100
-      (parser-generator-lr-translate)))
-    (message "Passed 10^2")
-
-    (switch-to-buffer buffer)
-    (kill-region (point-min) (point-max))
-    (insert "1+10^2\n")
-    (should
-     (equal
-      101
-      (parser-generator-lr-translate)))
-    (message "Passed 1+10^2")
-
-    (switch-to-buffer buffer)
-    (kill-region (point-min) (point-max))
-    (insert "-33\n")
-    (should
-     (equal
-      -33
-      (parser-generator-lr-translate)))
-    (message "Passed -33")
-
-    (switch-to-buffer buffer)
-    (kill-region (point-min) (point-max))
-    (insert "3+4*5\n")
-    (should
-     (equal
-      23
-      (parser-generator-lr-translate)))
-    (message "Passed 3+4*5")
-
-    (switch-to-buffer buffer)
-    (kill-region (point-min) (point-max))
-    (insert "3+4+5-6\n")
-    (should
-     (equal
-      6
-      (parser-generator-lr-translate)))
-    (message "Passed 3+4+5-6")
-
-    (switch-to-buffer buffer)
-    (kill-region (point-min) (point-max))
-    (insert "4*5+3\n")
-    (should
-     (equal
-      32
-      (parser-generator-lr-translate)))
-    (message "Passed 4*5+3 with expected wrong associativity (4*8)")
-
-    (switch-to-buffer buffer)
-    (kill-region (point-min) (point-max))
-    (insert "10/1+1\n")
-    (should
-     (equal
-      5
-      (parser-generator-lr-translate)))
-    (message "Passed 10/1+1 with expected wrong associativity (10/2)")
-
-    (switch-to-buffer buffer)
-    (kill-region (point-min) (point-max))
-    (insert "10^2+3\n")
-    (should
-     (equal
-      100000
-      (parser-generator-lr-translate)))
-    (message "Passed 10^2+3 with expected wrong associativity (10^5)")
-
-    (switch-to-buffer buffer)
-    (kill-region (point-min) (point-max))
-    (insert "-33+5\n")
-    (should
-     (equal
-      -38
-      (parser-generator-lr-translate)))
-    (message "Passed -33+5 with expected wrong associativity (-38)")
-
-    (kill-buffer))
-
-  (message "Infix calculator grammar caused expected wrong calculations")
-
-  ;; Add precedence to fix associativity
+  ;; Add global symbol precedence and also
+  ;; context-sensitive precedence and grammar should now pass without conflicts
   (setq
    parser-generator--context-sensitive-attributes
    '(%prec))
@@ -905,11 +736,14 @@
   (setq
    parser-generator-lr--context-sensitive-precedence-attribute
    '%prec)
+  ;; https://www.gnu.org/software/bison/manual/html_node/How-Precedence.html
   (setq
    parser-generator-lr--precedence-comparison-function
    (lambda(a b)
-     (let ((max-op)
-           (max-value))
+     (let ((a-max-op)
+           (a-max-value)
+           (b-max-op)
+           (b-max-value))
        (when a
          (let ((a-left (plist-get a '%left))
                (a-precedence (plist-get a '%precedence))
@@ -917,24 +751,24 @@
            (when (and
                   a-left
                   (or
-                   (not max-value)
-                   (> a-left max-value)))
-             (setq max-op '%left)
-             (setq max-value a-left))
+                   (not a-max-value)
+                   (> a-left a-max-value)))
+             (setq a-max-op '%left)
+             (setq a-max-value a-left))
            (when (and
                   a-precedence
                   (or
-                   (not max-value)
-                   (> a-precedence max-value)))
-             (setq max-op '%precedence)
-             (setq max-value a-precedence))
+                   (not a-max-value)
+                   (> a-precedence a-max-value)))
+             (setq a-max-op '%precedence)
+             (setq a-max-value a-precedence))
            (when (and
                   a-right
                   (or
-                   (not max-value)
-                   (> a-right max-value)))
-             (setq max-op '%right)
-             (setq max-value a-right))))
+                   (not a-max-value)
+                   (> a-right a-max-value)))
+             (setq a-max-op '%right)
+             (setq a-max-value a-right))))
        (when b
          (let ((b-left (plist-get b '%left))
                (b-precedence (plist-get b '%precedence))
@@ -942,33 +776,47 @@
            (when (and
                   b-left
                   (or
-                   (not max-value)
-                   (> b-left max-value)))
-             (setq max-op '%left)
-             (setq max-value b-left))
+                   (not b-max-value)
+                   (> b-left b-max-value)))
+             (setq b-max-op '%left)
+             (setq b-max-value b-left))
            (when (and
                   b-precedence
                   (or
-                   (not max-value)
-                   (> b-precedence max-value)))
-             (setq max-op '%precedence)
-             (setq max-value b-precedence))
+                   (not b-max-value)
+                   (> b-precedence b-max-value)))
+             (setq b-max-op '%precedence)
+             (setq b-max-value b-precedence))
            (when (and
                   b-right
                   (or
-                   (not max-value)
-                   (> b-right max-value)))
-             (setq max-op '%right)
-             (setq max-value b-right))))
-       (if max-op
-           (cond
-            ((equal max-op '%left)
-             t)
-            ((equal max-op '%precedence)
-             t)
-            ((equal max-op '%right)
-             nil))
-         nil))))
+                   (not b-max-value)
+                   (> b-right b-max-value)))
+             (setq b-max-op '%right)
+             (setq b-max-value b-right))))
+       (cond
+        ((and
+          a-max-value
+          (or
+           (not b-max-value)
+           (> a-max-value b-max-value)))
+         t)
+        ((and
+          b-max-value
+          (or
+           (not a-max-value)
+           (> b-max-value a-max-value)))
+         nil)
+        ((and
+          a-max-value
+          b-max-value
+          (= a-max-value b-max-value))
+         (cond
+          ((or
+            (equal a-max-op '%left)
+            (equal a-max-op '%precedence))
+           t)
+          (t nil)))))))
   (setq
    parser-generator--global-declaration
    '(
@@ -1006,12 +854,12 @@
 
     (switch-to-buffer buffer)
     (kill-region (point-min) (point-max))
-    (insert "4*5+3\n")
+    (insert "4* 5 + 3\n")
     (should
      (equal
       23
       (parser-generator-lr-translate)))
-    (message "Passed 4*5+3 with correct result")
+    (message "Passed 4* 5 + 3 with correct result")
 
     (switch-to-buffer buffer)
     (kill-region (point-min) (point-max))
@@ -1067,14 +915,15 @@
       (parser-generator-lr-translate)))
     (message "Passed -56 + 2 with correct result")
 
+    ;; TODO This should work
     (switch-to-buffer buffer)
     (kill-region (point-min) (point-max))
-    (insert "4+5*3\n")
+    (insert "4 + 5  *3\n")
     (should
      (equal
       19
       (parser-generator-lr-translate)))
-    (message "Passed 4+5*3 with correct result")
+    (message "Passed 4 + 5  *3 with correct result")
 
     (switch-to-buffer buffer)
     (kill-region (point-min) (point-max))
@@ -1852,7 +1701,7 @@
   "Run test."
   ;; (setq debug-on-error nil)
 
-  ;; (parser-generator-lr-test-infix-calculator)
+  (parser-generator-lr-test-infix-calculator)
   (parser-generator-lr-test--items-for-prefix)
   (parser-generator-lr-test--items-valid-p)
   (parser-generator-lr-test--generate-goto-tables)
