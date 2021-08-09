@@ -406,7 +406,7 @@
                                                   index-hash-key
                                                   index-symbols)))
                                             (if
-                                                (parser-generator-lr--reduce-takes-precedence-p
+                                                (parser-generator-lr--action-takes-precedence-p
                                                  (car u)
                                                  production-number
                                                  (nth 2 b))
@@ -1029,8 +1029,8 @@
       (setq set-index (1+ set-index)))
     valid-p))
 
-(defun parser-generator-lr--reduce-takes-precedence-p (symbol a-production-number &optional b-production-number)
-  "Return t if reduction of SYMBOL at A-PRODUCTION-NUMBER takes precedence over other action.  If other action is a reduction then it is at B-PRODUCTION-NUMBER."
+(defun parser-generator-lr--action-takes-precedence-p (symbol a-production-number &optional b-production-number)
+  "Return t if action of SYMBOL at A-PRODUCTION-NUMBER takes precedence over other action.  If other action is a reduction then it is at B-PRODUCTION-NUMBER."
   (let* ((a-precedence-value
          (gethash
           symbol

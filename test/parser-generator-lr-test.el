@@ -92,14 +92,7 @@
      Sp))
   (parser-generator-set-look-ahead-number 1)
   (parser-generator-process-grammar)
-  (let ((table-lr-items
-         (parser-generator-lr--generate-goto-tables)))
-    ;; (message "cyclical lr-items: %s" table-lr-items)
-    (parser-generator-lr--generate-action-tables
-     table-lr-items)
-    ;; (message "cyclical goto-tables: %s" (parser-generator-lr--get-expanded-goto-tables))
-    ;; (message "cyclical action-tables: %s" (parser-generator-lr--get-expanded-action-tables))
-    )
+  (parser-generator-lr-generate-parser-tables)
   (message "Passed cyclical grammar")
 
   ;; Grammar with conflicts that can be resolved using precedence attributes
@@ -119,8 +112,6 @@
   (should-error
    (parser-generator-lr-generate-parser-tables))
   (message "Conflicted grammar caused expected exception")
-
-  ;; Inconsistent grammar! ((A) (a b) nil (c)) (index: 0) with look-ahead (c) conflicts with ((B) (a b) (c) ($)) (index: 1) with look-ahead (c) in sets: ((((A) (a b) nil (c)) ((B) (a b) (c) ($))))
 
   (setq
    parser-generator--global-attributes
@@ -191,9 +182,18 @@
             a-precedence
             b-precedence))
           (t nil))))))
-
   (parser-generator-lr-generate-parser-tables)
+  ;; TODO Verify generated action-table here
+  (should
+   (equal
+    '(1 2 3)
+    (parser-generator-lr--get-expanded-goto-tables)))
+  (should
+   (equal
+    '((0 (((a) shift))) (1 (((c) shift))) (2 ((($) reduce 2))) (3 ((($) accept))) (4 (((b) shift))) (5 (((c) shift))) (6 ((($) reduce 4))) (7 ((($) reduce 1))))
+    (parser-generator-lr--get-expanded-action-tables)))
   (message "Grammar not conflicting anymore")
+  (error "Quit here")
 
   (let ((table-lr-items
          (parser-generator-lr--generate-goto-tables)))
@@ -617,7 +617,8 @@
    (parser-generator-lr-generate-parser-tables))
   (message "Expected shift/reduce conflict in state 14")
 
-  ;; TODO Add global precedence and context-sensitive precedence and grammar should now pass without conflicts
+  ;; Add global symbol precedence and also
+  ;; context-sensitive precedence and grammar should now pass without conflicts
   (setq
    parser-generator--global-attributes
    '(%left %precedence %right))
@@ -666,11 +667,31 @@
            nil)
           ((and
             a-precedence
-            b-precedence)
-           (>
+            b-precedence
+            (>
+             a-precedence
+             b-precedence))
+           t)
+          ((and
             a-precedence
-            b-precedence))
-          (t nil))))))
+            b-precedence
+            (<
+             a-precedence
+             b-precedence))
+           nil)
+          ((and
+            a-precedence
+            b-precedence
+            (=
+             a-precedence
+             b-precedence))
+           ;; TODO Fix this
+           ;; TODO if a-precedence-value > b-precedence-value then reduce (t)
+           ;; TODO if a-precedence-value < b-precedence-value then shift (nil)
+           ;; TODO if a-precedence-value equal be-precedence-value then let operator decide
+           (cond
+            ((equal a-precedence))
+            )))))))
   (parser-generator-set-grammar
    '(
      (start input line exp)
@@ -805,7 +826,7 @@
      (equal
       32
       (parser-generator-lr-translate)))
-    (message "Passed 4*5+3 with expected wrong associativity")
+    (message "Passed 4*5+3 with expected wrong associativity (4*8)")
 
     (switch-to-buffer buffer)
     (kill-region (point-min) (point-max))
@@ -814,7 +835,7 @@
      (equal
       5
       (parser-generator-lr-translate)))
-    (message "Passed 10/1+1 with expected wrong associativity")
+    (message "Passed 10/1+1 with expected wrong associativity (10/2)")
 
     (switch-to-buffer buffer)
     (kill-region (point-min) (point-max))
@@ -823,7 +844,7 @@
      (equal
       100000
       (parser-generator-lr-translate)))
-    (message "Passed 10^2+3 with expected wrong associativity")
+    (message "Passed 10^2+3 with expected wrong associativity (10^5)")
 
     (switch-to-buffer buffer)
     (kill-region (point-min) (point-max))
@@ -832,7 +853,7 @@
      (equal
       -38
       (parser-generator-lr-translate)))
-    (message "Passed -33+5 with expected wrong associativity")
+    (message "Passed -33+5 with expected wrong associativity (-38)")
 
     (kill-buffer))
 
@@ -1798,7 +1819,7 @@
   "Run test."
   ;; (setq debug-on-error nil)
 
-  (parser-generator-lr-test-infix-calculator)
+  ;; (parser-generator-lr-test-infix-calculator)
   (parser-generator-lr-test--items-for-prefix)
   (parser-generator-lr-test--items-valid-p)
   (parser-generator-lr-test--generate-goto-tables)
