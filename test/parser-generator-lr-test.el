@@ -230,13 +230,10 @@
   (parser-generator-lr-generate-parser-tables)
   (should
    (equal
-    '((0 ((A 1) (B 2) (S 3) (a 4))) (1 ((c 7))) (2 nil) (3 nil) (4 ((b 5))) (5 ((c 6))) (6 nil) (7 nil))
-    (parser-generator-lr--get-expanded-goto-tables)))
-  (should
-   (equal
     '((0 (((a) shift))) (1 (((c) shift))) (2 ((($) reduce 2))) (3 ((($) accept))) (4 (((b) shift))) (5 (((c) shift))) (6 ((($) reduce 4))) (7 ((($) reduce 1))))
     (parser-generator-lr--get-expanded-action-tables)))
   (message "Grammar not conflicting anymore solution #1")
+
   ;; Example parse "a b c"
   ;; stack: 0
   ;; a -> action shift, goto 4
@@ -253,6 +250,7 @@
 
   ;; Make a new context-sensitive precedence that
   ;; makes production 1 take precedence over production 4
+
   (parser-generator-set-grammar
    '(
      (Sp S A B)
@@ -268,13 +266,10 @@
   (parser-generator-lr-generate-parser-tables)
   (should
    (equal
-    '((0 ((A 1) (B 2) (S 3) (a 4))) (1 ((c 7))) (2 nil) (3 nil) (4 ((b 5))) (5 ((c 6))) (6 nil) (7 nil))
-    (parser-generator-lr--get-expanded-goto-tables)))
-  (should
-   (equal
     '((0 (((a) shift))) (1 (((c) shift))) (2 ((($) reduce 2))) (3 ((($) accept))) (4 (((b) shift))) (5 (((c) reduce 3))) (6 ((($) reduce 4))) (7 ((($) reduce 1))))
     (parser-generator-lr--get-expanded-action-tables)))
   (message "Grammar not conflicting anymore solution #2")
+
   ;; Example parse "a b c"
   ;; stack: 0
   ;; a -> action shift, goto 4
@@ -290,6 +285,54 @@
   ;; $ -> accept
 
   ;; Test grammar that can be only solved by using global and context-sensitive attributes
+  (setq
+   parser-generator-lex-analyzer--function
+   (lambda (index)
+     (with-current-buffer "*buffer*"
+       (let ((token))
+         (when
+             (<
+              index
+              (point-max))
+           (goto-char
+            index)
+
+           ;; Skip white-space(s)
+           (when (looking-at-p "[\t ]+")
+             (when
+                 (search-forward-regexp "[^\t ]" nil t)
+               (forward-char -1)))
+
+           (cond
+            ((looking-at "\\([0-9]+\\.[0-9]+\\|[0-9]+\\)")
+             (setq
+              token
+              `(NUM ,(match-beginning 0) . ,(match-end 0))))
+            ((looking-at "\\(\\+\\|-\\|*\\|/\\|\\^\\|)\\|(\\|\n\\)")
+             (let ((symbol
+                    (buffer-substring-no-properties
+                     (match-beginning 0)
+                     (match-end 0))))
+               (setq
+                token
+                `(,symbol ,(match-beginning 0) . ,(match-end 0)))))
+            (t (error "Unexpected input at %d!" index))))
+         token))))
+  (setq
+   parser-generator-lex-analyzer--get-function
+   (lambda (token)
+     (with-current-buffer "*buffer*"
+       (let ((start (car (cdr token)))
+             (end (cdr (cdr token))))
+         (when (<= end (point-max))
+           (let ((symbol
+                  (buffer-substring-no-properties start end)))
+             (when
+                 (string-match-p "^\\([0-9]+\\.[0-9]+\\|[0-9]+\\)$" symbol)
+               (setq
+                symbol
+                (string-to-number symbol)))
+             symbol))))))
   (setq
    parser-generator-lr--global-precedence-attributes
    nil)
@@ -359,35 +402,40 @@
   ;; + -> shift, new-stack: 0 input 1 exp 6, GOTO 10
   ;; new-stack: 0 input 1 exp 6 + 10
   ;; NUM -> shift, new-stack: 0 input 1 exp 6 10 NUM 5
-  ;; * -> reduce.. causes expected (1+1)*2 = 4
+  ;; * -> reduce 5.. causes expected (1+1)*2 = 4
+  (let ((buffer (generate-new-buffer "*buffer*")))
+    (switch-to-buffer buffer)
+    (insert "2+3*5\n")
+    (let ((parse (parser-generator-lr-parse)))
+      (should
+       (equal
+        '(1 5 5 5 8 6 4 2)
+        parse)))
+    (let ((translate (parser-generator-lr-translate)))
+      (should
+       (equal
+        17
+        translate)))
+    (kill-buffer))
+  (message "Passed correct precedence of 2+3*5 = 2+(3*5)")
 
-  (should
-   (equal
-    '((0 ((input 1))) (1 (("
-" 2) ("(" 3) ("-" 4) (NUM 5) (exp 6) (line 7))) (2 nil) (3 (("(" 20) ("-" 21) (NUM 22) (exp 23))) (4 (("(" 3) ("-" 4) (NUM 5) (exp 19))) (5 nil) (6 (("
-" 8) ("*" 9) ("+" 10) ("-" 11) ("/" 12) ("^" 13))) (7 nil) (8 nil) (9 (("(" 3) ("-" 4) (NUM 5) (exp 18))) (10 (("(" 3) ("-" 4) (NUM 5) (exp 17))) (11 (("(" 3) ("-" 4) (NUM 5) (exp 16))) (12 (("(" 3) ("-" 4) (NUM 5) (exp 15))) (13 (("(" 3) ("-" 4) (NUM 5) (exp 14))) (14 (("*" 9) ("+" 10) ("-" 11) ("/" 12) ("^" 13))) (15 (("*" 9) ("+" 10) ("-" 11) ("/" 12) ("^" 13))) (16 (("*" 9) ("+" 10) ("-" 11) ("/" 12) ("^" 13))) (17 (("*" 9) ("+" 10) ("-" 11) ("/" 12) ("^" 13))) (18 (("*" 9) ("+" 10) ("-" 11) ("/" 12) ("^" 13))) (19 (("*" 9) ("+" 10) ("-" 11) ("/" 12) ("^" 13))) (20 (("(" 20) ("-" 21) (NUM 22) (exp 36))) (21 (("(" 20) ("-" 21) (NUM 22) (exp 35))) (22 nil) (23 ((")" 24) ("*" 25) ("+" 26) ("-" 27) ("/" 28) ("^" 29))) (24 nil) (25 (("(" 20) ("-" 21) (NUM 22) (exp 34))) (26 (("(" 20) ("-" 21) (NUM 22) (exp 33))) (27 (("(" 20) ("-" 21) (NUM 22) (exp 32))) (28 (("(" 20) ("-" 21) (NUM 22) (exp 31))) (29 (("(" 20) ("-" 21) (NUM 22) (exp 30))) (30 (("*" 25) ("+" 26) ("-" 27) ("/" 28) ("^" 29))) (31 (("*" 25) ("+" 26) ("-" 27) ("/" 28) ("^" 29))) (32 (("*" 25) ("+" 26) ("-" 27) ("/" 28) ("^" 29))) (33 (("*" 25) ("+" 26) ("-" 27) ("/" 28) ("^" 29))) (34 (("*" 25) ("+" 26) ("-" 27) ("/" 28) ("^" 29))) (35 (("*" 25) ("+" 26) ("-" 27) ("/" 28) ("^" 29))) (36 ((")" 37) ("*" 25) ("+" 26) ("-" 27) ("/" 28) ("^" 29))) (37 nil))
-    (parser-generator-lr--get-expanded-goto-tables)))
-  (should
-   (equal
-    '((0 ((("
-") reduce 1) (($) reduce 1) (("(") reduce 1) (("-") reduce 1) ((NUM) reduce 1))) (1 ((("
-") shift) (($) accept) (("(") shift) (("-") shift) ((NUM) shift))) (2 ((("
-") reduce 3) (($) reduce 3) (("(") reduce 3) (("-") reduce 3) ((NUM) reduce 3))) (3 ((("(") shift) (("-") shift) ((NUM) shift))) (4 ((("(") shift) (("-") shift) ((NUM) shift))) (5 ((("
-") reduce 5) (("*") reduce 5) (("+") reduce 5) (("-") reduce 5) (("/") reduce 5) (("^") reduce 5))) (6 ((("
-") shift) (("*") shift) (("+") shift) (("-") shift) (("/") shift) (("^") shift))) (7 ((("
-") reduce 2) (($) reduce 2) (("(") reduce 2) (("-") reduce 2) ((NUM) reduce 2))) (8 ((("
-") reduce 4) (($) reduce 4) (("(") reduce 4) (("-") reduce 4) ((NUM) reduce 4))) (9 ((("(") shift) (("-") shift) ((NUM) shift))) (10 ((("(") shift) (("-") shift) ((NUM) shift))) (11 ((("(") shift) (("-") shift) ((NUM) shift))) (12 ((("(") shift) (("-") shift) ((NUM) shift))) (13 ((("(") shift) (("-") shift) ((NUM) shift))) (14 ((("
-") reduce 11) (("*") shift) (("+") shift) (("-") shift) (("/") shift) (("^") shift))) (15 ((("
-") reduce 9) (("*") shift) (("+") shift) (("-") shift) (("/") shift) (("^") shift))) (16 ((("
-") reduce 7) (("*") shift) (("+") shift) (("-") shift) (("/") shift) (("^") shift))) (17 ((("
-") reduce 6) (("*") shift) (("+") shift) (("-") shift) (("/") shift) (("^") shift))) (18 ((("
-") reduce 8) (("*") shift) (("+") shift) (("-") shift) (("/") shift) (("^") shift))) (19 ((("
-") reduce 10) (("*") shift) (("+") shift) (("-") shift) (("/") shift) (("^") shift))) (20 ((("(") shift) (("-") shift) ((NUM) shift))) (21 ((("(") shift) (("-") shift) ((NUM) shift))) (22 (((")") reduce 5) (("*") reduce 5) (("+") reduce 5) (("-") reduce 5) (("/") reduce 5) (("^") reduce 5))) (23 (((")") shift) (("*") shift) (("+") shift) (("-") shift) (("/") shift) (("^") shift))) (24 ((("
-") reduce 12) (("*") reduce 12) (("+") reduce 12) (("-") reduce 12) (("/") reduce 12) (("^") reduce 12))) (25 ((("(") shift) (("-") shift) ((NUM) shift))) (26 ((("(") shift) (("-") shift) ((NUM) shift))) (27 ((("(") shift) (("-") shift) ((NUM) shift))) (28 ((("(") shift) (("-") shift) ((NUM) shift))) (29 ((("(") shift) (("-") shift) ((NUM) shift))) (30 (((")") reduce 11) (("*") shift) (("+") shift) (("-") shift) (("/") shift) (("^") shift))) (31 (((")") reduce 9) (("*") shift) (("+") shift) (("-") shift) (("/") shift) (("^") shift))) (32 (((")") reduce 7) (("*") shift) (("+") shift) (("-") shift) (("/") shift) (("^") shift))) (33 (((")") reduce 6) (("*") shift) (("+") shift) (("-") shift) (("/") shift) (("^") shift))) (34 (((")") reduce 8) (("*") shift) (("+") shift) (("-") shift) (("/") shift) (("^") shift))) (35 (((")") reduce 10) (("*") shift) (("+") shift) (("-") shift) (("/") shift) (("^") shift))) (36 (((")") shift) (("*") shift) (("+") shift) (("-") shift) (("/") shift) (("^") shift))) (37 (((")") reduce 12) (("*") reduce 12) (("+") reduce 12) (("-") reduce 12) (("/") reduce 12) (("^") reduce 12))))
-    (parser-generator-lr--get-expanded-action-tables)))
-  (message "Generated grammar with expected wrong operator precedence")
+  (let ((buffer (generate-new-buffer "*buffer*")))
+    (switch-to-buffer buffer)
+    (insert "2*3+5\n")
+    (let ((parse (parser-generator-lr-parse)))
+      (should
+       (equal
+        '(1 5 5 5 6 8 4 2)
+        parse)))
+    (let ((translate (parser-generator-lr-translate)))
+      (should
+       (equal
+        16
+        translate)))
+    (kill-buffer))
+  (message "Passed incorrect precedence of 2*3+5 => 2*(3+5)")
 
-  ;; Add global precedence, but it should not solve all conflicts
+  ;; Add global precedence, but it should not solve all errors
   (setq
    parser-generator-lr--global-precedence-attributes
    '(%left %precedence %right))
@@ -400,35 +448,27 @@
      (%right "^")))
   (parser-generator-lr-generate-parser-tables)
 
-  (message "GOTO-tables: %S" (parser-generator-lr--get-expanded-goto-tables))
-  (message "ACTION-tables: %S" (parser-generator-lr--get-expanded-action-tables))
-  (error "was here")
-  ;; TODO Validate GOTO and ACTION-tables here, everything should be correct except -1-1
-  (should
-   (equal
-    '(1 2 3)
-    (parser-generator-lr--get-expanded-goto-tables)))
-  (should
-   (equal
-    '(1 2 3)
-    (parser-generator-lr--get-expanded-action-tables)))
+  (let ((buffer (generate-new-buffer "*buffer*")))
+    (switch-to-buffer buffer)
+    (insert "2*3+5\n")
+    (let ((parse (parser-generator-lr-parse)))
+      (should
+       (equal
+        '(1 5 5 5 8 6 4 2)
+        parse)))
+    (let ((translate (parser-generator-lr-translate)))
+      (should
+       (equal
+        11
+        translate)))
+    (kill-buffer))
+  (message "Passed correct precedence of 2*3+5 => (2*3)+5")
 
+  ;; Add context-sensitive precedence that should solve cases of -X
   (setq
    parser-generator-lr--context-sensitive-precedence-attribute
    '%prec)
   (parser-generator-lr-generate-parser-tables)
-  ;; TODO Validate GOTO and ACTION-tables here
-  (message "GOTO-tables: %S" (parser-generator-lr--get-expanded-goto-tables))
-  (message "ACTION-tables: %S" (parser-generator-lr--get-expanded-action-tables))
-  (error "was here")
-  (should
-   (equal
-    '(1 2 3)
-    (parser-generator-lr--get-expanded-goto-tables)))
-  (should
-   (equal
-    '(1 2 3)
-    (parser-generator-lr--get-expanded-action-tables)))
 
   (message "Passed tests for (parser-generator-lr--generate-action-tables)"))
 
