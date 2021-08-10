@@ -407,7 +407,8 @@
                                                   index-symbols)))
                                             (if
                                                 (parser-generator-lr--action-takes-precedence-p
-                                                 (car u)
+                                                 (car (last B))
+                                                 (car (last u))
                                                  production-number
                                                  (nth 2 b))
                                                 (progn
@@ -1029,13 +1030,16 @@
       (setq set-index (1+ set-index)))
     valid-p))
 
-(defun parser-generator-lr--action-takes-precedence-p (symbol a-production-number &optional b-production-number)
-  "Return t if action of SYMBOL at A-PRODUCTION-NUMBER takes precedence over other action.  If other action is a reduction then it is at B-PRODUCTION-NUMBER."
-  (let* ((a-precedence-value
+(defun parser-generator-lr--action-takes-precedence-p (a-symbol b-symbol a-production-number &optional b-production-number)
+  "Return t if action of A-SYMBOL at A-PRODUCTION-NUMBER takes precedence over B-SYMBOL optionally at B-PRODUCTION-NUMBER."
+  (let ((a-precedence-value
          (gethash
-          symbol
+          a-symbol
           parser-generator-lr--global-precedence-table))
-        (b-precedence-value a-precedence-value))
+        (b-precedence-value
+         (gethash
+          b-symbol
+          parser-generator-lr--global-precedence-table)))
 
     ;; Context-sensitive precedence takes precedence over
     ;; global precedence

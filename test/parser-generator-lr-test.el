@@ -149,40 +149,84 @@
   (setq
    parser-generator-lr--precedence-comparison-function
    (lambda(a b)
-     (if (and
-          (not a)
-          (not b))
-         nil
-       (let ((a-precedence)
-             (b-precedence))
-         (when a
-           (setq
-            a-precedence
-            (plist-get
-             a
-             '%precedence)))
-         (when b
-           (setq
-            b-precedence
-            (plist-get
-             b
-             '%precedence)))
+     (let ((a-max-op)
+           (a-max-value)
+           (b-max-op)
+           (b-max-value))
+       (message "(parser-generator-lr--precedence-comparison-function %S %S)" a b)
+       (when a
+         (let ((a-left (plist-get a '%left))
+               (a-precedence (plist-get a '%precedence))
+               (a-right (plist-get a '%right)))
+           (when (and
+                  a-left
+                  (or
+                   (not a-max-value)
+                   (> a-left a-max-value)))
+             (setq a-max-op '%left)
+             (setq a-max-value a-left))
+           (when (and
+                  a-precedence
+                  (or
+                   (not a-max-value)
+                   (> a-precedence a-max-value)))
+             (setq a-max-op '%precedence)
+             (setq a-max-value a-precedence))
+           (when (and
+                  a-right
+                  (or
+                   (not a-max-value)
+                   (> a-right a-max-value)))
+             (setq a-max-op '%right)
+             (setq a-max-value a-right))))
+       (when b
+         (let ((b-left (plist-get b '%left))
+               (b-precedence (plist-get b '%precedence))
+               (b-right (plist-get b '%right)))
+           (when (and
+                  b-left
+                  (or
+                   (not b-max-value)
+                   (> b-left b-max-value)))
+             (setq b-max-op '%left)
+             (setq b-max-value b-left))
+           (when (and
+                  b-precedence
+                  (or
+                   (not b-max-value)
+                   (> b-precedence b-max-value)))
+             (setq b-max-op '%precedence)
+             (setq b-max-value b-precedence))
+           (when (and
+                  b-right
+                  (or
+                   (not b-max-value)
+                   (> b-right b-max-value)))
+             (setq b-max-op '%right)
+             (setq b-max-value b-right))))
+       (cond
+        ((and
+          a-max-value
+          (or
+           (not b-max-value)
+           (> a-max-value b-max-value)))
+         t)
+        ((and
+          b-max-value
+          (or
+           (not a-max-value)
+           (> b-max-value a-max-value)))
+         nil)
+        ((and
+          a-max-value
+          b-max-value
+          (= a-max-value b-max-value))
          (cond
-          ((and
-            a-precedence
-            (not b-precedence))
+          ((or
+            (equal a-max-op '%left)
+            (equal a-max-op '%precedence))
            t)
-          ((and
-            b-precedence
-            (not a-precedence))
-           nil)
-          ((and
-            a-precedence
-            b-precedence)
-           (>
-            a-precedence
-            b-precedence))
-          (t nil))))))
+          (t nil)))))))
   (parser-generator-lr-generate-parser-tables)
   (should
    (equal
@@ -245,7 +289,146 @@
   ;; stack: 0 S 3
   ;; $ -> accept
 
-  ;; TODO Test grammar that can be solved by using global attributes here
+  ;; Test grammar that can be only solved by using global and context-sensitive attributes
+  (setq
+   parser-generator-lr--global-precedence-attributes
+   nil)
+  (setq
+   parser-generator-lr--context-sensitive-precedence-attribute
+   nil)
+  (setq
+   parser-generator--e-identifier
+   '%empty)
+  (parser-generator-set-look-ahead-number 1)
+  (setq
+   parser-generator--global-attributes
+   '(%left %precedence %right))
+  (setq
+   parser-generator--context-sensitive-attributes
+   '(%prec))
+  (parser-generator-set-grammar
+   '(
+     (start input line exp)
+     ("+" "-" "*" "/" "^" "(" ")" "\n" NUM)
+     (
+      (start input)
+      (input
+       %empty
+       (input line (lambda(args) (nth 1 args))))
+      (line
+       "\n"
+       (exp "\n" (lambda(args) (nth 0 args))))
+      (exp
+       NUM
+       (exp "+" exp (lambda(args) (+ (nth 0 args) (nth 2 args))))
+       (exp "-" exp (lambda(args) (- (nth 0 args) (nth 2 args))))
+       (exp "*" exp (lambda(args) (* (nth 0 args) (nth 2 args))))
+       (exp "/" exp (lambda(args) (/ (nth 0 args) (nth 2 args))))
+       ("-" exp %prec NEG (lambda(args) (- (nth 1 args))))
+       (exp "^" exp (lambda(args) (expt (nth 0 args) (nth 2 args))))
+       ("(" exp ")" (lambda(args) (nth 1 args)))))
+     start))
+  (parser-generator-process-grammar)
+  (parser-generator-lr-generate-parser-tables)
+
+  ;; Parse: 1+1*2\n
+  ;;
+  ;; Production 0: ((start) (input))
+  ;; Production 1: ((input) (%empty))
+  ;; Production 2: ((input) (input line))
+  ;; Production 3: ((line) ("
+  ;; "))
+  ;; Production 4: ((line) (exp "
+  ;; "))
+  ;; Production 5: ((exp) (NUM))
+  ;; Production 6: ((exp) (exp "+" exp))
+  ;; Production 7: ((exp) (exp "-" exp))
+  ;; Production 8: ((exp) (exp "*" exp))
+  ;; Production 9: ((exp) (exp "/" exp))
+  ;; Production 10: ((exp) ("-" exp))
+  ;; Production 11: ((exp) (exp "^" exp))
+  ;; Production 12: ((exp) ("(" exp ")"))
+  ;;
+  ;; stack: 0
+  ;; NUM -> reduce 1, pop 0, new-stack: 0 input, GOTO 1
+  ;; stack: 0 input 1
+  ;; NUM -> shift, GOTO 5
+  ;; stack: 0 input 1 NUM 5
+  ;; + -> reduce 5 to exp, pop 2, new-stack: 0 input 1, GOTO 6
+  ;; new-stack: 0 input 1 exp 6
+  ;; + -> shift, new-stack: 0 input 1 exp 6, GOTO 10
+  ;; new-stack: 0 input 1 exp 6 + 10
+  ;; NUM -> shift, new-stack: 0 input 1 exp 6 10 NUM 5
+  ;; * -> reduce.. causes expected (1+1)*2 = 4
+
+  (should
+   (equal
+    '((0 ((input 1))) (1 (("
+" 2) ("(" 3) ("-" 4) (NUM 5) (exp 6) (line 7))) (2 nil) (3 (("(" 20) ("-" 21) (NUM 22) (exp 23))) (4 (("(" 3) ("-" 4) (NUM 5) (exp 19))) (5 nil) (6 (("
+" 8) ("*" 9) ("+" 10) ("-" 11) ("/" 12) ("^" 13))) (7 nil) (8 nil) (9 (("(" 3) ("-" 4) (NUM 5) (exp 18))) (10 (("(" 3) ("-" 4) (NUM 5) (exp 17))) (11 (("(" 3) ("-" 4) (NUM 5) (exp 16))) (12 (("(" 3) ("-" 4) (NUM 5) (exp 15))) (13 (("(" 3) ("-" 4) (NUM 5) (exp 14))) (14 (("*" 9) ("+" 10) ("-" 11) ("/" 12) ("^" 13))) (15 (("*" 9) ("+" 10) ("-" 11) ("/" 12) ("^" 13))) (16 (("*" 9) ("+" 10) ("-" 11) ("/" 12) ("^" 13))) (17 (("*" 9) ("+" 10) ("-" 11) ("/" 12) ("^" 13))) (18 (("*" 9) ("+" 10) ("-" 11) ("/" 12) ("^" 13))) (19 (("*" 9) ("+" 10) ("-" 11) ("/" 12) ("^" 13))) (20 (("(" 20) ("-" 21) (NUM 22) (exp 36))) (21 (("(" 20) ("-" 21) (NUM 22) (exp 35))) (22 nil) (23 ((")" 24) ("*" 25) ("+" 26) ("-" 27) ("/" 28) ("^" 29))) (24 nil) (25 (("(" 20) ("-" 21) (NUM 22) (exp 34))) (26 (("(" 20) ("-" 21) (NUM 22) (exp 33))) (27 (("(" 20) ("-" 21) (NUM 22) (exp 32))) (28 (("(" 20) ("-" 21) (NUM 22) (exp 31))) (29 (("(" 20) ("-" 21) (NUM 22) (exp 30))) (30 (("*" 25) ("+" 26) ("-" 27) ("/" 28) ("^" 29))) (31 (("*" 25) ("+" 26) ("-" 27) ("/" 28) ("^" 29))) (32 (("*" 25) ("+" 26) ("-" 27) ("/" 28) ("^" 29))) (33 (("*" 25) ("+" 26) ("-" 27) ("/" 28) ("^" 29))) (34 (("*" 25) ("+" 26) ("-" 27) ("/" 28) ("^" 29))) (35 (("*" 25) ("+" 26) ("-" 27) ("/" 28) ("^" 29))) (36 ((")" 37) ("*" 25) ("+" 26) ("-" 27) ("/" 28) ("^" 29))) (37 nil))
+    (parser-generator-lr--get-expanded-goto-tables)))
+  (should
+   (equal
+    '((0 ((("
+") reduce 1) (($) reduce 1) (("(") reduce 1) (("-") reduce 1) ((NUM) reduce 1))) (1 ((("
+") shift) (($) accept) (("(") shift) (("-") shift) ((NUM) shift))) (2 ((("
+") reduce 3) (($) reduce 3) (("(") reduce 3) (("-") reduce 3) ((NUM) reduce 3))) (3 ((("(") shift) (("-") shift) ((NUM) shift))) (4 ((("(") shift) (("-") shift) ((NUM) shift))) (5 ((("
+") reduce 5) (("*") reduce 5) (("+") reduce 5) (("-") reduce 5) (("/") reduce 5) (("^") reduce 5))) (6 ((("
+") shift) (("*") shift) (("+") shift) (("-") shift) (("/") shift) (("^") shift))) (7 ((("
+") reduce 2) (($) reduce 2) (("(") reduce 2) (("-") reduce 2) ((NUM) reduce 2))) (8 ((("
+") reduce 4) (($) reduce 4) (("(") reduce 4) (("-") reduce 4) ((NUM) reduce 4))) (9 ((("(") shift) (("-") shift) ((NUM) shift))) (10 ((("(") shift) (("-") shift) ((NUM) shift))) (11 ((("(") shift) (("-") shift) ((NUM) shift))) (12 ((("(") shift) (("-") shift) ((NUM) shift))) (13 ((("(") shift) (("-") shift) ((NUM) shift))) (14 ((("
+") reduce 11) (("*") shift) (("+") shift) (("-") shift) (("/") shift) (("^") shift))) (15 ((("
+") reduce 9) (("*") shift) (("+") shift) (("-") shift) (("/") shift) (("^") shift))) (16 ((("
+") reduce 7) (("*") shift) (("+") shift) (("-") shift) (("/") shift) (("^") shift))) (17 ((("
+") reduce 6) (("*") shift) (("+") shift) (("-") shift) (("/") shift) (("^") shift))) (18 ((("
+") reduce 8) (("*") shift) (("+") shift) (("-") shift) (("/") shift) (("^") shift))) (19 ((("
+") reduce 10) (("*") shift) (("+") shift) (("-") shift) (("/") shift) (("^") shift))) (20 ((("(") shift) (("-") shift) ((NUM) shift))) (21 ((("(") shift) (("-") shift) ((NUM) shift))) (22 (((")") reduce 5) (("*") reduce 5) (("+") reduce 5) (("-") reduce 5) (("/") reduce 5) (("^") reduce 5))) (23 (((")") shift) (("*") shift) (("+") shift) (("-") shift) (("/") shift) (("^") shift))) (24 ((("
+") reduce 12) (("*") reduce 12) (("+") reduce 12) (("-") reduce 12) (("/") reduce 12) (("^") reduce 12))) (25 ((("(") shift) (("-") shift) ((NUM) shift))) (26 ((("(") shift) (("-") shift) ((NUM) shift))) (27 ((("(") shift) (("-") shift) ((NUM) shift))) (28 ((("(") shift) (("-") shift) ((NUM) shift))) (29 ((("(") shift) (("-") shift) ((NUM) shift))) (30 (((")") reduce 11) (("*") shift) (("+") shift) (("-") shift) (("/") shift) (("^") shift))) (31 (((")") reduce 9) (("*") shift) (("+") shift) (("-") shift) (("/") shift) (("^") shift))) (32 (((")") reduce 7) (("*") shift) (("+") shift) (("-") shift) (("/") shift) (("^") shift))) (33 (((")") reduce 6) (("*") shift) (("+") shift) (("-") shift) (("/") shift) (("^") shift))) (34 (((")") reduce 8) (("*") shift) (("+") shift) (("-") shift) (("/") shift) (("^") shift))) (35 (((")") reduce 10) (("*") shift) (("+") shift) (("-") shift) (("/") shift) (("^") shift))) (36 (((")") shift) (("*") shift) (("+") shift) (("-") shift) (("/") shift) (("^") shift))) (37 (((")") reduce 12) (("*") reduce 12) (("+") reduce 12) (("-") reduce 12) (("/") reduce 12) (("^") reduce 12))))
+    (parser-generator-lr--get-expanded-action-tables)))
+  (message "Generated grammar with expected wrong operator precedence")
+
+  ;; Add global precedence, but it should not solve all conflicts
+  (setq
+   parser-generator-lr--global-precedence-attributes
+   '(%left %precedence %right))
+  (setq
+   parser-generator--global-declaration
+   '(
+     (%left "-" "+")
+     (%left "*" "/")
+     (%precedence NEG)
+     (%right "^")))
+  (parser-generator-lr-generate-parser-tables)
+
+  (message "GOTO-tables: %S" (parser-generator-lr--get-expanded-goto-tables))
+  (message "ACTION-tables: %S" (parser-generator-lr--get-expanded-action-tables))
+  (error "was here")
+  ;; TODO Validate GOTO and ACTION-tables here, everything should be correct except -1-1
+  (should
+   (equal
+    '(1 2 3)
+    (parser-generator-lr--get-expanded-goto-tables)))
+  (should
+   (equal
+    '(1 2 3)
+    (parser-generator-lr--get-expanded-action-tables)))
+
+  (setq
+   parser-generator-lr--context-sensitive-precedence-attribute
+   '%prec)
+  (parser-generator-lr-generate-parser-tables)
+  ;; TODO Validate GOTO and ACTION-tables here
+  (message "GOTO-tables: %S" (parser-generator-lr--get-expanded-goto-tables))
+  (message "ACTION-tables: %S" (parser-generator-lr--get-expanded-action-tables))
+  (error "was here")
+  (should
+   (equal
+    '(1 2 3)
+    (parser-generator-lr--get-expanded-goto-tables)))
+  (should
+   (equal
+    '(1 2 3)
+    (parser-generator-lr--get-expanded-action-tables)))
 
   (message "Passed tests for (parser-generator-lr--generate-action-tables)"))
 
@@ -1701,7 +1884,6 @@
   "Run test."
   ;; (setq debug-on-error nil)
 
-  (parser-generator-lr-test-infix-calculator)
   (parser-generator-lr-test--items-for-prefix)
   (parser-generator-lr-test--items-valid-p)
   (parser-generator-lr-test--generate-goto-tables)
@@ -1709,7 +1891,8 @@
   (parser-generator-lr-test-parse)
   (parser-generator-lr-test-translate)
   (parser-generator-lr-test-parse-k-2)
-  (parser-generator-lr-test-parse-k-0))
+  (parser-generator-lr-test-parse-k-0)
+  (parser-generator-lr-test-infix-calculator))
 
 
 (provide 'parser-generator-lr-test)
