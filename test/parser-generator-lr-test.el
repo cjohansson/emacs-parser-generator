@@ -53,47 +53,114 @@
             (push history iterated-history)
             (setq history-index (1+ history-index))))))))
 
-(defun parser-generator-lr-test--generate-action-tables ()
-  "Test `parser-generator-lr--generate-action-tables'."
-  (message "Starting tests for (parser-generator-lr--generate-action-tables)")
+(defun parser-generator-lr-test--generate-precedence-tables ()
+  "Test `parser-generator-lr--generate-precedence-tables'."
+  (message "Starting tests for (parser-generator-lr--generate-precedence-tables)")
 
-  ;; Example 5.32 p. 393
-  (parser-generator-set-grammar
-   '((Sp S) (a b) ((Sp S) (S (S a S b)) (S e)) Sp))
-  (parser-generator-set-look-ahead-number 1)
-  (parser-generator-process-grammar)
-  (parser-generator-lr-generate-parser-tables)
-
-  ;; Fig. 5.9 p. 374, replaced e with $
-  (should
-   (equal
-    '((0 ((($) reduce 2) ((a) reduce 2)))
-      (1 ((($) accept) ((a) shift)))
-      (2 (((a) reduce 2) ((b) reduce 2)))
-      (3 (((a) shift) ((b) shift)))
-      (4 (((a) reduce 2) ((b) reduce 2)))
-      (5 ((($) reduce 1) ((a) reduce 1)))
-      (6 (((a) shift) ((b) shift)))
-      (7 (((a) reduce 1) ((b) reduce 1))))
-    (parser-generator-lr--get-expanded-action-tables)))
-  (message "Passed Example 5.32 p. 393")
-
-  ;; Cyclical grammar
+  ;; TODO Test getting token precedence value and type
+  (setq
+   parser-generator--global-attributes
+   '(%left %precedence %right))
+  (setq
+   parser-generator-lr--global-precedence-attributes
+   '(%left %precedence %right))
+  (setq
+   parser-generator--context-sensitive-attributes
+   '(%prec))
+  (setq
+   parser-generator--global-declaration
+   '((%left a)
+     (%right b)
+     (%left c)
+     (%precedence FIRST)))
   (parser-generator-set-grammar
    '(
      (Sp S A B)
      (a b c)
      (
       (Sp S)
-      (S A B)
-      (A (a b A) (a B))
-      (B (c S))
+      (S (A c) B)
+      (A (a b))
+      (B (a b c %prec FIRST))
       )
      Sp))
-  (parser-generator-set-look-ahead-number 1)
   (parser-generator-process-grammar)
-  (parser-generator-lr-generate-parser-tables)
-  (message "Passed cyclical grammar")
+  (parser-generator-lr--generate-precedence-tables)
+  (should
+   (equal
+    '%left
+    (parser-generator-lr--get-symbol-precedence-type 'a)))
+  (should
+   (equal
+    0
+    (parser-generator-lr--get-symbol-precedence-value 'a)))
+  (should
+   (equal
+    '%right
+    (parser-generator-lr--get-symbol-precedence-type 'b)))
+  (should
+   (equal
+    1
+    (parser-generator-lr--get-symbol-precedence-value 'b)))
+  (should
+   (equal
+    '%left
+    (parser-generator-lr--get-symbol-precedence-type 'c)))
+  (should
+   (equal
+    2
+    (parser-generator-lr--get-symbol-precedence-value 'c)))
+  (message "Passed generation of precedence value and type of symbols.")
+
+  ;; Sp -> S
+  (should
+   (equal
+    nil
+    (parser-generator-lr--get-production-number-precedence-type 0)))
+  (should
+   (equal
+    nil
+    (parser-generator-lr--get-production-number-precedence-value 0)))
+
+  ;; S -> A c
+  (should
+   (equal
+    '%left
+    (parser-generator-lr--get-production-number-precedence-type 1)))
+  (should
+   (equal
+    2
+    (parser-generator-lr--get-production-number-precedence-value 1)))
+
+  ;; S -> B
+  (should
+   (equal
+    nil
+    (parser-generator-lr--get-production-number-precedence-type 2)))
+  (should
+   (equal
+    nil
+    (parser-generator-lr--get-production-number-precedence-value 2)))
+
+  ;; A -> a b
+  (should
+   (equal
+    '%right
+    (parser-generator-lr--get-production-number-precedence-type 3)))
+  (should
+   (equal
+    1
+    (parser-generator-lr--get-production-number-precedence-value 3)))
+
+  ;; B -> a b c %prec FIRST
+  (should
+   (equal
+    '%precedence
+    (parser-generator-lr--get-production-number-precedence-type 4)))
+  (should
+   (equal
+    4
+    (parser-generator-lr--get-production-number-precedence-value 4)))
 
   ;; Grammar with conflicts that can be resolved
   ;; using context-sensitive precedence attributes
@@ -469,6 +536,54 @@
    parser-generator-lr--context-sensitive-precedence-attribute
    '%prec)
   (parser-generator-lr-generate-parser-tables)
+
+  ;; TODO Test-cases
+
+  (error "here")
+
+  (message "Passed tests for (parser-generator-lr--generate-precedence-tables)"))
+
+(defun parser-generator-lr-test--generate-action-tables ()
+  "Test `parser-generator-lr--generate-action-tables'."
+  (message "Starting tests for (parser-generator-lr--generate-action-tables)")
+
+  ;; Example 5.32 p. 393
+  (parser-generator-set-grammar
+   '((Sp S) (a b) ((Sp S) (S (S a S b)) (S e)) Sp))
+  (parser-generator-set-look-ahead-number 1)
+  (parser-generator-process-grammar)
+  (parser-generator-lr-generate-parser-tables)
+
+  ;; Fig. 5.9 p. 374, replaced e with $
+  (should
+   (equal
+    '((0 ((($) reduce 2) ((a) reduce 2)))
+      (1 ((($) accept) ((a) shift)))
+      (2 (((a) reduce 2) ((b) reduce 2)))
+      (3 (((a) shift) ((b) shift)))
+      (4 (((a) reduce 2) ((b) reduce 2)))
+      (5 ((($) reduce 1) ((a) reduce 1)))
+      (6 (((a) shift) ((b) shift)))
+      (7 (((a) reduce 1) ((b) reduce 1))))
+    (parser-generator-lr--get-expanded-action-tables)))
+  (message "Passed Example 5.32 p. 393")
+
+  ;; Cyclical grammar
+  (parser-generator-set-grammar
+   '(
+     (Sp S A B)
+     (a b c)
+     (
+      (Sp S)
+      (S A B)
+      (A (a b A) (a B))
+      (B (c S))
+      )
+     Sp))
+  (parser-generator-set-look-ahead-number 1)
+  (parser-generator-process-grammar)
+  (parser-generator-lr-generate-parser-tables)
+  (message "Passed cyclical grammar")
 
   (message "Passed tests for (parser-generator-lr--generate-action-tables)"))
 
@@ -1928,6 +2043,7 @@
   (parser-generator-lr-test--items-valid-p)
   (parser-generator-lr-test--generate-goto-tables)
   (parser-generator-lr-test--generate-action-tables)
+  (parser-generator-lr-test--generate-precedence-tables)
   (parser-generator-lr-test-parse)
   (parser-generator-lr-test-translate)
   (parser-generator-lr-test-parse-k-2)

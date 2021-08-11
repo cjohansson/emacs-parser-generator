@@ -45,58 +45,135 @@
   "Global precedence attributes.")
 
 (defvar
-  parser-generator-lr--global-precedence-attributes-table
-  nil
-  "Table of global precedence attributes.")
-
-(defvar
-  parser-generator-lr--global-precedence-table
-  nil
-  "Hash-table for fast look-up of global precedence symbols.")
-
-(defvar
   parser-generator-lr--precedence-comparison-function
   nil
   "Function to calculate precedence.")
 
+(defvar
+  parser-generator-lr--symbol-precedence-value
+  nil
+  "Table of the precedence value of all symbols.")
+
+(defvar
+  parser-generator-lr--symbol-precedence-type
+  nil
+  "Table of the precedence type of all symbols.")
+
+(defvar
+  parser-generator-lr--production-number-precedence-value
+  nil
+  "Table of the precedence value of all production numbers.")
+
+(defvar
+  parser-generator-lr--production-number-precedence-type
+  nil
+  "Table of the precedence type of all production numbers.")
+
 
 ;; Main Algorithms
 
-(defun parser-generator-lr--prepare-global-declaration ()
-  "Prepare global declaration for parsing."
+
+(defun parser-generator-lr--get-symbol-precedence-value (symbol)
+  "Get the precedence value of SYMBOL."
+  (unless parser-generator-lr--symbol-precedence-value
+    (error "Missing table for symbol precedence value!"))
+  (gethash
+   symbol
+   parser-generator-lr--symbol-precedence-value))
+
+(defun parser-generator-lr--get-symbol-precedence-type (symbol)
+  "Get the precedence type of SYMBOL."
+  (unless parser-generator-lr--symbol-precedence-type
+    (error "Missing table for symbol precedence type!"))
+  (gethash
+   symbol
+   parser-generator-lr--symbol-precedence-type))
+
+(defun parser-generator-lr--get-production-number-precedence-value (production-number)
+  "Get the precedence value of PRODUCTION-NUMBER."
+  (unless parser-generator-lr--production-number-precedence-value
+    (error "Missing table for production number precedence value!"))
+  (gethash
+   production-number
+   parser-generator-lr--production-number-precedence-value))
+
+(defun parser-generator-lr--get-production-number-precedence-type (production-number)
+  "Get the precedence type of PRODUCTION-NUMBER."
+  (unless parser-generator-lr--production-number-precedence-type
+    (error "Missing table for production number precedence type!"))
+  (gethash
+   production-number
+   parser-generator-lr--production-number-precedence-type))
+
+(defun parser-generator-lr--generate-precedence-tables ()
+  "Generate tables needed to determine precedence."
+
+  ;; Initialize hash-maps for precedence
   (setq
-   parser-generator-lr--global-precedence-table
+   parser-generator-lr--symbol-precedence-value
    (make-hash-table :test 'equal))
   (setq
-   parser-generator-lr--global-precedence-attributes-table
+   parser-generator-lr--symbol-precedence-type
    (make-hash-table :test 'equal))
-  (when parser-generator-lr--global-precedence-attributes
-    (dolist (item parser-generator-lr--global-precedence-attributes)
-      (puthash
-       item
-       t
-       parser-generator-lr--global-precedence-attributes-table))
-    (let ((line-index 0))
-      (dolist (line parser-generator--global-declaration)
-        (let ((attribute (car line))
-              (items (cdr line)))
-          (when
-              (gethash
-               attribute
-               parser-generator-lr--global-precedence-attributes-table)
-            (dolist (item items)
-              (puthash
-               item
-               `(,attribute ,line-index)
-               parser-generator-lr--global-precedence-table))))
-        (setq
-         line-index
-         (1+ line-index))))))
+  (setq
+   parser-generator-lr--production-number-precedence-value
+   (make-hash-table :test 'equal))
+  (setq
+   parser-generator-lr--production-number-precedence-type
+   (make-hash-table :test 'equal))
+
+  (let ((global-precedence-attributes-table
+         (make-hash-table :test 'equal)))
+    (when parser-generator-lr--global-precedence-attributes
+
+      ;; Build hash-map of all precedence attributes
+      (dolist (item parser-generator-lr--global-precedence-attributes)
+        (puthash
+         item
+         t
+         global-precedence-attributes-table))
+
+      ;; Go through global declaration in search of precedence attributes
+      (let ((line-index 0))
+        (dolist (line parser-generator--global-declaration)
+          (let ((attribute (car line))
+                (items (cdr line)))
+
+            ;; Is it a precedence-attribute?
+            (when
+                (gethash
+                 attribute
+                 global-precedence-attributes-table)
+              (dolist (item items)
+
+                ;; Store value
+                (puthash
+                 item
+                 line-index
+                 parser-generator-lr--symbol-precedence-value)
+
+                ;; Store type
+                (puthash
+                 item
+                 attribute
+                 parser-generator-lr--symbol-precedence-type))))
+          (setq
+           line-index
+           (1+ line-index))))
+
+      ;; TODO Go through production-numbers
+      ;; TODO Look for attributes
+      ;; TODO Look for precedence-attributes
+      ;; TODO If none was found, iterate symbols
+      ;; TODO If found a last terminal, use it's precedence type and value
+      ;; TODO for the rule
+
+      )))
 
 (defun parser-generator-lr-generate-parser-tables ()
   "Generate parsing tables for grammar."
   (message "\nStarting generation of parser-tables..\n")
-  (parser-generator-lr--prepare-global-declaration)
+  (parser-generator-lr--generate-precedence-tables)
   (let ((table-lr-items
          (parser-generator-lr--generate-goto-tables)))
     (parser-generator-lr--generate-action-tables
@@ -412,11 +489,10 @@
                                                  production-number
                                                  (nth 2 b))
                                                 (progn
-                                                  (parser-generator--debug
                                                    (message
                                                     "'%s' takes precedence over '%s'"
                                                     a
-                                                    b))
+                                                    b)
                                                   ;; Remove b from added-actions
                                                   (let ((new-action-table))
                                                     (dolist (action-item action-table)
@@ -431,11 +507,10 @@
                                                      action-table
                                                      (reverse
                                                       new-action-table))))
-                                              (parser-generator--debug
                                                (message
                                                 "'%s' takes precedence over '%s'"
                                                 b
-                                                a))
+                                                a)
                                               ;; Skip rest of this iteration
                                               (setq
                                                skip-symbol
