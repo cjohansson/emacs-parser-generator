@@ -161,12 +161,88 @@
            line-index
            (1+ line-index))))
 
-      ;; TODO Go through production-numbers
-      ;; TODO Look for attributes
-      ;; TODO Look for precedence-attributes
-      ;; TODO If none was found, iterate symbols
-      ;; TODO If found a last terminal, use it's precedence type and value
-      ;; TODO for the rule
+      ;; Go through production-numbers
+      (let ((productions (parser-generator--get-grammar-productions))
+            (production-number 0))
+        (dolist (production productions)
+          (let ((production-precedence-value)
+                (production-precedence-type))
+
+            ;; 1. Look for attributes
+            ;; 2. Look for precedence-attribute
+            ;; 3. Look for value and type of precedence-attribute
+            (when parser-generator-lr--context-sensitive-precedence-attribute
+              (let ((production-attributes
+                     (parser-generator--get-grammar-context-sensitive-attributes-by-production-number
+                      production-number)))
+                (when production-attributes
+                  (let ((production-precedence-attribute
+                         (plist-get
+                          production-attributes
+                          parser-generator-lr--context-sensitive-precedence-attribute)))
+                    (when production-precedence-attribute
+                      (let ((production-precedence-attribute-value
+                             (parser-generator-lr--get-symbol-precedence-value
+                              production-precedence-attribute))
+                            (production-precedence-attribute-type
+                             (parser-generator-lr--get-symbol-precedence-type
+                              production-precedence-attribute)))
+                        (when (and
+                               production-precedence-attribute-value
+                               production-precedence-attribute-type)
+                          (setq
+                           production-precedence-value
+                           production-precedence-attribute-value
+                           )
+                          (setq
+                           production-precedence-type
+                           production-precedence-attribute-type))))))))
+
+            ;; 1. If none was found
+            ;; 2. Iterate symbols of production RHS
+            ;; 3. If found a last terminal of RHS
+            ;; 4. Look for a precedence value and type of it
+            (unless production-precedence-value
+              (let ((rhs (car (cdr production)))
+                    (rhs-last-terminal))
+                (dolist (rhs-element rhs)
+                  (when (parser-generator--valid-terminal-p
+                         rhs-element)
+                    (setq
+                     rhs-last-terminal
+                     rhs-element)))
+
+                (when rhs-last-terminal
+                  (let ((terminal-precedence-value
+                         (parser-generator-lr--get-symbol-precedence-value
+                          rhs-last-terminal))
+                        (terminal-precedence-type
+                         (parser-generator-lr--get-symbol-precedence-type
+                          rhs-last-terminal)))
+                    (when (and
+                           terminal-precedence-value
+                           terminal-precedence-type)
+                      (setq
+                       production-precedence-value
+                       terminal-precedence-value)
+                      (setq
+                       production-precedence-type
+                       terminal-precedence-type))))))
+
+            (when (and
+                   production-precedence-type
+                   production-precedence-value)
+              (puthash
+               production-number
+               production-precedence-value
+               parser-generator-lr--production-number-precedence-value)
+              (puthash
+               production-number
+               production-precedence-type
+               parser-generator-lr--production-number-precedence-type))
+            (setq
+             production-number
+             (1+ production-number)))))
 
       )))
 
