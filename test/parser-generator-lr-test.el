@@ -484,35 +484,36 @@
 
     (let ((buffer (generate-new-buffer "*buffer*")))
     (switch-to-buffer buffer)
+
+    (kill-region (point-min) (point-max))
     (insert "2+3*5\n")
     (let ((translate (parser-generator-lr-translate)))
       (should
        (equal
         17
         translate)))
-    (kill-buffer))
-  (message "Passed correct precedence of 2+3*5 => 2+(3*5) = 17")
+    (message "Passed correct precedence of 2+3*5 => 2+(3*5) = 17")
 
-  (let ((buffer (generate-new-buffer "*buffer*")))
-    (switch-to-buffer buffer)
+    (kill-region (point-min) (point-max))
     (insert "2*3+5\n")
     (let ((translate (parser-generator-lr-translate)))
       (should
        (equal
         11
         translate)))
+    (message "Passed correct precedence of 2*3+5 => (2*3)+5 = 11")
+
+    ;; TODO Should make this work
+    (kill-region (point-min) (point-max))
+    (insert "4 + 4.5 - (34/(8*3+-3))\n")
+    (let ((translate (parser-generator-lr-translate)))
+      (should
+       (equal
+        6.880952381
+        translate)))
+    (message "Passed correct precedence of 4 + 4.5 - (34/(8*3+-3)) = 6.880952381")
+
     (kill-buffer))
-  (message "Passed correct precedence of 2*3+5 => (2*3)+5 = 11")
-
-  ;; Add context-sensitive precedence that should solve cases of -X
-  (setq
-   parser-generator-lr--context-sensitive-precedence-attribute
-   '%prec)
-  (parser-generator-lr-generate-parser-tables)
-
-  ;; TODO Test-cases
-
-  (error "here")
 
   (message "Passed tests for (parser-generator-lr--generate-precedence-tables)"))
 
