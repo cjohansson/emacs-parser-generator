@@ -388,12 +388,12 @@
        (exp "\n" (lambda(args) (nth 0 args))))
       (exp
        NUM
-       (exp "+" exp (lambda(args) (+ (nth 0 args) (nth 2 args))))
-       (exp "-" exp (lambda(args) (- (nth 0 args) (nth 2 args))))
-       (exp "*" exp (lambda(args) (* (nth 0 args) (nth 2 args))))
-       (exp "/" exp (lambda(args) (/ (nth 0 args) (nth 2 args))))
-       ("-" exp %prec NEG (lambda(args) (- (nth 1 args))))
-       (exp "^" exp (lambda(args) (expt (nth 0 args) (nth 2 args))))
+       (exp "+" exp (lambda(args) (+ (float (nth 0 args)) (nth 2 args))))
+       (exp "-" exp (lambda(args) (- (float (nth 0 args)) (nth 2 args))))
+       (exp "*" exp (lambda(args) (* (float (nth 0 args)) (nth 2 args))))
+       (exp "/" exp (lambda(args) (/ (float (nth 0 args)) (nth 2 args))))
+       ("-" exp %prec NEG (lambda(args) (- (float (nth 1 args)))))
+       (exp "^" exp (lambda(args) (expt (float (nth 0 args)) (nth 2 args))))
        ("(" exp ")" (lambda(args) (nth 1 args)))))
      start))
   (parser-generator-process-grammar)
@@ -451,7 +451,7 @@
     (let ((translate (parser-generator-lr-translate)))
       (should
        (equal
-        17
+        17.0
         translate)))
     (kill-buffer))
   (message "Passed correct precedence of 2+3*5 = 2+(3*5) = 17")
@@ -467,7 +467,7 @@
     (let ((translate (parser-generator-lr-translate)))
       (should
        (equal
-        16
+        16.0
         translate)))
     (kill-buffer))
   (message "Passed incorrect precedence of 2*3+5 => 2*(3+5) = 16")
@@ -490,7 +490,7 @@
     (let ((translate (parser-generator-lr-translate)))
       (should
        (equal
-        17
+        17.0
         translate)))
     (message "Passed correct precedence of 2+3*5 => 2+(3*5) = 17")
 
@@ -499,19 +499,108 @@
     (let ((translate (parser-generator-lr-translate)))
       (should
        (equal
-        11
+        11.0
         translate)))
     (message "Passed correct precedence of 2*3+5 => (2*3)+5 = 11")
 
-    ;; TODO Should make this work
+    (kill-region (point-min) (point-max))
+    (insert "2-3*5\n")
+    (let ((translate (parser-generator-lr-translate)))
+      (should
+       (equal
+        -13.0
+        translate)))
+    (message "Passed correct precedence of 2-3*5 => 2-(3*5) = -13")
+
+    (kill-region (point-min) (point-max))
+    (insert "2*3-5\n")
+    (let ((translate (parser-generator-lr-translate)))
+      (should
+       (equal
+        1.0
+        translate)))
+    (message "Passed correct precedence of 2*3-5 => (2*3)-5 = 1")
+
+    (kill-region (point-min) (point-max))
+    (insert "2+10/5\n")
+    (let ((translate (parser-generator-lr-translate)))
+      (should
+       (equal
+        4.0
+        translate)))
+    (message "Passed correct precedence of 2+10/5 => 2+(10/5) = 4")
+
+    (kill-region (point-min) (point-max))
+    (insert "10/5+2\n")
+    (let ((translate (parser-generator-lr-translate)))
+      (should
+       (equal
+        4.0
+        translate)))
+    (message "Passed correct precedence of 10/5+2 => (10/5)+2 = 4")
+
+    (kill-region (point-min) (point-max))
+    (insert "- 55\n")
+    (let ((translate (parser-generator-lr-translate)))
+      (should
+       (equal
+        -55.0
+        translate)))
+    (message "Passed correct precedence of - 55")
+
+    (kill-region (point-min) (point-max))
+    (insert "-56 + 2\n")
+    (let ((translate (parser-generator-lr-translate)))
+      (should
+       (equal
+        -54.0
+        translate)))
+    (message "Passed correct precedence of -56 + 2 = -54")
+
+    (kill-region (point-min) (point-max))
+    (insert "3+-3\n")
+    (let ((translate (parser-generator-lr-translate)))
+      (should
+       (equal
+        0.0
+        translate)))
+    (message "Passed correct precedence of 3+-3 = 0")
+
+    (kill-region (point-min) (point-max))
+    (insert "(8*3+-3)\n")
+    (let ((translate (parser-generator-lr-translate)))
+      (should
+       (equal
+        21.0
+        translate)))
+    (message "Passed correct precedence of (8*3+-3) = 21")
+
+    (kill-region (point-min) (point-max))
+    (insert "34/(8*3+-3)\n")
+    (let ((translate (parser-generator-lr-translate)))
+      (should
+       (equal
+        1.619047619047619
+        translate)))
+    (message "Passed correct precedence of (34/(8*3+-3)) = 1.619047619047619")
+
     (kill-region (point-min) (point-max))
     (insert "4 + 4.5 - (34/(8*3+-3))\n")
     (let ((translate (parser-generator-lr-translate)))
       (should
        (equal
-        6.880952381
+        6.880952380952381
         translate)))
-    (message "Passed correct precedence of 4 + 4.5 - (34/(8*3+-3)) = 6.880952381")
+    (message "Passed correct precedence of 4 + 4.5 - (34/(8*3+-3)) = 6.880952380952381")
+
+    (kill-region (point-min) (point-max))
+    (insert "3 ^ 2\n")
+    (let ((translate (parser-generator-lr-translate)))
+      (should
+       (equal
+        9.0
+        translate)))
+    (message "Passed correct precedence of 3 ^ 2 = 9.0")
 
     (kill-buffer))
 
