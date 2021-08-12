@@ -1143,10 +1143,15 @@
                        b-production-number)
                       (progn
                         (unless
-                            (parser-generator-lr--action-takes-precedence-p
-                             a-follow
-                             a-production-number
-                             b-production-number)
+                            (or
+                             (parser-generator-lr--action-takes-precedence-p
+                              a-follow
+                              a-production-number
+                              b-production-number)
+                             (parser-generator-lr--action-takes-precedence-p
+                              b-follow
+                              b-production-number
+                              a-production-number))
                           (when
                               signal-on-false
                             (error

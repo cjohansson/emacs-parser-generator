@@ -220,6 +220,7 @@
   (setq
    parser-generator-lr--precedence-comparison-function
    (lambda(a-type a-value b-type b-value)
+     (message "(parser-generator-lr--precedence-comparison-function %S %S %S %S)" a-type a-value b-type b-value)
      (cond
 
       ((and
@@ -249,8 +250,7 @@
       ((and
         a-value
         (not b-value))
-       t))
-     nil))
+       t))))
   (parser-generator-lr-generate-parser-tables)
   (should
    (equal
@@ -357,6 +357,7 @@
                 symbol
                 (string-to-number symbol)))
              symbol))))))
+
   (setq
    parser-generator-lr--global-precedence-attributes
    nil)
@@ -396,7 +397,19 @@
        ("(" exp ")" (lambda(args) (nth 1 args)))))
      start))
   (parser-generator-process-grammar)
+
+  (should-error
+   (parser-generator-lr-generate-parser-tables))
+  (message "Grammar caused expected conflict 3")
+
+  (setq
+   parser-generator-lr--global-precedence-attributes
+   '(%left %precedence %right))
+  (setq
+   parser-generator-lr--context-sensitive-precedence-attribute
+   '%prec)
   (parser-generator-lr-generate-parser-tables)
+  (message "Grammar not conflict anymore")
 
   ;; Parse: 1+1*2\n
   ;;
@@ -441,7 +454,7 @@
         17
         translate)))
     (kill-buffer))
-  (message "Passed correct precedence of 2+3*5 = 2+(3*5)")
+  (message "Passed correct precedence of 2+3*5 = 2+(3*5) = 17")
 
   (let ((buffer (generate-new-buffer "*buffer*")))
     (switch-to-buffer buffer)
@@ -457,12 +470,9 @@
         16
         translate)))
     (kill-buffer))
-  (message "Passed incorrect precedence of 2*3+5 => 2*(3+5)")
+  (message "Passed incorrect precedence of 2*3+5 => 2*(3+5) = 16")
 
   ;; Add global precedence, but it should not solve all errors
-  (setq
-   parser-generator-lr--global-precedence-attributes
-   '(%left %precedence %right))
   (setq
    parser-generator--global-declaration
    '(
@@ -472,21 +482,27 @@
      (%right "^")))
   (parser-generator-lr-generate-parser-tables)
 
+    (let ((buffer (generate-new-buffer "*buffer*")))
+    (switch-to-buffer buffer)
+    (insert "2+3*5\n")
+    (let ((translate (parser-generator-lr-translate)))
+      (should
+       (equal
+        17
+        translate)))
+    (kill-buffer))
+  (message "Passed correct precedence of 2+3*5 => 2+(3*5) = 17")
+
   (let ((buffer (generate-new-buffer "*buffer*")))
     (switch-to-buffer buffer)
     (insert "2*3+5\n")
-    (let ((parse (parser-generator-lr-parse)))
-      (should
-       (equal
-        '(1 5 5 5 8 6 4 2)
-        parse)))
     (let ((translate (parser-generator-lr-translate)))
       (should
        (equal
         11
         translate)))
     (kill-buffer))
-  (message "Passed correct precedence of 2*3+5 => (2*3)+5")
+  (message "Passed correct precedence of 2*3+5 => (2*3)+5 = 11")
 
   ;; Add context-sensitive precedence that should solve cases of -X
   (setq
@@ -1625,6 +1641,7 @@
 (defun parser-generator-lr-test ()
   "Run test."
   ;; (setq debug-on-error nil)
+  ;; (setq debug-on-signal nil)
 
   (parser-generator-lr-test--items-for-prefix)
   (parser-generator-lr-test--items-valid-p)
