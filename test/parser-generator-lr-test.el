@@ -219,8 +219,7 @@
    '%prec)
   (setq
    parser-generator-lr--precedence-comparison-function
-   (lambda(a-type a-value b-type b-value)
-     (message "(parser-generator-lr--precedence-comparison-function %S %S %S %S)" a-type a-value b-type b-value)
+   (lambda(a-type a-value _b-type b-value)
      (cond
 
       ((and
@@ -858,6 +857,10 @@
   "Test `parser-generator-lr-parse'."
   (message "Started tests for (parser-generator-lr-parse)")
 
+  (parser-generator-set-look-ahead-number 1)
+  (setq
+   parser-generator--e-identifier
+   'e)
   (parser-generator-set-grammar
    '((Sp S) (a b) ((Sp S) (S (S a S b)) (S e)) Sp))
   (parser-generator-set-look-ahead-number 1)

@@ -564,10 +564,11 @@
                                                  production-number
                                                  (nth 2 b))
                                                 (progn
-                                                  (message
-                                                   "'%s' takes precedence over '%s'"
-                                                   a
-                                                   b)
+                                                  (parser-generator--debug
+                                                   (message
+                                                    "'%s' takes precedence over '%s'"
+                                                    a
+                                                    b))
                                                   ;; Remove b from added-actions
                                                   (let ((new-action-table))
                                                     (dolist (action-item action-table)
@@ -582,10 +583,11 @@
                                                      action-table
                                                      (reverse
                                                       new-action-table))))
-                                              (message
-                                               "'%s' takes precedence over '%s'"
-                                               b
-                                               a)
+                                              (parser-generator--debug
+                                               (message
+                                                "'%s' takes precedence over '%s'"
+                                                b
+                                                a))
                                               ;; Skip rest of this iteration
                                               (setq
                                                skip-symbol
