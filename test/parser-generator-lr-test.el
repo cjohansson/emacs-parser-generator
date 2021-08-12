@@ -219,85 +219,38 @@
    '%prec)
   (setq
    parser-generator-lr--precedence-comparison-function
-   (lambda(a b)
-     (let ((a-max-op)
-           (a-max-value)
-           (b-max-op)
-           (b-max-value))
-       (message "(parser-generator-lr--precedence-comparison-function %S %S)" a b)
-       (when a
-         (let ((a-left (plist-get a '%left))
-               (a-precedence (plist-get a '%precedence))
-               (a-right (plist-get a '%right)))
-           (when (and
-                  a-left
-                  (or
-                   (not a-max-value)
-                   (> a-left a-max-value)))
-             (setq a-max-op '%left)
-             (setq a-max-value a-left))
-           (when (and
-                  a-precedence
-                  (or
-                   (not a-max-value)
-                   (> a-precedence a-max-value)))
-             (setq a-max-op '%precedence)
-             (setq a-max-value a-precedence))
-           (when (and
-                  a-right
-                  (or
-                   (not a-max-value)
-                   (> a-right a-max-value)))
-             (setq a-max-op '%right)
-             (setq a-max-value a-right))))
-       (when b
-         (let ((b-left (plist-get b '%left))
-               (b-precedence (plist-get b '%precedence))
-               (b-right (plist-get b '%right)))
-           (when (and
-                  b-left
-                  (or
-                   (not b-max-value)
-                   (> b-left b-max-value)))
-             (setq b-max-op '%left)
-             (setq b-max-value b-left))
-           (when (and
-                  b-precedence
-                  (or
-                   (not b-max-value)
-                   (> b-precedence b-max-value)))
-             (setq b-max-op '%precedence)
-             (setq b-max-value b-precedence))
-           (when (and
-                  b-right
-                  (or
-                   (not b-max-value)
-                   (> b-right b-max-value)))
-             (setq b-max-op '%right)
-             (setq b-max-value b-right))))
+   (lambda(a-type a-value b-type b-value)
+     (cond
+
+      ((and
+        a-value
+        b-value)
        (cond
-        ((and
-          a-max-value
-          (or
-           (not b-max-value)
-           (> a-max-value b-max-value)))
+        ((> a-value b-value)
          t)
-        ((and
-          b-max-value
-          (or
-           (not a-max-value)
-           (> b-max-value a-max-value)))
+
+        ((< a-value b-value)
          nil)
-        ((and
-          a-max-value
-          b-max-value
-          (= a-max-value b-max-value))
+
+        ((= a-value b-value)
+
          (cond
-          ((or
-            (equal a-max-op '%left)
-            (equal a-max-op '%precedence))
+          ((equal a-type '%left)
            t)
-          (t nil)))))))
+
+          ((equal a-type '%right)
+           nil)
+
+          ((equal a-type '%precedence)
+           t))
+
+         )))
+
+      ((and
+        a-value
+        (not b-value))
+       t))
+     nil))
   (parser-generator-lr-generate-parser-tables)
   (should
    (equal

@@ -436,7 +436,7 @@
                                                      t))
                                                 (let ((action-item
                                                        (list
-                                                         eff-item
+                                                        eff-item
                                                         'shift)))
                                                   ;; Add symbol to hash-table to
                                                   ;; enable conflict resolution
@@ -444,7 +444,7 @@
                                                          (format
                                                           "%s-%S"
                                                           goto-index
-                                                           eff-item)))
+                                                          eff-item)))
                                                     (unless
                                                         (gethash
                                                          index-hash-key
@@ -541,7 +541,7 @@
                                          (format
                                           "%s-%S"
                                           goto-index
-                                           u)))
+                                          u)))
 
                                     ;; Check if we have an action on this symbol already
                                     (when
@@ -551,7 +551,7 @@
                                       (if
                                           (and
                                            parser-generator-lr--precedence-comparison-function
-                                           parser-generator-lr--global-precedence-table)
+                                           parser-generator-lr--global-precedence-attributes)
                                           (let ((a
                                                  (list u 'reduce production-number))
                                                 (b
@@ -560,15 +560,14 @@
                                                   index-symbols)))
                                             (if
                                                 (parser-generator-lr--action-takes-precedence-p
-                                                 (car (last B))
                                                  (car (last u))
                                                  production-number
                                                  (nth 2 b))
                                                 (progn
-                                                   (message
-                                                    "'%s' takes precedence over '%s'"
-                                                    a
-                                                    b)
+                                                  (message
+                                                   "'%s' takes precedence over '%s'"
+                                                   a
+                                                   b)
                                                   ;; Remove b from added-actions
                                                   (let ((new-action-table))
                                                     (dolist (action-item action-table)
@@ -583,10 +582,10 @@
                                                      action-table
                                                      (reverse
                                                       new-action-table))))
-                                               (message
-                                                "'%s' takes precedence over '%s'"
-                                                b
-                                                a)
+                                              (message
+                                               "'%s' takes precedence over '%s'"
+                                               b
+                                               a)
                                               ;; Skip rest of this iteration
                                               (setq
                                                skip-symbol
@@ -624,7 +623,7 @@
                                             (nth (1- (length u)) u)))
                                           (let ((action-item
                                                  (list
-                                                   u
+                                                  u
                                                   'accept)))
                                             (puthash
                                              index-hash-key
@@ -646,7 +645,7 @@
                                         ;; save reduction action in action table
                                         (let ((action-item
                                                (list
-                                                 u
+                                                u
                                                 'reduce
                                                 production-number)))
                                           (puthash
@@ -671,12 +670,7 @@
                      nil)))
                   (setq
                    lr-item-index
-                   (1+ lr-item-index)))
-
-                ;; TODO Handle case here were we have a conflict
-                ;; TODO shift/reduce or reduce/reduce
-
-                ))))
+                   (1+ lr-item-index)))))))
         (parser-generator--debug
          (message "%s actions %s" goto-index action-table))
         (when action-table
@@ -1149,7 +1143,8 @@
                        b-production-number)
                       (progn
                         (unless
-                            (parser-generator-lr--conflict-can-be-resolved-by-context
+                            (parser-generator-lr--action-takes-precedence-p
+                             a-follow
                              a-production-number
                              b-production-number)
                           (when
@@ -1181,131 +1176,60 @@
       (setq set-index (1+ set-index)))
     valid-p))
 
-(defun parser-generator-lr--action-takes-precedence-p (a-symbol b-symbol a-production-number &optional b-production-number)
-  "Return t if action of A-SYMBOL at A-PRODUCTION-NUMBER takes precedence over B-SYMBOL optionally at B-PRODUCTION-NUMBER."
-  (let ((a-precedence-value
-         (gethash
-          a-symbol
-          parser-generator-lr--global-precedence-table))
-        (b-precedence-value
-         (gethash
-          b-symbol
-          parser-generator-lr--global-precedence-table)))
+(defun parser-generator-lr--action-takes-precedence-p (symbol a-production-number &optional b-production-number)
+  "Return t if reduce action of SYMBOL at A-PRODUCTION-NUMBER takes precedence over shift action.  Optionally is b is a reduction at at B-PRODUCTION-NUMBER."
+  (let* ((a-precedence-type
+          (parser-generator-lr--get-symbol-precedence-type
+           symbol))
+         (a-precedence-value
+          (parser-generator-lr--get-symbol-precedence-value
+           symbol))
+         (b-precedence-type
+          a-precedence-type)
+         (b-precedence-value
+          a-precedence-value))
 
     ;; Context-sensitive precedence takes precedence over
     ;; global precedence
-    (let ((a-attributes
-           (gethash
-            a-production-number
-            parser-generator--table-productions-attributes)))
-      (when a-attributes
-        (let ((a-precedence-symbol
-               (plist-get
-                a-attributes
-                parser-generator-lr--context-sensitive-precedence-attribute)))
-          (when a-precedence-symbol
-            (setq
-             a-precedence-value
-             (gethash
-              a-precedence-symbol
-              parser-generator-lr--global-precedence-table))))))
+    (let ((a-production-precedence-value
+           (parser-generator-lr--get-production-number-precedence-value
+            a-production-number))
+          (a-production-precedence-type
+           (parser-generator-lr--get-production-number-precedence-type
+            a-production-number)))
+      (when (and
+             a-production-precedence-type
+             a-production-precedence-value)
+        (setq
+         a-precedence-type
+         a-production-precedence-type)
+        (setq
+         a-precedence-value
+         a-production-precedence-value)))
 
     (when b-production-number
-      (let ((b-attributes
-             (gethash
-              b-production-number
-              parser-generator--table-productions-attributes)))
-        (when b-attributes
-          (let ((b-precedence-symbol
-                 (plist-get
-                  b-attributes
-                  parser-generator-lr--context-sensitive-precedence-attribute)))
-            (when b-precedence-symbol
-              (setq
-               b-precedence-value
-               (gethash
-                b-precedence-symbol
-                parser-generator-lr--global-precedence-table)))))))
+      (let ((b-production-precedence-value
+             (parser-generator-lr--get-production-number-precedence-value
+              b-production-number))
+            (b-production-precedence-type
+             (parser-generator-lr--get-production-number-precedence-type
+              b-production-number)))
+        (when (and
+               b-production-precedence-type
+               b-production-precedence-value)
+          (setq
+           b-precedence-type
+           b-production-precedence-type)
+          (setq
+           b-precedence-value
+           b-production-precedence-value))))
 
     (funcall
      parser-generator-lr--precedence-comparison-function
+     a-precedence-type
      a-precedence-value
+     b-precedence-type
      b-precedence-value)))
-
-(defun parser-generator-lr--conflict-can-be-resolved-by-context (a-production-number b-production-number)
-  "Return whether a conflict can be solved by context between A-PRODUCTION-NUMBER and B-PRODUCTION-NUMBER."
-  (let ((can-be-resolved)
-        (a-precedence-value)
-        (b-precedence-value))
-    (when
-        ;; Precedence comparison function exists?
-        (and
-         parser-generator-lr--precedence-comparison-function
-         (functionp
-          parser-generator-lr--precedence-comparison-function)
-         parser-generator-lr--global-precedence-attributes
-         parser-generator-lr--context-sensitive-precedence-attribute)
-
-      ;; Try to find precedence data for A
-      (when a-production-number
-        (let ((a-attributes
-               (gethash
-                a-production-number
-                parser-generator--table-productions-attributes)))
-          (when a-attributes
-            (let ((a-precedence-symbol
-                   (plist-get
-                    a-attributes
-                    parser-generator-lr--context-sensitive-precedence-attribute)))
-              (when a-precedence-symbol
-                (setq
-                 a-precedence-value
-                 (gethash
-                  a-precedence-symbol
-                  parser-generator-lr--global-precedence-table)))))))
-
-      ;; Try to find precedence data for B
-      (when b-production-number
-        (let ((b-attributes
-               (gethash
-                b-production-number
-                parser-generator--table-productions-attributes)))
-          (when b-attributes
-            (let ((b-precedence-symbol
-                   (plist-get
-                    b-attributes
-                    parser-generator-lr--context-sensitive-precedence-attribute)))
-              (when b-precedence-symbol
-                (setq
-                 b-precedence-value
-                 (gethash
-                  b-precedence-symbol
-                  parser-generator-lr--global-precedence-table)))))))
-
-      (when (or
-             a-precedence-value
-             b-precedence-value)
-        (let (
-              (comparison-a-b
-               (funcall
-                parser-generator-lr--precedence-comparison-function
-                a-precedence-value
-                b-precedence-value))
-              (comparison-b-a
-               (funcall
-                parser-generator-lr--precedence-comparison-function
-                b-precedence-value
-                a-precedence-value)))
-          (unless
-              (equal
-               comparison-a-b
-               comparison-b-a)
-            (setq
-             can-be-resolved
-             t))))
-
-      )
-    can-be-resolved))
 
 ;; Algorithm 5.8, p. 386
 (defun parser-generator-lr--items-for-prefix (γ)
