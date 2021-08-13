@@ -27,6 +27,7 @@ Example with grammar with production: S -> SaSb and S is non-terminal and a, b a
 You can set global symbol operator precedence and also context-sensitive precedence, like in GNU Bison. Example
 
 ``` emacs-lisp
+(require 'parser-generator-lr)
 (setq
    parser-generator--global-attributes
    '(%left %precedence %right))
@@ -63,6 +64,7 @@ You can set global symbol operator precedence and also context-sensitive precede
 Calculate the set of LR items valid for any viable prefix S.
 
 ``` emacs-lisp
+(require 'parser-generator-lr)
 (require 'ert)
 
 (parser-set-grammar '((Sp S) (a b) ((Sp S) (S (S a S b)) (S e)) Sp))
@@ -276,5 +278,6 @@ The export should be executed after a parser has been generated, example:
       (message "Passed parse for exported parser")))
 ```
 
+[Example LR(k) Infix Calculator](../LRk-Infix-Calculator.md)
 
 [Back to syntax analysis](../Syntax-Analysis.md)

@@ -26,6 +26,8 @@ Example with grammar with production: S -> SaSb and S is non-terminal and a, b a
 You can set global symbol operator precedence and also context-sensitive precedence, like in GNU Bison. Example
 
 ``` emacs-lisp
+(require 'parser-generator-lr)
+
 (setq
    parser-generator--global-attributes
    '(%left %precedence %right))
@@ -66,42 +68,53 @@ Perform a right-parse of input-stream. Example from [Wikipedia](https://en.wikip
 (require 'ert)
 
 (let ((buffer (generate-new-buffer "*a*")))
-  (switch-to-buffer buffer)
-  (kill-region (point-min) (point-max))
-  (insert "1+1")
+    (switch-to-buffer buffer)
+    (kill-region (point-min) (point-max))
+    (insert "1+1")
 
-  (parser-generator-set-grammar
-   '((S E B) ("*" "+" "0" "1") ((S (E $)) (E (E "*" B) (E "+" B) (B)) (B ("0") ("1"))) S))
-  (parser-generator-set-look-ahead-number 0)
-  (parser-generator-process-grammar)
-  (parser-generator-lr-generate-parser-tables)
+    (parser-generator-set-grammar
+     '((S E B) ("*" "+" "0" "1") ((S (E $)) (E (E "*" B) (E "+" B) (B)) (B ("0") ("1"))) S))
+    (parser-generator-set-look-ahead-number 0)
+    (parser-generator-process-grammar)
+    (parser-generator-lr-generate-parser-tables)
 
-  ;; Setup lex-analyzer
-  (setq
-   parser-generator-lex-analyzer--function
-   (lambda (index)
-     (with-current-buffer buffer
-       (when (<= (+ index 1) (point-max))
-         (let ((start index)
-               (end (+ index 1)))
-           (let ((token (buffer-substring-no-properties start end)))
-             `(,token ,start . ,end)))))))
-  (setq
-   parser-generator-lex-analyzer--get-function
-   (lambda (token)
-     (with-current-buffer buffer
-       (let ((start (car (cdr token)))
-             (end (cdr (cdr token))))
-         (when (<= end (point-max))
-           (buffer-substring-no-properties
-            start
-            end))))))
+    ;; Setup lex-analyzer
+    (setq
+     parser-generator-lex-analyzer--function
+     (lambda (index)
+       (with-current-buffer buffer
+         (when (<= (+ index 1) (point-max))
+           (let ((start index)
+                 (end (+ index 1)))
+             (let ((token (buffer-substring-no-properties start end)))
+               `(,token ,start . ,end)))))))
+    (setq
+     parser-generator-lex-analyzer--get-function
+     (lambda (token)
+       (with-current-buffer buffer
+         (let ((start (car (cdr token)))
+               (end (cdr (cdr token))))
+           (when (<= end (point-max))
+             (buffer-substring-no-properties
+              start
+              end))))))
 
-  (should
-   (equal
-    '(5 3 5 2)
-    (parser-generator-lr-parse)))
-  (message "Passed parse with k = 0 # 1")
+    (should
+     (equal
+      '(5 3 5 2)
+      (parser-generator-lr-parse)))
+    (message "Passed parse with k = 0 # 1")
+
+    (switch-to-buffer buffer)
+    (kill-region (point-min) (point-max))
+    (insert "1+1*1")
+
+    (should
+     (equal
+      '(5 3 5 2 5 1)
+      (parser-generator-lr-parse)))
+    (message "Passed parse with k = 0 # 2")
+    (kill-buffer))
 ```
 
 ## Translate
@@ -109,42 +122,59 @@ Perform a right-parse of input-stream. Example from [Wikipedia](https://en.wikip
 Each production RHS can optionally contain a lambda-expression that will be called if specified when a reduction is made, example:
 
 ```emacs-lisp
+(require 'parser-generator-lr)
+(require 'ert)
+
 (let ((buffer (generate-new-buffer "*a*")))
-  (switch-to-buffer buffer)
-  (kill-region (point-min) (point-max))
-  (insert "1+1")
+    (switch-to-buffer buffer)
+    (kill-region (point-min) (point-max))
+    (insert "1+1")
 
-  (parser-generator-set-grammar
-   '((S E B) ("*" "+" "0" "1") ((S (E $)) (E (E "*" B (lambda(args) (let ((ret (list (nth 0 args)))) (when (nth 2 args) (setq ret (append ret `(" x " ,(nth 2 args))))) ret))) (E "+" B (lambda(args) (let ((ret (list (nth 0 args)))) (when (nth 2 args) (setq ret (append ret `(" . " ,(nth 2 args))))) ret))) (B)) (B ("0") ("1"))) S))
-  (parser-generator-set-look-ahead-number 0)
-  (parser-generator-process-grammar)
-  (parser-generator-lr-generate-parser-tables)
+    (parser-generator-set-grammar
+     '(
+       (S E B)
+       ("*" "+" "0" "1")
+       (
+        (S (E $))
+        (E
+         (E "*" B (lambda(args) (let ((ret (list (nth 0 args)))) (when (nth 2 args) (setq ret (append ret `(" x " ,(nth 2 args))))) ret)))
+         (E "+" B (lambda(args) (let ((ret (list (nth 0 args)))) (when (nth 2 args) (setq ret (append ret `(" . " ,(nth 2 args))))) ret)))
+         (B)
+         )
+        (B
+         ("0")
+         ("1"))
+        )
+       S))
+    (parser-generator-set-look-ahead-number 0)
+    (parser-generator-process-grammar)
+    (parser-generator-lr-generate-parser-tables)
 
-  ;; Setup lex-analyzer
-  (setq
-   parser-generator-lex-analyzer--function
-   (lambda (index)
-     (with-current-buffer buffer
-       (when (<= (+ index 1) (point-max))
-         (let ((start index)
-               (end (+ index 1)))
-           (let ((token (buffer-substring-no-properties start end)))
-             `(,token ,start . ,end)))))))
-  (setq
-   parser-generator-lex-analyzer--get-function
-   (lambda (token)
-     (with-current-buffer buffer
-       (let ((start (car (cdr token)))
-             (end (cdr (cdr token))))
-         (when (<= end (point-max))
-           (buffer-substring-no-properties start end))))))
+    ;; Setup lex-analyzer
+    (setq
+     parser-generator-lex-analyzer--function
+     (lambda (index)
+       (with-current-buffer buffer
+         (when (< index (point-max))
+           (let ((start index)
+                 (end (+ index 1)))
+             (let ((token (buffer-substring-no-properties start end)))
+               `(,token ,start . ,end)))))))
+    (setq
+     parser-generator-lex-analyzer--get-function
+     (lambda (token)
+       (with-current-buffer buffer
+         (let ((start (car (cdr token)))
+               (end (cdr (cdr token))))
+           (when (<= end (point-max))
+             (buffer-substring-no-properties start end))))))
 
-  (should
-   (equal
-    '((("1")) " . " ("1"))
-    (parser-generator-lr-translate)))
-  (message "Passed translation k=0")
-  (kill-buffer))
+    (should
+     (equal
+      '("1" " . " "1")
+      (parser-generator-lr-translate)))
+    (message "Passed translation k=0")
+    (kill-buffer))
 ```
 
 ## Export
@@ -152,6 +182,9 @@ Each production RHS can optionally contain a lambda-expression that will be call
 The export should be executed after a parser has been generated, example:
 
 ```emacs-lisp
+(require 'parser-generator-lr)
+(require 'ert)
+
 (let ((buffer (generate-new-buffer "*a*")))
   (switch-to-buffer buffer)
   (kill-region (point-min) (point-max))

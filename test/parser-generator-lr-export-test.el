@@ -250,6 +250,64 @@
           (fa-translate))))
       (message "Passed translate for exported parser")))
 
+
+  ;; Test exported LR(0) Parser
+  (generate-new-buffer "*a*")
+  (switch-to-buffer "*a*")
+  (kill-region (point-min) (point-max))
+  (insert "1+1")
+
+  (parser-generator-set-grammar
+   '((S E B) ("*" "+" "0" "1") ((S (E $)) (E (E "*" B) (E "+" B) (B)) (B ("0") ("1"))) S))
+  (parser-generator-set-look-ahead-number 0)
+  (parser-generator-process-grammar)
+  (parser-generator-lr-generate-parser-tables)
+
+  ;; Setup lex-analyzer
+  (setq
+   parser-generator-lex-analyzer--function
+   (lambda (index)
+     (with-current-buffer "*a*"
+       (when (<= (+ index 1) (point-max))
+         (let ((start index)
+               (end (+ index 1)))
+           (let ((token (buffer-substring-no-properties start end)))
+             `(,token ,start . ,end)))))))
+  (setq
+   parser-generator-lex-analyzer--get-function
+   (lambda (token)
+     (with-current-buffer "*a*"
+       (let ((start (car (cdr token)))
+             (end (cdr (cdr token))))
+         (when (<= end (point-max))
+           (buffer-substring-no-properties
+            start
+            end))))))
+
+  (should
+   (equal
+    '(5 3 5 2)
+    (parser-generator-lr-parse)))
+
+  ;; Export parser
+  (let ((export (parser-generator-lr-export-to-elisp "e--")))
+
+    (with-temp-buffer
+      (insert export)
+      (eval-buffer)
+      (should
+       (equal
+        t
+        (fboundp 'e---parse)))
+
+      (when (fboundp 'e---parse)
+        (should
+         (equal
+          '(5 3 5 2)
+          (e---parse))))
+      (message "Passed parse for exported LR(0) parser")))
+  (kill-buffer)
+
   (message "Passed parse tests"))
 
 (defun parser-generator-lr-export-test-translate ()
