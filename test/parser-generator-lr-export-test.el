@@ -18,7 +18,15 @@
     (switch-to-buffer buffer)
     (insert "aabb")
 
-    (parser-generator-set-grammar '((Sp S) ("a" "b") ((Sp S) (S (S "a" S "b" (lambda(args) (let ((list "")) (dolist (item args) (when item (setq list (format "%s%s" item list)))) list)))) (S e)) Sp))
+    (parser-generator-set-grammar
+     '(
+       (Sp S)
+       ("a" "b")
+       (
+        (Sp S)
+        (S (S "a" S "b" (lambda(args) (let ((list "")) (dolist (item args) (when item (setq list (format "%s%s" item list)))) list))))
+        (S e)
+        ) Sp))
     (parser-generator-set-look-ahead-number 1)
     (parser-generator-process-grammar)
     (parser-generator-lr-generate-parser-tables)
@@ -48,7 +56,7 @@
       (parser-generator-lr-parse)))
     (should
      (equal
-      "bbaaba"
+      "bbaa"
       (parser-generator-lr-translate)))
 
     ;; Export parser
@@ -76,7 +84,7 @@
       (when (fboundp 'ba-translate)
         (should
          (equal
-          "bbaaba"
+          "bbaa"
           (ba-translate))))))
 
   (should
@@ -216,7 +224,7 @@
 
     (should
      (equal
-      "bbaaba"
+      "bbaa"
       (parser-generator-lr-translate)))
 
     (message "Passed translate before export")
@@ -236,7 +244,7 @@
       (when (fboundp 'fa-translate)
         (should
          (equal
-          "bbaaba"
+          "bbaa"
           (fa-translate))))
       (message "Passed translate for exported parser")))
 
@@ -276,7 +284,7 @@
 
     (should
      (equal
-      "bbaaba"
+      "bbaa"
       (parser-generator-lr-translate)))
 
     (message "Passed translate before export")
@@ -294,7 +302,7 @@
       (when (fboundp 'fa-translate)
         (should
          (equal
-          "bbaaba"
+          "bbaa"
           (fa-translate))))
       (message "Passed translate for exported parser")))
 
