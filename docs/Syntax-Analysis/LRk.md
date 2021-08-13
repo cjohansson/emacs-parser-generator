@@ -28,6 +28,7 @@ You can set global symbol operator precedence and also context-sensitive precede
 
 ``` emacs-lisp
 (require 'parser-generator-lr)
+
 (setq
    parser-generator--global-attributes
    '(%left %precedence %right))
@@ -82,6 +83,7 @@ Calculate the set of LR items valid for any viable prefix S.
 ```
 
 ``` emacs-lisp
+(require 'parser-generator-lr)
 (require 'ert)
 
 (parser-set-grammar '((Sp S) (a b) ((Sp S) (S (S a S b)) (S e)) Sp))
@@ -134,6 +136,9 @@ Perform a right-parse of input-stream.
 Each production RHS can optionally contain a lambda-expression that will be called if specified when a reduction is made, example:
 
 ```emacs-lisp
+(require 'parser-generator-lr)
+(require 'ert)
+
 (let ((buffer (generate-new-buffer "*a*")))
     (switch-to-buffer buffer)
     (insert "if (a) { b; }")
@@ -229,6 +234,9 @@ Each production RHS can optionally contain a lambda-expression that will be call
 The export should be executed after a parser has been generated, example:
 
 ```emacs-lisp
+(require 'parser-generator-lr)
+(require 'ert)
+
   ;; Generate parser
   (parser-generator-set-grammar
    '((Sp S) (a b) ((Sp S) (S (S a S b)) (S e)) Sp))
@@ -278,6 +286,6 @@ The export should be executed after a parser has been generated, example:
       (message "Passed parse for exported parser")))
 ```
 
-[Example LR(k) Infix Calculator](../LRk-Infix-Calculator.md)
+[Example LR(k) Infix Calculator](LRk-Infix-Calculator.md)
 
 [Back to syntax analysis](../Syntax-Analysis.md)

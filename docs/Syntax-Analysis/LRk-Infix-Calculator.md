@@ -116,5 +116,6 @@ Example reproduced from GNU Bison manual [Infix Notation Calculator](https://www
       (kill-buffer))
 ```
 
-[Back to LR(k) Parser](../LRk.md)
+[Back to LR(k) Parser](LRk.md)
+
 [Back to syntax analysis](../Syntax-Analysis.md)
