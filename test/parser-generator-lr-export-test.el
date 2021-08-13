@@ -176,22 +176,22 @@
   (message "Passed parse before export")
 
   ;; Export parser
-  (let ((export (parser-generator-lr-export-to-elisp "e--")))
+  (let ((export (parser-generator-lr-export-to-elisp "e")))
 
-    (parser-generator--debug
-     (message "export:\n%s\n" export))
+    (message "export:\n%S\n" export)
+
     (with-temp-buffer
       (insert export)
       (eval-buffer)
       (should
        (equal
         t
-        (fboundp 'e---parse)))
-      (when (fboundp 'e---parse)
+        (fboundp 'e-parse)))
+      (when (fboundp 'e-parse)
         (should
          (equal
           '(2 2 2 1 1)
-          (e---parse))))
+          (e-parse))))
       (message "Passed parse for exported parser")))
 
   (let ((buffer (generate-new-buffer "*a*")))
@@ -232,6 +232,7 @@
     ;; Export parser
     (let ((export (parser-generator-lr-export-to-elisp "fa")))
       (with-temp-buffer
+        (message "Export:\n%S" export)
         (insert export)
         (eval-buffer)
         (should

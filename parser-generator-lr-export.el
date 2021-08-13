@@ -52,73 +52,73 @@
        (format
         ";;; %s.el --- Exported Emacs Parser Generator -*- lexical-binding: t -*-\n\n\n"
         namespace))
-      (insert ";;; Commentary:\n\n\n;;; Code:\n\n\n")
+      (insert ";;; Commentary:\n\n\n;;; Code:\n\n")
 
-      (insert ";;; Constants:\n\n\n")
+      (insert "\n;;; Constants:\n\n\n")
 
       ;; Action-tables
       (insert
        (format
-        "(defconst\n  %s--action-tables\n  %S\n  \"Generated action-tables.\")\n\n"
+        "(defconst\n  %s--action-tables\n  %S\n  \"The generated action-tables.\")\n\n"
         namespace
         parser-generator-lr--action-tables))
       (insert
        (format
-        "(defconst\n  %s--distinct-action-tables\n  %S\n  \"Generated distinct action-tables.\")\n\n"
+        "(defconst\n  %s--distinct-action-tables\n  %S\n  \"The generated distinct action-tables.\")\n\n"
         namespace
         parser-generator-lr--distinct-action-tables))
 
       ;; Goto-tables
       (insert
        (format
-        "(defconst\n  %s--goto-tables\n  %S\n  \"Generated goto-tables.\")\n\n"
+        "(defconst\n  %s--goto-tables\n  %S\n  \"The generated goto-tables.\")\n\n"
         namespace
         parser-generator-lr--goto-tables))
       (insert
        (format
-        "(defconst\n  %s--distinct-goto-tables\n  %S\n  \"Generated distinct goto-tables.\")\n\n"
+        "(defconst\n  %s--distinct-goto-tables\n  %S\n  \"The generated distinct goto-tables.\")\n\n"
         namespace
         parser-generator-lr--distinct-goto-tables))
 
       ;; Table production-number
       (insert
        (format
-        "(defconst\n  %s--table-productions-number-reverse\n  %S\n  \"Hash-table indexed by production-number and value is production.\")\n\n"
+        "(defconst\n  %s--table-productions-number-reverse\n  %S\n  \"The hash-table indexed by production-number and value is production.\")\n\n"
         namespace
         parser-generator--table-productions-number-reverse))
 
       ;; Table look-aheads
       (insert
        (format
-        "(defconst\n  %s--table-look-aheads\n  %S\n  \"Hash-table of valid look-aheads.\")\n\n"
+        "(defconst\n  %s--table-look-aheads\n  %S\n  \"The hash-table of valid look-aheads.\")\n\n"
         namespace
         parser-generator--table-look-aheads-p))
 
       ;; Table terminals
       (insert
        (format
-        "(defconst\n  %s--table-terminal-p\n  %S\n  \"Hash-table of valid terminals.\")\n\n"
+        "(defconst\n  %s--table-terminal-p\n  %S\n  \"The hash-table of valid terminals.\")\n\n"
         namespace
         parser-generator--table-terminal-p))
 
       ;; Table non-terminals
       (insert
        (format
-        "(defconst\n  %s--table-non-terminal-p\n  %S\n  \"Hash-table of valid non-terminals.\")\n\n"
+        "(defconst\n  %s--table-non-terminal-p\n  %S\n  \"The hash-table of valid non-terminals.\")\n\n"
         namespace
         parser-generator--table-non-terminal-p))
 
       ;; Table translations
       (insert
        (format
-        "(defconst\n  %s--table-translations\n  %S\n  \"Hash-table of translations.\")\n\n"
+        "(defconst\n  %s--table-translations\n  %S\n  \"The hash-table of translations.\")\n\n"
         namespace
         parser-generator--table-translations))
 
       ;; Lex-Analyzer Get Function
       (insert
        (format
-        "(defconst\n  %s-lex-analyzer--get-function\n  (lambda %S %S)\n  \"Lex-Analyzer Get Function.\")\n\n"
+        "(defconst\n  %s-lex-analyzer--get-function\n  (lambda %S %S)\n  \"The lex-analyzer get function.\")\n\n"
         namespace
         (nth 2 parser-generator-lex-analyzer--get-function)
         (nth 3 parser-generator-lex-analyzer--get-function)))
@@ -126,7 +126,7 @@
       ;; Lex-Analyzer Function
       (insert
        (format
-        "(defconst\n  %s-lex-analyzer--function\n  (lambda %S %S)\n  \"Lex-Analyzer Function.\")\n\n"
+        "(defconst\n  %s-lex-analyzer--function\n  (lambda %S %S)\n  \"The lex-analyzer function.\")\n\n"
         namespace
         (nth 2 parser-generator-lex-analyzer--function)
         (nth 3 parser-generator-lex-analyzer--function)))
@@ -143,40 +143,40 @@
             (nth 2 parser-generator-lex-analyzer--reset-function)
             (nth 3 parser-generator-lex-analyzer--reset-function)))
         (insert "nil\n"))
-      (insert "  \"Lex-Analyzer Reset Function.\")\n\n")
+      (insert "  \"The lex-analyzer reset function.\")\n\n")
 
       ;; E-identifier
       (insert
        (format
-        "(defconst\n  %s--e-identifier\n  '%S\n  \"e-identifier\")\n\n"
+        "(defconst\n  %s--e-identifier\n  '%S\n  \"The e-identifier.\")\n\n"
         namespace
         parser-generator--e-identifier))
 
       ;; EOF-identifier
       (insert
        (format
-        "(defconst\n  %s--eof-identifier\n  '%S\n  \"EOF-identifier.\")\n\n"
+        "(defconst\n  %s--eof-identifier\n  '%S\n  \"The end-of-file-identifier.\")\n\n"
         namespace
         parser-generator--eof-identifier))
 
       ;; Look-ahead number
       (insert
        (format
-        "(defconst\n  %s--look-ahead-number\n  %S\n  \"Look-ahead number.\")\n\n"
+        "(defconst\n  %s--look-ahead-number\n  %S\n  \"The look-ahead number.\")\n\n"
         namespace
         parser-generator--look-ahead-number))
 
-      (insert "\n;;; Variables:\n\n\n")
+      (insert "\n;;; Variables:\n\n")
 
       ;; Lex-analyzer index
       (insert
        (format
-        "(defvar-local\n  %s-lex-analyzer--index\n  0\n  \"Current index of lex-analyzer.\")\n\n"
+        "(defvar-local\n  %s-lex-analyzer--index\n  0\n  \"The current index of the lex-analyzer.\")\n\n"
         namespace))
 
-      (insert "\n;;; Functions:\n\n\n")
+      (insert "\n;;; Functions:\n\n")
 
-      (insert ";;; Lex-Analyzer:\n\n\n")
+      (insert "\n;;; Lex-Analyzer:\n\n")
 
       ;; Lex-Analyzer Get Function
       (insert
@@ -196,10 +196,10 @@
         namespace
         namespace))
       (insert "
-      (error
+      (error (error
         \"Lex-analyze failed to get token meta-data of %s, error: %s\"
         token
-        (car (cdr error))))
+        (car (cdr error)))))
     (unless meta-information
       (error \"Could not find any token meta-information for: %s\" token))
     meta-information))\n")
@@ -309,7 +309,7 @@
     (nreverse tokens)))\n"
                       namespace))
 
-      (insert "\n;;; Syntax-Analyzer / Parser:\n\n\n");
+      (insert "\n\n;;; Syntax-Analyzer / Parser:\n\n");
 
       ;; Get grammar production by number
       (insert
@@ -443,6 +443,16 @@
          input-tape-index)
       (%s-lex-analyzer--reset))
 
+    ;; Make sure tables exists
+    (unless %s--action-tables
+      (error \"Missing action-tables for grammar!\"))
+    (unless %s--distinct-action-tables
+      (error \"Missing distinct GOTO-tables for grammar!\"))
+    (unless %s--goto-tables
+      (error \"Missing GOTO-tables for grammar!\"))
+    (unless %s--distinct-goto-tables
+      (error \"Missing distinct GOTO-tables for grammar!\"))
+
     (let ((accept)
           (pre-index 0))
       (while (not accept)
@@ -506,7 +516,14 @@
                namespace
                namespace
                namespace
+               namespace
+               namespace
+               namespace
+               namespace
+               namespace
+               namespace
                namespace))
+
       (insert "
               (unless action-table
                 (error
@@ -626,7 +643,6 @@
                            %s-lex-analyzer--index
                            possible-look-aheads))
 
-                        ;; Maybe push both tokens here?
                         (push (car a-full) pushdown-list)
                         (push next-index pushdown-list)
                         (%s-lex-analyzer--pop-token))))))
@@ -667,8 +683,10 @@
                               (setq popped-items (1+ popped-items)))))
                         (push production-number output)
 
-                        (let ((popped-items-meta-contents)
-                              (all-expanded t))
+                        (let ((popped-items-meta-contents))
+                          (setq
+                           popped-items-contents
+                           (reverse popped-items-contents))
                           ;; Collect arguments for translation
                           (dolist (popped-item popped-items-contents)
                             (if (and
@@ -678,96 +696,7 @@
                                 (push
                                  (%s-lex-analyzer--get-function
                                   popped-item)
-                                 popped-items-meta-contents)
-                              (if (gethash
-                                   popped-item
-                                   translation-symbol-table)
-                                  (push
-                                   (gethash
-                                    popped-item
-                                    translation-symbol-table)
-                                   popped-items-meta-contents)
-                                (setq
-                                 all-expanded
-                                 nil)
-                                (push
-                                 nil
-                                 popped-items-meta-contents))))
-                          (setq
-                           popped-items-meta-contents
-                           (nreverse popped-items-meta-contents))
-
-                          ;; Perform translation at reduction if specified
-                          (if
-                              (%s--get-grammar-translation-by-number
-                               production-number)
-                              (let ((partial-translation
-                                     (funcall
-                                      (%s--get-grammar-translation-by-number
-                                       production-number)
-                                      popped-items-meta-contents)))
-                                (puthash
-                                 production-lhs
-                                 partial-translation
-                                 translation-symbol-table)
-                                (setq
-                                 translation
-                                 partial-translation))
-
-                            ;; When no translation is specified just use arguments as translation
-                            (when all-expanded
-                              (let ((partial-translation
-                                     popped-items-meta-contents))
-                                (puthash
-                                 production-lhs
-                                 partial-translation
-                                 translation-symbol-table)
-                                (setq
-                                 translation
-                                 partial-translation)))))
-
-                        (let ((new-table-index (car pushdown-list)))
-                            (let ((goto-table-distinct-index
-                                   (gethash
-                                    new-table-index
-                                    %s--goto-tables)))
-                              (let ((goto-table
-                                     (gethash
-                                      goto-table-distinct-index
-                                      %s--distinct-goto-tables)))
-                            (let ((goto-table-length
-                                   (length goto-table))
-                                  (goto-index 0)
-                                  (searching-match t)
-                                  (next-index))
-
-                              (while (and
-                                      searching-match
-                                      (< goto-index goto-table-length))
-                                (let ((goto-item (nth goto-index goto-table)))
-                                  (let ((goto-item-symbol (list (car goto-item)))
-                                        (goto-item-next-index (car (cdr goto-item))))
-
-                                    (when (equal
-                                           goto-item-symbol
-                                           production-lhs)
-                                      (setq next-index goto-item-next-index)
-                                      (setq searching-match nil))))
-
-                                (setq goto-index (1+ goto-index)))
-
-                              (when next-index
-                                (push production-lhs pushdown-list)
-                                (push next-index pushdown-list))))))))))
-
-                 ((equal action-match '(accept))
-                  ;;    (d) If f(u) = accept, we halt and declare the string
-                  ;;    in the output buffer to be the right parse of the original
-                  ;;    input string.
-
-                  (setq accept t))"
-               namespace
-               namespace
+                                 popped-items-meta-contents)"
                namespace
                namespace
                namespace
@@ -778,9 +707,177 @@
                namespace))
 
       (insert "
-                 (t (error
-                     \"Invalid action-match: %s!\"
-                     action-match)))))))))
+
+                              ;; If item is a non-terminal
+                              (let ((temp-hash-key
+                                     (format
+                                      \"%S\"
+                                       popped-item)))
+")
+
+      (insert (format "
+                                  ;; If we have a translation for symbol, pop one
+                                  ;; otherwise push nil on translation argument stack
+                              (if (gethash
+                                   temp-hash-key
+                                   translation-symbol-table)
+                                  (let ((symbol-translations
+                                         (gethash
+                                          temp-hash-key
+                                          translation-symbol-table)))
+                                    (push
+                                     partial-translation
+                                     symbol-translations)
+                                    (puthash
+                                     temp-hash-key
+                                     symbol-translations
+                                     translation-symbol-table)
+                                    (setq
+                                     translation
+                                     partial-translation))))))
+
+                          ;; If we have a translation for symbol, pop one
+                                  ;; otherwise push nil on translation argument stack
+                                  (if (gethash
+                                       temp-hash-key
+                                       translation-symbol-table)
+                                      (let ((symbol-translations
+                                             (gethash
+                                              temp-hash-key
+                                              translation-symbol-table)))
+                                        (let ((symbol-translation
+                                               (pop symbol-translations)))
+                                          (push
+                                           symbol-translation
+                                           popped-items-meta-contents)
+                                          (puthash
+                                           temp-hash-key
+                                           symbol-translations
+                                           translation-symbol-table)))
+                                    (push
+                                     nil
+                                     popped-items-meta-contents)))))
+
+                            ;; If we just have one argument, pass it as a instead of a list
+                            (when (= (length popped-items-meta-contents) 1)
+                              (setq
+                               popped-items-meta-contents
+                               (car popped-items-meta-contents)))
+
+                            ;; Perform translation at reduction if specified
+                            (if
+                                (parser-generator--get-grammar-translation-by-number
+                                 production-number)
+                                (let ((partial-translation
+                                       (funcall
+                                        (parser-generator--get-grammar-translation-by-number
+                                         production-number)
+                                        popped-items-meta-contents)))"
+                      namespace
+                      namespace
+                      namespace
+                      namespace
+                      namespace
+                      namespace))
+
+      (insert "
+                                  (let ((temp-hash-key
+                                         (format
+                                          \"%S\"
+                                          production-lhs)))")
+
+      (insert (format "
+                                    (let ((symbol-translations
+                                           (gethash
+                                            temp-hash-key
+                                            translation-symbol-table)))
+                                      (push
+                                       partial-translation
+                                       symbol-translations)
+                                      (puthash
+                                       temp-hash-key
+                                       symbol-translations
+                                       translation-symbol-table)
+                                      (setq
+                                       translation
+                                       partial-translation))))
+
+                              ;; When no translation is specified just use popped contents as translation
+                              (let ((partial-translation
+                                     popped-items-meta-contents))"
+                                          namespace
+                                          namespace
+                                          namespace
+                                          namespace
+                                          namespace
+                                          namespace
+                                          namespace))
+               (insert "
+                                (let ((temp-hash-key
+                                       (format
+                                        \"%S\"
+                                        production-lhs)))")
+
+               (insert (format "
+                                  (let ((symbol-translations
+                                         (gethash
+                                          temp-hash-key
+                                          translation-symbol-table)))
+                                    (push
+                                     partial-translation
+                                     symbol-translations)
+                                    (puthash
+                                     temp-hash-key
+                                     symbol-translations
+                                     translation-symbol-table)
+                                    (setq
+                                     translation
+                                     partial-translation))))))
+
+                          (let ((new-table-index (car pushdown-list)))
+                            (let ((goto-table-distinct-index
+                                   (gethash
+                                    new-table-index
+                                    %s--goto-tables)))
+                              (let ((goto-table
+                                     (gethash
+                                      goto-table-distinct-index
+                                      %s--distinct-goto-tables)))
+                                (let ((goto-table-length
+                                       (length goto-table))
+                                      (goto-index 0)
+                                      (searching-match t)
+                                      (next-index))
+
+                                  (while (and
+                                          searching-match
+                                          (< goto-index goto-table-length))
+                                    (let ((goto-item (nth goto-index goto-table)))
+                                      (let ((goto-item-symbol (list (car goto-item)))
+                                            (goto-item-next-index (car (cdr goto-item))))
+
+                                        (when (equal
+                                               goto-item-symbol
+                                               production-lhs)
+                                          (setq next-index goto-item-next-index)
+                                          (setq searching-match nil))))
+
+                                    (setq goto-index (1+ goto-index)))
+
+                                  (when next-index
+                                    (push production-lhs pushdown-list)
+                                    (push next-index pushdown-list))))))))))
+
+                   ((equal action-match '(accept))
+                    ;;    (d) If f(u) = accept, we halt and declare the string
+                    ;;    in the output buffer to be the right parse of the original
+                    ;;    input string.
+
+                    (setq accept t))
+
+                   (t (error
+                       \"Invalid action-match: %s!\"
+                       action-match)))))))))
       (unless accept
         (error
          \"Parsed entire string without getting accepting! Output: %s\"
@@ -801,7 +898,19 @@
          output
          translation
          translation-symbol-table-list
-         history)))))\n")
+         history)))))"
+               namespace
+               namespace
+               namespace
+               namespace
+               namespace
+               namespace
+               namespace
+               namespace
+               namespace
+               namespace
+               namespace
+               ))
 
       ;; Parse
       (insert
@@ -822,6 +931,8 @@
           translation
           history)))
     (nth 0 result)))\n"
+               namespace
+               namespace
                namespace
                namespace))
 
