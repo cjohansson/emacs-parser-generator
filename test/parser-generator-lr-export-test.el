@@ -62,7 +62,7 @@
     ;; Export parser
     (let ((export (parser-generator-lr-export-to-elisp "ba")))
       (parser-generator--debug
-       (message "export:\n%s\n" export))
+       (message "export:\n%S\n" export))
       (with-temp-buffer
         (insert export)
         (eval-buffer)
@@ -177,8 +177,8 @@
 
   ;; Export parser
   (let ((export (parser-generator-lr-export-to-elisp "e")))
-
-    (message "export:\n%S\n" export)
+    (parser-generator--debug
+     (message "export:\n%S\n" export))
 
     (with-temp-buffer
       (insert export)
@@ -232,7 +232,8 @@
     ;; Export parser
     (let ((export (parser-generator-lr-export-to-elisp "fa")))
       (with-temp-buffer
-        (message "Export:\n%S" export)
+        (parser-generator--debug
+         (message "export:\n%S\n" export))
         (insert export)
         (eval-buffer)
         (should

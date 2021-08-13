@@ -520,8 +520,6 @@
                namespace
                namespace
                namespace
-               namespace
-               namespace
                namespace))
 
       (insert "
@@ -574,12 +572,14 @@
                   ;; (c) If f(u) = error, we halt parsing (and, in practice
                   ;; transfer to an error recovery routine)."
                namespace))
+
       (insert "
                   (error
                    (format
                     \"Invalid syntax! Expected one of %s found %s at %s\"
                     possible-look-aheads
                     look-ahead")
+
       (insert (format "
                     %s-lex-analyzer--index)
                    possible-look-aheads
@@ -702,8 +702,6 @@
                namespace
                namespace
                namespace
-               namespace
-               namespace
                namespace))
 
       (insert "
@@ -716,29 +714,9 @@
 ")
 
       (insert (format "
-                                  ;; If we have a translation for symbol, pop one
-                                  ;; otherwise push nil on translation argument stack
+                              ;; If we have a translation for symbol, pop one
+                              ;; otherwise push nil on translation argument stack
                               (if (gethash
-                                   temp-hash-key
-                                   translation-symbol-table)
-                                  (let ((symbol-translations
-                                         (gethash
-                                          temp-hash-key
-                                          translation-symbol-table)))
-                                    (push
-                                     partial-translation
-                                     symbol-translations)
-                                    (puthash
-                                     temp-hash-key
-                                     symbol-translations
-                                     translation-symbol-table)
-                                    (setq
-                                     translation
-                                     partial-translation))))))
-
-                          ;; If we have a translation for symbol, pop one
-                                  ;; otherwise push nil on translation argument stack
-                                  (if (gethash
                                        temp-hash-key
                                        translation-symbol-table)
                                       (let ((symbol-translations
@@ -772,13 +750,7 @@
                                        (funcall
                                         (parser-generator--get-grammar-translation-by-number
                                          production-number)
-                                        popped-items-meta-contents)))"
-                      namespace
-                      namespace
-                      namespace
-                      namespace
-                      namespace
-                      namespace))
+                                        popped-items-meta-contents)))"))
 
       (insert "
                                   (let ((temp-hash-key
@@ -804,14 +776,7 @@
 
                               ;; When no translation is specified just use popped contents as translation
                               (let ((partial-translation
-                                     popped-items-meta-contents))"
-                                          namespace
-                                          namespace
-                                          namespace
-                                          namespace
-                                          namespace
-                                          namespace
-                                          namespace))
+                                     popped-items-meta-contents))"))
                (insert "
                                 (let ((temp-hash-key
                                        (format
@@ -903,13 +868,6 @@
                namespace
                namespace
                namespace
-               namespace
-               namespace
-               namespace
-               namespace
-               namespace
-               namespace
-               namespace
                ))
 
       ;; Parse
@@ -931,8 +889,6 @@
           translation
           history)))
     (nth 0 result)))\n"
-               namespace
-               namespace
                namespace
                namespace))
 
@@ -963,6 +919,7 @@
        (format
         "\n(provide '%s)"
         namespace))
+
       (insert
        (format
         "\n\n;;; %s.el ends here"

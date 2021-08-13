@@ -1011,7 +1011,6 @@
         (a)
         (a-look-ahead)
         (a-follow)
-        (a-follow-full)
         (a-index 0)
         (a-production)
         (a-production-number)
@@ -1157,10 +1156,9 @@
                           (when
                               signal-on-false
                             (error
-                             "Inconsistent grammar! '%S' (index: %d) with look-ahead '%S' conflicts with '%S' (index: %d) with look-ahead '%S' in sets:\n%S"
+                             "Inconsistent grammar! '%S' (index: %d) conflicts with '%S' (index: %d) with look-ahead '%S' in sets:\n%S"
                              a
                              a-index
-                             a-follow-full
                              b
                              b-index
                              b-suffix-follow-eff-item
@@ -1169,10 +1167,9 @@
                     (when
                         signal-on-false
                       (error
-                       "Inconsistent grammar! '%S' (index: %d) with look-ahead '%S' conflicts with '%S' (index: %d) with look-ahead '%S' in sets:\n%S"
+                       "Inconsistent grammar! '%S' (index: %d) conflicts with '%S' (index: %d) with look-ahead '%S' in sets:\n%S"
                        a
                        a-index
-                       a-follow-full
                        b
                        b-index
                        b-suffix-follow-eff-item
