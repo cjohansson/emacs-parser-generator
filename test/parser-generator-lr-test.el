@@ -249,7 +249,14 @@
       ((and
         a-value
         (not b-value))
-       t))))
+       t)
+
+      ((and
+        (not a-value)
+        (not b-value))
+       nil)
+
+      )))
   (parser-generator-lr-generate-parser-tables)
   (should
    (equal
@@ -341,6 +348,7 @@
                 `(,symbol ,(match-beginning 0) . ,(match-end 0)))))
             (t (error "Unexpected input at %d!" index))))
          token))))
+
   (setq
    parser-generator-lex-analyzer--get-function
    (lambda (token)
@@ -373,6 +381,9 @@
   (setq
    parser-generator--context-sensitive-attributes
    '(%prec))
+  (setq
+   parser-generator--global-declaration
+   nil)
   (parser-generator-set-grammar
    '(
      (start input line exp)
@@ -396,7 +407,6 @@
        ("(" exp ")" (lambda(args) (nth 1 args)))))
      start))
   (parser-generator-process-grammar)
-
   (should-error
    (parser-generator-lr-generate-parser-tables))
   (message "Grammar caused expected conflict 3")
@@ -441,6 +451,8 @@
   ;; * -> reduce 5.. causes expected (1+1)*2 = 4
   (let ((buffer (generate-new-buffer "*buffer*")))
     (switch-to-buffer buffer)
+
+    (kill-region (point-min) (point-max))
     (insert "2+3*5\n")
     (let ((parse (parser-generator-lr-parse)))
       (should
@@ -452,11 +464,9 @@
        (equal
         17.0
         translate)))
-    (kill-buffer))
-  (message "Passed correct precedence of 2+3*5 = 2+(3*5) = 17")
+    (message "Passed correct precedence of 2+3*5 = 2+(3*5) = 17")
 
-  (let ((buffer (generate-new-buffer "*buffer*")))
-    (switch-to-buffer buffer)
+    (kill-region (point-min) (point-max))
     (insert "2*3+5\n")
     (let ((parse (parser-generator-lr-parse)))
       (should
@@ -468,8 +478,17 @@
        (equal
         16.0
         translate)))
+    (message "Passed incorrect precedence of 2*3+5 => 2*(3+5) = 16")
+
+    (kill-region (point-min) (point-max))
+    (insert "-5+3\n")
+    (let ((translate (parser-generator-lr-translate)))
+      (should
+       (equal
+        -8.0
+        translate)))
+    (message "Passed incorrect precedence of -5+3 => -(5+3) = -8")
     (kill-buffer))
-  (message "Passed incorrect precedence of 2*3+5 => 2*(3+5) = 16")
 
   ;; Add global precedence, but it should not solve all errors
   (setq
