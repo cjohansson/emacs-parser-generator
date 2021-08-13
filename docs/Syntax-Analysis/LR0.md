@@ -21,6 +21,42 @@ Example with grammar with production: S -> SaSb and S is non-terminal and a, b a
 * A is the production LHS
 * B, C is parts of the production RHS, if the dot is at the left B is nil and C is the entire RHS. If the dot is at the right then B is the production RHS and C is nil, otherwise B and C contains parts of the RHS
 
+## Declaring operator precedence
+
+You can set global symbol operator precedence and also context-sensitive precedence, like in GNU Bison. Example
+
+``` emacs-lisp
+(setq
+   parser-generator--global-attributes
+   '(%left %precedence %right))
+  (setq
+   parser-generator-lr--global-precedence-attributes
+   '(%left %precedence %right))
+  (setq
+   parser-generator--context-sensitive-attributes
+   '(%prec))
+  (setq
+   parser-generator-lr--context-sensitive-precedence-attribute
+   '%prec)
+  (setq
+   parser-generator--global-declaration
+   '((%left a)
+     (%right b)
+     (%left c)
+     (%precedence FIRST)))
+(parser-generator-set-grammar
+   '(
+     (Sp S A B)
+     (a b c)
+     (
+      (Sp S)
+      (S (A c) B)
+      (A (a b %prec a))
+      (B (a b c %prec FIRST))
+      )
+     Sp))
+```
+
 ## Parse
 
 Perform a right-parse of input-stream. Example from [Wikipedia](https://en.wikipedia.org/wiki/LR_parser#Constructing_LR(0)_parsing_tables).

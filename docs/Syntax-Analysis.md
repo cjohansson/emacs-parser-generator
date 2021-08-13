@@ -39,9 +39,29 @@ Grammar consists of `N`, `T`, `P` and `S`, where `N` is non-terminals, `T` is te
 * P = `'((S (A B)) (A (B a) e) (B (C b) C) (C c e))`
 * S = `'S`
 
+Example:
+
 ``` emacs-lisp
 (parser-generator-set-grammar '((S A B C) (a b c) ((S (A B)) (A (B a) e) (B (C b) C) (C c e)) S))
 ```
+
+Productions can include context-sensitive attributes like this:
+
+``` emacs-lisp
+((S (A B %prec first)) (A (B a %weight) e) (B (C b) C) (C c e))
+```
+
+### Global attributes
+
+A list of valid attributes can be set in the variable `parser-generator--global-attributes`.
+
+### Context-sensitive attributes
+
+A list of valid attributes can be set in the variable `parser-generator--context-sensitive-attributes`.
+
+### Global declaration
+
+Can be set in variable `parser-generator--global-declaration`. This may be used differently in different parsing algorithms.
 
 ### e-identifier
 
