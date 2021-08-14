@@ -744,13 +744,15 @@
 
                             ;; Perform translation at reduction if specified
                             (if
-                                (parser-generator--get-grammar-translation-by-number
+                                (%s--get-grammar-translation-by-number
                                  production-number)
                                 (let ((partial-translation
                                        (funcall
-                                        (parser-generator--get-grammar-translation-by-number
+                                        (%s--get-grammar-translation-by-number
                                          production-number)
-                                        popped-items-meta-contents)))"))
+                                        popped-items-meta-contents)))"
+                      namespace
+                      namespace))
 
       (insert "
                                   (let ((temp-hash-key
@@ -838,8 +840,11 @@
                     ;;    in the output buffer to be the right parse of the original
                     ;;    input string.
 
-                    (setq accept t))
+                    (setq accept t))"
+                               namespace
+                               namespace))
 
+               (insert "
                    (t (error
                        \"Invalid action-match: %s!\"
                        action-match)))))))))
@@ -863,12 +868,7 @@
          output
          translation
          translation-symbol-table-list
-         history)))))"
-               namespace
-               namespace
-               namespace
-               namespace
-               ))
+         history)))))")
 
       ;; Parse
       (insert
