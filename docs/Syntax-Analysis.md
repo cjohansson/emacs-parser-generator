@@ -42,13 +42,15 @@ Grammar consists of `N`, `T`, `P` and `S`, where `N` is non-terminals, `T` is te
 Example:
 
 ``` emacs-lisp
+(require 'parser-generator)
+
 (parser-generator-set-grammar '((S A B C) (a b c) ((S (A B)) (A (B a) e) (B (C b) C) (C c e)) S))
 ```
 
 Productions can include context-sensitive attributes like this:
 
 ``` emacs-lisp
-((S (A B %prec first)) (A (B a %weight) e) (B (C b) C) (C c e))
+((S (A B %prec first)) (A (B a %weight c) e) (B (C b) C) (C c e))
 ```
 
 ### Global attributes
@@ -112,6 +114,8 @@ Is a simple integer above zero. You set it like this: `(parser-generator-set-loo
 A optional translation is defined as a lambda function as the last element of a production right-hand-side, example:
 
 ```emacs-lisp
+(require 'parser-generator)
+
 (parser-generator-set-grammar 
   '((Sp S) ("a" "b") ((Sp S) (S (S "a" S "b" (lambda(args) (nreverse args)))) (S e)) Sp))
 ```
@@ -123,6 +127,8 @@ You cannot have a SDT + SA on the same production right-hand side, just one or t
 A optional semantic action is defined as a lambda function as the last element of a production right-hand-side, example:
 
 ```emacs-lisp
+(require 'parser-generator)
+
 (parser-generator-set-grammar 
   '((Sp S) ("a" "b") ((Sp S) (S (S "a" S "b" (lambda(args) (nreverse args)))) (S e)) Sp))
 ```
@@ -136,13 +142,13 @@ You cannot have a SDT + SA on the same production right-hand side, just one or t
 Calculate the first look-ahead number of terminals of the sentential-form `S`, example:
 
 ``` emacs-lisp
+(require 'parser-generator)
 (require 'ert)
 
 (parser-generator-set-grammar 
   '((S A B C) (a b c) ((S (A B)) (A (B a) e) (B (C b) C) (C c e)) S))
 (parser-generator-set-look-ahead-number 2)
 (parser-generator-process-grammar)
-
 (should
   (equal
     '((a) (a c) (a b) (c a) (b a) (e) (c) (b) (c b))
@@ -154,6 +160,7 @@ Calculate the first look-ahead number of terminals of the sentential-form `S`, e
 Calculate the e-free-first look-ahead number of terminals of sentential-form `S`, if you have multiple symbols the e-free-first will only affect the first symbol, the rest will be treated via first-function (above). Example:
 
 ``` emacs-lisp
+(require 'parser-generator)
 (require 'ert)
 
 (parser-generator-set-grammar 
@@ -172,6 +179,7 @@ Calculate the e-free-first look-ahead number of terminals of sentential-form `S`
 Calculate the look-ahead number of terminals possibly following S.
 
 ``` emacs-lisp
+(require 'parser-generator)
 (require 'ert)
 
 (parser-generator-set-grammar 
@@ -184,6 +192,5 @@ Calculate the look-ahead number of terminals possibly following S.
    '((a))
    (parser-generator--follow 'A)))
 ```
-
 
 [Back to start](../../../)
