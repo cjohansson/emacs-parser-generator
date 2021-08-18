@@ -437,7 +437,7 @@
            (car item))
         (error
          "Invalid global declaration '%S' in grammar!"
-         item))))
+         (car item)))))
 
   (let ((productions
          (parser-generator--get-grammar-productions)))
