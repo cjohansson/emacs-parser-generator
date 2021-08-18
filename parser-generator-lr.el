@@ -1141,10 +1141,7 @@
                        b-suffix-follow-eff-item)
 
                   (let ((a-production-precedence-value)
-                        (b-production-precedence-value)
-                        (symbol-precedence-value
-                         (parser-generator-lr--get-symbol-precedence-value
-                          a-follow)))
+                        (b-production-precedence-value))
                     ;; Check if either production has a precedence-value
                     (when a-production-number
                       (setq
@@ -1162,7 +1159,6 @@
                         ;; any production-number we might be able to continue
                         ;; if there are precedence rules
                         (or
-                         symbol-precedence-value
                          a-production-precedence-value
                          b-production-precedence-value)
                         (progn
