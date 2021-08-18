@@ -69,6 +69,10 @@
   nil
   "Table of the precedence type of all production numbers.")
 
+(defvar
+  parser-generator-lr--allow-default-conflict-resolution
+  nil
+  "Whether to allow to resolve shift/reduce conflicts with shift in cases were there is no precedence values.")
 
 ;; Main Algorithms
 
@@ -1135,46 +1139,67 @@
                 (when (equal
                        a-follow
                        b-suffix-follow-eff-item)
-                  (if
-                      ;; If it's the same following symbol but we have
-                      ;; any production-number we might be able to continue
-                      ;; if there are precedence rules
-                      (or
-                       a-production-number
-                       b-production-number)
-                      (progn
-                        (unless
-                            (or
-                             (parser-generator-lr--action-takes-precedence-p
-                              a-follow
-                              a-production-number
-                              b-production-number)
-                             (parser-generator-lr--action-takes-precedence-p
-                              b-follow
-                              b-production-number
-                              a-production-number))
-                          (when
-                              signal-on-false
-                            (error
-                             "Inconsistent grammar! '%S' (index: %d) conflicts with '%S' (index: %d) with look-ahead '%S' in sets:\n%S"
-                             a
-                             a-index
-                             b
-                             b-index
-                             b-suffix-follow-eff-item
-                             lr-item-sets))
-                          (setq valid-p nil)))
-                    (when
-                        signal-on-false
-                      (error
-                       "Inconsistent grammar! '%S' (index: %d) conflicts with '%S' (index: %d) with look-ahead '%S' in sets:\n%S"
-                       a
-                       a-index
-                       b
-                       b-index
-                       b-suffix-follow-eff-item
-                       lr-item-sets))
-                    (setq valid-p nil)))))
+
+                  (let ((a-production-precedence-value)
+                        (b-production-precedence-value)
+                        (symbol-precedence-value
+                         (parser-generator-lr--get-symbol-precedence-value
+                          a-follow)))
+                    ;; Check if either production has a precedence-value
+                    (when a-production-number
+                      (setq
+                       a-production-precedence-value
+                       (parser-generator-lr--get-production-number-precedence-value
+                        a-production-number)))
+                    (when b-production-number
+                      (setq
+                       b-production-precedence-value
+                       (parser-generator-lr--get-production-number-precedence-value
+                        b-production-number)))
+
+                    (if
+                        ;; If it's the same following symbol but we have
+                        ;; any production-number we might be able to continue
+                        ;; if there are precedence rules
+                        (or
+                         symbol-precedence-value
+                         a-production-precedence-value
+                         b-production-precedence-value)
+                        (progn
+                          (unless
+                              (or
+                               (parser-generator-lr--action-takes-precedence-p
+                                a-follow
+                                a-production-number
+                                b-production-number)
+                               (parser-generator-lr--action-takes-precedence-p
+                                b-follow
+                                b-production-number
+                                a-production-number))
+                            (when
+                                signal-on-false
+                              (error
+                               "Inconsistent grammar after precedence calculation! '%S' (index: %d) conflicts with '%S' (index: %d) with look-ahead '%S' in sets:\n%S"
+                               a
+                               a-index
+                               b
+                               b-index
+                               b-suffix-follow-eff-item
+                               lr-item-sets))
+                            (setq valid-p nil)))
+                      (unless
+                          parser-generator-lr--allow-default-conflict-resolution
+                        (when
+                            signal-on-false
+                          (error
+                           "Inconsistent grammar without precedence calculation! '%S' (index: %d) conflicts with '%S' (index: %d) with look-ahead '%S' in sets:\n%S"
+                           a
+                           a-index
+                           b
+                           b-index
+                           b-suffix-follow-eff-item
+                           lr-item-sets))
+                        (setq valid-p nil)))))))
             (setq b-index (1+ b-index))))
         (setq a-index (1+ a-index)))
       (setq set-index (1+ set-index)))
@@ -1228,12 +1253,21 @@
            b-precedence-value
            b-production-precedence-value))))
 
-    (funcall
-     parser-generator-lr--precedence-comparison-function
-     a-precedence-type
-     a-precedence-value
-     b-precedence-type
-     b-precedence-value)))
+    ;; When precedence-values are lacking
+    ;; and default conflict resolution is enabled
+    ;; signal a shift action
+    (if
+        (and
+         (not a-precedence-value)
+         (not b-precedence-value)
+         parser-generator-lr--allow-default-conflict-resolution)
+        nil
+      (funcall
+       parser-generator-lr--precedence-comparison-function
+       a-precedence-type
+       a-precedence-value
+       b-precedence-type
+       b-precedence-value))))
 
 ;; Algorithm 5.8, p. 386
 (defun parser-generator-lr--items-for-prefix (γ)

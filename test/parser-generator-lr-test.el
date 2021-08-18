@@ -856,6 +856,7 @@
   
 
   (let ((table-lr-items (parser-generator-process-grammar)))
+    (parser-generator-lr-generate-parser-tables)
 
     (should
      (equal
