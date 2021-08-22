@@ -21,6 +21,14 @@ Example with grammar with production: S -> SaSb and S is non-terminal and a, b a
 * A is the production LHS
 * B, C is parts of the production RHS, if the dot is at the left B is nil and C is the entire RHS. If the dot is at the right then B is the production RHS and C is nil, otherwise B and C contains parts of the RHS
 
+## Declare default conflict resolution
+
+If two items A and B both lack precedence values you can allow a default shift action with:
+
+``` emacs-lisp
+(setq parser-generator-lr--allow-default-conflict-resolution t)
+```
+
 ## Declaring operator precedence
 
 You can set global symbol operator precedence and also context-sensitive precedence, like in GNU Bison. Example
