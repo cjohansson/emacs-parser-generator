@@ -666,6 +666,27 @@
   (parser-generator-lr-generate-parser-tables)
   (message "Passed cyclical grammar")
 
+  ;; Test with e-identifier inside rule here
+  (setq
+   parser-generator--e-identifier
+   '%empty)
+  (parser-generator-set-grammar
+   '(
+     (Sp S A B C)
+     (a b c)
+     (
+      (Sp S)
+      (S (A C B))
+      (A (a b))
+      (B c)
+      (C %empty)
+      )
+     Sp))
+  (parser-generator-set-look-ahead-number 1)
+  (parser-generator-process-grammar)
+  (parser-generator-lr-generate-parser-tables)
+  (message "Passed grammar with e-identifier in middle of rule")
+
   (message "Passed tests for (parser-generator-lr--generate-action-tables)"))
 
 (defun parser-generator-lr-test--generate-goto-tables ()
