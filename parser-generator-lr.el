@@ -494,31 +494,31 @@
                              0)
 
                             ;; LR(0) uses a different algorithm for determining reduce actions
-                            (unless (nth 2 lr-item)
-                              (let ((production (list A B)))
-                                (let
-                                    ((production-number
-                                      (parser-generator--get-grammar-production-number
-                                       production)))
-                                  (unless production-number
-                                    (error
-                                     "Expecting production number for %s from LR-item %s!"
-                                     production
-                                     lr-item))
+                            (let ((production (list A B)))
+                              (let
+                                  ((production-number
+                                    (parser-generator--get-grammar-production-number
+                                     production)))
+                                (unless production-number
+                                  (error
+                                   "Expecting production number for %s from LR-item %s!"
+                                   production
+                                   lr-item))
 
-                                  (parser-generator--debug
-                                   (message "production: %s (%s)" production production-number)
-                                   (message "u: %s" u))
-                                  (push
-                                   (list
-                                    nil
-                                    'reduce
-                                    production-number)
-                                   action-table)
-                                  (setq
-                                   found-action
-                                   t))))
+                                (parser-generator--debug
+                                 (message "production: %s (%s)" production production-number)
+                                 (message "u: %s" u))
+                                (push
+                                 (list
+                                  nil
+                                  'reduce
+                                  production-number)
+                                 action-table)
+                                (setq
+                                 found-action
+                                 t)))
 
+                          ;; LR(k > 0)
                           (when (parser-generator--valid-look-ahead-p u)
                             (let ((production (list A B)))
                               (let
