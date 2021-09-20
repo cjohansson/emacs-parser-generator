@@ -322,7 +322,7 @@
           (let ((lr-items-length
                  (length lr-items)))
 
-            ;; Where u is in (T U e)*k
+            ;; Where u is in (T U e)*k (terminals and e-identifier at length k)
             (dolist (state states)
               (let ((lr-item)
                     (lr-item-index 0)
