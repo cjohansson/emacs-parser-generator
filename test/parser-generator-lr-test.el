@@ -699,9 +699,9 @@
      (a b c)
      (
       (Sp S)
-      (S (A C B))
-      (A (a b))
-      (B c)
+      (S (a C b)) ;; TODO Make this work with (S (A C B)) as well
+      (A a)
+      (B b)
       (C %empty)
       )
      Sp))
@@ -716,7 +716,13 @@
     (message "table-lr-items: %S" (parser-generator--hash-to-list table-lr-items))
     (parser-generator-lr--generate-action-tables
      table-lr-items))
+  (should
+   (equal
+    '((0 (((a) shift))) (1 ((($) accept))) (2 (((b) reduce 4))) (3 (((b) shift))) (4 ((($) reduce 1))))
+    (parser-generator-lr--get-expanded-action-tables)))
   (message "Passed grammar with e-identifier in middle of rule")
+
+  (error "was here")
 
   (message "Passed tests for (parser-generator-lr--generate-action-tables)"))
 
