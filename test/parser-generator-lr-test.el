@@ -666,6 +666,29 @@
   (parser-generator-lr-generate-parser-tables)
   (message "Passed cyclical grammar")
 
+  ;; Test e-identifier in midst of grammar below
+  (setq
+   parser-generator--e-identifier
+   'e)
+  (parser-generator-set-grammar
+   '((Sp S E) (a b) ((Sp S) (S (S a E b)) (S e) (E e)) Sp))
+  (parser-generator-set-look-ahead-number 1)
+  (parser-generator-process-grammar)
+  (parser-generator-lr-generate-parser-tables)
+
+  (should
+   (equal
+    '(
+      (0 ((($) reduce 2) ((a) reduce 2)))
+      (1 ((($) accept) ((a) shift)))
+      (2 (((b) reduce 3)))
+      (3 (((b) shift)))
+      (4 ((($) reduce 1) ((a) reduce 1))))
+    (parser-generator-lr--get-expanded-action-tables)))
+  (message "Passed example with e-identifier in middle of rune")
+
+
+
   ;; Test with e-identifier inside rule here
   (setq
    parser-generator--e-identifier
@@ -684,7 +707,15 @@
      Sp))
   (parser-generator-set-look-ahead-number 1)
   (parser-generator-process-grammar)
-  (parser-generator-lr-generate-parser-tables)
+  (parser-generator-lr--generate-precedence-tables)
+
+  ;; TODO Make this work
+  (let ((table-lr-items
+         (parser-generator-lr--generate-goto-tables)))
+    (message "GOTO-tables: %S" (parser-generator-lr--get-expanded-goto-tables))
+    (message "table-lr-items: %S" (parser-generator--hash-to-list table-lr-items))
+    (parser-generator-lr--generate-action-tables
+     table-lr-items))
   (message "Passed grammar with e-identifier in middle of rule")
 
   (message "Passed tests for (parser-generator-lr--generate-action-tables)"))
