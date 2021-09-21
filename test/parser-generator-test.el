@@ -402,6 +402,12 @@
     (parser-generator--first 'Sp)))
   (message "Passed first 10 with complex grammar that contains cyclic loops")
 
+  (should
+   (equal
+    '((a) (c) (e))
+    (parser-generator--first '(e Sp))))
+  (message "Passed first 11 with multiple items")
+
   (message "Passed tests for (parser-generator--first)"))
 
 (defun parser-generator-test--e-free-first ()
