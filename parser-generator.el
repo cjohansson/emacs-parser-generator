@@ -17,7 +17,7 @@
 
 (defvar
   parser-generator--debug
-  nil
+  t
   "Whether to print debug messages or not.")
 
 (defvar
@@ -1690,12 +1690,26 @@
                       (cond
 
                        ((parser-generator--valid-e-p symbol)
+
+                        ;; When there a symbols left on stack, make alternative trail by skipping this symbol
+                        (unless (or
+                                 disallow-e-first
+                                 (= input-tape-index (1- input-tape-length)))
+                          (parser-generator--debug
+                           (message
+                            "Pushed alternative trail to stack since symbol is e-identifier: %s"
+                            `(,(1+ input-tape-index) ,first-length ,first)))
+                          (push
+                           `(,(1+ input-tape-index) ,first-length ,first)
+                           stack))
+
                         (if disallow-e-first
                             (when (> first-length 0)
                               (setq first (append first (list symbol)))
                               (setq first-length (1+ first-length)))
                           (setq first (append first (list symbol)))
                           (setq first-length (1+ first-length)))
+
                         (setq keep-looking nil))
 
                        ((parser-generator--valid-eof-p symbol)
