@@ -1819,6 +1819,20 @@
                              (message
                               "main-symbol-f-set: %s"
                               (car symbol-f-set)))
+
+                            ;; When there a symbols left on stack, make alternative trail by skipping this symbol
+                            (when (and
+                                   (parser-generator--valid-e-p (car (car symbol-f-set)))
+                                   (not disallow-e-first)
+                                   (< input-tape-index (1- input-tape-length)))
+                              (parser-generator--debug
+                               (message
+                                "Pushed alternative trail from non-terminal expansion to stack since first symbol is the e-identifier: %s"
+                                `(,(1+ input-tape-index) ,first-length ,first)))
+                              (push
+                               `(,(1+ input-tape-index) ,first-length ,first)
+                               stack))
+
                             (setq
                              first-length
                              (+ first-length (length (car symbol-f-set))))

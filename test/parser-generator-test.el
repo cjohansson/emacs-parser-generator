@@ -406,7 +406,27 @@
    (equal
     '((a) (c) (e))
     (parser-generator--first '(e Sp))))
-  (message "Passed first 11 with multiple items")
+  (message "Passed first 11 with multiple items with e-identifiers")
+
+  (parser-generator-set-grammar
+   '(
+     (Sp S A B C)
+     (a b c)
+     (
+      (Sp S)
+      (S (A C B))
+      (A a)
+      (B b)
+      (C e)
+      )
+     Sp))
+  (parser-generator-set-look-ahead-number 1)
+  (parser-generator-process-grammar)
+  (should
+   (equal
+    (parser-generator--first '(C B))
+    '((b) (e))))
+  (message "Passed first 12 with multiple non-terminals and e-identifiers")
 
   (message "Passed tests for (parser-generator--first)"))
 
