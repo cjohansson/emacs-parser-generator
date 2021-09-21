@@ -685,11 +685,9 @@
       (3 (((b) shift)))
       (4 ((($) reduce 1) ((a) reduce 1))))
     (parser-generator-lr--get-expanded-action-tables)))
-  (message "Passed example with e-identifier in middle of rune")
+  (message "Passed example with e-identifier in middle of rule")
 
-
-
-  ;; Test with e-identifier inside rule here
+  ;; Another test with e-identifier inside rule here
   (setq
    parser-generator--e-identifier
    '%empty)
@@ -699,7 +697,7 @@
      (a b c)
      (
       (Sp S)
-      (S (a C b)) ;; TODO Make this work with (S (A C B)) as well
+      (S (A C B))
       (A a)
       (B b)
       (C %empty)
@@ -707,22 +705,20 @@
      Sp))
   (parser-generator-set-look-ahead-number 1)
   (parser-generator-process-grammar)
-  (parser-generator-lr--generate-precedence-tables)
+  (parser-generator-lr-generate-parser-tables)
 
-  ;; TODO Make this work
-  (let ((table-lr-items
-         (parser-generator-lr--generate-goto-tables)))
-    (message "GOTO-tables: %S" (parser-generator-lr--get-expanded-goto-tables))
-    (message "table-lr-items: %S" (parser-generator--hash-to-list table-lr-items))
-    (parser-generator-lr--generate-action-tables
-     table-lr-items))
   (should
    (equal
-    '((0 (((a) shift))) (1 ((($) accept))) (2 (((b) reduce 4))) (3 (((b) shift))) (4 ((($) reduce 1))))
+    '(
+      (0 (((a) shift)))
+      (1 (((b) reduce 4)))
+      (2 ((($) accept)))
+      (3 (((b) reduce 2)))
+      (4 (((b) shift)))
+      (5 ((($) reduce 1)))
+      (6 ((($) reduce 3))))
     (parser-generator-lr--get-expanded-action-tables)))
   (message "Passed grammar with e-identifier in middle of rule")
-
-  (error "was here")
 
   (message "Passed tests for (parser-generator-lr--generate-action-tables)"))
 
