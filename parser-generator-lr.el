@@ -72,7 +72,7 @@
 (defvar
   parser-generator-lr--allow-default-conflict-resolution
   nil
-  "Whether to allow to resolve shift/reduce conflicts with shift in cases were there is no precedence values.")
+  "Allow default shift conflict resolution with no precedence values.")
 
 ;; Main Algorithms
 
