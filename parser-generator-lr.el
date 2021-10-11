@@ -1840,11 +1840,7 @@
                     ;; transfer to an error recovery routine).
 
                     (error
-                     (format
-                      "Invalid syntax! Expected one of %S found %S at position %S"
-                      possible-look-aheads
-                      look-ahead
-                      parser-generator-lex-analyzer--index)
+                     "Invalid syntax! Expected one of %S found %S at position %S"
                      possible-look-aheads
                      look-ahead
                      parser-generator-lex-analyzer--index))

@@ -575,13 +575,10 @@
 
       (insert "
                   (error
-                   (format
                     \"Invalid syntax! Expected one of %s found %s at %s\"
-                    possible-look-aheads
-                    look-ahead")
+")
 
       (insert (format "
-                    %s-lex-analyzer--index)
                    possible-look-aheads
                    look-ahead
                    %s-lex-analyzer--index))
@@ -628,7 +625,6 @@
                                 (setq searching-match nil))))
 
                           (setq goto-index (1+ goto-index)))"
-                      namespace
                       namespace
                       namespace
                       namespace))
@@ -868,7 +864,7 @@
          output
          translation
          translation-symbol-table-list
-         history)))))")
+         history)))))\n")
 
       ;; Parse
       (insert
