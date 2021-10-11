@@ -9,8 +9,8 @@
 
 (require 'parser-generator-lr)
 
-(defun parser-generator-lr-export-to-elisp (namespace)
-  "Export parser with NAMESPACE."
+(defun parser-generator-lr-export-to-elisp (namespace &optional header)
+  "Export parser with NAMESPACE and a optional HEADER."
   (message "\nStarting generation of elips..\n")
 
   ;; Make sure all requisites are defined
@@ -53,6 +53,9 @@
         ";;; %s.el --- Exported Emacs Parser Generator -*- lexical-binding: t -*-\n\n\n"
         namespace))
       (insert ";;; Commentary:\n\n\n;;; Code:\n\n")
+
+      (when header
+        (insert header))
 
       (insert "\n;;; Constants:\n\n\n")
 
