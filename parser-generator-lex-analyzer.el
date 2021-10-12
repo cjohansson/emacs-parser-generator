@@ -33,6 +33,11 @@
   nil
   "Function used when resetting lex-analyzer.")
 
+(defvar-local
+  parser-generator-lex-analyzer--move-to-index-flag
+  nil
+  "Non-nil means move index to value.")
+
 
 ;; Functions
 
@@ -75,24 +80,32 @@
             k)
       (condition-case error
           (progn
+            (setq-local
+             parser-generator-lex-analyzer--move-to-index-flag
+             nil)
             (let ((next-look-ahead
                    (funcall
                     parser-generator-lex-analyzer--function
                     index)))
-              (if next-look-ahead
+              (if parser-generator-lex-analyzer--move-to-index-flag
                   (progn
-                    (unless (listp (car next-look-ahead))
-                      (setq next-look-ahead (list next-look-ahead)))
-                    (dolist (next-look-ahead-item next-look-ahead)
-                      (when (<
-                             look-ahead-length
-                             k)
-                        (push next-look-ahead-item look-ahead)
-                        (setq look-ahead-length (1+ look-ahead-length))
-                        (setq index (cdr (cdr next-look-ahead-item))))))
-                (push (list parser-generator--eof-identifier) look-ahead)
-                (setq look-ahead-length (1+ look-ahead-length))
-                (setq index (1+ index)))))
+                    (setq
+                     index
+                     parser-generator-lex-analyzer--move-to-index-flag))
+                (if next-look-ahead
+                    (progn
+                      (unless (listp (car next-look-ahead))
+                        (setq next-look-ahead (list next-look-ahead)))
+                      (dolist (next-look-ahead-item next-look-ahead)
+                        (when (<
+                               look-ahead-length
+                               k)
+                          (push next-look-ahead-item look-ahead)
+                          (setq look-ahead-length (1+ look-ahead-length))
+                          (setq index (cdr (cdr next-look-ahead-item))))))
+                  (push (list parser-generator--eof-identifier) look-ahead)
+                  (setq look-ahead-length (1+ look-ahead-length))
+                  (setq index (1+ index))))))
         (error
          (error
           "Lex-analyze failed to peek next look-ahead at %s, error: %s"
@@ -108,28 +121,41 @@
     (error "Missing lex-analyzer function!"))
   (unless parser-generator--look-ahead-number
     (error "Missing look-ahead-number!"))
-  (let ((iteration 0)
+  (let ((continue t)
         (tokens))
-    (while (< iteration 1)
+    (while continue
       (condition-case error
           (progn
+            (setq-local
+             parser-generator-lex-analyzer--move-to-index-flag
+             nil)
             (let ((token
                    (funcall
                     parser-generator-lex-analyzer--function
                     parser-generator-lex-analyzer--index)))
-              (when token
-                (unless (listp (car token))
-                  (setq token (list token)))
-                (let ((first-token (car token)))
-                  (setq
-                   parser-generator-lex-analyzer--index
-                   (cdr (cdr first-token)))
-                  (push first-token tokens)))))
-        (error (error
-                "Lex-analyze failed to pop token at %s, error: %s"
-                parser-generator-lex-analyzer--index
-                (car (cdr error)))))
-      (setq iteration (1+ iteration)))
+              (if parser-generator-lex-analyzer--move-to-index-flag
+                  (progn
+                    (setq-local
+                     parser-generator-lex-analyzer--index
+                     parser-generator-lex-analyzer--move-to-index-flag))
+                (when token
+                  (unless (listp (car token))
+                    (setq token (list token)))
+                  (let ((first-token (car token)))
+                    (setq
+                     parser-generator-lex-analyzer--index
+                     (cdr (cdr first-token)))
+                    (push
+                     first-token
+                     tokens)))
+                (setq
+                 continue
+                 nil))))
+        (error
+         (error
+          "Lex-analyze failed to pop token at %s, error: %s"
+          parser-generator-lex-analyzer--index
+          (car (cdr error))))))
     (nreverse tokens)))
 
 (defun parser-generator-lex-analyzer--reset ()
