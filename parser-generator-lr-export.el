@@ -259,9 +259,12 @@
                     index)))
                   (if %s-lex-analyzer--move-to-index-flag
                     (progn
-                      (setq
-                       index
-                       %s-lex-analyzer--move-to-index-flag))
+                     (setq-local
+                      %s-lex-analyzer--index
+                      %s-lex-analyzer--move-to-index-flag)
+                    (setq
+                     index
+                     %s-lex-analyzer--index))
               (if next-look-ahead
                   (progn
                     (unless (listp (car next-look-ahead))
@@ -276,6 +279,8 @@
                 (push (list %s--eof-identifier) look-ahead)
                 (setq look-ahead-length (1+ look-ahead-length))
                 (setq index (1+ index))))))"
+               namespace
+               namespace
                namespace
                namespace
                namespace
