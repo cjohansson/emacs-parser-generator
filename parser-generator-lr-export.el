@@ -62,66 +62,66 @@
       ;; Action-tables
       (insert
        (format
-        "(defconst\n  %s--action-tables\n  %S\n  \"The generated action-tables.\")\n\n"
+        "(defvar\n  %s--action-tables\n  %S\n  \"The generated action-tables.\")\n\n"
         namespace
         parser-generator-lr--action-tables))
       (insert
        (format
-        "(defconst\n  %s--distinct-action-tables\n  %S\n  \"The generated distinct action-tables.\")\n\n"
+        "(defvar\n  %s--distinct-action-tables\n  %S\n  \"The generated distinct action-tables.\")\n\n"
         namespace
         parser-generator-lr--distinct-action-tables))
 
       ;; Goto-tables
       (insert
        (format
-        "(defconst\n  %s--goto-tables\n  %S\n  \"The generated goto-tables.\")\n\n"
+        "(defvar\n  %s--goto-tables\n  %S\n  \"The generated goto-tables.\")\n\n"
         namespace
         parser-generator-lr--goto-tables))
       (insert
        (format
-        "(defconst\n  %s--distinct-goto-tables\n  %S\n  \"The generated distinct goto-tables.\")\n\n"
+        "(defvar\n  %s--distinct-goto-tables\n  %S\n  \"The generated distinct goto-tables.\")\n\n"
         namespace
         parser-generator-lr--distinct-goto-tables))
 
       ;; Table production-number
       (insert
        (format
-        "(defconst\n  %s--table-productions-number-reverse\n  %S\n  \"The hash-table indexed by production-number and value is production.\")\n\n"
+        "(defvar\n  %s--table-productions-number-reverse\n  %S\n  \"The hash-table indexed by production-number and value is production.\")\n\n"
         namespace
         parser-generator--table-productions-number-reverse))
 
       ;; Table look-aheads
       (insert
        (format
-        "(defconst\n  %s--table-look-aheads\n  %S\n  \"The hash-table of valid look-aheads.\")\n\n"
+        "(defvar\n  %s--table-look-aheads\n  %S\n  \"The hash-table of valid look-aheads.\")\n\n"
         namespace
         parser-generator--table-look-aheads-p))
 
       ;; Table terminals
       (insert
        (format
-        "(defconst\n  %s--table-terminal-p\n  %S\n  \"The hash-table of valid terminals.\")\n\n"
+        "(defvar\n  %s--table-terminal-p\n  %S\n  \"The hash-table of valid terminals.\")\n\n"
         namespace
         parser-generator--table-terminal-p))
 
       ;; Table non-terminals
       (insert
        (format
-        "(defconst\n  %s--table-non-terminal-p\n  %S\n  \"The hash-table of valid non-terminals.\")\n\n"
+        "(defvar\n  %s--table-non-terminal-p\n  %S\n  \"The hash-table of valid non-terminals.\")\n\n"
         namespace
         parser-generator--table-non-terminal-p))
 
       ;; Table translations
       (insert
        (format
-        "(defconst\n  %s--table-translations\n  %S\n  \"The hash-table of translations.\")\n\n"
+        "(defvar\n  %s--table-translations\n  %S\n  \"The hash-table of translations.\")\n\n"
         namespace
         parser-generator--table-translations))
 
       ;; Lex-Analyzer Get Function
       (insert
        (format
-        "(defconst\n  %s-lex-analyzer--get-function\n  (lambda %S %S)\n  \"The lex-analyzer get function.\")\n\n"
+        "(defvar\n  %s-lex-analyzer--get-function\n  (lambda %S %S)\n  \"The lex-analyzer get function.\")\n\n"
         namespace
         (nth 2 parser-generator-lex-analyzer--get-function)
         (nth 3 parser-generator-lex-analyzer--get-function)))
@@ -129,7 +129,7 @@
       ;; Lex-Analyzer Function
       (insert
        (format
-        "(defconst\n  %s-lex-analyzer--function\n  (lambda %S %S)\n  \"The lex-analyzer function.\")\n\n"
+        "(defvar\n  %s-lex-analyzer--function\n  (lambda %S %S)\n  \"The lex-analyzer function.\")\n\n"
         namespace
         (nth 2 parser-generator-lex-analyzer--function)
         (nth 3 parser-generator-lex-analyzer--function)))
@@ -137,7 +137,7 @@
       ;; Lex-Analyzer Reset Function
       (insert
        (format
-        "(defconst\n  %s-lex-analyzer--reset-function\n  "
+        "(defvar\n  %s-lex-analyzer--reset-function\n  "
         namespace))
       (if parser-generator-lex-analyzer--reset-function
           (insert
@@ -151,21 +151,21 @@
       ;; E-identifier
       (insert
        (format
-        "(defconst\n  %s--e-identifier\n  '%S\n  \"The e-identifier.\")\n\n"
+        "(defvar\n  %s--e-identifier\n  '%S\n  \"The e-identifier.\")\n\n"
         namespace
         parser-generator--e-identifier))
 
       ;; EOF-identifier
       (insert
        (format
-        "(defconst\n  %s--eof-identifier\n  '%S\n  \"The end-of-file-identifier.\")\n\n"
+        "(defvar\n  %s--eof-identifier\n  '%S\n  \"The end-of-file-identifier.\")\n\n"
         namespace
         parser-generator--eof-identifier))
 
       ;; Look-ahead number
       (insert
        (format
-        "(defconst\n  %s--look-ahead-number\n  %S\n  \"The look-ahead number.\")\n\n"
+        "(defvar\n  %s--look-ahead-number\n  %S\n  \"The look-ahead number.\")\n\n"
         namespace
         parser-generator--look-ahead-number))
 
@@ -175,6 +175,12 @@
       (insert
        (format
         "(defvar-local\n  %s-lex-analyzer--index\n  0\n  \"The current index of the lex-analyzer.\")\n\n"
+        namespace))
+
+      ;; Lex-analyzer move to index flag
+      (insert
+       (format
+        "(defvar-local\n  %s-lex-analyzer--move-to-index-flag\n  nil\n  \"Non-nil means move index to value.\")\n\n"
         namespace))
 
       (insert "\n;;; Functions:\n\n")
@@ -244,10 +250,18 @@
             k)
       (condition-case error
           (progn
+            (setq-local
+              %s-lex-analyzer--move-to-index-flag
+              nil)
             (let ((next-look-ahead
                    (funcall
                     %s-lex-analyzer--function
                     index)))
+                  (if %s-lex-analyzer--move-to-index-flag
+                    (progn
+                      (setq
+                       index
+                       parser-generator-lex-analyzer--move-to-index-flag))
               (if next-look-ahead
                   (progn
                     (unless (listp (car next-look-ahead))
@@ -261,7 +275,9 @@
                         (setq index (cdr (cdr next-look-ahead-item))))))
                 (push (list %s--eof-identifier) look-ahead)
                 (setq look-ahead-length (1+ look-ahead-length))
-                (setq index (1+ index)))))"
+                (setq index (1+ index))))))"
+               namespace
+               namespace
                namespace
                namespace
                namespace
@@ -281,15 +297,23 @@
 (defun
   %s-lex-analyzer--pop-token ()
   \"Pop next token via lex-analyzer.\"
-  (let ((iteration 0)
+  (let ((continue t)
         (tokens))
-    (while (< iteration 1)
+    (while continue
       (condition-case error
           (progn
+            (setq-local
+              %s-lex-analyzer--move-to-index-flag
+              nil)
             (let ((token
                    (funcall
                     %s-lex-analyzer--function
                     %s-lex-analyzer--index)))
+              (if %s-lex-analyzer--move-to-index-flag
+                  (progn
+                    (setq-local
+                     %s-lex-analyzer--index
+                     %s-lex-analyzer--move-to-index-flag))
               (when token
                 (unless (listp (car token))
                   (setq token (list token)))
@@ -297,7 +321,16 @@
                   (setq
                    %s-lex-analyzer--index
                    (cdr (cdr first-token)))
-                  (push first-token tokens)))))"
+                  (push 
+                   first-token 
+                   tokens)))
+                (setq
+                 continue
+                 nil))))"
+               namespace
+               namespace
+               namespace
+               namespace
                namespace
                namespace
                namespace
@@ -307,8 +340,7 @@
                 \"Lex-analyze failed to pop token at %s, error: %s\"")
       (insert (format "
                 %s-lex-analyzer--index
-                (car (cdr error)))))
-      (setq iteration (1+ iteration)))
+                (car (cdr error))))))
     (nreverse tokens)))\n"
                       namespace))
 
