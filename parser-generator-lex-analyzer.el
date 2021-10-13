@@ -88,13 +88,9 @@
                     parser-generator-lex-analyzer--function
                     index)))
               (if parser-generator-lex-analyzer--move-to-index-flag
-                  (progn
-                    (setq-local
-                     parser-generator-lex-analyzer--index
-                     parser-generator-lex-analyzer--move-to-index-flag)
-                    (setq
-                     index
-                     parser-generator-lex-analyzer--index))
+                  (setq
+                   index
+                   parser-generator-lex-analyzer--move-to-index-flag)
                 (if next-look-ahead
                     (progn
                       (unless (listp (car next-look-ahead))
