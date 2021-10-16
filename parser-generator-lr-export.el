@@ -118,6 +118,41 @@
         namespace
         parser-generator--table-translations))
 
+      ;; E-identifier
+      (insert
+       (format
+        "(defvar\n  %s--e-identifier\n  '%S\n  \"The e-identifier.\")\n\n"
+        namespace
+        parser-generator--e-identifier))
+
+      ;; EOF-identifier
+      (insert
+       (format
+        "(defvar\n  %s--eof-identifier\n  '%S\n  \"The end-of-file-identifier.\")\n\n"
+        namespace
+        parser-generator--eof-identifier))
+
+      ;; Look-ahead number
+      (insert
+       (format
+        "(defvar\n  %s--look-ahead-number\n  %S\n  \"The look-ahead number.\")\n\n"
+        namespace
+        parser-generator--look-ahead-number))
+
+      (insert "\n;;; Variables:\n\n")
+
+      ;; Index
+      (insert
+       (format
+        "(defvar-local\n  %s-lex-analyzer--index\n  0\n  \"The current index of the lex-analyzer.\")\n\n"
+        namespace))
+
+      ;; Move to index flag
+      (insert
+       (format
+        "(defvar-local\n  %s-lex-analyzer--move-to-index-flag\n  nil\n  \"Non-nil means move index to value.\")\n\n"
+        namespace))
+
       ;; Lex-Analyzer Get Function
       (insert
        (format
@@ -147,41 +182,6 @@
             (nth 3 parser-generator-lex-analyzer--reset-function)))
         (insert "nil\n"))
       (insert "  \"The lex-analyzer reset function.\")\n\n")
-
-      ;; E-identifier
-      (insert
-       (format
-        "(defvar\n  %s--e-identifier\n  '%S\n  \"The e-identifier.\")\n\n"
-        namespace
-        parser-generator--e-identifier))
-
-      ;; EOF-identifier
-      (insert
-       (format
-        "(defvar\n  %s--eof-identifier\n  '%S\n  \"The end-of-file-identifier.\")\n\n"
-        namespace
-        parser-generator--eof-identifier))
-
-      ;; Look-ahead number
-      (insert
-       (format
-        "(defvar\n  %s--look-ahead-number\n  %S\n  \"The look-ahead number.\")\n\n"
-        namespace
-        parser-generator--look-ahead-number))
-
-      (insert "\n;;; Variables:\n\n")
-
-      ;; Lex-analyzer index
-      (insert
-       (format
-        "(defvar-local\n  %s-lex-analyzer--index\n  0\n  \"The current index of the lex-analyzer.\")\n\n"
-        namespace))
-
-      ;; Lex-analyzer move to index flag
-      (insert
-       (format
-        "(defvar-local\n  %s-lex-analyzer--move-to-index-flag\n  nil\n  \"Non-nil means move index to value.\")\n\n"
-        namespace))
 
       (insert "\n;;; Functions:\n\n")
 
