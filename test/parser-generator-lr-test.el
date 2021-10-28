@@ -12,7 +12,7 @@
 
 (defun parser-generator-lr-test--parse-incremental-vs-regular ()
   "Verify that regular and incremental parse results in same data."
-  (let ((regular-parse (parser-generator-lr--parse)))
+  (let ((regular-parse (parser-generator-lr--parse t)))
     ;; (message "regular-parse: %s" regular-parse)
     (let ((regular-parse-history (nth 3 regular-parse)))
       ;; (message "regular-parse-history: %s" regular-parse-history)
@@ -37,6 +37,7 @@
 
             (let ((incremental-parse
                    (parser-generator-lr--parse
+                    t
                     input-tape-index
                     pushdown-list
                     output
@@ -977,7 +978,7 @@
          (setq index (1+ index)))
        (nreverse tokens))))
   (should-error
-   (parser-generator-lr--parse))
+   (parser-generator-lr--parse t))
   (message "Passed test with terminals as symbols, invalid syntax")
 
   (parser-generator-set-grammar '((Sp S) ("a" "b") ((Sp S) (S (S "a" S "b")) (S e)) Sp))
@@ -1023,7 +1024,7 @@
          (setq index (1+ index)))
        (nreverse tokens))))
   (should-error
-   (parser-generator-lr--parse))
+   (parser-generator-lr--parse t))
   (message "Passed test with terminals as string, invalid syntax")
 
   (setq

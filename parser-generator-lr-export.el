@@ -449,13 +449,14 @@
 (defun
   %s--parse
   (&optional
+    perform-sdt
     input-tape-index
     pushdown-list
     output
     translation
     translation-symbol-table-list
     history)
-  \"Perform a LR-parse via lex-analyzer, optionally at INPUT-TAPE-INDEX with PUSHDOWN-LIST, OUTPUT, TRANSLATION, TRANSLATION-SYMBOL-TABLE-LIST and HISTORY.\"
+  \"Perform a LR-parse via lex-analyzer, optionally PERFORM-SDT means to perform syntax-directed translation and optioanlly start at INPUT-TAPE-INDEX with PUSHDOWN-LIST, OUTPUT, TRANSLATION, TRANSLATION-SYMBOL-TABLE-LIST and HISTORY.\"
   (unless input-tape-index
     (setq input-tape-index 1))
   (unless pushdown-list
@@ -721,20 +722,21 @@
                               (setq popped-items (1+ popped-items)))))
                         (push production-number output)
 
-                        (let ((popped-items-meta-contents))
-                          (setq
-                           popped-items-contents
-                           (reverse popped-items-contents))
-                          ;; Collect arguments for translation
-                          (dolist (popped-item popped-items-contents)
-                            (if (and
-                                 (listp popped-item)
-                                 (cdr popped-item))
-                                ;; If item is a terminal, use it's literal value
-                                (push
-                                 (%s-lex-analyzer--get-function
-                                  popped-item)
-                                 popped-items-meta-contents)"
+                        (when perform-sdt
+                          (let ((popped-items-meta-contents))
+                            (setq
+                             popped-items-contents
+                             (reverse popped-items-contents))
+                            ;; Collect arguments for translation
+                            (dolist (popped-item popped-items-contents)
+                              (if (and
+                                   (listp popped-item)
+                                   (cdr popped-item))
+                                  ;; If item is a terminal, use it's literal value
+                                  (push
+                                   (%s-lex-analyzer--get-function
+                                    popped-item)
+                                   popped-items-meta-contents)"
                namespace
                namespace
                namespace
@@ -744,61 +746,89 @@
 
       (insert "
 
-                              ;; If item is a non-terminal
-                              (let ((temp-hash-key
-                                     (format
-                                      \"%S\"
-                                       popped-item)))
+                                ;; If item is a non-terminal
+                                (let ((temp-hash-key
+                                       (format
+                                        \"%S\"
+                                         popped-item)))
 ")
 
       (insert (format "
-                              ;; If we have a translation for symbol, pop one
-                              ;; otherwise push nil on translation argument stack
-                              (if (gethash
-                                       temp-hash-key
-                                       translation-symbol-table)
-                                      (let ((symbol-translations
-                                             (gethash
-                                              temp-hash-key
-                                              translation-symbol-table)))
-                                        (let ((symbol-translation
-                                               (pop symbol-translations)))
-                                          (push
-                                           symbol-translation
-                                           popped-items-meta-contents)
-                                          (puthash
-                                           temp-hash-key
-                                           symbol-translations
-                                           translation-symbol-table)))
-                                    (push
-                                     nil
-                                     popped-items-meta-contents)))))
+                                ;; If we have a translation for symbol, pop one
+                                ;; otherwise push nil on translation argument stack
+                                (if (gethash
+                                         temp-hash-key
+                                         translation-symbol-table)
+                                        (let ((symbol-translations
+                                               (gethash
+                                                temp-hash-key
+                                                translation-symbol-table)))
+                                          (let ((symbol-translation
+                                                 (pop symbol-translations)))
+                                            (push
+                                             symbol-translation
+                                             popped-items-meta-contents)
+                                            (puthash
+                                             temp-hash-key
+                                             symbol-translations
+                                             translation-symbol-table)))
+                                      (push
+                                       nil
+                                       popped-items-meta-contents)))))
 
-                            ;; If we just have one argument, pass it as a instead of a list
-                            (when (= (length popped-items-meta-contents) 1)
-                              (setq
-                               popped-items-meta-contents
-                               (car popped-items-meta-contents)))
+                              ;; If we just have one argument, pass it as a instead of a list
+                              (when (= (length popped-items-meta-contents) 1)
+                                (setq
+                                 popped-items-meta-contents
+                                 (car popped-items-meta-contents)))
 
-                            ;; Perform translation at reduction if specified
-                            (if
-                                (%s--get-grammar-translation-by-number
-                                 production-number)
-                                (let ((partial-translation
-                                       (funcall
-                                        (%s--get-grammar-translation-by-number
-                                         production-number)
-                                        popped-items-meta-contents)))"
+                              ;; Perform translation at reduction if specified
+                              (if
+                                  (%s--get-grammar-translation-by-number
+                                   production-number)
+                                  (let ((partial-translation
+                                         (funcall
+                                          (%s--get-grammar-translation-by-number
+                                           production-number)
+                                          popped-items-meta-contents)))"
                       namespace
                       namespace))
 
       (insert "
+                                    (let ((temp-hash-key
+                                           (format
+                                            \"%S\"
+                                            production-lhs)))"
+              )
+
+      (insert (format "
+                                      (let ((symbol-translations
+                                             (gethash
+                                              temp-hash-key
+                                              translation-symbol-table)))
+                                        (push
+                                         partial-translation
+                                         symbol-translations)
+                                        (puthash
+                                         temp-hash-key
+                                         symbol-translations
+                                         translation-symbol-table)
+                                        (setq
+                                         translation
+                                         partial-translation))))
+
+                                ;; When no translation is specified just use popped contents as translation
+                                (let ((partial-translation
+                                       popped-items-meta-contents))"
+                      ))
+               (insert "
                                   (let ((temp-hash-key
                                          (format
                                           \"%S\"
-                                          production-lhs)))")
+                                          production-lhs)))"
+                       )
 
-      (insert (format "
+               (insert (format "
                                     (let ((symbol-translations
                                            (gethash
                                             temp-hash-key
@@ -812,32 +842,7 @@
                                        translation-symbol-table)
                                       (setq
                                        translation
-                                       partial-translation))))
-
-                              ;; When no translation is specified just use popped contents as translation
-                              (let ((partial-translation
-                                     popped-items-meta-contents))"))
-               (insert "
-                                (let ((temp-hash-key
-                                       (format
-                                        \"%S\"
-                                        production-lhs)))")
-
-               (insert (format "
-                                  (let ((symbol-translations
-                                         (gethash
-                                          temp-hash-key
-                                          translation-symbol-table)))
-                                    (push
-                                     partial-translation
-                                     symbol-translations)
-                                    (puthash
-                                     temp-hash-key
-                                     symbol-translations
-                                     translation-symbol-table)
-                                    (setq
-                                     translation
-                                     partial-translation))))))
+                                       partial-translation)))))))
 
                           (let ((new-table-index (car pushdown-list)))
                             (let ((goto-table-distinct-index
@@ -921,6 +926,7 @@
   \"Perform a LR-parse via lex-analyzer, optionally at INPUT-TAPE-INDEX with PUSHDOWN-LIST, OUTPUT, TRANSLATION and HISTORY.\"
   (let ((result
          (%s--parse
+          nil
           input-tape-index
           pushdown-list
           output
@@ -943,6 +949,7 @@
   \"Perform a LR-parse via lex-analyzer, optionally at INPUT-TAPE-INDEX with PUSHDOWN-LIST, OUTPUT, TRANSLATION and HISTORY.\"
   (let ((result
          (%s--parse
+          t
           input-tape-index
           pushdown-list
           output

@@ -93,7 +93,7 @@
     (fboundp 'ba--parse)))
 
   (when (fboundp 'ba--parse)
-    (let ((regular-parse (ba--parse)))
+    (let ((regular-parse (ba--parse t)))
       (let ((regular-parse-history (nth 3 regular-parse)))
         ;; (message "regular-parse-history: %s" regular-parse-history)
         (let ((history-length (length regular-parse-history))
@@ -121,6 +121,7 @@
 
               (let ((incremental-parse
                      (ba--parse
+                      t
                       input-tape-index
                       pushdown-list
                       output
