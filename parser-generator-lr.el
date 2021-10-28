@@ -1839,11 +1839,17 @@
                     ;; (c) If f(u) = error, we halt parsing (and, in practice
                     ;; transfer to an error recovery routine).
 
-                    (error
-                     "Invalid syntax! Expected one of %S found %S at position %S"
-                     possible-look-aheads
-                     look-ahead
-                     parser-generator-lex-analyzer--index))
+                    (signal
+                     'error
+                     (list
+                      (format
+                       "Invalid syntax! Expected one of %S found %S at position %S"
+                       possible-look-aheads
+                       look-ahead
+                       parser-generator-lex-analyzer--index)
+                      possible-look-aheads
+                      look-ahead
+                      parser-generator-lex-analyzer--index)))
 
                   (parser-generator--debug
                    (message "action-table: %s" action-table)
@@ -1904,11 +1910,17 @@
                              (message "shift next-index: %s" next-index))
 
                             (unless next-index
-                              (error
-                               "In shift, found no GOTO-item for %s at %s, expected one of %s"
-                               a
-                               parser-generator-lex-analyzer--index
-                               possible-look-aheads))
+                              (signal
+                               'error
+                               (list
+                                (format
+                                 "In shift, found no GOTO-item for %s at %s, expected one of %s"
+                                 a
+                                 parser-generator-lex-analyzer--index
+                                 possible-look-aheads)
+                                a
+                                parser-generator-lex-analyzer--index
+                                possible-look-aheads)))
 
                             (push (car a-full) pushdown-list)
                             (push next-index pushdown-list)
@@ -2123,30 +2135,39 @@
 
                     (setq accept t))
 
-                   (t (error
+                   (t
+                    (signal
+                     'error
+                     (list
+                      (format
                        "Invalid action-match: %s!"
-                       action-match)))))))))
+                       action-match)
+                      action-match))))))))))
       (unless accept
-        (error
-         "Parsed entire string without getting accepting! Output: %s"
-         (reverse output)))
-      (when history
-        (setq history (reverse history)))
-      (when output
-        (setq output (reverse output)))
-      (let ((translation-symbol-table-list))
-        (when translation-symbol-table
-          (maphash
-           (lambda (key value)
-             (push
-              `(,key ,value)
-              translation-symbol-table-list))
-           translation-symbol-table))
-        (list
-         output
-         translation
-         translation-symbol-table-list
-         history)))))
+        (signal
+         'error
+         (list
+          (format
+           "Parsed entire string without getting accepting! Output: %s"
+           (reverse output))
+          (reverse output)))))
+    (when history
+      (setq history (reverse history)))
+    (when output
+      (setq output (reverse output)))
+    (let ((translation-symbol-table-list))
+      (when translation-symbol-table
+        (maphash
+         (lambda (key value)
+           (push
+            `(,key ,value)
+            translation-symbol-table-list))
+         translation-symbol-table))
+      (list
+       output
+       translation
+       translation-symbol-table-list
+       history))))
 
 (provide 'parser-generator-lr)
 

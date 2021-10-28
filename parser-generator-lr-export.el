@@ -609,14 +609,20 @@
                namespace))
 
       (insert "
-                  (error
-                    \"Invalid syntax! Expected one of %s found %s at %s\"
+                  (signal
+                    'error
+                    (list
+                      (format
+                        \"Invalid syntax! Expected one of %s found %s at %s\"
 ")
 
       (insert (format "
                    possible-look-aheads
                    look-ahead
-                   %s-lex-analyzer--index))
+                   %s-lex-analyzer--index)
+                   possible-look-aheads
+                   look-ahead
+                   %s-lex-analyzer--index)))
 
                 (cond
 
@@ -660,6 +666,7 @@
                                 (setq searching-match nil))))
 
                           (setq goto-index (1+ goto-index)))"
+                      namespace
                       namespace
                       namespace
                       namespace))

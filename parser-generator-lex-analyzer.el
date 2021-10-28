@@ -45,7 +45,11 @@
 (defun parser-generator-lex-analyzer--get-function (token)
   "Get information about TOKEN."
   (unless parser-generator-lex-analyzer--get-function
-    (error "Missing lex-analyzer get function! Token: %s" token))
+    (signal
+     'error
+     (list
+      (format "Missing lex-analyzer get function! Token: %s" token)
+      token)))
   (let ((meta-information))
     (condition-case error
         (progn
@@ -53,12 +57,22 @@
                 (funcall
                  parser-generator-lex-analyzer--get-function
                  token)))
-      (error (error
-              "Lex-analyze failed to get token meta-data of %s, error: %s"
-              token
-              (car (cdr error)))))
+      (error
+       (signal
+        'error
+        (list
+         (format
+          "Lex-analyze failed to get token meta-data of %s, error: %s"
+          token
+          (car (cdr error)))
+         token
+         (car (cdr error))))))
     (unless meta-information
-      (error "Could not find any token meta-information for: %s" token))
+      (signal
+       'error
+       (list
+        (format "Could not find any token meta-information for: %s" token)
+        token)))
     meta-information))
 
 (defun parser-generator-lex-analyzer--peek-next-look-ahead ()
