@@ -1689,13 +1689,14 @@
 
 ;; Algorithm 5.7, p. 375
 (defun parser-generator-lr--parse
-    (&optional perform-sdt
-               input-tape-index
-               pushdown-list
-               output
-               translation
-               translation-symbol-table-list
-               history)
+    (&optional
+     perform-sdt
+     input-tape-index
+     pushdown-list
+     output
+     translation
+     translation-symbol-table-list
+     history)
   "Perform a LR-parse via lex-analyzer, optionally PERFORM-SDT means to perform syntax-directed translation and optioanlly start at INPUT-TAPE-INDEX with PUSHDOWN-LIST, OUTPUT, TRANSLATION, TRANSLATION-SYMBOL-TABLE-LIST and HISTORY."
   (unless input-tape-index
     (setq input-tape-index 1))
