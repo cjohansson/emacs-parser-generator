@@ -1044,6 +1044,135 @@
   (parser-generator-lr-test--parse-incremental-vs-regular)
   (message "Passed incremental-tests")
 
+
+  ;; TODO Test left-recursive grammar from PHP 8.0 here
+  (parser-generator-set-look-ahead-number 1)
+  (setq
+   parser-generator--e-identifier
+   '%empty)
+  (parser-generator-set-grammar
+   '(
+     (start expr match match_arm_list non_empty_match_arm_list match_arm match_arm_cond_list possible_comma)
+     (T_DEFAULT T_MATCH "(" ")" "{" "}" "," T_DOUBLE_ARROW number)
+     (
+      (start
+       expr
+       )
+      (expr
+       number
+       match)
+      (match
+       (T_MATCH "(" expr ")" "{" match_arm_list "}")
+       )
+      (match_arm_list
+       %empty
+       (non_empty_match_arm_list possible_comma)
+       )
+      (non_empty_match_arm_list
+       match_arm
+       (non_empty_match_arm_list "," match_arm)
+       )
+      (match_arm
+       (match_arm_cond_list possible_comma T_DOUBLE_ARROW expr)
+       (T_DEFAULT possible_comma T_DOUBLE_ARROW expr)
+       )
+      (match_arm_cond_list
+       expr
+       (match_arm_cond_list "," expr)
+       )
+      (possible_comma
+       %empty
+       ",")
+      )
+     start
+     )
+   )
+  (parser-generator-set-look-ahead-number 1)
+  (parser-generator-process-grammar)
+  (parser-generator-lr-generate-parser-tables)
+  (setq
+   parser-generator-lex-analyzer--function
+   (lambda (index)
+     (with-current-buffer "*PHP8.0*"
+       (let ((token))
+         (goto-char index)
+         (cond
+          ((looking-at "[ \n\t]+")
+           (setq
+            parser-generator-lex-analyzer--move-to-index-flag
+            (match-end 0)))
+          ((or
+            (looking-at "{")
+            (looking-at "}")
+            (looking-at ",")
+            (looking-at "(")
+            (looking-at ")"))
+           (setq
+            token
+            `(
+              ,(buffer-substring-no-properties
+                (match-beginning 0)
+                (match-end 0))
+              ,(match-beginning 0)
+              . ,(match-end 0)
+              )
+            ))
+          ((looking-at "default")
+           (setq
+            token
+            `(
+              T_DEFAULT
+              ,(match-beginning 0)
+              . ,(match-end 0))
+            )
+           )
+          ((looking-at "match")
+           (setq
+            token
+            `(
+              T_MATCH
+              ,(match-beginning 0)
+              . ,(match-end 0))
+            )
+           )
+          ((looking-at "=>")
+           (setq
+            token
+            `(
+              T_DOUBLE_ARROW
+              ,(match-beginning 0)
+              . ,(match-end 0))
+            )
+           )
+          ((looking-at "[0-9]+")
+           (setq
+            token
+            `(
+              number
+              ,(match-beginning 0)
+              . ,(match-end 0))
+            )
+           )
+          )
+         token
+         ))))
+  (let ((buffer (generate-new-buffer "*PHP8.0*")))
+    (with-current-buffer buffer
+      (kill-region (point-min) (point-max))
+      (insert "match (55) {\n    default => 33,\n}")
+      (parser-generator-lr--parse)
+      (kill-buffer)
+      (message "Passed test PHP 8.0 match grammar 1")
+      ))
+  (let ((buffer (generate-new-buffer "*PHP8.0*")))
+    (with-current-buffer buffer
+      (kill-region (point-min) (point-max))
+      (insert "match (55) {\n    22,33 => 22,\n    25 => 20,\n    default => 33\n}")
+      (parser-generator-lr--parse)
+      (kill-buffer)
+      (message "Passed test PHP 8.0 match grammar 2")
+      ))
+
   (message "Passed tests for (parser-generator-lr--parse)"))
 
 (defun parser-generator-lr-test-parse-k-2 ()
