@@ -1972,7 +1972,8 @@
                           (push production-number output)
 
                           (when perform-sdt
-                            (let ((popped-items-meta-contents))
+                            (let ((popped-items-meta-contents)
+                                  (popped-items-terminals))
                               (setq
                                popped-items-contents
                                (reverse popped-items-contents))
@@ -1987,10 +1988,14 @@
                                      (cdr popped-item))
 
                                     ;; If item is a terminal, use it's literal value
-                                    (push
-                                     (parser-generator-lex-analyzer--get-function
-                                      popped-item)
-                                     popped-items-meta-contents)
+                                    (progn
+                                      (push
+                                       (parser-generator-lex-analyzer--get-function
+                                        popped-item)
+                                       popped-items-meta-contents)
+                                      (push
+                                       popped-item
+                                       popped-items-terminals))
 
                                   ;; If item is a non-terminal
                                   (let ((temp-hash-key
@@ -2012,26 +2017,36 @@
                                             (push
                                              symbol-translation
                                              popped-items-meta-contents)
+                                            (push
+                                             nil
+                                             popped-items-terminals)
                                             (puthash
                                              temp-hash-key
                                              symbol-translations
                                              translation-symbol-table)))
                                       (push
                                        nil
-                                       popped-items-meta-contents)))))
+                                       popped-items-meta-contents)
+                                      (push
+                                       nil
+                                       popped-items-terminals)))))
 
                               ;; If we just have one argument, pass it as a instead of a list
                               (when (= (length popped-items-meta-contents) 1)
                                 (setq
                                  popped-items-meta-contents
-                                 (car popped-items-meta-contents)))
+                                 (car popped-items-meta-contents))
+                                (setq
+                                 popped-items-terminals
+                                 (car popped-items-terminals)))
 
                               (parser-generator--debug
                                (message
-                                "Production arguments: %s -> %s = %s"
+                                "Production arguments: %s -> %s = %s (%S)"
                                 production-lhs
                                 production-rhs
-                                popped-items-meta-contents))
+                                popped-items-meta-contents
+                                popped-items-terminals))
 
                               ;; Perform translation at reduction if specified
                               (if
@@ -2041,7 +2056,8 @@
                                          (funcall
                                           (parser-generator--get-grammar-translation-by-number
                                            production-number)
-                                          popped-items-meta-contents)))
+                                          popped-items-meta-contents
+                                          popped-items-terminals)))
                                     (parser-generator--debug
                                      (message
                                       "translation-symbol-table: %S = %S (processed)"

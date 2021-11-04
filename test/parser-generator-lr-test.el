@@ -393,19 +393,19 @@
       (start input)
       (input
        %empty
-       (input line (lambda(args) (nth 1 args))))
+       (input line (lambda(args _terminals) (nth 1 args))))
       (line
        "\n"
-       (exp "\n" (lambda(args) (nth 0 args))))
+       (exp "\n" (lambda(args _terminals) (nth 0 args))))
       (exp
        NUM
-       (exp "+" exp (lambda(args) (+ (float (nth 0 args)) (nth 2 args))))
-       (exp "-" exp (lambda(args) (- (float (nth 0 args)) (nth 2 args))))
-       (exp "*" exp (lambda(args) (* (float (nth 0 args)) (nth 2 args))))
-       (exp "/" exp (lambda(args) (/ (float (nth 0 args)) (nth 2 args))))
-       ("-" exp %prec NEG (lambda(args) (- (float (nth 1 args)))))
-       (exp "^" exp (lambda(args) (expt (float (nth 0 args)) (nth 2 args))))
-       ("(" exp ")" (lambda(args) (nth 1 args)))))
+       (exp "+" exp (lambda(args _terminals) (+ (float (nth 0 args)) (nth 2 args))))
+       (exp "-" exp (lambda(args _terminals) (- (float (nth 0 args)) (nth 2 args))))
+       (exp "*" exp (lambda(args _terminals) (* (float (nth 0 args)) (nth 2 args))))
+       (exp "/" exp (lambda(args _terminals) (/ (float (nth 0 args)) (nth 2 args))))
+       ("-" exp %prec NEG (lambda(args _terminals) (- (float (nth 1 args)))))
+       (exp "^" exp (lambda(args _terminals) (expt (float (nth 0 args)) (nth 2 args))))
+       ("(" exp ")" (lambda(args _terminals) (nth 1 args)))))
      start))
   (parser-generator-process-grammar)
   (should-error
@@ -1457,7 +1457,18 @@
     (insert "abac")
 
     (parser-generator-set-grammar
-     '((Sp S R T) ("a" "b" "c") ((Sp S) (S (R S) (R)) (R ("a" "b" T (lambda(args) (list "begin" (nth 2 args) "end")))) (T ("a" T (lambda(args) "test")) ("c") (e))) Sp))
+     '(
+       (Sp S R T)
+       ("a" "b" "c")
+       (
+        (Sp S)
+        (S (R S) (R))
+        (R ("a" "b" T (lambda(args _terminals) (list "begin" (nth 2 args) "end"))))
+        (T ("a" T (lambda(args _terminals) "test")) ("c") (e)
+           )
+        )
+       Sp)
+     )
     (parser-generator-set-look-ahead-number 2)
     (parser-generator-process-grammar)
     (parser-generator-lr-generate-parser-tables)
@@ -1714,8 +1725,8 @@
        (
         (S (E $))
         (E
-         (E "*" B (lambda(args) (let ((ret (list (nth 0 args)))) (when (nth 2 args) (setq ret (append ret `(" x " ,(nth 2 args))))) ret)))
-         (E "+" B (lambda(args) (let ((ret (list (nth 0 args)))) (when (nth 2 args) (setq ret (append ret `(" . " ,(nth 2 args))))) ret)))
+         (E "*" B (lambda(args _terminals) (let ((ret (list (nth 0 args)))) (when (nth 2 args) (setq ret (append ret `(" x " ,(nth 2 args))))) ret)))
+         (E "+" B (lambda(args _terminals) (let ((ret (list (nth 0 args)))) (when (nth 2 args) (setq ret (append ret `(" . " ,(nth 2 args))))) ret)))
          (B)
          )
         (B
@@ -1765,7 +1776,17 @@
     (switch-to-buffer buffer)
     (insert "aabb")
 
-    (parser-generator-set-grammar '((Sp S) ("a" "b") ((Sp S) (S (S "a" S "b" (lambda(args) (let ((list "")) (dolist (item args) (when item (setq list (format "%s%s" item list)))) list)))) (S e)) Sp))
+    (parser-generator-set-grammar
+     '
+     (
+      (Sp S)
+      ("a" "b")
+      (
+       (Sp S)
+       (S (S "a" S "b" (lambda(args _terminals) (let ((list "")) (dolist (item args) (when item (setq list (format "%s%s" item list)))) list))))
+       (S e)
+       )
+      Sp))
     (parser-generator-set-look-ahead-number 1)
     (setq
      parser-generator--e-identifier
@@ -1804,7 +1825,18 @@
     (switch-to-buffer buffer)
     (insert "if (a) { b; }")
 
-    (parser-generator-set-grammar '((Sp S) (";" OPEN_ROUND_BRACKET CLOSE_ROUND_BRACKET ECHO IF OPEN_CURLY_BRACKET CLOSE_CURLY_BRACKET VARIABLE) ((Sp S) (S (IF OPEN_ROUND_BRACKET VARIABLE CLOSE_ROUND_BRACKET OPEN_CURLY_BRACKET VARIABLE ";" CLOSE_CURLY_BRACKET (lambda(args) (format "(when %s %s)" (nth 2 args) (nth 5 args)))))) Sp))
+    (parser-generator-set-grammar
+     '
+     (
+      (Sp S)
+      (";" OPEN_ROUND_BRACKET CLOSE_ROUND_BRACKET ECHO IF OPEN_CURLY_BRACKET CLOSE_CURLY_BRACKET VARIABLE)
+      (
+       (Sp S)
+       (S (IF OPEN_ROUND_BRACKET VARIABLE CLOSE_ROUND_BRACKET OPEN_CURLY_BRACKET VARIABLE ";" CLOSE_CURLY_BRACKET (lambda(args _tokens) (format "(when %s %s)" (nth 2 args) (nth 5 args)))))
+       )
+      Sp
+      )
+     )
     (parser-generator-set-look-ahead-number 1)
     (parser-generator-process-grammar)
     (parser-generator-lr-generate-parser-tables)
@@ -1857,7 +1889,18 @@
     (switch-to-buffer buffer)
     (kill-region (point-min) (point-max))
 
-    (parser-generator-set-grammar '((Sp S T) (";" OPEN_ROUND_BRACKET CLOSE_ROUND_BRACKET ECHO IF OPEN_CURLY_BRACKET CLOSE_CURLY_BRACKET VARIABLE) ((Sp S) (S (IF OPEN_ROUND_BRACKET VARIABLE CLOSE_ROUND_BRACKET OPEN_CURLY_BRACKET T CLOSE_CURLY_BRACKET (lambda(args) (format "(when %s %s)" (nth 2 args) (nth 5 args))))) (T (ECHO VARIABLE ";" (lambda(args) (format "(message %s)" (nth 1 args)))) (VARIABLE ";" (lambda(args) (format "%s" (nth 0 args)))))) Sp))
+    (parser-generator-set-grammar
+     '(
+       (Sp S T)
+       (";" OPEN_ROUND_BRACKET CLOSE_ROUND_BRACKET ECHO IF OPEN_CURLY_BRACKET CLOSE_CURLY_BRACKET VARIABLE)
+       (
+        (Sp S)
+        (S (IF OPEN_ROUND_BRACKET VARIABLE CLOSE_ROUND_BRACKET OPEN_CURLY_BRACKET T CLOSE_CURLY_BRACKET (lambda(args _terminals) (format "(when %s %s)" (nth 2 args) (nth 5 args)))))
+        (T (ECHO VARIABLE ";" (lambda(args _terminals) (format "(message %s)" (nth 1 args)))) (VARIABLE ";" (lambda(args _terminals) (format "%s" (nth 0 args)))))
+        )
+       Sp
+       )
+     )
     (parser-generator-set-look-ahead-number 1)
     (parser-generator-process-grammar)
     (parser-generator-lr-generate-parser-tables)
@@ -1886,7 +1929,17 @@
     (switch-to-buffer buffer)
     (insert "if (a) { b; }")
 
-    (parser-generator-set-grammar '((Sp S) (";" OPEN_ROUND_BRACKET CLOSE_ROUND_BRACKET IF OPEN_CURLY_BRACKET CLOSE_CURLY_BRACKET VARIABLE) ((Sp S) (S (IF OPEN_ROUND_BRACKET VARIABLE CLOSE_ROUND_BRACKET OPEN_CURLY_BRACKET VARIABLE ";" CLOSE_CURLY_BRACKET (lambda(args) (format "(when %s %s)" (nth 2 args) (nth 5 args)))))) Sp))
+    (parser-generator-set-grammar
+     '(
+       (Sp S)
+       (";" OPEN_ROUND_BRACKET CLOSE_ROUND_BRACKET IF OPEN_CURLY_BRACKET CLOSE_CURLY_BRACKET VARIABLE)
+       (
+        (Sp S)
+        (S (IF OPEN_ROUND_BRACKET VARIABLE CLOSE_ROUND_BRACKET OPEN_CURLY_BRACKET VARIABLE ";" CLOSE_CURLY_BRACKET (lambda(args _terminals) (format "(when %s %s)" (nth 2 args) (nth 5 args)))))
+        )
+       Sp
+       )
+     )
     (parser-generator-set-look-ahead-number 1)
     (parser-generator-process-grammar)
     (parser-generator-lr-generate-parser-tables)

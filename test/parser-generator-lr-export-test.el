@@ -24,9 +24,12 @@
        ("a" "b")
        (
         (Sp S)
-        (S (S "a" S "b" (lambda(args) (let ((list "")) (dolist (item args) (when item (setq list (format "%s%s" item list)))) list))))
+        (S (S "a" S "b" (lambda(args _terminals) (let ((list "")) (dolist (item args) (when item (setq list (format "%s%s" item list)))) list))))
         (S e)
-        ) Sp))
+        )
+       Sp
+       )
+     )
     (parser-generator-set-look-ahead-number 1)
     (parser-generator-process-grammar)
     (parser-generator-lr-generate-parser-tables)
@@ -146,7 +149,17 @@
 
   ;; Generate parser
   (parser-generator-set-grammar
-   '((Sp S) (a b) ((Sp S) (S (S a S b)) (S e)) Sp))
+   '(
+     (Sp S)
+     (a b)
+     (
+      (Sp S)
+      (S (S a S b))
+      (S e)
+      )
+     Sp
+     )
+   )
   (parser-generator-set-look-ahead-number 1)
   (parser-generator-process-grammar)
   (parser-generator-lr-generate-parser-tables)
@@ -199,7 +212,18 @@
     (switch-to-buffer buffer)
     (insert "aabb")
 
-    (parser-generator-set-grammar '((Sp S) ("a" "b") ((Sp S) (S (S "a" S "b" (lambda(args) (let ((list "")) (dolist (item args) (when item (setq list (format "%s%s" item list)))) list)))) (S e)) Sp))
+    (parser-generator-set-grammar
+     '(
+       (Sp S)
+       ("a" "b")
+       (
+        (Sp S)
+        (S (S "a" S "b" (lambda(args _terminals) (let ((list "")) (dolist (item args) (when item (setq list (format "%s%s" item list)))) list))))
+        (S e)
+        )
+       Sp
+       )
+     )
     (parser-generator-set-look-ahead-number 1)
     (parser-generator-process-grammar)
     (parser-generator-lr-generate-parser-tables)
@@ -259,7 +283,17 @@
   (insert "1+1")
 
   (parser-generator-set-grammar
-   '((S E B) ("*" "+" "0" "1") ((S (E $)) (E (E "*" B) (E "+" B) (B)) (B ("0") ("1"))) S))
+   '(
+     (S E B)
+     ("*" "+" "0" "1")
+     (
+      (S (E $))
+      (E (E "*" B) (E "+" B) (B))
+      (B ("0") ("1"))
+      )
+     S
+     )
+   )
   (parser-generator-set-look-ahead-number 0)
   (parser-generator-process-grammar)
   (parser-generator-lr-generate-parser-tables)
@@ -319,7 +353,18 @@
     (switch-to-buffer buffer)
     (insert "aabb")
 
-    (parser-generator-set-grammar '((Sp S) ("a" "b") ((Sp S) (S (S "a" S "b" (lambda(args) (let ((list "")) (dolist (item args) (when item (setq list (format "%s%s" item list)))) list)))) (S e)) Sp))
+    (parser-generator-set-grammar
+     '(
+       (Sp S)
+       ("a" "b")
+       (
+        (Sp S)
+        (S (S "a" S "b" (lambda(args _terminals) (let ((list "")) (dolist (item args) (when item (setq list (format "%s%s" item list)))) list))))
+        (S e)
+        )
+       Sp
+       )
+     )
     (parser-generator-set-look-ahead-number 1)
     (parser-generator-process-grammar)
     (parser-generator-lr-generate-parser-tables)

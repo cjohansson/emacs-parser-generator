@@ -731,7 +731,8 @@
                         (push production-number output)
 
                         (when perform-sdt
-                          (let ((popped-items-meta-contents))
+                          (let ((popped-items-meta-contents)
+                                (popped-items-terminals))
                             (setq
                              popped-items-contents
                              (reverse popped-items-contents))
@@ -741,10 +742,14 @@
                                    (listp popped-item)
                                    (cdr popped-item))
                                   ;; If item is a terminal, use it's literal value
-                                  (push
-                                   (%s-lex-analyzer--get-function
-                                    popped-item)
-                                   popped-items-meta-contents)"
+                                  (progn
+                                    (push
+                                      (%s-lex-analyzer--get-function
+                                       popped-item)
+                                       popped-items-meta-contents)
+                                      (push
+                                       popped-item
+                                       popped-items-terminals))"
                namespace
                namespace
                namespace
@@ -776,19 +781,28 @@
                                             (push
                                              symbol-translation
                                              popped-items-meta-contents)
+                                            (push
+                                             nil
+                                             popped-items-terminals)
                                             (puthash
                                              temp-hash-key
                                              symbol-translations
                                              translation-symbol-table)))
                                       (push
                                        nil
-                                       popped-items-meta-contents)))))
+                                       popped-items-meta-contents)
+                                      (push
+                                       nil
+                                       popped-items-terminals)))))
 
                               ;; If we just have one argument, pass it as a instead of a list
                               (when (= (length popped-items-meta-contents) 1)
                                 (setq
                                  popped-items-meta-contents
-                                 (car popped-items-meta-contents)))
+                                 (car popped-items-meta-contents))
+                                (setq
+                                 popped-items-terminals
+                                 (car popped-items-terminals)))
 
                               ;; Perform translation at reduction if specified
                               (if
@@ -798,7 +812,8 @@
                                          (funcall
                                           (%s--get-grammar-translation-by-number
                                            production-number)
-                                          popped-items-meta-contents)))"
+                                          popped-items-meta-contents
+                                          popped-items-terminals)))"
                       namespace
                       namespace))
 
