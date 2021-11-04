@@ -9,8 +9,8 @@
 
 (require 'parser-generator-lr)
 
-(defun parser-generator-lr-export-to-elisp (namespace &optional header)
-  "Export parser with NAMESPACE and a optional HEADER."
+(defun parser-generator-lr-export-to-elisp (namespace &optional header copyright)
+  "Export parser with NAMESPACE and a optional HEADER and COPYRIGHT."
   (message "\nStarting generation of elips..\n")
 
   ;; Make sure all requisites are defined
@@ -50,14 +50,20 @@
       ;; Header
       (insert
        (format
-        ";;; %s.el --- Exported Emacs Parser Generator -*- lexical-binding: t -*-\n\n\n"
+        ";;; %s.el --- Exported Emacs Parser Generator -*- lexical-binding: t -*-\n\n"
         namespace))
+
+      ;; Optional copyright
+      (when copyright
+        (insert copyright))
+
       (insert ";;; Commentary:\n\n\n;;; Code:\n\n")
 
+      ;; Optional header
       (when header
         (insert header))
 
-      (insert "\n;;; Constants:\n\n\n")
+      (insert "\n;;; Variables:\n\n\n")
 
       ;; Action-tables
       (insert
@@ -71,7 +77,7 @@
         namespace
         parser-generator-lr--distinct-action-tables))
 
-      ;; Goto-tables
+      ;; GOTO-tables
       (insert
        (format
         "(defvar\n  %s--goto-tables\n  %S\n  \"The generated goto-tables.\")\n\n"
@@ -139,7 +145,7 @@
         namespace
         parser-generator--look-ahead-number))
 
-      (insert "\n;;; Variables:\n\n")
+      (insert "\n;;; Local Variables:\n\n")
 
       ;; Index
       (insert
@@ -152,6 +158,8 @@
        (format
         "(defvar-local\n  %s-lex-analyzer--move-to-index-flag\n  nil\n  \"Non-nil means move index to value.\")\n\n"
         namespace))
+
+      (insert "\n;;; Variable Functions:\n\n")
 
       ;; Lex-Analyzer Get Function
       (insert
@@ -185,7 +193,7 @@
 
       (insert "\n;;; Functions:\n\n")
 
-      (insert "\n;;; Lex-Analyzer:\n\n")
+      (insert "\n;;; Functions for Lex-Analyzer:\n\n")
 
       ;; Lex-Analyzer Get Function
       (insert
@@ -344,7 +352,7 @@
     (nreverse tokens)))\n"
                       namespace))
 
-      (insert "\n\n;;; Syntax-Analyzer / Parser:\n\n");
+      (insert "\n\n;;; Functions for Syntax-Analyzer / Parser:\n\n");
 
       ;; Get grammar production by number
       (insert
