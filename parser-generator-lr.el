@@ -2015,10 +2015,10 @@
                                           (let ((symbol-translation
                                                  (pop symbol-translations)))
                                             (push
-                                             symbol-translation
+                                             (car symbol-translation)
                                              popped-items-meta-contents)
                                             (push
-                                             nil
+                                             (car (cdr symbol-translation))
                                              popped-items-terminals)
                                             (puthash
                                              temp-hash-key
@@ -2072,7 +2072,9 @@
                                               temp-hash-key
                                               translation-symbol-table)))
                                         (push
-                                         partial-translation
+                                         (list
+                                          partial-translation
+                                          (if (= (length popped-items-terminals) 1) popped-items-terminals nil))
                                          symbol-translations)
                                         (puthash
                                          temp-hash-key
@@ -2084,7 +2086,9 @@
 
                                 ;; When no translation is specified just use popped contents as translation
                                 (let ((partial-translation
-                                       popped-items-meta-contents))
+                                       (list
+                                        popped-items-meta-contents
+                                        popped-items-terminals)))
                                   (parser-generator--debug
                                    (message
                                     "translation-symbol-table: %S = %S (generic)"
@@ -2107,7 +2111,7 @@
                                        translation-symbol-table)
                                       (setq
                                        translation
-                                       partial-translation)))))))
+                                       (car partial-translation))))))))
 
                           (let ((new-table-index (car pushdown-list)))
                             (let ((goto-table-distinct-index
