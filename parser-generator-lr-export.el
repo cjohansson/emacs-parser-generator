@@ -779,10 +779,10 @@
                                           (let ((symbol-translation
                                                  (pop symbol-translations)))
                                             (push
-                                             symbol-translation
+                                             (car symbol-translation)
                                              popped-items-meta-contents)
                                             (push
-                                             nil
+                                             (car (cdr symbol-translation))
                                              popped-items-terminals)
                                             (puthash
                                              temp-hash-key
@@ -830,8 +830,10 @@
                                               temp-hash-key
                                               translation-symbol-table)))
                                         (push
-                                         partial-translation
-                                         symbol-translations)
+                                          (list
+                                           partial-translation
+                                           popped-items-terminals)
+                                           symbol-translations)
                                         (puthash
                                          temp-hash-key
                                          symbol-translations

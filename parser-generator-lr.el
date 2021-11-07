@@ -2074,7 +2074,7 @@
                                         (push
                                          (list
                                           partial-translation
-                                          (if (= (length popped-items-terminals) 1) popped-items-terminals nil))
+                                          popped-items-terminals)
                                          symbol-translations)
                                         (puthash
                                          temp-hash-key
