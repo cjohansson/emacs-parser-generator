@@ -867,7 +867,7 @@
                                        translation-symbol-table)
                                       (setq
                                        translation
-                                       partial-translation)))))))
+                                       (car partial-translation))))))))
 
                           (let ((new-table-index (car pushdown-list)))
                             (let ((goto-table-distinct-index
