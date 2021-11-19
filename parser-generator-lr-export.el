@@ -844,7 +844,9 @@
 
                                 ;; When no translation is specified just use popped contents as translation
                                 (let ((partial-translation
-                                       popped-items-meta-contents))"
+                                       (list
+                                        popped-items-meta-contents
+                                        popped-items-terminals)))"
                       ))
                (insert "
                                   (let ((temp-hash-key
