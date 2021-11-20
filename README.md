@@ -3,9 +3,9 @@
 [![License GPL 3](https://img.shields.io/badge/license-GPL_3-green.svg)](https://www.gnu.org/licenses/gpl-3.0.txt)
 [![Build Status](https://travis-ci.org/cjohansson/emacs-parser-generator.svg?branch=master)](https://travis-ci.org/cjohansson/emacs-parser-generator)
 
-The idea of this plugin is to provide functions for various kinds of context-free grammar parser generations with support for syntax-directed-translations (SDT) and semantic actions (SA) and the possibility of exporting parsers and translators (as generated elisp code) to enable Emacs plugin-agnostic usage. This project is also about implementing algorithms described in the book `The Theory of Parsing, Translation and Compiling (Volume 1)` by `Alfred V. Aho and Jeffrey D. Ullman` (1972). Additional this project is about me learning how to parse programming languages.
+The idea of this plugin is to provide functions for various kinds of context-free grammar parser generations with support for syntax-directed-translations (SDT) and semantic actions (SA) and the possibility of exporting parsers and translators (as generated stand-alone elisp code) to enable Emacs plugin-agnostic usage. This project is also about implementing algorithms described in the book `The Theory of Parsing, Translation and Compiling (Volume 1)` by `Alfred V. Aho and Jeffrey D. Ullman` (1972). Additional this project is about me learning how to parse programming languages.
 
-At the moment it is possible to generate canonical LR(k) parsers using this library.
+At the moment it is possible to generate canonical LR(k) parsers using this library for complex languages like PHP 8.0.
 
 ## Lexical Analysis
 

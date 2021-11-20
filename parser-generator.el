@@ -1,8 +1,36 @@
 ;;; parser-generator.el --- Parser Generator library -*- lexical-binding: t -*-
 
+;; Copyright (C) 2020-2021  Free Software Foundation, Inc.
+
+;; Author: Christian Johansson <christian@cvj.se>
+;; Maintainer: Christian Johansson <christian@cvj.se>
+;; Created: 10 Oct 2020
+;; Modified: 20 Nov 2021
+;; Version: 0.1.3
+;; Keywords: tools, convenience
+;; URL: https://github.com/cjohansson/emacs-parser-generator
+
+;; Package-Requires: ((emacs "26"))
+
+;; This file is not part of GNU Emacs.
+
+;; This program is free software; you can redistribute it and/or
+;; modify it under the terms of the GNU General Public License as
+;; published by the Free Software Foundation; either version 2, or (at
+;; your option) any later version.
+
+;; This program is distributed in the hope that it will be useful, but
+;; WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+;; General Public License for more details.
+
+;; You should have received a copy of the GNU General Public License
+;; along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.
+
 
 ;;; Commentary:
 
+;; The idea of this plugin is to provide functions for various kinds of context-free grammar parser generations with support for syntax-directed-translations (SDT) and semantic actions (SA) and the possibility of exporting parsers and translators (as generated stand-alone elisp code) to enable Emacs plugin-agnostic usage.
 
 ;;; Code:
 

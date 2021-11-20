@@ -1,5 +1,7 @@
 ;;; parser-generator-test.el --- Tests for Parser Generator -*- lexical-binding: t -*-
 
+;; Copyright (C) 2020-2021  Free Software Foundation, Inc.
+
 
 ;;; Commentary:
 

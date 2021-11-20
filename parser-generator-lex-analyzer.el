@@ -1,5 +1,7 @@
 ;;; parser-generator-lex-analyzer.el --- Lex-analyzer library -*- lexical-binding: t -*-
 
+;; Copyright (C) 2020-2021  Free Software Foundation, Inc.
+
 
 ;;; Commentary:
 

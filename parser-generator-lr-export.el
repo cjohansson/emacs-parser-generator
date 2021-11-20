@@ -1,5 +1,7 @@
 ;;; parser-generator-lr-export.el --- Export LR(k) Parser -*- lexical-binding: t -*-
 
+;; Copyright (C) 2020-2021  Free Software Foundation, Inc.
+
 
 ;;; Commentary:
 
