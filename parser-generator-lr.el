@@ -1474,7 +1474,7 @@
           parser-generator--look-ahead-number
           parser-generator--eof-identifier)))
     (parser-generator--debug
-     (message "x: %s" x))
+     (message "x: %S" x))
 
     ;; TODO Use caches to optimize this loop?
     (dolist (lr-item previous-lr-item)
