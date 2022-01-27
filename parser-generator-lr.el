@@ -1558,7 +1558,7 @@
                   lr-item-suffix-first
                   lr-item-suffix)
                  (message
-                  "lr-item-suffix-rest: %s from %s + %s"
+                  "lr-item-suffix-rest: %s from %s + %s\n"
                   lr-item-suffix-rest
                   (cdr lr-item-suffix)
                   (nth 3 lr-item)))

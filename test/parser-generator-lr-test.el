@@ -1215,6 +1215,13 @@
   (parser-generator-set-look-ahead-number 1)
   (parser-generator-process-grammar)
   (parser-generator-lr-generate-parser-tables)
+
+  ;; TODO Make this test pass
+  (should
+   (equal
+    (parser-generator--first '(inner_statement_list T_CASE))
+    '((T_CASE) (T_ECHO) (T_SWITCH))))
+
   (setq
    parser-generator-lex-analyzer--function
    (lambda (index)
