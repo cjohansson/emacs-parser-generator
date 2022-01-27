@@ -45,7 +45,7 @@
 
 (defvar
   parser-generator--debug
-  nil
+  t
   "Whether to print debug messages or not.")
 
 (defvar
@@ -1920,6 +1920,7 @@
      hash-key
      parser-generator--table-firsts)))
 
+;; TODO Should add support for e-identifiers
 ;; Definition at p. 343
 (defun parser-generator--follow (β)
   "Calculate follow-set of Β.  FOLLOW(β) = w, w is the set {w | S =>* αβγ and w is in FIRST(γ)}."
