@@ -670,6 +670,14 @@
        t
        parser-generator--table-look-aheads-p))))
 
+(defun parser-generator-set-e-identifier (e-identifier)
+  "Set E-IDENTIFIER."
+  (unless (or
+           (stringp e-identifier)
+           (symbolp e-identifier))
+    (error "E-identifier must be a symbol or string!"))
+  (setq parser-generator--e-identifier e-identifier))
+
 (defun parser-generator-set-look-ahead-number (k)
   "Set look-ahead number K."
   (unless (parser-generator--valid-look-ahead-number-p k)
@@ -1805,68 +1813,69 @@
                                  (message
                                   "stopped looking since non-terminal starts with e-identifier: %s"
                                   symbol-f-set))
-                                (setq keep-looking nil))
-                            
+                                (setq
+                                 keep-looking
+                                 nil))
+
                             ;; Handle this scenario here were a non-terminal can result in different FIRST sets
-                            (when (>
-                                   (length symbol-f-set)
-                                   1)
-                              (let ((symbol-f-set-index
-                                     1)
-                                    (symbol-f-set-length
-                                     (length symbol-f-set)))
-                                (while
-                                    (<
-                                     symbol-f-set-index
-                                     symbol-f-set-length)
-                                  (let ((symbol-f-set-element
-                                         (nth
-                                          symbol-f-set-index
-                                          symbol-f-set)))
-                                    (let ((alternative-first-length
-                                           (+ first-length (length symbol-f-set-element)))
-                                          (alternative-first
-                                           (append first symbol-f-set-element))
-                                          (alternative-tape-index
-                                           (1+ input-tape-index)))
+                            (let ((symbol-f-set-index 0)
+                                  (symbol-f-set-length
+                                   (length symbol-f-set))
+                                  (found-e-trail)
+                                  (e-trail-is-viable-p
+                                   (< input-tape-index (1- input-tape-length)))
+                                  (original-first first)
+                                  (original-first-length first-length))
+                              (while (< symbol-f-set-index symbol-f-set-length)
+                                (let ((symbol-f-set-element (nth symbol-f-set-index symbol-f-set)))
+                                  (let ((alternative-first-length
+                                         (+ original-first-length (length symbol-f-set-element)))
+                                        (alternative-first
+                                         (append original-first symbol-f-set-element))
+                                        (alternative-tape-index
+                                         (1+ input-tape-index)))
+                                    (parser-generator--debug
+                                     (message
+                                      "alternative-first: %s"
+                                      alternative-first))
+
+                                    ;; When the e-identifier is an alternative trail
+                                    ;; and there a symbols left on stack
+                                    ;; make alternative trail by skipping this symbol
+                                    (when (and
+                                           e-trail-is-viable-p
+                                           (not found-e-trail)
+                                           (not disallow-e-first)
+                                           (parser-generator--valid-e-p
+                                            (car alternative-first)))
+                                      (push
+                                       `(,(1+ input-tape-index) ,original-first-length ,original-first)
+                                       stack)
                                       (parser-generator--debug
                                        (message
-                                        "alternative-first: %s"
-                                        alternative-first))
+                                        "Pushed alternative trail from non-terminal expansion to stack since first symbol is the e-identifier: %s"
+                                        `(,(1+ input-tape-index) ,original-first-length ,original-first)))
+                                      (setq
+                                       found-e-trail
+                                       t))
+
+                                    (if (= symbol-f-set-index 0)
+                                        (progn
+                                          (setq
+                                           first-length
+                                           (+ original-first-length (length alternative-first)))
+                                          (setq
+                                           first
+                                           (append original-first alternative-first)))
                                       (push
                                        `(
                                          ,alternative-tape-index
                                          ,alternative-first-length
                                          ,alternative-first)
-                                       stack)))
-                                  (setq
-                                   symbol-f-set-index
-                                   (1+ symbol-f-set-index)))))
-
-                            (parser-generator--debug
-                             (message
-                              "main-symbol-f-set: %s"
-                              (car symbol-f-set)))
-
-                            ;; When there a symbols left on stack, make alternative trail by skipping this symbol
-                            (when (and
-                                   (parser-generator--valid-e-p (car (car symbol-f-set)))
-                                   (not disallow-e-first)
-                                   (< input-tape-index (1- input-tape-length)))
-                              (parser-generator--debug
-                               (message
-                                "Pushed alternative trail from non-terminal expansion to stack since first symbol is the e-identifier: %s"
-                                `(,(1+ input-tape-index) ,first-length ,first)))
-                              (push
-                               `(,(1+ input-tape-index) ,first-length ,first)
-                               stack))
-
-                            (setq
-                             first-length
-                             (+ first-length (length (car symbol-f-set))))
-                            (setq
-                             first
-                             (append first (car symbol-f-set))))))))
+                                       stack))))
+                                (setq
+                                 symbol-f-set-index
+                                 (1+ symbol-f-set-index)))))))))
                     (setq
                      input-tape-index
                      (1+ input-tape-index)))

@@ -430,6 +430,60 @@
     '((b) (e))))
   (message "Passed first 12 with multiple non-terminals and e-identifiers")
 
+  (parser-generator-set-look-ahead-number 1)
+  (parser-generator-set-e-identifier '%empty)
+  (parser-generator-set-grammar
+   '(
+     (start inner_statement_list statement switch_case_list case_list case_separator)
+     (T_SWITCH T_ECHO T_CONSTANT_ENCAPSED_STRING ";" ":" "{" "}" T_CASE)
+     (
+      (start
+       inner_statement_list
+       )
+      (inner_statement_list
+       (inner_statement_list statement)
+       %empty
+       )
+      (statement
+       (T_SWITCH switch_case_list)
+       (T_ECHO T_CONSTANT_ENCAPSED_STRING ";")
+       )
+      (switch_case_list
+       ("{" case_list "}")
+       ("{" ";" case_list "}")
+       )
+      (case_list
+       %empty
+       (case_list T_CASE case_separator inner_statement_list)
+       )
+      (case_separator
+       ":"
+       ";"
+       )
+      )
+     start
+     )
+   )
+  (parser-generator-set-look-ahead-number 1)
+  (parser-generator-process-grammar)
+  (should
+   (equal
+    (parser-generator--first '(inner_statement_list T_CASE))
+    '((%empty) (T_CASE) (T_ECHO) (T_SWITCH))))
+  (should
+   (equal
+    (parser-generator--first '(inner_statement_list inner_statement_list T_CASE))
+    '((%empty) (T_CASE) (T_ECHO) (T_SWITCH))))
+  (should
+   (equal
+    (parser-generator--first '(inner_statement_list inner_statement_list inner_statement_list T_CASE))
+    '((%empty) (T_CASE) (T_ECHO) (T_SWITCH))))
+  ;; TODO Make this pass
+  (should
+   (equal
+    (parser-generator--e-free-first '(inner_statement_list inner_statement_list inner_statement_list T_CASE))
+    '((T_ECHO) (T_SWITCH))))
+
   (message "Passed tests for (parser-generator--first)"))
 
 (defun parser-generator-test--e-free-first ()
@@ -437,6 +491,7 @@
   (message "Starting tests for (parser-generator--e-free-first)")
 
   ;; Example 5.28 p 382
+  (parser-generator-set-e-identifier 'e)
   (parser-generator-set-grammar '((S A B C) (a b c) ((S (A B)) (A (B a) e) (B (C b) C) (C c e)) S))
   (parser-generator-set-look-ahead-number 2)
   (parser-generator-process-grammar)
