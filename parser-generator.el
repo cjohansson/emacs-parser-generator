@@ -45,7 +45,7 @@
 
 (defvar
   parser-generator--debug
-  nil
+  t
   "Whether to print debug messages or not.")
 
 (defvar
@@ -1842,10 +1842,13 @@
                                     ;; When the e-identifier is an alternative trail
                                     ;; and there a symbols left on stack
                                     ;; make alternative trail by skipping this symbol
+                                    ;; but only if there are more symbols in the input tape
                                     (when (and
                                            e-trail-is-viable-p
                                            (not found-e-trail)
-                                           (not disallow-e-first)
+                                           (or
+                                            (not disallow-e-first)
+                                            (> original-first-length 0))
                                            (parser-generator--valid-e-p
                                             (car alternative-first)))
                                       (push
