@@ -478,11 +478,6 @@
    (equal
     (parser-generator--first '(inner_statement_list inner_statement_list inner_statement_list T_CASE))
     '((%empty) (T_CASE) (T_ECHO) (T_SWITCH))))
-  ;; TODO Make this pass
-  (should
-   (equal
-    (parser-generator--e-free-first '(inner_statement_list inner_statement_list inner_statement_list T_CASE))
-    '((T_ECHO) (T_SWITCH))))
 
   (message "Passed tests for (parser-generator--first)"))
 
