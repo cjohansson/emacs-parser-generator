@@ -79,11 +79,6 @@
   "Generated F-sets for grammar.")
 
 (defvar
-  parser-generator--f-free-sets
-  nil
-  "Generated e-free F-sets for grammar.")
-
-(defvar
   parser-generator--look-ahead-number
   nil
   "Current look-ahead number used.")
@@ -160,9 +155,6 @@
   "Clear cache."
   (setq
    parser-generator--f-sets
-   nil)
-  (setq
-   parser-generator--f-free-sets
    nil)
   (setq
    parser-generator--table-firsts
@@ -1051,9 +1043,7 @@
 (defun parser-generator--generate-f-sets ()
   "Generate F-sets for grammar."
   ;; Generate F-sets only once per grammar
-  (unless (and
-           parser-generator--f-sets
-           parser-generator--f-free-sets)
+  (unless parser-generator--f-sets
     (parser-generator--debug
      (message "(parser-generator--generate-f-sets)"))
     (let ((productions
@@ -1062,209 +1052,190 @@
            (max
             1
             parser-generator--look-ahead-number)))
-      (let ((disallow-set '(nil t)))
-        (parser-generator--debug
-         (message "disallow-set: %s" disallow-set))
-        (dolist (disallow-e-first disallow-set)
+      (let ((f-sets (make-hash-table :test 'equal))
+            (i 0)
+            (expanded-all nil)
+            (expanded-all-second nil))
+
+        (while (or
+                (not expanded-all)
+                (not expanded-all-second))
+          ;; Make one iteration after everything has been expanded
+          (when expanded-all
+            (setq
+             expanded-all-second
+             t))
+          (when (> i 100)
+            (error "Endless loop!"))
           (parser-generator--debug
-           (message "disallow-e-first: %s" disallow-e-first))
-          (let ((f-sets (make-hash-table :test 'equal))
-                (i 0)
-                (expanded-all nil)
-                (expanded-all-second nil))
+           (message "i = %s" i))
+          (setq
+           expanded-all
+           t)
+          (let ((f-set (make-hash-table :test 'equal)))
 
-            (while (or
-                    (not expanded-all)
-                    (not expanded-all-second))
-              ;; Make one iteration after everything has been expanded
-              (when expanded-all
-                (setq
-                 expanded-all-second
-                 t))
-              (when (> i 100)
-                (error "Endless loop!"))
-              (parser-generator--debug
-               (message "i = %s" i))
-              (setq
-               expanded-all
-               t)
-              (let ((f-set (make-hash-table :test 'equal)))
+            ;; Iterate all productions, set F_i
+            (dolist (p productions)
+              (let ((production-lhs (car p))
+                    (production-rhs (cdr p)))
+                (parser-generator--debug
+                 (message
+                  "Production: %s -> %s"
+                  production-lhs
+                  production-rhs))
 
-                ;; Iterate all productions, set F_i
-                (dolist (p productions)
-                  (let ((production-lhs (car p))
-                        (production-rhs (cdr p)))
-                    (parser-generator--debug
-                     (message
-                      "Production: %s -> %s"
-                      production-lhs
-                      production-rhs))
-
-                    ;; Iterate all blocks in RHS
-                    (let ((f-p-set)
-                          (rhs-expanded-full t))
-                      (dolist (rhs-p production-rhs)
-                        (let ((rhs-string rhs-p))
-                          (let ((rhs-leading-terminals)
-                                (f-set-return
-                                 (parser-generator--f-set
-                                  rhs-string
-                                  `(
-                                    ,k
-                                    ,i
-                                    ,f-sets
-                                    ,disallow-e-first
-                                    ,production-lhs)
-                                  '((nil t 0)))))
-
-                            (parser-generator--debug
-                             (message
-                              "f-set-return: %s = %s"
+                ;; Iterate all blocks in RHS
+                (let ((f-p-set)
+                      (rhs-expanded-full t))
+                  (dolist (rhs-p production-rhs)
+                    (let ((rhs-string rhs-p))
+                      (let ((rhs-leading-terminals)
+                            (f-set-return
+                             (parser-generator--f-set
                               rhs-string
-                              f-set-return))
+                              `(
+                                ,k
+                                ,i
+                                ,f-sets
+                                ,production-lhs)
+                              '((nil t 0)))))
 
-                            (unless (nth 0 f-set-return)
-                              (let ((unexpanded-non-terminal
-                                     (nth 1 f-set-return)))
-                                (cond
-                                 ((equal
-                                   unexpanded-non-terminal
-                                   production-lhs)
-                                  (parser-generator--debug
-                                   (message
-                                    "Production '%S' unexpanded due to self-reference, ignore flag."
-                                    production-lhs)))
-                                 ((gethash
-                                   unexpanded-non-terminal
-                                   f-set)
-                                  (parser-generator--debug
-                                   (message
-                                    "Production '%S' is un-expanded due to reference to previously processed production '%S', ignore flag."
-                                    production-lhs
-                                    unexpanded-non-terminal
-                                    )))
-                                 (t
-                                  (parser-generator--debug
-                                   (message
-                                    "Expanded-all negative set because f-set-return '%s' is not fully expanded because '%s' is unexpanded"
-                                    f-set-return
-                                    (nth 1 f-set-return)))
-                                  (setq
-                                   rhs-expanded-full
-                                   nil)
-                                  (setq
-                                   expanded-all
-                                   nil)))))
+                        (parser-generator--debug
+                         (message
+                          "f-set-return: %s = %s"
+                          rhs-string
+                          f-set-return))
 
-                            (setq
-                             rhs-leading-terminals
-                             (nth 2 f-set-return))
-
-                            (parser-generator--debug
-                             (message
-                              "Leading %d terminals at index %s: %s -> %s = %s"
-                              k
-                              i
-                              production-lhs
-                              rhs-string
-                              rhs-leading-terminals))
-                            (parser-generator--debug
-                             (message
-                              "expanded-all: %s"
-                              expanded-all))
-
-                            (when rhs-leading-terminals
-                              (when (and
-                                     (listp rhs-leading-terminals)
-                                     (> (length rhs-leading-terminals) 0))
-                                (dolist
-                                    (rhs-leading-terminals-element
-                                     rhs-leading-terminals)
-                                  (push
-                                   rhs-leading-terminals-element
-                                   f-p-set)))))))
-
-                      ;; If we have multiple equal LHS
-                      ;; merge them
-                      (when (
-                             gethash
-                             production-lhs
-                             f-set)
-                        (let ((existing-f-set
-                               (gethash
+                        (unless (nth 0 f-set-return)
+                          (let ((unexpanded-non-terminal
+                                 (nth 1 f-set-return)))
+                            (cond
+                             ((equal
+                               unexpanded-non-terminal
+                               production-lhs)
+                              (parser-generator--debug
+                               (message
+                                "Production '%S' unexpanded due to self-reference, ignore flag."
+                                production-lhs)))
+                             ((gethash
+                               unexpanded-non-terminal
+                               f-set)
+                              (parser-generator--debug
+                               (message
+                                "Production '%S' is un-expanded due to reference to previously processed production '%S', ignore flag."
                                 production-lhs
-                                f-set)))
+                                unexpanded-non-terminal
+                                )))
+                             (t
+                              (parser-generator--debug
+                               (message
+                                "Expanded-all negative set because f-set-return '%s' is not fully expanded because '%s' is unexpanded"
+                                f-set-return
+                                (nth 1 f-set-return)))
+                              (setq
+                               rhs-expanded-full
+                               nil)
+                              (setq
+                               expanded-all
+                               nil)))))
 
-                          ;; If another RHS has not been fully expanded
-                          ;; mark LHS as not fully expanded
-                          (unless (nth 0 existing-f-set)
-                            (parser-generator--debug
-                             (message
-                              "Expanded-all negative set for LHS '%s' because a alternative RHS '%s' is not fully expanded"
-                              production-lhs
-                              existing-f-set))
-                            (setq
-                             expanded-all
-                             nil)
-                            (setq
-                             rhs-expanded-full
-                             nil))
+                        (setq
+                         rhs-leading-terminals
+                         (nth 2 f-set-return))
 
-                          (setq f-p-set
-                                (append
-                                 f-p-set
-                                 (nth 1 existing-f-set)))))
+                        (parser-generator--debug
+                         (message
+                          "Leading %d terminals at index %s: %s -> %s = %s"
+                          k
+                          i
+                          production-lhs
+                          rhs-string
+                          rhs-leading-terminals))
+                        (parser-generator--debug
+                         (message
+                          "expanded-all: %s"
+                          expanded-all))
 
-                      ;; Make set distinct
-                      (setq
-                       f-p-set
-                       (parser-generator--distinct
-                        f-p-set))
-                      (puthash
-                       production-lhs
-                       (list
-                        rhs-expanded-full
-                        (reverse f-p-set))
-                       f-set)
-                      (parser-generator--debug
-                       (message
-                        "F_%s%s = %s"
-                        i
-                        production-lhs
-                        (gethash
+                        (when rhs-leading-terminals
+                          (when (and
+                                 (listp rhs-leading-terminals)
+                                 (> (length rhs-leading-terminals) 0))
+                            (dolist
+                                (rhs-leading-terminals-element
+                                 rhs-leading-terminals)
+                              (push
+                               rhs-leading-terminals-element
+                               f-p-set)))))))
+
+                  ;; If we have multiple equal LHS
+                  ;; merge them
+                  (when (
+                         gethash
                          production-lhs
-                         f-set))))))
+                         f-set)
+                    (let ((existing-f-set
+                           (gethash
+                            production-lhs
+                            f-set)))
 
-                (puthash
-                 i
-                 f-set
-                 f-sets)
-                (setq
-                 i
-                 (+ i 1))))
+                      ;; If another RHS has not been fully expanded
+                      ;; mark LHS as not fully expanded
+                      (unless (nth 0 existing-f-set)
+                        (parser-generator--debug
+                         (message
+                          "Expanded-all negative set for LHS '%s' because a alternative RHS '%s' is not fully expanded"
+                          production-lhs
+                          existing-f-set))
+                        (setq
+                         expanded-all
+                         nil)
+                        (setq
+                         rhs-expanded-full
+                         nil))
 
-            (if disallow-e-first
-                (progn
+                      (setq f-p-set
+                            (append
+                             f-p-set
+                             (nth 1 existing-f-set)))))
+
+                  ;; Make set distinct
                   (setq
-                   parser-generator--f-free-sets
-                   (gethash
-                    (1- i)
-                    f-sets))
+                   f-p-set
+                   (parser-generator--distinct
+                    f-p-set))
+                  (puthash
+                   production-lhs
+                   (list
+                    rhs-expanded-full
+                    (reverse f-p-set))
+                   f-set)
                   (parser-generator--debug
                    (message
-                    "E-FREE-FIRST max-index: %s, contents: %s"
-                    (1- i)
-                    parser-generator--f-free-sets)))
-              (setq
-               parser-generator--f-sets
-               (gethash
-                (1- i)
-                f-sets))
-              (parser-generator--debug
-               (message
-                "FIRST max-index: %s, contents: %s"
-                (1- i)
-                parser-generator--f-sets)))))))
+                    "F_%s%s = %s"
+                    i
+                    production-lhs
+                    (gethash
+                     production-lhs
+                     f-set))))))
+
+            (puthash
+             i
+             f-set
+             f-sets)
+            (setq
+             i
+             (+ i 1))))
+
+        (setq
+         parser-generator--f-sets
+         (gethash
+          (1- i)
+          f-sets))
+        (parser-generator--debug
+         (message
+          "FIRST max-index: %s, contents: %s"
+          (1- i)
+          parser-generator--f-sets))))
     (parser-generator--debug
      (message "Generated F-sets"))))
 
@@ -1328,12 +1299,10 @@
         (k (nth 0 state))
         (i (nth 1 state))
         (f-sets (nth 2 state))
-        (disallow-e-first (nth 3 state))
-        (lhs (nth 4 state))
+        (lhs (nth 3 state))
         (expanded-all t)
         (unexpanded-non-terminal nil))
     (parser-generator--debug
-     (message "disallow-3-first: %s" disallow-e-first)
      (message "input-tape-length: %s" input-tape-length)
      (message "k: %s" k)
      (message "i: %s" i))
@@ -1462,28 +1431,15 @@
                                                  (message "alternative-set is the e identifier"))
 
                                                 ;; Branch off here in two separate tracks, one with the e-identifier appended and one without
-                                                (if disallow-e-first
-                                                    (progn
-                                                      (when (and
-                                                             all-leading-terminals-p
-                                                             (> leading-terminals-count 0))
-                                                        (let ((branch `(
-                                                                        ,leading-terminals
-                                                                        ,all-leading-terminals-p
-                                                                        ,(1+ input-tape-index))))
-                                                          (parser-generator--debug (message "branched off 2: %s" branch))
-                                                          ;; Branch off here with a separate track where this e-identifier is ignored
-                                                          (push branch stack))))
-
-                                                  (when all-leading-terminals-p
-                                                    (let ((branch
-                                                           `(
-                                                             ,leading-terminals
-                                                             ,all-leading-terminals-p
-                                                             ,(1+ input-tape-index))))
-                                                      (parser-generator--debug (message "branched off 1: %s" branch))
-                                                      ;; Branch off here with a separate track where this e-identifier is ignored
-                                                      (push branch stack))))
+                                                (when all-leading-terminals-p
+                                                  (let ((branch
+                                                         `(
+                                                           ,leading-terminals
+                                                           ,all-leading-terminals-p
+                                                           ,(1+ input-tape-index))))
+                                                    (parser-generator--debug (message "branched off 1: %s" branch))
+                                                    ;; Branch off here with a separate track where this e-identifier is ignored
+                                                    (push branch stack)))
 
                                                 (when all-leading-terminals-p
                                                   (let ((alternative-leading-terminals
@@ -1536,41 +1492,26 @@
                                        (message "sub-terminal-set is the e identifier"))
 
                                       ;; Branch off here in two separate tracks, one with the e-identifier appended and one without
-                                      (if disallow-e-first
-                                          (progn
-                                            (when (and
-                                                   all-leading-terminals-p
-                                                   (> leading-terminals-count 0))
-                                              (let ((branch
-                                                     `(
-                                                       ,leading-terminals
-                                                       ,all-leading-terminals-p
-                                                       ,(1+ input-tape-index))))
-                                                ;; Branch off here with a separate track where this e-identifier is ignored
-                                                (parser-generator--debug (message "branched off 4: %s" branch))
-                                                (push branch stack)))
 
-                                            (setq all-leading-terminals-p nil))
+                                      ;; Add e-identifier to leading terminals when
+                                      ;; we have not found any leading terminals
+                                      ;; and we are at the last symbol in input-tape
 
-                                        ;; Add e-identifier to leading terminals when
-                                        ;; we have not found any leading terminals
-                                        ;; and we are at the last symbol in input-tape
+                                      (when all-leading-terminals-p
+                                        (let ((branch
+                                               `(
+                                                 ,leading-terminals
+                                                 ,all-leading-terminals-p
+                                                 ,(1+ input-tape-index))))
+                                          ;; Branch off here with a separate track where this e-identifier is ignored
+                                          (parser-generator--debug (message "branched off 5: %s" branch))
+                                          (push branch stack)))
 
-                                        (when all-leading-terminals-p
-                                          (let ((branch
-                                                 `(
-                                                   ,leading-terminals
-                                                   ,all-leading-terminals-p
-                                                   ,(1+ input-tape-index))))
-                                            ;; Branch off here with a separate track where this e-identifier is ignored
-                                            (parser-generator--debug (message "branched off 5: %s" branch))
-                                            (push branch stack)))
-
-                                        (parser-generator--debug (message "leading-terminals-1: %s" leading-terminals))
-                                        (setq leading-terminals (parser-generator--merge-max-terminals leading-terminals sub-terminal-set k))
-                                        (parser-generator--debug (message "leading-terminals-2: %s" leading-terminals))
-                                        (setq leading-terminals-count (length leading-terminals))
-                                        (setq all-leading-terminals-p nil)))
+                                      (parser-generator--debug (message "leading-terminals-1: %s" leading-terminals))
+                                      (setq leading-terminals (parser-generator--merge-max-terminals leading-terminals sub-terminal-set k))
+                                      (parser-generator--debug (message "leading-terminals-2: %s" leading-terminals))
+                                      (setq leading-terminals-count (length leading-terminals))
+                                      (setq all-leading-terminals-p nil))
 
                                   (parser-generator--debug (message "leading-terminals-3: %s" leading-terminals))
                                   (setq leading-terminals (parser-generator--merge-max-terminals leading-terminals sub-terminal-set k))
@@ -1612,44 +1553,27 @@
                      nil)))
 
                  ((equal rhs-type 'E-IDENTIFIER)
-                  (if disallow-e-first
-                      (progn
-                        (when (and
-                               all-leading-terminals-p
-                               (> leading-terminals-count 0))
-                          ;; Branch off here with a separate track where this e-identifier is ignored
-                          (let ((branch
-                                 `(
-                                   ,leading-terminals
-                                   ,all-leading-terminals-p
-                                   ,(1+ input-tape-index))))
-                            (parser-generator--debug (message "branched off 6: %s" branch))
-                            (push branch stack)))
+                  ;; Add e-identifier to leading terminals when
+                  ;; we have not found any leading terminals
+                  ;; and we are at the last symbol in input-tape
 
-                        (setq all-leading-terminals-p nil))
-                    ;; Add e-identifier to leading terminals when
-                    ;; we have not found any leading terminals
-                    ;; and we are at the last symbol in input-tape
+                  (when all-leading-terminals-p
+                    ;; Branch off here with a separate track where this e-identifier is ignored
+                    (let ((branch
+                           `(
+                             ,leading-terminals
+                             ,all-leading-terminals-p
+                             ,(1+ input-tape-index))))
+                      (parser-generator--debug (message "branched off 7: %s" branch))
+                      (push branch stack)))
 
-                    (when all-leading-terminals-p
-                      ;; Branch off here with a separate track where this e-identifier is ignored
-                      (let ((branch
-                             `(
-                               ,leading-terminals
-                               ,all-leading-terminals-p
-                               ,(1+ input-tape-index))))
-                        (parser-generator--debug (message "branched off 7: %s" branch))
-                        (push branch stack)))
-
-                    (setq leading-terminals (append leading-terminals rhs-element))
-                    (setq leading-terminals-count (1+ leading-terminals-count))
-                    (setq all-leading-terminals-p nil)))
+                  (setq leading-terminals (append leading-terminals rhs-element))
+                  (setq leading-terminals-count (1+ leading-terminals-count))
+                  (setq all-leading-terminals-p nil))
 
                  ((equal rhs-type 'TERMINAL)
                   (setq leading-terminals (append leading-terminals (list rhs-element)))
-                  (setq leading-terminals-count (1+ leading-terminals-count)))
-
-                 ))
+                  (setq leading-terminals-count (1+ leading-terminals-count)))))
               (setq input-tape-index (1+ input-tape-index)))
 
             (when (> leading-terminals-count 0)
@@ -1679,20 +1603,18 @@
           "%S-%s"
           β
           disallow-e-first)))
-    (unless
-        (gethash
-         hash-key
-         parser-generator--table-firsts)
+    (unless (gethash
+             hash-key
+             parser-generator--table-firsts)
       (unless (listp β)
         (setq β (list β)))
       (unless (or
                ignore-validation
                (parser-generator--valid-sentential-form-p β))
         (error "Invalid sentential form β! %s" β))
-      (let ((k
-             (max
-              1
-              parser-generator--look-ahead-number)))
+      (let ((k (max
+                1
+                parser-generator--look-ahead-number)))
 
         ;; Generate F-sets only once per grammar
         (parser-generator--generate-f-sets)
@@ -1769,36 +1691,19 @@
                           ;; Load the pre-generated F-set
                           ;; if it's the first symbol and we are using
                           ;; E-FREE-FIRST then use separate hash-table
-                          (if (and
-                               disallow-e-first
-                               (= first-length 0))
-                              (progn
-                                (parser-generator--debug
-                                 (message
-                                  "gethash: %s"
-                                  (gethash
-                                   symbol
-                                   parser-generator--f-free-sets)))
-                                (setq
-                                 symbol-f-set
-                                 (nth
-                                  1
-                                  (gethash
-                                   symbol
-                                   parser-generator--f-free-sets))))
-                            (parser-generator--debug
-                             (message
-                              "gethash: %s"
-                              (gethash
-                               symbol
-                               parser-generator--f-sets)))
-                            (setq
-                             symbol-f-set
-                             (nth
-                              1
-                              (gethash
-                               symbol
-                               parser-generator--f-sets))))
+                          (parser-generator--debug
+                           (message
+                            "gethash: %s"
+                            (gethash
+                             symbol
+                             parser-generator--f-sets)))
+                          (setq
+                           symbol-f-set
+                           (nth
+                            1
+                            (gethash
+                             symbol
+                             parser-generator--f-sets)))
                           (parser-generator--debug
                            (message
                             "symbol-f-set: %s"

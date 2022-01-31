@@ -545,6 +545,16 @@
     (parser-generator--e-free-first '(a S b))))
   (message "Passed empty-free-first 2 with trailing e-identifier 1")
 
+  ;; TODO Make this pass
+  (parser-generator-set-grammar
+   '((Sp S R T) (a b c) ((Sp S) (S (R S) (R)) (R (a b T)) (T (a T) (c) (e))) Sp))
+  (parser-generator-set-look-ahead-number 2)
+  (parser-generator-process-grammar)
+  (should
+   (equal
+    '((a a) (a c) (a e) (c e))
+    (parser-generator--e-free-first 'T)))
+
   (message "Passed tests for (parser-generator--empty-free-first)"))
 
 (defun parser-generator-test--get-grammar-context-sensitive-attributes-by-production-number ()
