@@ -282,6 +282,14 @@
   (should
    (equal
     '(("c") ("d"))
+    (parser-generator--first 'B)))
+  (should
+   (equal
+    '(("c") ("d"))
+    (parser-generator--first 'A)))
+  (should
+   (equal
+    '(("c") ("d"))
     (parser-generator--first 'S)))
   (message "Passed first 1 with semi-complex grammar")
 
