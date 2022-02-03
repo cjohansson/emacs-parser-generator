@@ -1429,7 +1429,11 @@
 
                               ;; Should branch off here, each unique permutation should be included in set
                               ;; Follow the first alternative in this scope but follow the rest in separate scopes
-                              (let ((sub-terminal-index 0))
+                              (let ((sub-symbols-set-index 0)
+                                    (original-leading-symbols
+                                     leading-symbols)
+                                    (original-leading-terminals
+                                     leading-terminals))
                                 (dolist (sub-symbol-alternative-set sub-terminal-sets)
                                   (parser-generator--debug
                                    (message
@@ -1443,9 +1447,9 @@
                                         (sub-symbol)
                                         (sub-terminal)
                                         (sub-symbols
-                                         (reverse leading-symbols))
+                                         (reverse original-leading-symbols))
                                         (sub-terminals
-                                         (reverse leading-terminals)))
+                                         (reverse original-leading-terminals)))
                                     (while (and
                                             (< sub-symbol-index sub-symbol-length)
                                             (< (length sub-terminals) k))
@@ -1454,12 +1458,16 @@
                                        (nth
                                         sub-symbol-index
                                         sub-symbol-alternative-set))
+                                      (parser-generator--debug
+                                       (message
+                                        "sub-symbol: %S"
+                                        sub-symbol))
                                       (push
                                        sub-symbol
                                        sub-symbols)
-                                      (unless (parser-generator--valid-e-p sub-terminal)
+                                      (unless (parser-generator--valid-e-p sub-symbol)
                                         (push
-                                         sub-terminal
+                                         sub-symbol
                                          sub-terminals))
                                       (setq
                                        sub-symbol-index
@@ -1470,21 +1478,38 @@
                                     (setq
                                      sub-terminals
                                      (reverse sub-terminals))
-                                    (let ((branch
-                                           `(
-                                             ,sub-symbols
-                                             ,sub-terminals
-                                             ,(1+ input-tape-index))))
-                                      (parser-generator--debug
-                                       (message
-                                        "branched off 3: %s"
-                                        branch))
-                                      (push
-                                       branch
-                                       stack)))
+
+                                    ;; The first iteration does not branch off
+                                    (if (= sub-symbols-set-index 0)
+                                        (progn
+                                          (setq
+                                           leading-symbols
+                                           sub-symbols)
+                                          (setq
+                                           leading-symbols-count
+                                           (length leading-symbols))
+                                          (setq
+                                           leading-terminals
+                                           sub-terminals)
+                                          (setq
+                                           leading-terminals-count
+                                           (length leading-terminals)))
+                                      (let (
+                                            (branch
+                                             `(
+                                               ,sub-symbols
+                                               ,sub-terminals
+                                               ,(1+ input-tape-index))))
+                                        (parser-generator--debug
+                                         (message
+                                          "branched off 3: %s"
+                                          branch))
+                                        (push
+                                         branch
+                                         stack))))
                                   (setq
-                                   sub-terminal-index
-                                   (1+ sub-terminal-index)))))
+                                   sub-symbols-set-index
+                                   (1+ sub-symbols-set-index)))))
 
                           (parser-generator--debug
                            (message
@@ -1534,6 +1559,7 @@
                   (setq
                    leading-terminals-count
                    (1+ leading-terminals-count)))))
+
               (setq
                input-tape-index
                (1+ input-tape-index)))
@@ -1615,27 +1641,32 @@
                       (cond
 
                        ((parser-generator--valid-e-p symbol)
-
-                        ;; When there a symbols left on stack, make alternative trail by skipping this symbol
-                        (unless (or
-                                 disallow-e-first
-                                 (= input-tape-index (1- input-tape-length)))
-                          (parser-generator--debug
-                           (message
-                            "Pushed alternative trail to stack since symbol is e-identifier: %s"
-                            `(,(1+ input-tape-index) ,first-length ,first)))
-                          (push
-                           `(,(1+ input-tape-index) ,first-length ,first)
-                           stack))
-
-                        (if disallow-e-first
-                            (when (> first-length 0)
-                              (setq first (append first (list symbol)))
-                              (setq first-length (1+ first-length)))
-                          (setq first (append first (list symbol)))
-                          (setq first-length (1+ first-length)))
-
-                        (setq keep-looking nil))
+                        (if (and
+                             disallow-e-first
+                             (= first-length 0))
+                            (parser-generator--debug
+                             (message
+                              "First symbol is the e-identifier and it is disallowed"))
+                          (setq
+                           keep-looking
+                           nil)
+                          (unless (parser-generator--valid-e-p (car first))
+                            (parser-generator--debug
+                             (message
+                              "Pushed alternative trail to stack since symbol is e-identifier: %s"
+                              `(
+                                ,(1+ input-tape-index)
+                                ,first-length
+                                ,first)))
+                            (push
+                             `(
+                               ,(1+ input-tape-index)
+                               ,first-length
+                               ,first)
+                             stack)
+                            (setq first (append first (list symbol)))
+                            (setq first-length (1+ first-length))
+                            (setq keep-looking nil))))
 
                        ((parser-generator--valid-eof-p symbol)
                         (setq first (append first (list symbol)))
@@ -1671,125 +1702,226 @@
                             (gethash
                              symbol
                              parser-generator--f-sets)))
+
+                          ;; NOTE symbol-f-set contains a list of alternative
+                          ;; order of symbols. A non-terminal can result in different
+                          ;; alternative FIRST sets
                           (parser-generator--debug
                            (message
                             "symbol-f-set: %s"
                             symbol-f-set))
 
-                          (if (and
-                               (not symbol-f-set)
-                               disallow-e-first
-                               (= first-length 0))
-                              (progn
-                                (parser-generator--debug
-                                 (message
-                                  "stopped looking since non-terminal starts with e-identifier: %s"
-                                  symbol-f-set))
-                                (setq
-                                 keep-looking
-                                 nil))
+                          (let ((symbol-f-set-index
+                                 0)
+                                (symbol-f-set-length
+                                 (length symbol-f-set))
+                                (original-first
+                                 first)
+                                (original-first-length
+                                 first-length))
 
-                            ;; Handle this scenario here were a non-terminal can result in different FIRST sets
-                            (let ((symbol-f-set-index 0)
-                                  (symbol-f-set-length
-                                   (length symbol-f-set))
-                                  (found-e-trail)
-                                  (e-trail-is-viable-p
-                                   (< input-tape-index (1- input-tape-length)))
-                                  (original-first first)
-                                  (original-first-length first-length))
-                              (while (< symbol-f-set-index symbol-f-set-length)
-                                (let ((symbol-f-set-element (nth symbol-f-set-index symbol-f-set)))
-                                  (let ((alternative-first-length
-                                         (+ original-first-length (length symbol-f-set-element)))
-                                        (alternative-first
-                                         (append original-first symbol-f-set-element))
-                                        (alternative-tape-index
-                                         (1+ input-tape-index)))
-                                    (parser-generator--debug
-                                     (message
-                                      "alternative-first: %s"
-                                      alternative-first))
-
-                                    ;; When the e-identifier is an alternative trail
-                                    ;; and there a symbols left on stack
-                                    ;; make alternative trail by skipping this symbol
-                                    ;; but only if there are more symbols in the input tape
-                                    (when (and
-                                           e-trail-is-viable-p
-                                           (not found-e-trail)
-                                           (or
-                                            (not disallow-e-first)
-                                            (> original-first-length 0))
-                                           (parser-generator--valid-e-p
-                                            (car alternative-first)))
-                                      (push
-                                       `(,(1+ input-tape-index) ,original-first-length ,original-first)
-                                       stack)
+                            ;; Iterate each alternative set
+                            (while (< symbol-f-set-index
+                                      symbol-f-set-length)
+                              (let ((symbol-f-set-element
+                                     (nth symbol-f-set-index symbol-f-set)))
+                                (if (= symbol-f-set-index 0)
+                                    (progn
+                                      (setq
+                                       first
+                                       (append
+                                        original-first
+                                        symbol-f-set-element))
+                                      (setq
+                                       first-length
+                                       (length first))
                                       (parser-generator--debug
                                        (message
-                                        "Pushed alternative trail from non-terminal expansion to stack since first symbol is the e-identifier: %s"
-                                        `(,(1+ input-tape-index) ,original-first-length ,original-first)))
-                                      (setq
-                                       found-e-trail
-                                       t))
+                                        "new first: %S (%S)"
+                                        first
+                                        first-length)))
 
-                                    (if (= symbol-f-set-index 0)
-                                        (progn
-                                          (setq
-                                           first-length
-                                           (+ original-first-length (length alternative-first)))
-                                          (setq
-                                           first
-                                           (append original-first alternative-first)))
-                                      (push
-                                       `(
-                                         ,alternative-tape-index
-                                         ,alternative-first-length
-                                         ,alternative-first)
-                                       stack))))
+                                  (let* ((branched-first
+                                          (append
+                                           original-first
+                                           symbol-f-set-element))
+                                         (branched-first-length
+                                          (length branched-first))
+                                         (branch
+                                          (list
+                                           (1+ input-tape-index)
+                                           branched-first-length
+                                           branched-first)))
+                                    (parser-generator--debug
+                                     (message
+                                      "branched FIRST: %S"
+                                      branch))
+                                    (push branch stack)))
+
                                 (setq
                                  symbol-f-set-index
                                  (1+ symbol-f-set-index)))))))))
                     (setq
                      input-tape-index
                      (1+ input-tape-index)))
+
                   (when (> first-length 0)
+                    ;; Iterate each symbol
+                    ;; If we should calculate E-FREE-FIRST don't allow first symbol to be a e-identifier
+                    ;; TODO Only allow e-identifier to be the last symbol of a list
 
-                    ;; If length exceeds k, strip trailing symbols
-                    (when (> (length first) k)
-                      (setq first (reverse first))
-                      (while (> (length first) k)
-                        (pop first))
-                      (setq first (reverse first)))
+                    (parser-generator--debug
+                     (message
+                      "FIRST: %S"
+                      first))
 
-                    ;; When length of terminals list is below K
-                    ;; fill up with e-identifiers
-                    (when (and
-                           (< (length first) k))
-                      ;; (message "first-before-fill: %s" first)
-                      (setq first (reverse first))
-                      (while (< (length first) k)
-                        (push parser-generator--e-identifier first))
-                      (setq first (reverse first))
-                      ;; (message "first-after-fill: %s" first)
-                      )
-                    (unless
-                        (gethash
-                         first
-                         first-items)
-                      (parser-generator--debug
-                       (message
-                        "push to first-list: %s to %s"
-                        first
-                        first-list))
-                      (puthash
-                       first
-                       t
-                       first-items)
-                      (push
-                       first
-                       first-list)))))))
+                    (let ((first-stack (list (list first nil 0)))
+                          (first-stack-item)
+                          (first-item)
+                          (first-item-length)
+                          (new-first)
+                          (new-first-length)
+                          (first-index))
+                      (while first-stack
+                        (setq
+                         first-stack-item
+                         (pop first-stack))
+                        (setq
+                         first-item
+                         (nth 0 first-stack-item))
+                        (setq
+                         first-item-length
+                         (length first-item))
+                        (setq
+                         new-first
+                         (nth 1 first-stack-item))
+                        (setq
+                         new-first-length
+                         (length new-first))
+                        (setq
+                         first-index
+                         (nth 2 first-stack-item))
+
+                        (parser-generator--debug
+                         (message
+                          "\nfirst-stack-item: %S"
+                          first-stack-item)
+                         (message
+                          "first-item: %S"
+                          first-item)
+                         (message
+                          "first-item-length: %S"
+                          first-item-length)
+                         (message
+                          "new-first: %S"
+                          new-first)
+                         (message
+                          "new-first-length: %S"
+                          new-first-length)
+                         (message
+                          "first-index: %S\n"
+                          first-index))
+
+                        (let ((keep-looking t)
+                              (keep-match t)
+                              (first-symbol))
+                          (while (and
+                                  (< first-index first-item-length)
+                                  (< new-first-length k)
+                                  keep-match
+                                  keep-looking)
+                            (setq
+                             first-symbol
+                             (nth first-index first-item))
+                            (parser-generator--debug
+                             (message
+                              "\nfirst-symbol: %S"
+                              first-symbol))
+
+                            ;; Optionally Disallow e-identifier as first symbol
+                            (if (and
+                                 (= new-first-length 0)
+                                 disallow-e-first
+                                 (parser-generator--valid-e-p
+                                  first-symbol))
+                                (setq
+                                 keep-match
+                                 nil)
+
+                              (if (parser-generator--valid-e-p
+                                   first-symbol)
+                                  (progn
+
+                                    ;; The e-identifier always allow two
+                                    ;; alternative paths in the grammar
+                                    ;; branch off the one without the e-identifier here
+                                    (let ((branch
+                                           (list
+                                            first-item
+                                            new-first
+                                            (1+ first-index))))
+                                      (parser-generator--debug
+                                       (message
+                                        "branch 4: %S"
+                                        branch))
+                                      (push
+                                       branch
+                                       first-stack))
+                                    (push
+                                     first-symbol
+                                     new-first)
+                                    (setq
+                                     new-first-length
+                                     (1+ new-first-length))
+                                    (setq
+                                     keep-looking
+                                     nil))
+
+                                (push
+                                 first-symbol
+                                 new-first)
+                                (setq
+                                 new-first-length
+                                 (1+ new-first-length)))
+
+                              (setq
+                               first-index
+                               (1+ first-index))))
+
+                          (when keep-match
+                            (setq
+                             new-first
+                             (reverse new-first))
+
+                            ;; When length of terminals list is below K
+                            ;; fill up with e-identifiers
+                            (when (< (length new-first) k)
+                              (setq
+                               new-first
+                               (reverse new-first))
+                              (while (< (length new-first) k)
+                                (push
+                                 parser-generator--e-identifier
+                                 new-first))
+                              (setq
+                               new-first
+                               (reverse new-first)))
+
+                            (unless (gethash
+                                     new-first
+                                     first-items)
+                              (parser-generator--debug
+                               (message
+                                "push to first-list: %S to %S"
+                                new-first
+                                first-list))
+                              (puthash
+                               new-first
+                               t
+                               first-items)
+                              (push
+                               new-first
+                               first-list)))))))))))
           (unless skip-sorting
             (setq
              first-list
