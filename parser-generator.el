@@ -1584,36 +1584,55 @@
 
 ;; Algorithm 5.5, p. 357
 (defun parser-generator--first
-    (
-     β
-     &optional
-     disallow-e-first
-     ignore-validation
-     skip-sorting)
+    (β &optional disallow-e-first ignore-validation skip-sorting)
   "For sentential-form Β, calculate first terminals, optionally DISALLOW-E-FIRST, IGNORE-VALIDATION and SKIP-SORTING."
-  (let ((hash-key
-         (format
-          "%S-%s"
-          β
-          disallow-e-first)))
+
+  ;; Cache first calculation
+  (let ((hash-key (format "%S-%s" β disallow-e-first)))
     (unless (gethash
              hash-key
              parser-generator--table-firsts)
+
+      ;; Make sure we are dealing with a list of symbols
       (unless (listp β)
         (setq β (list β)))
+
+      ;; Perform optional validation of inpuit
       (unless (or
                ignore-validation
                (parser-generator--valid-sentential-form-p β))
         (error "Invalid sentential form β! %s" β))
-      (let ((k (max
-                1
-                parser-generator--look-ahead-number)))
+
+      ;; Make sure that the k value is at least 1
+      (let ((k (max 1 parser-generator--look-ahead-number)))
 
         ;; Generate F-sets only once per grammar
         (parser-generator--generate-f-sets)
 
         (let ((first-list nil)
               (first-items (make-hash-table :test 'equal)))
+
+          ;; Algorithm
+          ;; 1. Iterate each symbol of input and expand into list of lists of terminals and the e-identifier
+          ;;     if input symbol is a terminal or the e-identifier push it to each expanded list
+          ;;     if input symbol is a non-terminal, expand it and push each possible expansion onto each expanded list
+          ;; 2. Reverse each expanded list and place each list on a stack of unprocessed lists each with a input-index to zero
+          ;; 3. Process each unprocessed list and expand into a list of lists of terminals and the e-identifier
+          ;;        pop a unprocessed list from the stack of unprocessed lists
+          ;;            create a new empty list
+          ;;            set skip-flag to false
+          ;;            set loop-flag to true
+          ;;            loop while index is below length and skip-flag is false and loop-flag is true
+          ;;                if a list starts with the e-identifier and it is disallowed, set skip-flag to true to stop iterating
+          ;;                if a symbol on a list is a terminal push it onto the new list
+          ;;                if a symbol on a the list is the e-identifier
+          ;;                    push a copy of the new list on the unprocessed stack but increase it's input-index by one
+          ;;                    push the e-identifier onto the new list and set loop-flag to false to stop iterating
+          ;;                increase index with one
+          ;;            if skip-flag is false place new list onto the list of processed lists
+          ;; 4. Reverse each processed list
+          ;; 5. Return processed lists
+
           ;; Iterate each symbol in β using a PDA algorithm
           (let ((input-tape β)
                 (input-tape-length (length β))
@@ -1630,8 +1649,7 @@
                       (keep-looking t))
                   (while (and
                           keep-looking
-                          (< input-tape-index input-tape-length)
-                          (< first-length k))
+                          (< input-tape-index input-tape-length))
                     (let ((symbol (nth input-tape-index input-tape)))
                       (parser-generator--debug
                        (message
@@ -1822,14 +1840,14 @@
                           "first-index: %S\n"
                           first-index))
 
-                        (let ((keep-looking t)
+                        (let ((keep-looking2 t)
                               (keep-match t)
                               (first-symbol))
                           (while (and
                                   (< first-index first-item-length)
                                   (< new-first-length k)
                                   keep-match
-                                  keep-looking)
+                                  keep-looking2)
                             (setq
                              first-symbol
                              (nth first-index first-item))
@@ -1844,9 +1862,13 @@
                                  disallow-e-first
                                  (parser-generator--valid-e-p
                                   first-symbol))
-                                (setq
-                                 keep-match
-                                 nil)
+                                (progn
+                                  (setq
+                                   keep-match
+                                   nil)
+                                  (parser-generator--debug
+                                   (message
+                                    "first symbol is the e-identifier and it is forbidden, ignore match")))
 
                               (if (parser-generator--valid-e-p
                                    first-symbol)
@@ -1874,7 +1896,7 @@
                                      new-first-length
                                      (1+ new-first-length))
                                     (setq
-                                     keep-looking
+                                     keep-looking2
                                      nil))
 
                                 (push
