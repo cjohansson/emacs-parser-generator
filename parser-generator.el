@@ -692,6 +692,7 @@
       (parser-generator--valid-look-ahead-number-p
        parser-generator--look-ahead-number)
     (error "Invalid look-ahead number k!"))
+  (message "k = %d" parser-generator--look-ahead-number)
   (unless parser-generator--grammar
     (error "No grammar defined!"))
   (unless
@@ -1587,15 +1588,25 @@
     (β &optional disallow-e-first ignore-validation skip-sorting)
   "For sentential-form Β, calculate first terminals, optionally DISALLOW-E-FIRST, IGNORE-VALIDATION and SKIP-SORTING."
 
+  ;; Make sure we are dealing with a list of symbols
+  (unless (listp β)
+    (setq β (list β)))
+
+  (parser-generator--debug
+   (if disallow-e-first
+       (message
+        "\nE-FREE-FIRST%S"
+        β)
+     (message
+      "\nFIRST%S"
+      β)))
+
   ;; Cache first calculation
   (let ((hash-key (format "%S-%s" β disallow-e-first)))
-    (unless (gethash
-             hash-key
-             parser-generator--table-firsts)
-
-      ;; Make sure we are dealing with a list of symbols
-      (unless (listp β)
-        (setq β (list β)))
+    (unless
+        (gethash
+         hash-key
+         parser-generator--table-firsts)
 
       ;; Perform optional validation of inpuit
       (unless (or
@@ -1603,357 +1614,353 @@
                (parser-generator--valid-sentential-form-p β))
         (error "Invalid sentential form β! %s" β))
 
-      ;; Make sure that the k value is at least 1
-      (let ((k (max 1 parser-generator--look-ahead-number)))
+      ;; Generate F-sets only once per grammar
+      (parser-generator--generate-f-sets)
 
-        ;; Generate F-sets only once per grammar
-        (parser-generator--generate-f-sets)
+      ;; Algorithm
+      ;; 1. Iterate each symbol of input and expand into list of lists of terminals and the e-identifier
+      ;;     if input symbol is a terminal or the e-identifier push it to each expanded list
+      ;;     if input symbol is a non-terminal, expand it and push each possible expansion onto each expanded list
+      ;; 2. Reverse each expanded list and place each list on a stack of unprocessed lists each with a input-index to zero
+      ;; 3. Process each unprocessed list and expand into a list of lists of terminals and the e-identifier
+      ;;        pop a unprocessed list from the stack of unprocessed lists
+      ;;            create a new empty list
+      ;;            set skip-flag to false
+      ;;            set loop-flag to true
+      ;;            loop while index is below length and skip-flag is false and loop-flag is true
+      ;;                if a list starts with the e-identifier and it is disallowed, set skip-flag to true to stop iterating
+      ;;                if a symbol on a list is a terminal push it onto the new list
+      ;;                if a symbol on a the list is the e-identifier
+      ;;                    push a copy of the new list on the unprocessed stack but increase it's input-index by one
+      ;;                    push the e-identifier onto the new list and set loop-flag to false to stop iterating
+      ;;                increase index with one
+      ;;            if skip-flag is false place new list onto the list of processed lists
+      ;; 4. Reverse each processed list
+      ;; 5. Return processed lists
 
-        (let ((first-list nil)
-              (first-items (make-hash-table :test 'equal)))
+      (let ((expanded-lists nil)
+            (processed-lists))
 
-          ;; Algorithm
-          ;; 1. Iterate each symbol of input and expand into list of lists of terminals and the e-identifier
-          ;;     if input symbol is a terminal or the e-identifier push it to each expanded list
-          ;;     if input symbol is a non-terminal, expand it and push each possible expansion onto each expanded list
-          ;; 2. Reverse each expanded list and place each list on a stack of unprocessed lists each with a input-index to zero
-          ;; 3. Process each unprocessed list and expand into a list of lists of terminals and the e-identifier
-          ;;        pop a unprocessed list from the stack of unprocessed lists
-          ;;            create a new empty list
-          ;;            set skip-flag to false
-          ;;            set loop-flag to true
-          ;;            loop while index is below length and skip-flag is false and loop-flag is true
-          ;;                if a list starts with the e-identifier and it is disallowed, set skip-flag to true to stop iterating
-          ;;                if a symbol on a list is a terminal push it onto the new list
-          ;;                if a symbol on a the list is the e-identifier
-          ;;                    push a copy of the new list on the unprocessed stack but increase it's input-index by one
-          ;;                    push the e-identifier onto the new list and set loop-flag to false to stop iterating
-          ;;                increase index with one
-          ;;            if skip-flag is false place new list onto the list of processed lists
-          ;; 4. Reverse each processed list
-          ;; 5. Return processed lists
+        ;; 1. Iterate each symbol of input and expand into list of lists of terminals and the e-identifier
+        (let ((input-tape β)
+              (input-tape-index 0)
+              (input-tape-length (length β))
+              (input-symbol))
 
-          ;; Iterate each symbol in β using a PDA algorithm
-          (let ((input-tape β)
-                (input-tape-length (length β))
-                (stack '((0 0 nil))))
-            (while stack
-              (let ((stack-topmost (pop stack)))
-                (parser-generator--debug
-                 (message
-                  "\nstack-topmost: %s"
-                  stack-topmost))
-                (let ((input-tape-index (car stack-topmost))
-                      (first-length (car (cdr stack-topmost)))
-                      (first (car (cdr (cdr stack-topmost))))
-                      (keep-looking t))
-                  (while (and
-                          keep-looking
-                          (< input-tape-index input-tape-length))
-                    (let ((symbol (nth input-tape-index input-tape)))
-                      (parser-generator--debug
-                       (message
-                        "symbol index: %s from %s is: %s"
-                        input-tape-index
-                        input-tape symbol))
-                      (cond
+          (parser-generator--debug
+           (message
+            "\nExpanding symbols.. %S"
+            input-tape)
+           (message
+            "Length: %S"
+            input-tape-length))
 
-                       ((parser-generator--valid-e-p symbol)
+          (while (< input-tape-index input-tape-length)
+            (setq
+             input-symbol
+             (nth input-tape-index input-tape))
+            (parser-generator--debug
+             (message
+              "input-symbol: %S"
+              input-symbol))
+            (cond
+
+             ;; if input symbol is a non-terminal, expand it and push each possible expansion onto each expanded list
+             ((parser-generator--valid-non-terminal-p input-symbol)
+              (parser-generator--debug
+               (message
+                "input-symbol is non-terminal"))
+              (let ((expanded-non-terminal-lists
+                     (nth
+                      1
+                      (gethash
+                       (list input-symbol)
+                       parser-generator--f-sets))))
+                (let ((expanded-list-index)
+                      (expanded-list-count
+                       (length expanded-lists)))
+                  (parser-generator--debug
+                   (message
+                    "non-terminal expands into: %S with count: %d"
+                    expanded-non-terminal-lists
+                    (length expanded-non-terminal-lists)))
+
+                  (if (= expanded-list-count 0)
+                      (setq
+                       expanded-lists
+                       expanded-non-terminal-lists)
+
+                    (dolist (expanded-non-terminal-list expanded-non-terminal-lists)
+                      (setq expanded-list-index 0)
+                      (while (< expanded-list-index expanded-list-count)
+                        (setf
+                         (nth expanded-list-index expanded-lists)
+                         (nreverse
+                          (append
+                           (reverse
+                            (nth expanded-list-index expanded-lists))
+                           expanded-non-terminal-list)))
+                        (setq
+                         expanded-list-index
+                         (1+ expanded-list-index))))))))
+
+             ;; if input symbol is a terminal or the e-identifier push it to each expanded list
+             ((or
+               (parser-generator--valid-e-p input-symbol)
+               (parser-generator--valid-terminal-p input-symbol))
+              (parser-generator--debug
+               (message
+                "symbol is terminal or the e-identifier"))
+              (let ((expanded-list-index 0)
+                    (expanded-list-count
+                     (length expanded-lists)))
+                (if (= expanded-list-count 0)
+                    (setq
+                     expanded-lists
+                     (list (list input-symbol)))
+                  (while (< expanded-list-index expanded-list-count)
+                    (setf
+                     (nth expanded-list-index expanded-lists)
+                     (nreverse
+                      (append
+                       (nreverse
+                        (nth expanded-list-index expanded-lists))
+                       (list input-symbol))))
+                    (setq
+                     expanded-list-index
+                     (1+ expanded-list-index)))))))
+            (setq
+             input-tape-index
+             (1+ input-tape-index))))
+
+        (if expanded-lists
+            (let ((unprocessed-lists)
+                  (k (max 1 parser-generator--look-ahead-number))
+                  (distinct-processed-lists (make-hash-table :test 'equal)))
+              (parser-generator--debug
+               (message
+                "\nExpanded symbols: %S"
+                expanded-lists))
+
+              ;; 2. Place each expanded list on a stack of unprocessed lists
+              ;; each with a input-index to zero and an empty processed list
+              (let ((expanded-list-index 0)
+                    (expanded-list-count
+                     (length expanded-lists)))
+                (while (< expanded-list-index expanded-list-count)
+                  (push
+                   (list
+                    (nth expanded-list-index expanded-lists)
+                    0
+                    nil)
+                   unprocessed-lists)
+                  (setq
+                   expanded-list-index
+                   (1+ expanded-list-index))))
+
+              ;; 3. Process each unprocessed list and expand into a list of lists of terminals and the e-identifier
+              (let ((unprocessed-data)
+                    (unprocessed-list)
+                    (unprocessed-list-index)
+                    (processed-list))
+                (while unprocessed-lists
+                  (setq
+                   unprocessed-data
+                   (pop unprocessed-lists))
+                  (setq
+                   unprocessed-list
+                   (nth 0 unprocessed-data))
+                  (setq
+                   unprocessed-list-index
+                   (nth 1 unprocessed-data))
+                  (setq
+                   unprocessed-list-length
+                   (length unprocessed-list))
+                  (setq
+                   processed-list
+                   (nth 2 unprocessed-data))
+                  (parser-generator--debug
+                   (message
+                    "\nunprocessed-list: %S"
+                    unprocessed-list)
+                   (message
+                    "unprocessed-list-index: %S"
+                    unprocessed-list-index)
+                   (message
+                    "unprocessed-list-length: %S"
+                    unprocessed-list-length))
+
+                  (let ((skip-flag)
+                        (loop-flag t))
+                    (while (and
+                            (not skip-flag)
+                            loop-flag
+                            (< unprocessed-list-index unprocessed-list-length))
+                      (let ((unprocessed-list-symbol
+                             (nth unprocessed-list-index unprocessed-list)))
+
+                        ;; if a list starts with the e-identifier and it is disallowed
+                        ;; set skip-flag to true to stop iterating
                         (if (and
                              disallow-e-first
-                             (= first-length 0))
-                            (parser-generator--debug
-                             (message
-                              "First symbol is the e-identifier and it is disallowed"))
-                          (setq
-                           keep-looking
-                           nil)
-                          (unless (parser-generator--valid-e-p (car first))
-                            (parser-generator--debug
-                             (message
-                              "Pushed alternative trail to stack since symbol is e-identifier: %s"
-                              `(
-                                ,(1+ input-tape-index)
-                                ,first-length
-                                ,first)))
-                            (push
-                             `(
-                               ,(1+ input-tape-index)
-                               ,first-length
-                               ,first)
-                             stack)
-                            (setq first (append first (list symbol)))
-                            (setq first-length (1+ first-length))
-                            (setq keep-looking nil))))
-
-                       ((parser-generator--valid-eof-p symbol)
-                        (setq first (append first (list symbol)))
-                        (setq first-length (1+ first-length)))
-
-                       ((parser-generator--valid-terminal-p symbol)
-                        (setq first (append first (list symbol)))
-                        (setq first-length (1+ first-length)))
-
-                       ((parser-generator--valid-non-terminal-p symbol)
-                        (parser-generator--debug
-                         (message "non-terminal symbol: %s" symbol))
-                        (setq
-                         symbol
-                         (list symbol))
-                        (parser-generator--debug
-                         (message "non-terminal symbol production: %s" symbol))
-                        (let ((symbol-f-set))
-
-                          ;; Load the pre-generated F-set
-                          ;; if it's the first symbol and we are using
-                          ;; E-FREE-FIRST then use separate hash-table
-                          (parser-generator--debug
-                           (message
-                            "gethash: %s"
-                            (gethash
-                             symbol
-                             parser-generator--f-sets)))
-                          (setq
-                           symbol-f-set
-                           (nth
-                            1
-                            (gethash
-                             symbol
-                             parser-generator--f-sets)))
-
-                          ;; NOTE symbol-f-set contains a list of alternative
-                          ;; order of symbols. A non-terminal can result in different
-                          ;; alternative FIRST sets
-                          (parser-generator--debug
-                           (message
-                            "symbol-f-set: %s"
-                            symbol-f-set))
-
-                          (let ((symbol-f-set-index
-                                 0)
-                                (symbol-f-set-length
-                                 (length symbol-f-set))
-                                (original-first
-                                 first)
-                                (original-first-length
-                                 first-length))
-
-                            ;; Iterate each alternative set
-                            (while (< symbol-f-set-index
-                                      symbol-f-set-length)
-                              (let ((symbol-f-set-element
-                                     (nth symbol-f-set-index symbol-f-set)))
-                                (if (= symbol-f-set-index 0)
-                                    (progn
-                                      (setq
-                                       first
-                                       (append
-                                        original-first
-                                        symbol-f-set-element))
-                                      (setq
-                                       first-length
-                                       (length first))
-                                      (parser-generator--debug
-                                       (message
-                                        "new first: %S (%S)"
-                                        first
-                                        first-length)))
-
-                                  (let* ((branched-first
-                                          (append
-                                           original-first
-                                           symbol-f-set-element))
-                                         (branched-first-length
-                                          (length branched-first))
-                                         (branch
-                                          (list
-                                           (1+ input-tape-index)
-                                           branched-first-length
-                                           branched-first)))
-                                    (parser-generator--debug
-                                     (message
-                                      "branched FIRST: %S"
-                                      branch))
-                                    (push branch stack)))
-
-                                (setq
-                                 symbol-f-set-index
-                                 (1+ symbol-f-set-index)))))))))
-                    (setq
-                     input-tape-index
-                     (1+ input-tape-index)))
-
-                  (when (> first-length 0)
-                    ;; Iterate each symbol
-                    ;; If we should calculate E-FREE-FIRST don't allow first symbol to be a e-identifier
-                    ;; TODO Only allow e-identifier to be the last symbol of a list
-
-                    (parser-generator--debug
-                     (message
-                      "FIRST: %S"
-                      first))
-
-                    (let ((first-stack (list (list first nil 0)))
-                          (first-stack-item)
-                          (first-item)
-                          (first-item-length)
-                          (new-first)
-                          (new-first-length)
-                          (first-index))
-                      (while first-stack
-                        (setq
-                         first-stack-item
-                         (pop first-stack))
-                        (setq
-                         first-item
-                         (nth 0 first-stack-item))
-                        (setq
-                         first-item-length
-                         (length first-item))
-                        (setq
-                         new-first
-                         (nth 1 first-stack-item))
-                        (setq
-                         new-first-length
-                         (length new-first))
-                        (setq
-                         first-index
-                         (nth 2 first-stack-item))
-
-                        (parser-generator--debug
-                         (message
-                          "\nfirst-stack-item: %S"
-                          first-stack-item)
-                         (message
-                          "first-item: %S"
-                          first-item)
-                         (message
-                          "first-item-length: %S"
-                          first-item-length)
-                         (message
-                          "new-first: %S"
-                          new-first)
-                         (message
-                          "new-first-length: %S"
-                          new-first-length)
-                         (message
-                          "first-index: %S\n"
-                          first-index))
-
-                        (let ((keep-looking2 t)
-                              (keep-match t)
-                              (first-symbol))
-                          (while (and
-                                  (< first-index first-item-length)
-                                  (< new-first-length k)
-                                  keep-match
-                                  keep-looking2)
-                            (setq
-                             first-symbol
-                             (nth first-index first-item))
-                            (parser-generator--debug
-                             (message
-                              "\nfirst-symbol: %S"
-                              first-symbol))
-
-                            ;; Optionally Disallow e-identifier as first symbol
-                            (if (and
-                                 (= new-first-length 0)
-                                 disallow-e-first
-                                 (parser-generator--valid-e-p
-                                  first-symbol))
-                                (progn
-                                  (setq
-                                   keep-match
-                                   nil)
-                                  (parser-generator--debug
-                                   (message
-                                    "first symbol is the e-identifier and it is forbidden, ignore match")))
-
-                              (if (parser-generator--valid-e-p
-                                   first-symbol)
-                                  (progn
-
-                                    ;; The e-identifier always allow two
-                                    ;; alternative paths in the grammar
-                                    ;; branch off the one without the e-identifier here
-                                    (let ((branch
-                                           (list
-                                            first-item
-                                            new-first
-                                            (1+ first-index))))
-                                      (parser-generator--debug
-                                       (message
-                                        "branch 4: %S"
-                                        branch))
-                                      (push
-                                       branch
-                                       first-stack))
-                                    (push
-                                     first-symbol
-                                     new-first)
-                                    (setq
-                                     new-first-length
-                                     (1+ new-first-length))
-                                    (setq
-                                     keep-looking2
-                                     nil))
-
-                                (push
-                                 first-symbol
-                                 new-first)
-                                (setq
-                                 new-first-length
-                                 (1+ new-first-length)))
-
+                             (= unprocessed-list-index 0)
+                             (parser-generator--valid-e-p
+                              unprocessed-list-symbol))
+                            (progn
                               (setq
-                               first-index
-                               (1+ first-index))))
+                               skip-flag
+                               t)
+                              (parser-generator--debug
+                               (message "Unprocessed list: %S starts with e-identifier, skipping")))
 
-                          (when keep-match
-                            (setq
-                             new-first
-                             (reverse new-first))
+                          (cond
 
-                            ;; When length of terminals list is below K
-                            ;; fill up with e-identifiers
-                            (when (< (length new-first) k)
-                              (setq
-                               new-first
-                               (reverse new-first))
-                              (while (< (length new-first) k)
-                                (push
-                                 parser-generator--e-identifier
-                                 new-first))
-                              (setq
-                               new-first
-                               (reverse new-first)))
+                           ;; if a symbol on a the list is the e-identifier
+                           ((parser-generator--valid-e-p
+                             unprocessed-list-symbol)
 
-                            (unless (gethash
-                                     new-first
-                                     first-items)
+                            ;; push a copy of the new list on the unprocessed stack but increase it's input-index by one
+                            (let ((unprocessed-branch
+                                   (list
+                                    unprocessed-list
+                                    (1+ unprocessed-list-index)
+                                    processed-list)))
                               (parser-generator--debug
                                (message
-                                "push to first-list: %S to %S"
-                                new-first
-                                first-list))
-                              (puthash
-                               new-first
-                               t
-                               first-items)
+                                "Pushed unprocessed-branch to unprocessed-lists: %S"
+                                unprocessed-branch))
                               (push
-                               new-first
-                               first-list)))))))))))
-          (unless skip-sorting
-            (setq
-             first-list
-             (sort
-              first-list
-              'parser-generator--sort-list)))
-          (puthash
-           hash-key
-           first-list
-           parser-generator--table-firsts))))
+                               unprocessed-branch
+                               unprocessed-lists))
+
+                            (parser-generator--debug
+                             (message
+                              "Added e-identifier to processed list"
+                              processed-list))
+                            (push
+                             unprocessed-list-symbol
+                             processed-list)
+                            (setq
+                             loop-flag
+                             nil))
+
+                           (t
+                            (push
+                             unprocessed-list-symbol
+                             processed-list)
+                            (parser-generator--debug
+                             (message
+                              "Added terminal %S to processed list"
+                              unprocessed-list-symbol
+                              processed-list)))))
+
+                        (setq
+                         unprocessed-list-index
+                         (1+ unprocessed-list-index))))
+
+                    ;; if skip-flag is false place reversed new list onto the list of processed lists
+                    (if skip-flag
+                        (progn
+                          (parser-generator--debug
+                           (message
+                            "Skip flag is set, ignoring resulted list: %S with length: %d"
+                            processed-list
+                            (length processed-list))))
+
+                      (parser-generator--debug
+                       (message
+                        "Skip flag is not set, proceeding with resulted list: %S with length: %d"
+                        processed-list
+                        (length processed-list)))
+
+                      ;; If length of a set is below K fill it up with e-identifiers
+                      (when (< (length processed-list) k)
+                        (let ((missing-symbol-count
+                               (- k (length processed-list)))
+                              (missing-symbol-index 0))
+                          (while (< missing-symbol-index missing-symbol-count)
+                            (push
+                             parser-generator--e-identifier
+                             processed-list)
+                            (setq
+                             missing-symbol-index
+                             (1+ missing-symbol-index)))
+                          (parser-generator--debug
+                           (message
+                            "Added %d trailing e-identifiers to set"
+                            missing-symbol-count))))
+
+                      (when (> (length processed-list) k)
+                        (let ((obsolete-symbol-count
+                               (- (length processed-list) k))
+                              (obsolete-symbol-index 0))
+                          (while (< obsolete-symbol-index obsolete-symbol-count)
+                            (pop
+                             processed-list)
+                            (setq
+                             obsolete-symbol-index
+                             (1+ obsolete-symbol-index)))
+                          (parser-generator--debug
+                           (message
+                            "Stripped away %d trailing symbols from set"
+                            obsolete-symbol-count))))
+
+                      (parser-generator--debug
+                       (message
+                        "processed-list: %S"
+                        processed-list))
+
+                      ;; Reverse list
+                      (setq
+                       processed-list
+                       (nreverse
+                        processed-list))
+
+                      ;; Make sure only distinct sets are added to list
+                      (let ((processed-list-hash-key
+                             (format
+                              "%S"
+                              processed-list)))
+                        (if (gethash
+                             processed-list-hash-key
+                             distinct-processed-lists)
+                            (progn
+                              (parser-generator--debug
+                               (message
+                                "Processed list already existed in set, skipping %S"
+                                processed-list)))
+
+                          (push
+                           processed-list
+                           processed-lists)
+                          (puthash
+                           processed-list-hash-key
+                           t
+                           distinct-processed-lists)
+                          (parser-generator--debug
+                           (message
+                            "Processed list is new, added to set %S"
+                            processed-list)))))))))
+
+          (parser-generator--debug
+           (message
+            "\nFailed to expand symbols!")))
+
+        ;; Optional sorting
+        (when (and
+               processed-lists
+               (not skip-sorting))
+          (setq
+           processed-lists
+           (sort
+            processed-lists
+            'parser-generator--sort-list)))
+
+        ;; Store in memory cache
+        (puthash
+         hash-key
+         processed-lists
+         parser-generator--table-firsts)))
     (gethash
      hash-key
      parser-generator--table-firsts)))
