@@ -1603,10 +1603,9 @@
 
   ;; Cache first calculation
   (let ((hash-key (format "%S-%s" β disallow-e-first)))
-    (unless
-        (gethash
-         hash-key
-         parser-generator--table-firsts)
+    (unless (gethash
+             hash-key
+             parser-generator--table-firsts)
 
       ;; Perform optional validation of inpuit
       (unless (or
@@ -1695,7 +1694,7 @@
                       (while (< expanded-list-index expanded-list-count)
                         (setf
                          (nth expanded-list-index expanded-lists)
-                         (nreverse
+                         (reverse
                           (append
                            (reverse
                             (nth expanded-list-index expanded-lists))
@@ -1721,9 +1720,9 @@
                   (while (< expanded-list-index expanded-list-count)
                     (setf
                      (nth expanded-list-index expanded-lists)
-                     (nreverse
+                     (reverse
                       (append
-                       (nreverse
+                       (reverse
                         (nth expanded-list-index expanded-lists))
                        (list input-symbol))))
                     (setq
@@ -1913,7 +1912,7 @@
                       ;; Reverse list
                       (setq
                        processed-list
-                       (nreverse
+                       (reverse
                         processed-list))
 
                       ;; Make sure only distinct sets are added to list
@@ -1955,6 +1954,11 @@
            (sort
             processed-lists
             'parser-generator--sort-list)))
+
+        (parser-generator--debug
+         (message
+          "processed-lists: %S"
+          processed-lists))
 
         ;; Store in memory cache
         (puthash
