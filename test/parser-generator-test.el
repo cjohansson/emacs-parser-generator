@@ -191,6 +191,24 @@
 
   (message "Passed tests for (parser-generator--follow)"))
 
+(defun parser-generator-test--generate-f-sets ()
+  "Test `parser-generator--first'."
+  (message "Starting tests for (parser-generator-test--generate-f-sets)")
+
+  (parser-generator-set-e-identifier 'e)
+  (parser-generator-set-grammar '((Sp S) (a b) ((Sp S) (S (S a S b)) (S e)) Sp))
+  (parser-generator-set-look-ahead-number 1)
+  (parser-generator-process-grammar)
+  (parser-generator--generate-f-sets)
+  (should
+   (equal
+    '(t ((e a)))
+    (gethash
+     (list 'S)
+     parser-generator--f-sets)))
+
+  (message "Passed tests for (parser-generator-test--generate-f-sets)"))
+
 (defun parser-generator-test--first ()
   "Test `parser-generator--first'."
   (message "Starting tests for (parser-generator--first)")
@@ -1056,6 +1074,7 @@
   (parser-generator-test--valid-production-p)
   (parser-generator-test--valid-sentential-form-p)
   (parser-generator-test--valid-terminal-p)
+  (parser-generator-test--generate-f-sets)
 
   ;; Algorithms
   (parser-generator-test--first)

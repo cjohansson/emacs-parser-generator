@@ -1370,7 +1370,7 @@
                   (setq rhs-type 'E-IDENTIFIER))
                  ((parser-generator--valid-terminal-p rhs-element)
                   (setq rhs-type 'TERMINAL))
-                 (t (error (format "Invalid symbol %s" rhs-element))))
+                 (t (error (format "Invalid symbol %s!" rhs-element))))
                 (parser-generator--debug
                  (message
                   "rhs-type: %s"
