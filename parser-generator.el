@@ -1660,7 +1660,7 @@
              (nth input-tape-index input-tape))
             (parser-generator--debug
              (message
-              "input-symbol: %S"
+              "\ninput-symbol: %S"
               input-symbol))
             (cond
 
@@ -1730,8 +1730,8 @@
                     (setf
                      (nth expanded-list-index expanded-lists)
                      (append
-                      (nth expanded-list-index expanded-lists)
-                      (list input-symbol)))
+                      (list input-symbol)
+                      (nth expanded-list-index expanded-lists)))
                     (setq
                      expanded-list-index
                      (1+ expanded-list-index))))
@@ -1771,6 +1771,7 @@
               ;; 3. Process each unprocessed list and expand into a list of lists of terminals and the e-identifier
               (let ((unprocessed-data)
                     (unprocessed-list)
+                    (unprocessed-list-length)
                     (unprocessed-list-index)
                     (processed-list))
                 (while unprocessed-lists
@@ -1821,7 +1822,8 @@
                                skip-flag
                                t)
                               (parser-generator--debug
-                               (message "Unprocessed list: %S starts with e-identifier, skipping")))
+                               (message
+                                "Unprocessed list starts with e-identifier, skipping")))
 
                           (cond
 
