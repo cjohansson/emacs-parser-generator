@@ -1685,23 +1685,32 @@
                     (length expanded-non-terminal-lists)))
 
                   (if (= expanded-list-count 0)
+                      (dolist (expanded-non-terminal-list expanded-non-terminal-lists)
+                        (push
+                         (reverse expanded-non-terminal-list)
+                         expanded-lists))
+
+                    (let ((new-expanded-lists))
+                      (dolist (expanded-non-terminal-list expanded-non-terminal-lists)
+                        (setq expanded-list-index 0)
+                        (let ((reversed-expanded-non-terminal-list
+                               (reverse expanded-non-terminal-list)))
+                          (while (< expanded-list-index expanded-list-count)
+                            (push
+                             (append
+                              reversed-expanded-non-terminal-list
+                              (nth expanded-list-index expanded-lists))
+                             new-expanded-lists)
+                            (setq
+                             expanded-list-index
+                             (1+ expanded-list-index)))))
                       (setq
                        expanded-lists
-                       expanded-non-terminal-lists)
-
-                    (dolist (expanded-non-terminal-list expanded-non-terminal-lists)
-                      (setq expanded-list-index 0)
-                      (while (< expanded-list-index expanded-list-count)
-                        (setf
-                         (nth expanded-list-index expanded-lists)
-                         (reverse
-                          (append
-                           (reverse
-                            (nth expanded-list-index expanded-lists))
-                           expanded-non-terminal-list)))
-                        (setq
-                         expanded-list-index
-                         (1+ expanded-list-index))))))))
+                       new-expanded-lists)))
+                  (parser-generator--debug
+                   (message
+                    "expanded-lists after adding: %S"
+                    expanded-lists)))))
 
              ;; if input symbol is a terminal or the e-identifier push it to each expanded list
              ((or
@@ -1709,7 +1718,7 @@
                (parser-generator--valid-terminal-p input-symbol))
               (parser-generator--debug
                (message
-                "symbol is terminal or the e-identifier"))
+                "symbol is a terminal or the e-identifier"))
               (let ((expanded-list-index 0)
                     (expanded-list-count
                      (length expanded-lists)))
@@ -1720,14 +1729,16 @@
                   (while (< expanded-list-index expanded-list-count)
                     (setf
                      (nth expanded-list-index expanded-lists)
-                     (reverse
-                      (append
-                       (reverse
-                        (nth expanded-list-index expanded-lists))
-                       (list input-symbol))))
+                     (append
+                      (nth expanded-list-index expanded-lists)
+                      (list input-symbol)))
                     (setq
                      expanded-list-index
-                     (1+ expanded-list-index)))))))
+                     (1+ expanded-list-index))))
+                (parser-generator--debug
+                 (message
+                  "expanded-lists after adding: %S"
+                  expanded-lists)))))
             (setq
              input-tape-index
              (1+ input-tape-index))))
@@ -1738,7 +1749,7 @@
                   (distinct-processed-lists (make-hash-table :test 'equal)))
               (parser-generator--debug
                (message
-                "\nExpanded symbols: %S"
+                "\nExpanded symbols: %S (in reverse order)"
                 expanded-lists))
 
               ;; 2. Place each expanded list on a stack of unprocessed lists
@@ -1749,7 +1760,7 @@
                 (while (< expanded-list-index expanded-list-count)
                   (push
                    (list
-                    (nth expanded-list-index expanded-lists)
+                    (reverse (nth expanded-list-index expanded-lists))
                     0
                     nil)
                    unprocessed-lists)
