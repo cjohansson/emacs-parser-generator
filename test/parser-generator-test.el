@@ -202,7 +202,7 @@
   (parser-generator--generate-f-sets)
   (should
    (equal
-    '(t ((e a)))
+    '(t ((e a) (e)))
     (gethash
      (list 'S)
      parser-generator--f-sets)))

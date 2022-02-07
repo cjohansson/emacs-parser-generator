@@ -1346,13 +1346,15 @@
           (let ((leading-terminals-count
                  (length leading-terminals))
                 (leading-symbols-count
-                 (length leading-symbols)))
+                 (length leading-symbols))
+                (keep-iterating t))
             (parser-generator--debug
              (message
               "leading-terminals-count: %s"
               leading-terminals-count))
 
             (while (and
+                    keep-iterating
                     (< input-tape-index input-tape-length)
                     (< leading-terminals-count k))
               (let ((rhs-element (nth input-tape-index input-tape))
@@ -1416,6 +1418,9 @@
                            (list rhs-element))
                           (setq
                            expanded-all
+                           nil)
+                          (setq
+                           keep-iterating
                            nil))
 
                         (if sub-terminal-sets
@@ -1531,7 +1536,10 @@
                      nil)
                     (setq
                      unexpanded-non-terminal
-                     (list rhs-element))))
+                     (list rhs-element))
+                    (setq
+                     keep-iterating
+                     nil)))
 
                  ((equal rhs-type 'E-IDENTIFIER)
                   (setq
