@@ -45,7 +45,7 @@
 
 (defvar
   parser-generator--debug
-  t
+  nil
   "Whether to print debug messages or not.")
 
 (defvar
@@ -1284,8 +1284,7 @@
         (input-tape-length (length input-tape))
         (k (nth 0 state))
         (i (nth 1 state))
-        (f-sets (nth 2 state))
-        (lhs (nth 3 state)))
+        (f-sets (nth 2 state)))
     (parser-generator--debug
      (message
       "input-tape-length: %s"
@@ -1774,7 +1773,7 @@
 
                             (parser-generator--debug
                              (message
-                              "Added e-identifier to processed list"
+                              "Added e-identifier to processed list: %S"
                               processed-list))
                             (push
                              unprocessed-list-symbol
@@ -1789,7 +1788,7 @@
                              processed-list)
                             (parser-generator--debug
                              (message
-                              "Added terminal %S to processed list"
+                              "Added terminal %S to processed list: %S"
                               unprocessed-list-symbol
                               processed-list)))))
 
