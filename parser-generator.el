@@ -1342,6 +1342,8 @@
                   (setq rhs-type 'E-IDENTIFIER))
                  ((parser-generator--valid-terminal-p rhs-element)
                   (setq rhs-type 'TERMINAL))
+                 ((parser-generator--valid-eof-p rhs-element)
+                  (setq rhs-type 'EOF))
                  (t (error (format "Invalid symbol %s!" rhs-element))))
                 (parser-generator--debug
                  (message
@@ -1476,7 +1478,9 @@
                    leading-symbols-count
                    (1+ leading-symbols-count)))
 
-                 ((equal rhs-type 'TERMINAL)
+                 ((or
+                   (equal rhs-type 'TERMINAL)
+                   (equal rhs-type 'EOF))
                   (setq
                    leading-symbols
                    (append
@@ -1638,9 +1642,13 @@
                     "expanded-lists after adding: %S"
                     expanded-lists)))))
 
-             ;; if input symbol is a terminal or the e-identifier push it to each expanded list
+             ;; if input symbol is a terminal
+             ;; or the e-identifier
+             ;; or the eof-identifier
+             ;; push it to each expanded list
              ((or
                (parser-generator--valid-e-p input-symbol)
+               (parser-generator--valid-eof-p input-symbol)
                (parser-generator--valid-terminal-p input-symbol))
               (parser-generator--debug
                (message

@@ -1281,7 +1281,6 @@
 
   (message "Passed tests for (parser-generator-lr--parse)"))
 
-;; TODO Make these pass again
 (defun parser-generator-lr-test-parse-k-2 ()
   "Test `parser-generator-lr-parse' with k = 2."
   (message "Started tests for (parser-generator-lr-parse) k = 2")
@@ -1486,19 +1485,18 @@
      lr-items)
     (parser-generator--debug
      (message
-      "Action-tables k = 2: %s"
+      "Action-tables k = 2: %S"
       (parser-generator-lr--get-expanded-action-tables)))
-
     (should
      (equal
       '(
         (0 (((a b) shift)))
         (1 ((($ $) reduce 2) ((a b) shift)))
         (2 ((($ $) accept)))
-        (3 (((b $) shift) ((b c) shift) ((b a) shift)))
-        (4 ((($ $) reduce 6) ((a b) reduce 6) ((a $) shift) ((a c) shift) ((a a) shift) ((c a) shift) ((c $) shift)))
+        (3 (((b c) shift) ((b a) shift) ((b $) shift)))
+        (4 ((($ $) reduce 6) ((a b) reduce 6) ((a c) shift) ((a a) shift) ((a $) shift) ((c a) shift) ((c $) shift)))
         (5 ((($ $) reduce 3) ((a b) reduce 3)))
-        (6 ((($ $) reduce 6) ((a b) reduce 6) ((a $) shift) ((a c) shift) ((a a) shift) ((c a) shift) ((c $) shift)))
+        (6 ((($ $) reduce 6) ((a b) reduce 6) ((a c) shift) ((a a) shift) ((a $) shift) ((c a) shift) ((c $) shift)))
         (7 ((($ $) reduce 5) ((a b) reduce 5)))
         (8 ((($ $) reduce 4) ((a b) reduce 4)))
         (9 ((($ $) reduce 1)))
@@ -1611,6 +1609,7 @@
 
   (message "Passed tests for (parser-generator-lr--parse-k-2)"))
 
+;; TODO Make this pass again
 (defun parser-generator-lr-test-parse-k-0 ()
   "Test `parser-generator-lr-parse' with k = 0."
   (message "Started tests for (parser-generator-lr-parse) k = 0")
