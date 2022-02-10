@@ -1049,31 +1049,32 @@
      (message "(parser-generator--generate-f-sets)"))
     (let ((productions
            (parser-generator--get-grammar-productions))
-          (k
-           (max
-            1
-            parser-generator--look-ahead-number)))
+          (k (max 1 parser-generator--look-ahead-number)))
       (let ((f-sets (make-hash-table :test 'equal))
             (i 0)
-            (expanded-all nil)
-            (expanded-all-second nil))
+            (max-i 100)
+            (expanded-all))
 
-        (while (or
-                (not expanded-all)
-                (not expanded-all-second))
-          ;; Make one iteration after everything has been expanded
-          (when expanded-all
-            (setq
-             expanded-all-second
-             t))
-          (when (> i 100)
+        (while (not expanded-all)
+          (when (> i max-i)
             (error "Endless loop!"))
           (parser-generator--debug
            (message "i = %s" i))
-          (setq
-           expanded-all
-           t)
-          (let ((f-set (make-hash-table :test 'equal)))
+          (let ((f-set
+                 (make-hash-table :test 'equal))
+                (distinct-lhs)
+                (distinct-lhs-p
+                 (make-hash-table :test 'equal))
+                (previous-f-set))
+            (when (> i 0)
+              (setq
+               expanded-all
+               t)
+              (setq
+               previous-f-set
+               (gethash
+                (1- i)
+                f-sets)))
 
             ;; Iterate all productions, set F_i
             (dolist (p productions)
@@ -1086,158 +1087,129 @@
                   production-rhs))
 
                 ;; Iterate all blocks in RHS
-                (let ((f-p-set)
-                      (rhs-expanded-full t))
-                  (dolist (rhs-p production-rhs)
-                    (let ((rhs-string rhs-p))
-                      (let ((rhs-leading-terminals)
-                            (f-set-return
-                             (parser-generator--f-set
-                              rhs-string
-                              `(
-                                ,k
-                                ,i
-                                ,f-sets
-                                ,production-lhs)
-                              '((nil nil 0)))))
+                (dolist (rhs-p production-rhs)
+                  (let ((rhs-string rhs-p))
+                    (let ((rhs-leading-symbols
+                           (parser-generator--f-set
+                            rhs-string
+                            `(
+                              ,k
+                              ,i
+                              ,f-sets
+                              ,production-lhs)
+                            '((nil nil 0)))))
 
-                        (parser-generator--debug
-                         (message
-                          "\nf-set-return: %s = %s"
-                          rhs-string
-                          f-set-return))
-
-                        ;; Unless set was fully expanded..
-                        (if (nth 0 f-set-return)
-                            (parser-generator--debug
-                             (message
-                              "Production '%S' fully expanded,"
-                              production-lhs))
-
-                          ;; Get unexpanded non-terminal
-                          (let ((unexpanded-non-terminal
-                                 (nth 1 f-set-return)))
-                            (cond
-
-                             ((equal
-                               unexpanded-non-terminal
-                               production-lhs)
-                              (parser-generator--debug
-                               (message
-                                "Production '%S' un-expanded due to self-reference, ignore flag."
-                                production-lhs)))
-
-                             ((gethash
-                               unexpanded-non-terminal
-                               f-set)
-                              (parser-generator--debug
-                               (message
-                                "Production '%S' is un-expanded due to reference to previously processed production '%S', ignore flag."
-                                production-lhs
-                                unexpanded-non-terminal)))
-
-                             (t
-                              (parser-generator--debug
-                               (message
-                                "Production 'S' is un-expanded due to reference to un-expanded non-terminal '%S'"
-                                production-lhs
-                                unexpanded-non-terminal))
-
-                              (setq
-                               rhs-expanded-full
-                               nil)
-                              (setq
-                               expanded-all
-                               nil)))))
-
-                        (setq
-                         rhs-leading-terminals
-                         (nth 2 f-set-return))
-
-                        (parser-generator--debug
-                         (message
-                          "Leading %d terminals at index %s: %s -> %s = %s"
-                          k
-                          i
-                          production-lhs
-                          rhs-string
-                          rhs-leading-terminals))
-
-                        (when rhs-leading-terminals
-                          (when (and
-                                 (listp rhs-leading-terminals)
-                                 (> (length rhs-leading-terminals) 0))
-                            (dolist
-                                (rhs-leading-terminals-element
-                                 rhs-leading-terminals)
-                              (push
-                               rhs-leading-terminals-element
-                               f-p-set)))))))
-
-                  ;; If we have multiple equal LHS merge them
-                  (when (gethash
-                         production-lhs
-                         f-set)
-                    (let ((existing-f-set
-                           (gethash
-                            production-lhs
-                            f-set)))
                       (parser-generator--debug
                        (message
-                        "existing-f-set: %S"
-                        existing-f-set))
+                        "\nrhs-leading-symbols: %S = %S"
+                        rhs-string
+                        rhs-leading-symbols))
 
-                      ;; If another RHS has not been fully expanded
-                      ;; mark LHS as not fully expanded
-                      (if (nth 0 existing-f-set)
-                          (parser-generator--debug
-                           (message
-                            "Previous RHS has been fully expanded as well."))
+                      (parser-generator--debug
+                       (message
+                        "Leading %d symbols at index %s: %s -> %s = %s"
+                        k
+                        i
+                        production-lhs
+                        rhs-string
+                        rhs-leading-symbols))
 
-                        (parser-generator--debug
-                         (message
-                          "Previous RHS has not been fully expanded so mark '%S' as not expanded."
-                          production-lhs))
-                        (setq
-                         expanded-all
-                         nil)
-                        (setq
-                         rhs-expanded-full
-                         nil))
+                      (when rhs-leading-symbols
+                        (if (gethash
+                             production-lhs
+                             f-set)
+                            (puthash
+                             production-lhs
+                             (append
+                              (gethash
+                               production-lhs
+                               f-set)
+                              rhs-leading-symbols)
+                             f-set)
+                          (puthash
+                           production-lhs
+                           rhs-leading-symbols
+                           f-set))
 
-                      (setq
-                       f-p-set
-                       (append
-                        f-p-set
-                        (nth 1 existing-f-set)))))
+                        (unless (gethash
+                                 production-lhs
+                                 distinct-lhs-p)
+                          (puthash
+                           production-lhs
+                           t
+                           distinct-lhs-p)
+                          (push
+                           production-lhs
+                           distinct-lhs))))))))
 
-                  ;; Make set distinct
-                  (setq
-                   f-p-set
-                   (parser-generator--distinct
-                    f-p-set))
-                  (puthash
+            ;; Iterate productions again
+            ;; make distinct sets and check if we found anything new
+            (dolist (production-lhs distinct-lhs)
+              (when (gethash
+                     production-lhs
+                     f-set)
+
+                ;; Make set distinct
+                (puthash
+                 production-lhs
+                 (parser-generator--distinct
+                  (gethash
                    production-lhs
-                   (list
-                    rhs-expanded-full
-                    (reverse f-p-set))
-                   f-set)
+                   f-set))
+                 f-set)
+
+                ;; Sort it for a more deterministic result
+                (puthash
+                 production-lhs
+                 (sort
+                  (parser-generator--distinct
+                   (gethash
+                    production-lhs
+                    f-set))
+                  'parser-generator--sort-list)
+                 f-set)
+
+                ;; If this set differs from the last, keep expanding
+                (when (and
+                       expanded-all
+                       previous-f-set
+                       (not
+                        (equal
+                         (gethash
+                          production-lhs
+                          f-set)
+                         (gethash
+                          production-lhs
+                          previous-f-set))))
                   (parser-generator--debug
                    (message
-                    "F_%s%s = %s"
+                    "F_%s%s = %S is new compared to F_%s%s = %S"
                     i
                     production-lhs
                     (gethash
                      production-lhs
-                     f-set))))))
+                     f-set)
+                    (1- i)
+                    production-lhs
+                    (gethash
+                     production-lhs
+                     previous-f-set)))
+                  (setq
+                   expanded-all
+                   nil))))
 
             (puthash
              i
              f-set
              f-sets)
+            (parser-generator--debug
+             (message
+              "F_%s = %s"
+              i
+              f-set))
             (setq
              i
-             (+ i 1))))
+             (1+ i))))
 
         (setq
          parser-generator--f-sets
@@ -1313,9 +1285,7 @@
         (k (nth 0 state))
         (i (nth 1 state))
         (f-sets (nth 2 state))
-        (lhs (nth 3 state))
-        (expanded-all t)
-        (unexpanded-non-terminal nil))
+        (lhs (nth 3 state)))
     (parser-generator--debug
      (message
       "input-tape-length: %s"
@@ -1357,7 +1327,8 @@
                     keep-iterating
                     (< input-tape-index input-tape-length)
                     (< leading-terminals-count k))
-              (let ((rhs-element (nth input-tape-index input-tape))
+              (let ((rhs-element
+                     (nth input-tape-index input-tape))
                     (rhs-type))
                 (parser-generator--debug
                  (message
@@ -1382,9 +1353,7 @@
 
                  ((equal rhs-type 'NON-TERMINAL)
                   (if (> i 0)
-                      (let ((sub-terminal-sets)
-                            (sub-terminal-expanded)
-                            (sub-terminal-data
+                      (let ((sub-terminal-sets
                              (gethash
                               (list rhs-element)
                               (gethash
@@ -1392,36 +1361,9 @@
                                f-sets))))
                         (parser-generator--debug
                          (message
-                          "sub-terminal-data: %s = %s"
-                          rhs-element
-                          sub-terminal-data))
-                        
-                        (setq
-                         sub-terminal-expanded
-                         (nth 0 sub-terminal-data))
-                        (setq
-                         sub-terminal-sets
-                         (nth 1 sub-terminal-data))
-
-                        ;; When sub-set has not been fully expanded mark this set
-                        ;; as not fully expanded either
-                        (when (and
-                               (not sub-terminal-expanded)
-                               sub-terminal-data)
-                          (parser-generator--debug
-                           (message
-                            "Can't expand '%S' because sub-terminals of '%S' has not been fully expanded"
-                            lhs
-                            rhs-element))
-                          (setq
-                           unexpanded-non-terminal
-                           (list rhs-element))
-                          (setq
-                           expanded-all
-                           nil)
-                          (setq
-                           keep-iterating
-                           nil))
+                          "sub-terminal-sets: %s = %s"
+                          (list rhs-element)
+                          sub-terminal-sets))
 
                         (if sub-terminal-sets
                             (progn
@@ -1451,7 +1393,6 @@
                                          (length
                                           sub-symbol-alternative-set))
                                         (sub-symbol)
-                                        (sub-terminal)
                                         (sub-symbols
                                          (reverse original-leading-symbols))
                                         (sub-terminals
@@ -1521,22 +1462,7 @@
                            (message
                             "Found no subsets for %s %s"
                             rhs-element
-                            (1- i)))
-                          (setq
-                           unexpanded-non-terminal
-                           (list rhs-element))))
-
-                    (parser-generator--debug
-                     (message
-                      "Expanded-all negative set for '%s' because symbol '%s' is a non-terminal and i is zero"
-                      lhs
-                      rhs-element))
-                    (setq
-                     expanded-all
-                     nil)
-                    (setq
-                     unexpanded-non-terminal
-                     (list rhs-element))
+                            (1- i)))))
                     (setq
                      keep-iterating
                      nil)))
@@ -1584,12 +1510,7 @@
               (push
                leading-symbols
                f-set))))))
-    (parser-generator--debug
-     (message "expanded-all: %s" expanded-all))
-    (list
-     expanded-all
-     unexpanded-non-terminal
-     f-set)))
+    f-set))
 
 ;; Algorithm 5.5, p. 357
 (defun parser-generator--first
@@ -1678,11 +1599,9 @@
                (message
                 "input-symbol is non-terminal"))
               (let ((expanded-non-terminal-lists
-                     (nth
-                      1
-                      (gethash
-                       (list input-symbol)
-                       parser-generator--f-sets))))
+                     (gethash
+                      (list input-symbol)
+                      parser-generator--f-sets)))
                 (let ((expanded-list-index)
                       (expanded-list-count
                        (length expanded-lists)))

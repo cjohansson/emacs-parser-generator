@@ -202,7 +202,7 @@
   (parser-generator--generate-f-sets)
   (should
    (equal
-    '(t ((e a) (e)))
+    '((e a) (e))
     (gethash
      (list 'S)
      parser-generator--f-sets)))
@@ -407,7 +407,7 @@
   (parser-generator-process-grammar)
   (should
    (equal
-    '((a a a b) (a a b a) (a a b b) (a a e e) (a b a a) (a b a b) (a b a e) (a b e e) (a e e e) (e e e e))
+    '((a a a a) (a a a b) (a a a e) (a a b a) (a a b b) (a a e e) (a b a a) (a b a b) (a b a e) (a b e e) (a e e e) (e e e e))
     (parser-generator--first 'S)))
   (message "Passed first 9 with complex grammar with starting e-identifier variant 2")
 
@@ -567,11 +567,10 @@
   (message "Passed empty-free-first 2 with trailing e-identifier 2")
   (should
    (equal
-    '((a a) (a e))
+    '((a a) (a b) (a e))
     (parser-generator--e-free-first '(a S b))))
   (message "Passed empty-free-first 2 with trailing e-identifier 1")
 
-  ;; TODO Make this pass
   (parser-generator-set-grammar
    '((Sp S R T) (a b c) ((Sp S) (S (R S) (R)) (R (a b T)) (T (a T) (c) (e))) Sp))
   (parser-generator-set-look-ahead-number 2)
