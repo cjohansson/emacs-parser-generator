@@ -1609,7 +1609,6 @@
 
   (message "Passed tests for (parser-generator-lr--parse-k-2)"))
 
-;; TODO Make this pass again
 (defun parser-generator-lr-test-parse-k-0 ()
   "Test `parser-generator-lr-parse' with k = 0."
   (message "Started tests for (parser-generator-lr-parse) k = 0")
@@ -1623,7 +1622,18 @@
   ;; (5) B → 1
 
   (parser-generator-set-grammar
-   '((S E B) ("*" "+" "0" "1") ((S (E $)) (E (E "*" B) (E "+" B) (B)) (B ("0") ("1"))) S))
+   '(
+     (S E B)
+     ("*" "+" "0" "1")
+     (
+      (S (E $))
+      (E (E "*" B) (E "+" B) (B))
+      (B ("0") ("1"))
+      )
+     S
+     )
+   )
+  (parser-generator-set-e-identifier nil)
   (parser-generator-set-look-ahead-number 0)
   (parser-generator-process-grammar)
 
@@ -1755,7 +1765,6 @@
       "Action-tables k = 0: %s"
       (parser-generator-lr--get-expanded-action-tables)))
 
-    ;; TODO Make this work
     (should
      (equal
       '(

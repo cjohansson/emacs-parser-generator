@@ -1463,7 +1463,10 @@
                            (message
                             "Found no subsets for %s %s"
                             rhs-element
-                            (1- i)))))
+                            (1- i)))
+                          (setq
+                           keep-iterating
+                           nil)))
                     (setq
                      keep-iterating
                      nil)))
@@ -1550,7 +1553,7 @@
 
       ;; Algorithm
       ;; 1. Iterate each symbol of input and expand into list of lists of terminals and the e-identifier
-      ;;     if input symbol is a terminal or the e-identifier push it to each expanded list
+      ;;     if input symbol is a terminal, the e-identifier or the EOF-identifier push it to each expanded list
       ;;     if input symbol is a non-terminal, expand it and push each possible expansion onto each expanded list
       ;; 2. Reverse each expanded list and place each list on a stack of unprocessed lists each with a input-index to zero
       ;; 3. Process each unprocessed list and expand into a list of lists of terminals and the e-identifier
@@ -1652,7 +1655,7 @@
                (parser-generator--valid-terminal-p input-symbol))
               (parser-generator--debug
                (message
-                "symbol is a terminal or the e-identifier"))
+                "symbol is a terminal, the e-identifier or the EOF-identifier"))
               (let ((expanded-list-index 0)
                     (expanded-list-count
                      (length expanded-lists)))
