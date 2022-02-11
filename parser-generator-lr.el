@@ -682,6 +682,11 @@
         (parser-generator--debug
          (message "%s actions %s" goto-index action-table))
         (when action-table
+          (setq
+           action-table
+           (sort
+            action-table
+            'parser-generator--sort-list))
           (message
            "ACTION-TABLE (%d): %S\n"
            goto-index
@@ -689,11 +694,13 @@
           (push
            (list
             goto-index
-            (sort action-table 'parser-generator--sort-list))
+            action-table)
            action-tables))))
     (unless found-accept
       (error "Failed to find an accept action in the generated action-tables!"))
-    (setq action-tables (nreverse action-tables))
+    (setq
+     action-tables
+     (nreverse action-tables))
     (setq
      parser-generator-lr--action-tables
      (make-hash-table :test 'equal))

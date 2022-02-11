@@ -1165,7 +1165,7 @@
       (message "Passed test PHP 8.0 match grammar 2")
       ))
 
-  ;; TODO Test another left-recursive grammar from PHP 8.0 here
+  ;; Test another left-recursive grammar from PHP 8.0 here
   (parser-generator-set-look-ahead-number 1)
   (parser-generator-set-e-identifier '%empty)
   (parser-generator-set-grammar
@@ -1735,7 +1735,7 @@
         (7 nil)
         (8 nil))
       (parser-generator-lr--get-expanded-goto-tables)))
-    (message "Passed GOTO-tables k = 2")
+    (message "Passed GOTO-tables k = 0")
 
     ;;   	*  	+  	0  	1  	$
     ;; 0 	   	   	s1 	s2 	
@@ -1755,6 +1755,7 @@
       "Action-tables k = 0: %s"
       (parser-generator-lr--get-expanded-action-tables)))
 
+    ;; TODO Make this work
     (should
      (equal
       '(
