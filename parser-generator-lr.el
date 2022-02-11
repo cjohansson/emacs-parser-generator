@@ -602,12 +602,24 @@
                                                (gethash
                                                 index-hash-key
                                                 index-symbols)))
-                                          (error
-                                           "Reduce/%S conflict for %S in state %S"
-                                           (car (cdr conflicted-item))
-                                           u
-                                           goto-index
-                                           ))))
+                                          (if (and
+                                               parser-generator-lr--allow-default-conflict-resolution
+                                               (equal
+                                                'shift
+                                                (car (cdr conflicted-item))))
+                                              (progn
+                                                (parser-generator--debug
+                                                 (message
+                                                  "Shift takes precedence over reduce by default"))
+                                                (setq
+                                                 skip-symbol
+                                                 t))
+                                            (error
+                                             "Reduce/%S conflict for %S in state %S"
+                                             (car (cdr conflicted-item))
+                                             u
+                                             goto-index
+                                             )))))
 
                                     (unless
                                         (or
