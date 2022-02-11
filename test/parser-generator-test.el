@@ -191,6 +191,24 @@
 
   (message "Passed tests for (parser-generator--follow)"))
 
+(defun parser-generator-test--generate-f-sets ()
+  "Test `parser-generator--first'."
+  (message "Starting tests for (parser-generator-test--generate-f-sets)")
+
+  (parser-generator-set-e-identifier 'e)
+  (parser-generator-set-grammar '((Sp S) (a b) ((Sp S) (S (S a S b)) (S e)) Sp))
+  (parser-generator-set-look-ahead-number 1)
+  (parser-generator-process-grammar)
+  (parser-generator--generate-f-sets)
+  (should
+   (equal
+    '((e a) (e))
+    (gethash
+     (list 'S)
+     parser-generator--f-sets)))
+
+  (message "Passed tests for (parser-generator-test--generate-f-sets)"))
+
 (defun parser-generator-test--first ()
   "Test `parser-generator--first'."
   (message "Starting tests for (parser-generator--first)")
@@ -279,6 +297,14 @@
   (parser-generator-set-grammar '((S A B) ("c" "d") ((S A) (A B) (B "c" "d")) S))
   (parser-generator-set-look-ahead-number 1)
   (parser-generator-process-grammar)
+  (should
+   (equal
+    '(("c") ("d"))
+    (parser-generator--first 'B)))
+  (should
+   (equal
+    '(("c") ("d"))
+    (parser-generator--first 'A)))
   (should
    (equal
     '(("c") ("d"))
@@ -372,7 +398,7 @@
   (parser-generator-process-grammar)
   (should
    (equal
-    '((a a b) (a a e) (a b a) (a b e) (a e e) (e e e))
+    '((a a a) (a a b) (a a e) (a b a) (a b e) (a e e) (e e e))
     (parser-generator--first 'S)))
   (message "Passed first 8 with complex grammar with starting e-identifier variant 2")
 
@@ -381,7 +407,7 @@
   (parser-generator-process-grammar)
   (should
    (equal
-    '((a a b b) (a a e e) (a b a a) (a b a b) (a b a e) (a b e e) (a e e e) (e e e e))
+    '((a a a a) (a a a b) (a a a e) (a a b a) (a a b b) (a a e e) (a b a a) (a b a b) (a b a e) (a b e e) (a e e e) (e e e e))
     (parser-generator--first 'S)))
   (message "Passed first 9 with complex grammar with starting e-identifier variant 2")
 
@@ -541,11 +567,10 @@
   (message "Passed empty-free-first 2 with trailing e-identifier 2")
   (should
    (equal
-    '((a a) (a e))
+    '((a a) (a b) (a e))
     (parser-generator--e-free-first '(a S b))))
   (message "Passed empty-free-first 2 with trailing e-identifier 1")
 
-  ;; TODO Make this pass
   (parser-generator-set-grammar
    '((Sp S R T) (a b c) ((Sp S) (S (R S) (R)) (R (a b T)) (T (a T) (c) (e))) Sp))
   (parser-generator-set-look-ahead-number 2)
@@ -1048,6 +1073,7 @@
   (parser-generator-test--valid-production-p)
   (parser-generator-test--valid-sentential-form-p)
   (parser-generator-test--valid-terminal-p)
+  (parser-generator-test--generate-f-sets)
 
   ;; Algorithms
   (parser-generator-test--first)

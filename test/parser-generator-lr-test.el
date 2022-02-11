@@ -1165,7 +1165,7 @@
       (message "Passed test PHP 8.0 match grammar 2")
       ))
 
-  ;; TODO Test another left-recursive grammar from PHP 8.0 here
+  ;; Test another left-recursive grammar from PHP 8.0 here
   (parser-generator-set-look-ahead-number 1)
   (parser-generator-set-e-identifier '%empty)
   (parser-generator-set-grammar
@@ -1281,7 +1281,6 @@
 
   (message "Passed tests for (parser-generator-lr--parse)"))
 
-;; TODO Make these pass again
 (defun parser-generator-lr-test-parse-k-2 ()
   "Test `parser-generator-lr-parse' with k = 2."
   (message "Started tests for (parser-generator-lr-parse) k = 2")
@@ -1486,19 +1485,18 @@
      lr-items)
     (parser-generator--debug
      (message
-      "Action-tables k = 2: %s"
+      "Action-tables k = 2: %S"
       (parser-generator-lr--get-expanded-action-tables)))
-
     (should
      (equal
       '(
         (0 (((a b) shift)))
         (1 ((($ $) reduce 2) ((a b) shift)))
         (2 ((($ $) accept)))
-        (3 (((b $) shift) ((b c) shift) ((b a) shift)))
-        (4 ((($ $) reduce 6) ((a b) reduce 6) ((a $) shift) ((a c) shift) ((a a) shift) ((c a) shift) ((c $) shift)))
+        (3 (((b c) shift) ((b a) shift) ((b $) shift)))
+        (4 ((($ $) reduce 6) ((a b) reduce 6) ((a c) shift) ((a a) shift) ((a $) shift) ((c a) shift) ((c $) shift)))
         (5 ((($ $) reduce 3) ((a b) reduce 3)))
-        (6 ((($ $) reduce 6) ((a b) reduce 6) ((a $) shift) ((a c) shift) ((a a) shift) ((c a) shift) ((c $) shift)))
+        (6 ((($ $) reduce 6) ((a b) reduce 6) ((a c) shift) ((a a) shift) ((a $) shift) ((c a) shift) ((c $) shift)))
         (7 ((($ $) reduce 5) ((a b) reduce 5)))
         (8 ((($ $) reduce 4) ((a b) reduce 4)))
         (9 ((($ $) reduce 1)))
@@ -1624,7 +1622,18 @@
   ;; (5) B → 1
 
   (parser-generator-set-grammar
-   '((S E B) ("*" "+" "0" "1") ((S (E $)) (E (E "*" B) (E "+" B) (B)) (B ("0") ("1"))) S))
+   '(
+     (S E B)
+     ("*" "+" "0" "1")
+     (
+      (S (E $))
+      (E (E "*" B) (E "+" B) (B))
+      (B ("0") ("1"))
+      )
+     S
+     )
+   )
+  (parser-generator-set-e-identifier nil)
   (parser-generator-set-look-ahead-number 0)
   (parser-generator-process-grammar)
 
@@ -1736,7 +1745,7 @@
         (7 nil)
         (8 nil))
       (parser-generator-lr--get-expanded-goto-tables)))
-    (message "Passed GOTO-tables k = 2")
+    (message "Passed GOTO-tables k = 0")
 
     ;;   	*  	+  	0  	1  	$
     ;; 0 	   	   	s1 	s2 	
