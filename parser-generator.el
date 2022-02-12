@@ -1271,7 +1271,7 @@
 
 ;; p. 357
 (defun parser-generator--f-set (input-tape state stack)
-  "A deterministic push-down transducer (DPT) for building F-sets from INPUT-TAPE, STATE and STACK."
+  "A deterministic push-down transducer (DPDT) for building F-sets from INPUT-TAPE, STATE and STACK."
   (unless (listp input-tape)
     (setq input-tape (list input-tape)))
   (parser-generator--debug
