@@ -12,7 +12,6 @@ We use push down transducer (PDT) based algorithms.
 ## Without Backtracking
 
 * LL(k) *WIP*
-* Deterministic Shift-Reduce Parsing *WIP*
 * [LR(k)](Syntax-Analysis/LRk.md)
 * [LR(0)](Syntax-Analysis/LR0.md)
 * Formal Shift-Reduce Parsing Algorithms *WIP*
@@ -67,11 +66,11 @@ Can be set in variable `parser-generator--global-declaration`. This may be used 
 
 ### e-identifier
 
-The symbol defined in variable `parser-generator--e-identifier`, with default-value: 'e`, symbolizes the e symbol. The symbol is allowed in some grammars and not in others.
+The symbol defined in variable `parser-generator--e-identifier`, with default-value: `'e`, symbolizes the e symbol. The symbol is allowed in some grammars and not in others and can be used to make parts of grammar optional.
 
 ### End-of-file identifier
 
-The symbol defined in variable `parser-generator--eof-identifier`, with default-value: '$`, symbolizes the end-of-file symbol.
+The symbol defined in variable `parser-generator--eof-identifier`, with default-value: `'$`, symbolizes the end-of-file symbol.
 
 ### Non-terminals
 
@@ -107,7 +106,7 @@ The start symbol is the entry-point of the grammar and should be either a string
 
 ### Look-ahead number
 
-Is a simple integer above zero. You set it like this: `(parser-generator-set-look-ahead-number 1)` for `1` number look-ahead.
+Is a simple integer above zero. You set it like this: `(parser-generator-set-look-ahead-number 1)` for a `1` number look-ahead.
 
 ### Syntax-directed-translation (SDT)
 
