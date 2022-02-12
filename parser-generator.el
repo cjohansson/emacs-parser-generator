@@ -5,8 +5,8 @@
 ;; Author: Christian Johansson <christian@cvj.se>
 ;; Maintainer: Christian Johansson <christian@cvj.se>
 ;; Created: 10 Oct 2020
-;; Modified: 20 Nov 2021
-;; Version: 0.1.3
+;; Modified: 12 Feb 2021
+;; Version: 0.1.4
 ;; Keywords: tools, convenience
 ;; URL: https://github.com/cjohansson/emacs-parser-generator
 
@@ -1271,7 +1271,7 @@
 
 ;; p. 357
 (defun parser-generator--f-set (input-tape state stack)
-  "A deterministic push-down transducer (DPDT) for building F-sets from INPUT-TAPE, STATE and STACK."
+  "A deterministic push-down transducer (DPT) for building F-sets from INPUT-TAPE, STATE and STACK."
   (unless (listp input-tape)
     (setq input-tape (list input-tape)))
   (parser-generator--debug
