@@ -18,3 +18,7 @@ We use deterministic push down transducer (PDT) based algorithms. Read more [her
 ## Test
 
 Run in terminal `make clean && make tests && make compile`
+
+## TODO / Roadmap / Issues
+
+Look here [here](TODO.md).
