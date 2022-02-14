@@ -254,13 +254,13 @@
 
 (defun parser-generator-lr-generate-parser-tables ()
   "Generate parsing tables for grammar."
-  (message "\nStarting generation of parser-tables..\n")
+  (message "\n;; Starting generation of parser-tables..\n")
   (parser-generator-lr--generate-precedence-tables)
   (let ((table-lr-items
          (parser-generator-lr--generate-goto-tables)))
     (parser-generator-lr--generate-action-tables
      table-lr-items)
-    (message "\nCompleted generation of parser-tables.\n")
+    (message "\n;; Completed generation of parser-tables.\n")
     table-lr-items))
 
 (defun parser-generator-lr--get-expanded-action-tables ()
@@ -700,7 +700,7 @@
             action-table
             'parser-generator--sort-list))
           (message
-           "ACTION-TABLE (%d): %S\n"
+           ";; ACTION-TABLE (%d): %S\n"
            goto-index
            action-table)
           (push
@@ -753,12 +753,12 @@
         (setq
          table-index
          (1+ table-index)))))
-  (message "\nCompleted generation of action-tables..\n"))
+  (message "\n;; Completed generation of action-tables..\n"))
 
 ;; Algorithm 5.9, p. 389
 (defun parser-generator-lr--generate-goto-tables ()
   "Calculate set of valid LR(k) items for grammar and a GOTO-table."
-  (message "\nStarting generation of goto-tables..\n")
+  (message "\n;; Starting generation of goto-tables..\n")
   (parser-generator--debug
    (message "(parser-generator-lr--generate-goto-tables)"))
   (let ((lr-item-set-new-index 0)
@@ -936,7 +936,7 @@
                        total-count
                        (1+ total-count))
                       (message
-                       "Found new distinct set of LR-items: %d"
+                       ";; Found a new distinct set of LR-items number: %d"
                        total-count)
                       ;; (2) Mark a
                       (puthash
@@ -953,7 +953,7 @@
           goto-table-table
           'parser-generator--sort-list))
         (message
-         "GOTO-TABLE (%d): %S\n"
+         ";; GOTO-TABLE (%d): %S\n"
          lr-item-set-index
          goto-table-table)
         (push
@@ -965,7 +965,7 @@
          marked-count
          (1+ marked-count))
         (message
-         "Progress: %s / %s = %d%%\n"
+         ";; Progress: %s / %s = %d%%\n"
          marked-count
          total-count
          (* 100 (/ (float marked-count) (float total-count))))))
@@ -1019,7 +1019,7 @@
              goto-table-index
              parser-generator-lr--goto-tables))))
         (setq table-index (1+ table-index))))
-    (message "\nCompleted generation of goto-tables.\n")
+    (message "\n;; Completed generation of goto-tables.\n")
     table-lr-items))
 
 ;; Algorithm 5.10, p. 391

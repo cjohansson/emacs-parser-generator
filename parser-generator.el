@@ -592,7 +592,7 @@
                     lhs
                     (reverse new-rhs)))
                   (message
-                   "Production %s: %S"
+                   ";; Production %s: %S"
                    production-index
                    production)
                   (push
@@ -676,7 +676,7 @@
 
 (defun parser-generator-process-grammar ()
   "Process grammar."
-  (message "\nStarting process of grammar..\n")
+  (message "\n;; Starting process of grammar..\n")
   (parser-generator--clear-cache)
   (unless parser-generator--look-ahead-number
     (error "No look-ahead-number defined!"))
@@ -684,7 +684,7 @@
       (parser-generator--valid-look-ahead-number-p
        parser-generator--look-ahead-number)
     (error "Invalid look-ahead number k!"))
-  (message "k = %d" parser-generator--look-ahead-number)
+  (message ";; k = %d" parser-generator--look-ahead-number)
   (unless parser-generator--grammar
     (error "No grammar defined!"))
   (unless
@@ -692,7 +692,7 @@
        parser-generator--grammar)
     (error "Invalid grammar G!"))
   (parser-generator--load-symbols)
-  (message "\nCompleted process of grammar\n"))
+  (message "\n;; Completed process of grammar\n"))
 
 (defun parser-generator--sort-list (a b)
   "Return non-nil if a element in A is greater than a element in B in lexicographic order."
