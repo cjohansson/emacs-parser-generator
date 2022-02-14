@@ -935,6 +935,9 @@
                       (setq
                        total-count
                        (1+ total-count))
+                      (message
+                       "Found new distinct set of LR-items: %d"
+                       total-count)
                       ;; (2) Mark a
                       (puthash
                        prefix-lr-items-hash-key
