@@ -45,7 +45,26 @@
 ;; Algorithm 5.2 p. 350
 (defun parser-generator-ll--generate-tables ()
   "Construction of LL(k)-tables.  Output the set of LL(k) tables needed to construct a parsing table for the grammar G."
-  )
+
+  (let ((tables)
+        (distinct-table-p (make-hash-table :test 'equal))
+        ;; (1) Construct T_0, the LL(k) table associated with S {e}
+        (stack `((,(parser-generator--get-grammar-start) nil)))
+        (stack-item))
+    (while stack
+      (setq stack-item (pop stack))
+      (let* ((production (nth 0 stack-item))
+             (dot-look-ahead (nth 1 stack-item))
+             (first-production (parser-generator--first production nil t t))
+             (first-dot-look-ahead (parser-generator--first dot-look-ahead nil t t))
+             (look-aheads (parser-generator--merge-max-terminals first-production first-dot-look-ahead)))
+        (parser-generator--debug
+         (message "production: %S" production)
+         (message "dot-look-ahead: %S" dot-look-ahead)
+         (message "first-production: %S" first-production)
+         (message "first-dot-look-ahead: %S" first-dot-look-ahead)
+         (message "look-aheads: %S" look-aheads))))
+    tables))
 
 
 ;; TODO

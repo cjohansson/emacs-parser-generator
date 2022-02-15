@@ -23,6 +23,23 @@
   "Test `parser-generator-ll--generate-parsing-table'."
   (message "Started tests for (parser-generator-ll--generate-parsing-table)")
 
+  ;; Example 5.15 p. 351
+  (parser-generator-set-e-identifier 'e)
+  (parser-generator-set-look-ahead-number 2)
+  (parser-generator-set-grammar
+   '(
+     (S A)
+     (a b)
+     (
+      (S (a A a a) (b A b a))
+      (A b e)
+      )
+     S
+     )
+   )
+  (parser-generator-process-grammar)
+  (let ((tables (parser-generator-ll--generate-tables)))
+    (message "tables: %S" tables))
 
   (message "Passed tests for (parser-generator-ll--generate-parsing-table)"))
 
