@@ -45,7 +45,7 @@
 
 (defvar
   parser-generator--debug
-  nil
+  t
   "Whether to print debug messages or not.")
 
 (defvar

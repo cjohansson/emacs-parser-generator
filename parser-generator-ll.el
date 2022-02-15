@@ -50,14 +50,94 @@
         (distinct-table-p (make-hash-table :test 'equal))
         ;; (1) Construct T_0, the LL(k) table associated with S {e}
         (stack `((,(parser-generator--get-grammar-start) nil)))
-        (stack-item))
+        (stack-item)
+        (k (max 1 parser-generator--look-ahead-number)))
     (while stack
       (setq stack-item (pop stack))
       (let* ((production (nth 0 stack-item))
              (dot-look-ahead (nth 1 stack-item))
              (first-production (parser-generator--first production nil t t))
              (first-dot-look-ahead (parser-generator--first dot-look-ahead nil t t))
-             (look-aheads (parser-generator--merge-max-terminals first-production first-dot-look-ahead)))
+             (look-aheads))
+        (cond
+         ((and first-production
+               (not first-dot-look-ahead))
+          (setq
+           look-aheads
+           (parser-generator--merge-max-terminals
+            first-production
+            nil
+            k)))
+         ((and first-dot-look-ahead
+               (not first-production))
+          (setq
+           look-aheads
+           (parser-generator--merge-max-terminals
+            nil
+            first-dot-look-ahead
+            k)))
+         ((and first-production
+               first-dot-look-ahead)
+          ;; Generate a new list of all permutations
+          ;; of first-production
+          ;; and first-dot-look-ahead
+          ;; with maximum length k
+          (let ((first-production-length
+                 (length first-production))
+                (first-production-index 0)
+                (first-dot-look-ahead-length
+                 (length first-dot-look-ahead))
+                (merged-look-aheds))
+            (while
+                (<
+                 first-production-index
+                 first-production-length)
+              (let ((first-production-element
+                     (nth
+                      first-production-index
+                      first-production))
+                    (first-dot-look-ahead-index 0))
+                (while
+                    (<
+                     first-dot-look-ahead-index
+                     first-dot-look-ahead-length)
+                  (let ((first-dot-look-ahead-element
+                         (nth
+                          first-dot-look-ahead-index
+                          first-dot-look-ahead)))
+                    (let ((merged-first-element
+                           (parser-generator--merge-max-terminals
+                            first-production-element
+                            first-dot-look-ahead-element)))
+                      (if merged-look-aheads
+                          (setq
+                           merged-look-aheads
+                           (append
+                            merged-look-aheads
+                            merged-first-element))
+                        (setq
+                         merged-look-aheads
+                         merged-first-element))))
+                  (setq
+                   first-dot-look-ahead-index
+                   (1+ first-dot-look-ahead-index)))
+                (setq
+                 first-production-index
+                 (1+ first-production-index))))
+            (setq
+             merged-look-aheads
+             (parser-generator--distinct
+              merged-look-aheads))
+            (setq
+             look-aheads
+             merged-look-aheads))
+                 
+          
+          )
+         (t (error
+             "Unexpected empty FIRST for production: %S and dot-look-ahead: %S"
+             production
+             dot-look-ahead)))
         (parser-generator--debug
          (message "production: %S" production)
          (message "dot-look-ahead: %S" dot-look-ahead)
