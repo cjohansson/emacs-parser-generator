@@ -967,27 +967,21 @@
 
   (message "Passed tests for (parser-generator--valid-terminal-p)"))
 
-(defun parser-generator-test--merge-max-terminals ()
-  "Test `parser-generator--merge-max-terminals'."
-  (message "Starting tests for (parser-generator--merge-max-terminals)")
+(defun parser-generator-test--merge-max-terminal-sets ()
+  "Test `parser-generator--merge-max-terminal-sets'."
+  (message "Starting tests for (parser-generator--merge-max-terminal-sets)")
 
+  ;; Example 5.13 p. 348
+  (parser-generator-set-e-identifier 'e)
+  (parser-generator-set-look-ahead-number 2)
   (should
    (equal
-    '(a b e)
-    (parser-generator--merge-max-terminals
-     '(a)
-     '(b e)
-     3)))
+    '((a b) (b) (b a))
+    (parser-generator--merge-max-terminal-sets
+     '((a b b) (e))
+     '((b) (b a b)))))
 
-  (should
-   (equal
-    '(a e)
-    (parser-generator--merge-max-terminals
-     '(a e)
-     '(b e)
-     3)))
-
-  (message "Passed tests for (parser-generator--merge-max-terminals)"))
+  (message "Passed tests for (parser-generator--merge-max-terminal-sets)"))
 
 (defun parser-generator-test--get-list-permutations ()
   "Test `parser-generator--get-list-permutations'."
@@ -1061,7 +1055,7 @@
   (parser-generator-test--get-grammar-look-aheads)
   (parser-generator-test--get-grammar-rhs)
   (parser-generator-test--get-list-permutations)
-  (parser-generator-test--merge-max-terminals)
+  (parser-generator-test--merge-max-terminal-sets)
   (parser-generator-test--sort-list)
   (parser-generator-test--valid-context-sensitive-attribute-p)
   (parser-generator-test--valid-context-sensitive-attributes-p)

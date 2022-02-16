@@ -1230,35 +1230,79 @@
          look-ahead)))
     (nreverse look-ahead)))
 
-(defun parser-generator--merge-max-terminals (a b k)
-  "Merge terminals from A and B to a maximum length of K."
-  (let ((merged)
+(defun parser-generator--merge-max-terminal-sets (a b)
+  "Calculate list of all lists of L1 (+) L2 which is a merge of all terminals in lists A combined with all terminals in lists B but with maximum length of the set look-ahead number."
+  (let ((a-length
+         (length a))
+        (a-index 0)
+        (b-length
+         (length b))
+        (merged-lists))
+    (while (< a-index a-length)
+      (let ((a-element (nth a-index a))
+            (b-index 0))
+        (while (< b-index b-length)
+          (let ((b-element (nth b-index b)))
+            (let ((merged-element
+                   (parser-generator--merge-max-terminals
+                    a-element
+                    b-element)))
+              (if merged-lists
+                  (setq
+                   merged-lists
+                   (append
+                    merged-lists
+                    (list merged-element)))
+                (setq
+                 merged-lists
+                 (list merged-element)))))
+          (setq b-index (1+ b-index)))
+        (setq a-index (1+ a-index))))
+    (setq
+     merged-lists
+     (parser-generator--distinct
+      merged-lists))
+    (setq
+     merged-lists
+     (sort
+      merged-lists
+      'parser-generator--sort-list))
+    merged-lists))
+
+;; Lemma 5.1 p. 348
+(defun parser-generator--merge-max-terminals (a b)
+  "Calculate L1 (+) L2 which is a merge of all terminals in A and B but with maximum length of the set look-ahead number."
+  (let ((k (max 1 parser-generator--look-ahead-number))
+        (merged)
         (merge-count 0)
-        (continue t)
         (a-element)
         (a-index 0)
         (a-length (length a))
         (b-element)
         (b-index 0)
         (b-length (length b)))
-    (while (and
-            (< a-index a-length)
-            (< merge-count k)
-            continue)
-      (setq a-element (nth a-index a))
-      (when (parser-generator--valid-e-p a-element)
-        (setq continue nil))
-      (push a-element merged)
-      (setq a-index (1+ a-index)))
-    (while (and
-            (< b-index b-length)
-            (< merge-count k)
-            continue)
-      (setq b-element (nth b-index b))
-      (when (parser-generator--valid-e-p b-element)
-        (setq continue nil))
-      (push b-element merged)
-      (setq b-index (1+ b-index)))
+    (let ((continue t))
+      (while (and
+              (< a-index a-length)
+              (< merge-count k)
+              continue)
+        (setq a-element (nth a-index a))
+        (if (parser-generator--valid-e-p a-element)
+            (setq continue nil)
+          (push a-element merged)
+          (setq a-index (1+ a-index))
+          (setq merge-count (1+ merge-count)))))
+    (let ((continue t))
+      (while (and
+              (< b-index b-length)
+              (< merge-count k)
+              continue)
+        (setq b-element (nth b-index b))
+        (if (parser-generator--valid-e-p b-element)
+            (setq continue nil)
+          (push b-element merged)
+          (setq b-index (1+ b-index))
+          (setq merge-count (1+ merge-count)))))
     (nreverse merged)))
 
 ;; p. 357

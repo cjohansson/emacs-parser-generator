@@ -66,74 +66,21 @@
            look-aheads
            (parser-generator--merge-max-terminals
             first-production
-            nil
-            k)))
+            nil)))
          ((and first-dot-look-ahead
                (not first-production))
           (setq
            look-aheads
            (parser-generator--merge-max-terminals
             nil
-            first-dot-look-ahead
-            k)))
+            first-dot-look-ahead)))
          ((and first-production
                first-dot-look-ahead)
-          ;; Generate a new list of all permutations
-          ;; of first-production
-          ;; and first-dot-look-ahead
-          ;; with maximum length k
-          (let ((first-production-length
-                 (length first-production))
-                (first-production-index 0)
-                (first-dot-look-ahead-length
-                 (length first-dot-look-ahead))
-                (merged-look-aheds))
-            (while
-                (<
-                 first-production-index
-                 first-production-length)
-              (let ((first-production-element
-                     (nth
-                      first-production-index
-                      first-production))
-                    (first-dot-look-ahead-index 0))
-                (while
-                    (<
-                     first-dot-look-ahead-index
-                     first-dot-look-ahead-length)
-                  (let ((first-dot-look-ahead-element
-                         (nth
-                          first-dot-look-ahead-index
-                          first-dot-look-ahead)))
-                    (let ((merged-first-element
-                           (parser-generator--merge-max-terminals
-                            first-production-element
-                            first-dot-look-ahead-element)))
-                      (if merged-look-aheads
-                          (setq
-                           merged-look-aheads
-                           (append
-                            merged-look-aheads
-                            merged-first-element))
-                        (setq
-                         merged-look-aheads
-                         merged-first-element))))
-                  (setq
-                   first-dot-look-ahead-index
-                   (1+ first-dot-look-ahead-index)))
-                (setq
-                 first-production-index
-                 (1+ first-production-index))))
-            (setq
-             merged-look-aheads
-             (parser-generator--distinct
-              merged-look-aheads))
-            (setq
-             look-aheads
-             merged-look-aheads))
-                 
-          
-          )
+          (setq
+           look-aheads
+           (parser-generator--merge-max-terminal-sets
+            first-production
+            first-dot-look-ahead))))
          (t (error
              "Unexpected empty FIRST for production: %S and dot-look-ahead: %S"
              production
