@@ -1232,20 +1232,57 @@
 
 (defun parser-generator--merge-max-terminal-sets (a b)
   "Calculate list of all lists of L1 (+) L2 which is a merge of all terminals in lists A combined with all terminals in lists B but with maximum length of the set look-ahead number."
-  (let ((a-length
-         (length a))
+  (let ((a-length (length a))
         (a-index 0)
-        (b-length
-         (length b))
+        (b-length (length b))
         (merged-lists))
-    (while (< a-index a-length)
-      (let ((a-element (nth a-index a))
-            (b-index 0))
+    (cond
+     ((and a b)
+      (while (< a-index a-length)
+        (let ((a-element (nth a-index a))
+              (b-index 0))
+          (while (< b-index b-length)
+            (let ((b-element (nth b-index b)))
+              (let ((merged-element
+                     (parser-generator--merge-max-terminals
+                      a-element
+                      b-element)))
+                (if merged-lists
+                    (setq
+                     merged-lists
+                     (append
+                      merged-lists
+                      (list merged-element)))
+                  (setq
+                   merged-lists
+                   (list merged-element)))))
+            (setq b-index (1+ b-index)))
+          (setq a-index (1+ a-index)))))
+     (a
+      (while (< a-index a-length)
+        (let ((a-element (nth a-index a)))
+          (let ((merged-element
+                 (parser-generator--merge-max-terminals
+                  a-element
+                  nil)))
+            (if merged-lists
+                (setq
+                 merged-lists
+                 (append
+                  merged-lists
+                  (list merged-element)))
+              (setq
+               merged-lists
+               (list merged-element)))))
+        (setq a-index (1+ a-index))))
+
+     (b
+      (let ((b-index 0))
         (while (< b-index b-length)
           (let ((b-element (nth b-index b)))
             (let ((merged-element
                    (parser-generator--merge-max-terminals
-                    a-element
+                    nil
                     b-element)))
               (if merged-lists
                   (setq
@@ -1256,8 +1293,7 @@
                 (setq
                  merged-lists
                  (list merged-element)))))
-          (setq b-index (1+ b-index)))
-        (setq a-index (1+ a-index))))
+          (setq b-index (1+ b-index))))))
     (setq
      merged-lists
      (parser-generator--distinct
