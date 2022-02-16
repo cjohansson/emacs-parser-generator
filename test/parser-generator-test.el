@@ -981,7 +981,16 @@
      '((a b b) (e))
      '((b) (b a b)))))
 
-  ;; TODO Example 5.14 p. 350 here
+  ;; Example 5.14 p. 350
+    (parser-generator-set-e-identifier 'e)
+    (parser-generator-set-look-ahead-number 2)
+    (should
+     (equal
+      '((a a) (a b) (b b))
+      (parser-generator--merge-max-terminal-sets
+       '((a b) (a e a) (b b) (b e b))
+       nil)))
+
 
   (message "Passed tests for (parser-generator--merge-max-terminal-sets)"))
 
