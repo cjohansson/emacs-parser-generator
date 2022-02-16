@@ -981,6 +981,8 @@
      '((a b b) (e))
      '((b) (b a b)))))
 
+  ;; TODO Example 5.14 p. 350 here
+
   (message "Passed tests for (parser-generator--merge-max-terminal-sets)"))
 
 (defun parser-generator-test--get-list-permutations ()

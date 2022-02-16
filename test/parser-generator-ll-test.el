@@ -23,6 +23,8 @@
   "Test `parser-generator-ll--generate-parsing-table'."
   (message "Started tests for (parser-generator-ll--generate-parsing-table)")
 
+  ;; TODO Example 5.14 p. 350 here
+
   ;; Example 5.15 p. 351
   (parser-generator-set-e-identifier 'e)
   (parser-generator-set-look-ahead-number 2)
