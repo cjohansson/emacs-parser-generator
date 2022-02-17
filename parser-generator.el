@@ -1243,10 +1243,11 @@
               (b-index 0))
           (while (< b-index b-length)
             (let ((b-element (nth b-index b)))
-              (let ((merged-element
-                     (parser-generator--merge-max-terminals
-                      a-element
-                      b-element)))
+              (when-let
+                  ((merged-element
+                    (parser-generator--merge-max-terminals
+                     a-element
+                     b-element)))
                 (if merged-lists
                     (setq
                      merged-lists
@@ -1261,10 +1262,11 @@
      (a
       (while (< a-index a-length)
         (let ((a-element (nth a-index a)))
-          (let ((merged-element
-                 (parser-generator--merge-max-terminals
-                  a-element
-                  nil)))
+          (when-let
+              ((merged-element
+                (parser-generator--merge-max-terminals
+                 a-element
+                 nil)))
             (if merged-lists
                 (setq
                  merged-lists
@@ -1280,10 +1282,11 @@
       (let ((b-index 0))
         (while (< b-index b-length)
           (let ((b-element (nth b-index b)))
-            (let ((merged-element
-                   (parser-generator--merge-max-terminals
-                    nil
-                    b-element)))
+            (when-let
+                ((merged-element
+                  (parser-generator--merge-max-terminals
+                   nil
+                   b-element)))
               (if merged-lists
                   (setq
                    merged-lists
@@ -1307,7 +1310,7 @@
 
 ;; Lemma 5.1 p. 348
 (defun parser-generator--merge-max-terminals (a b)
-  "Calculate L1 (+) L2 which is a merge of all terminals in A and B but with maximum length of the set look-ahead number."
+  "Calculate L1 (+) L2 which is a merge of all terminals in A and B but with exactly length of the set look-ahead number."
   (let ((k (max 1 parser-generator--look-ahead-number))
         (merged)
         (merge-count 0)
@@ -1333,7 +1336,9 @@
         (push b-element merged)
         (setq merge-count (1+ merge-count)))
       (setq b-index (1+ b-index)))
-    (nreverse merged)))
+    (if (= merge-count k)
+        (nreverse merged)
+      nil)))
 
 ;; p. 357
 (defun parser-generator--f-set (input-tape state stack)

@@ -48,50 +48,99 @@
 
   (let ((tables)
         (distinct-table-p (make-hash-table :test 'equal))
-        ;; (1) Construct T_0, the LL(k) table associated with S {e}
-        (stack `((,(parser-generator--get-grammar-start) nil)))
+        (stack)
         (stack-item)
         (k (max 1 parser-generator--look-ahead-number)))
+
+    ;; (1) Construct T_0, the LL(k) table associated with S {e}
+    (let* ((start (parser-generator--get-grammar-start))
+           (start-rhss (parser-generator--get-grammar-rhs start)))
+      (dolist (start-rhs start-rhss)
+        (let* ((production (list (list start) start-rhs))
+               (production-number
+                (parser-generator--get-grammar-production-number
+                 production)))
+          (push
+           (list (list start) start-rhs production-number nil)
+           stack))))
+    (setq stack (nreverse stack))
+    (parser-generator--debug
+     (message "stack: %S" stack))
+
     (while stack
       (setq stack-item (pop stack))
-      (let* ((production (nth 0 stack-item))
-             (dot-look-ahead (nth 1 stack-item))
-             (first-production (parser-generator--first production nil t t))
-             (first-dot-look-ahead (parser-generator--first dot-look-ahead nil t t))
+      (let* ((production-lhs
+              (nth 0 stack-item))
+             (production-rhs
+              (nth 1 stack-item))
+             (production-number (nth 2 stack-item))
+             (dot-look-ahead (nth 3 stack-item))
+             (first-rhs
+              (parser-generator--first production-rhs nil t t))
+             (first-dot-look-ahead
+              (parser-generator--first dot-look-ahead nil t t))
              (look-aheads))
         (cond
-         ((and first-production
+         ((and first-rhs
                (not first-dot-look-ahead))
           (setq
            look-aheads
            (parser-generator--merge-max-terminal-sets
-            first-production
+            first-rhs
             nil)))
          ((and first-dot-look-ahead
-               (not first-production))
+               (not first-rhs))
           (setq
            look-aheads
            (parser-generator--merge-max-terminal-sets
             nil
             first-dot-look-ahead)))
-         ((and first-production
+         ((and first-rhs
                first-dot-look-ahead)
           (setq
            look-aheads
            (parser-generator--merge-max-terminal-sets
-            first-production
+            first-rhs
             first-dot-look-ahead)))
          (t (error
              "Unexpected empty FIRST for production: %S and dot-look-ahead: %S"
              production
              dot-look-ahead)))
+
+        (when look-aheads
+          (let ((table))
+            (dolist (look-ahead look-aheads)
+              (push
+               (list
+                production-lhs
+                production-rhs
+                production-number
+                look-ahead
+                dot-look-ahead)
+               table))
+            (let ((table-hash-key
+                   (format "%S" table)))
+              (unless
+                  (gethash
+                   table-hash-key
+                   distinct-table-p)
+                (puthash
+                 table-hash-key
+                 table
+                 distinct-table-p)
+                (push
+                 table
+                 tables)))))
+
         (parser-generator--debug
-         (message "production: %S" production)
+         (message "\nproduction-lhs: %S" production-lhs)
+         (message "production-rhs: %S" production-rhs)
+         (message "production-number: %S" production-number)
          (message "dot-look-ahead: %S" dot-look-ahead)
-         (message "first-production: %S" first-production)
+         (message "first-rhs: %S" first-rhs)
          (message "first-dot-look-ahead: %S" first-dot-look-ahead)
          (message "look-aheads: %S" look-aheads))))
-    tables))
+    (nreverse tables)))
 
 
 ;; TODO
