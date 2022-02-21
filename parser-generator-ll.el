@@ -58,15 +58,11 @@
     (let* ((start (parser-generator--get-grammar-start))
            (start-rhss (parser-generator--get-grammar-rhs start)))
       (dolist (start-rhs start-rhss)
-        (let* ((production (list (list start) start-rhs))
-               (production-number
-                (parser-generator--get-grammar-production-number
-                 production)))
+        (let* ((production (list (list start) start-rhs)))
           (push
            (list
             (list start)
             start-rhs
-            production-number
             nil)
            stack))))
     (setq stack (nreverse stack))
@@ -79,42 +75,40 @@
               (nth 0 stack-item))
              (production-rhs
               (nth 1 stack-item))
-             (production-number
+             (parent-follow
               (nth 2 stack-item))
-             (dot-look-ahead
-              (nth 3 stack-item))
              (first-rhs
               (parser-generator--first production-rhs nil t t))
-             (first-dot-look-ahead
-              (parser-generator--first dot-look-ahead nil t t))
+             (first-parent-follow
+              (parser-generator--first parent-follow nil t t))
              (look-aheads))
 
         (cond
          ((and first-rhs
-               (not first-dot-look-ahead))
+               (not first-parent-follow))
           (setq
            look-aheads
            (parser-generator--merge-max-terminal-sets
             first-rhs
             nil)))
-         ((and first-dot-look-ahead
+         ((and first-parent-follow
                (not first-rhs))
           (setq
            look-aheads
            (parser-generator--merge-max-terminal-sets
             nil
-            first-dot-look-ahead)))
+            first-parent-follow)))
          ((and first-rhs
-               first-dot-look-ahead)
+               first-parent-follow)
           (setq
            look-aheads
            (parser-generator--merge-max-terminal-sets
             first-rhs
-            first-dot-look-ahead)))
+            first-parent-follow)))
          (t (error
-             "Unexpected empty FIRST for production: %S and dot-look-ahead: %S"
+             "Unexpected empty FIRST for production: %S and parent-follow: %S"
              production
-             dot-look-ahead)))
+             parent-follow)))
 
         ;; For each non-terminal in the production right-hand side
         ;; push a new item to stack with a local-follow
@@ -126,7 +120,7 @@
               (let* ((follow-set
                       (nthcdr (1+ sub-symbol-index) production-rhs))
                      (merged-follow
-                      (append follow-set dot-look-ahead))
+                      (append follow-set parent-follow))
                      (local-follow-set
                       (parser-generator--first merged-follow nil t t))
                      (sub-symbol-rhss
@@ -141,14 +135,10 @@
                   (dolist (sub-symbol-rhs sub-symbol-rhss)
                     (let* ((sub-symbol-production
                             (list (list sub-symbol) sub-symbol-rhs))
-                           (sub-symbol-production-number
-                            (parser-generator--get-grammar-production-number
-                             sub-symbol-production))
                            (new-stack-item
                             (list
                              (list sub-symbol)
                              sub-symbol-rhs
-                             sub-symbol-production-number
                              local-follow)))
                       (parser-generator--debug
                        (message "new-stack-item: %S" new-stack-item))
@@ -160,27 +150,26 @@
            (1+ sub-symbol-index)))
 
         ;; Add all distinct combinations of left-hand-side,
-        ;; look-ahead and dot-look-ahead to tables list here
+        ;; look-ahead and parent-follow to tables list here
         (when look-aheads
           (dolist (look-ahead look-aheads)
             (let ((table
                    (list
                     production-lhs
-                    dot-look-ahead
+                    parent-follow
                     look-ahead
-                    production-rhs
-                    production-number))
+                    production-rhs))
                   (item-hash-key
                    (format
                     "%S-%S-%S"
                     production-lhs
-                    dot-look-ahead
+                    parent-follow
                     look-ahead))
                   (table-hash-key
                    (format
                     "%S-%S"
                     production-lhs
-                    dot-look-ahead)))
+                    parent-follow)))
               (unless (gethash item-hash-key distinct-item-p)
                 (puthash
                  item-hash-key
@@ -214,10 +203,9 @@
         (parser-generator--debug
          (message "\nproduction-lhs: %S" production-lhs)
          (message "production-rhs: %S" production-rhs)
-         (message "production-number: %S" production-number)
-         (message "dot-look-ahead: %S" dot-look-ahead)
+         (message "parent-follow: %S" parent-follow)
          (message "first-rhs: %S" first-rhs)
-         (message "first-dot-look-ahead: %S" first-dot-look-ahead)
+         (message "first-parent-follow: %S" first-parent-follow)
          (message "look-aheads: %S" look-aheads))))
 
     (let ((sorted-tables))
