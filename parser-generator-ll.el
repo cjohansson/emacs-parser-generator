@@ -48,7 +48,8 @@
 
   (let ((tables (make-hash-table :test 'equal))
         (table-count 0)
-        (distinct-table-p (make-hash-table :test 'equal))
+        (distinct-table-number (make-hash-table :test 'equal))
+        (distinct-item-p (make-hash-table :test 'equal))
         (stack)
         (stack-item)
         (k (max 1 parser-generator--look-ahead-number)))
@@ -169,29 +170,46 @@
                     look-ahead
                     production-rhs
                     production-number))
+                  (item-hash-key
+                   (format
+                    "%S-%S-%S"
+                    production-lhs
+                    dot-look-ahead
+                    look-ahead))
                   (table-hash-key
                    (format
                     "%S-%S"
                     production-lhs
                     dot-look-ahead)))
-              (if (gethash table-hash-key distinct-table-p)
-                  (let ((existing-table-key
-                         (gethash table-hash-key distinct-table-p)))
+              (unless (gethash item-hash-key distinct-item-p)
+                (puthash
+                 item-hash-key
+                 t
+                 distinct-item-p)
+                (let ((existing-table-number
+                       (gethash
+                        table-hash-key
+                        distinct-table-number)))
+                  (if existing-table-number
+                      (puthash
+                       existing-table-number
+                       (push
+                        table
+                        (gethash
+                         existing-table-number
+                         tables))
+                       tables)
                     (puthash
-                     existing-table-key
-                     (push
-                      table
-                      (gethash existing-table-key tables))
-                     tables))
-                (puthash
-                 table-hash-key
-                 table-count
-                 distinct-table-p)
-                (puthash
-                 table-count
-                 (list table)
-                 tables)
-                (setq table-count (1+ table-count))))))
+                     table-hash-key
+                     table-count
+                     distinct-table-number)
+                    (puthash
+                     table-count
+                     (list table)
+                     tables)
+                    (setq
+                     table-count
+                     (1+ table-count))))))))
 
         (parser-generator--debug
          (message "\nproduction-lhs: %S" production-lhs)
