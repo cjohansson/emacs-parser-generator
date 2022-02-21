@@ -46,7 +46,8 @@
 (defun parser-generator-ll--generate-tables ()
   "Construction of LL(k)-tables.  Output the set of LL(k) tables needed to construct a parsing table for the grammar G."
 
-  (let ((tables)
+  (let ((tables (make-hash-table :test 'equal))
+        (table-count 0)
         (distinct-table-p (make-hash-table :test 'equal))
         (stack)
         (stack-item)
@@ -61,7 +62,11 @@
                 (parser-generator--get-grammar-production-number
                  production)))
           (push
-           (list (list start) start-rhs production-number nil)
+           (list
+            (list start)
+            start-rhs
+            production-number
+            nil)
            stack))))
     (setq stack (nreverse stack))
     (parser-generator--debug
@@ -110,66 +115,83 @@
              production
              dot-look-ahead)))
 
-        ;; For each non terminal in the right-hand side
-        ;; push to stack with a local look ahead
+        ;; For each non-terminal in the production right-hand side
+        ;; push a new item to stack with a local-follow
+        ;; and a new left-hand-side
         (let ((sub-symbol-index 0))
           (dolist (sub-symbol production-rhs)
             (when (parser-generator--valid-non-terminal-p
                    sub-symbol)
-              (let ((local-look-ahead
-                     (nthcdr (1+ sub-symbol-index) production-rhs))
-                    (sub-symbol-rhss
-                     (parser-generator--get-grammar-rhs
-                      sub-symbol)))
-                (dolist (sub-symbol-rhs sub-symbol-rhss)
-                  (let* ((sub-symbol-production
-                          (list (list sub-symbol) sub-symbol-rhs))
-                         (sub-symbol-production-number
-                          (parser-generator--get-grammar-production-number
-                           sub-symbol-production)))
-                    (push
-                     (list
-                      (list sub-symbol)
-                      sub-symbol-rhs
-                      sub-symbol-production-number
-                      local-look-ahead)
-                     stack))))))
+              (let* ((follow-set
+                      (nthcdr (1+ sub-symbol-index) production-rhs))
+                     (merged-follow
+                      (append follow-set dot-look-ahead))
+                     (local-follow-set
+                      (parser-generator--first merged-follow nil t t))
+                     (sub-symbol-rhss
+                      (parser-generator--get-grammar-rhs
+                       sub-symbol)))
+                (parser-generator--debug
+                 (message "\nfollow-set: %S" follow-set)
+                 (message "merged-follow: %S" follow-set)
+                 (message "local-follow-set: %S" local-follow-set)
+                 (message "sub-symbol-rhss: %S" sub-symbol-rhss))
+                (dolist (local-follow local-follow-set)
+                  (dolist (sub-symbol-rhs sub-symbol-rhss)
+                    (let* ((sub-symbol-production
+                            (list (list sub-symbol) sub-symbol-rhs))
+                           (sub-symbol-production-number
+                            (parser-generator--get-grammar-production-number
+                             sub-symbol-production))
+                           (new-stack-item
+                            (list
+                             (list sub-symbol)
+                             sub-symbol-rhs
+                             sub-symbol-production-number
+                             local-follow)))
+                      (parser-generator--debug
+                       (message "new-stack-item: %S" new-stack-item))
+                      (push
+                       new-stack-item
+                       stack)))))))
           (setq
            sub-symbol-index
            (1+ sub-symbol-index)))
 
-        ;; Add all distinct combinations of LHS, local-look-ahead and look-ahead
-        ;; to tables list here
+        ;; Add all distinct combinations of left-hand-side,
+        ;; look-ahead and dot-look-ahead to tables list here
         (when look-aheads
           (dolist (look-ahead look-aheads)
             (let ((table
                    (list
                     production-lhs
-                    production-rhs
-                    production-number
+                    dot-look-ahead
                     look-ahead
-                    dot-look-ahead))
+                    production-rhs
+                    production-number))
                   (table-hash-key
                    (format
-                    "%S"
-                    (list dot-look-ahead production-lhs look-ahead))))
-              (if
-                  (gethash
-                   table-hash-key
-                   distinct-table-p)
-                  (message
-                   "\nConflicting LL-items: %S vs %S"
-                   table
-                   (gethash
-                    table-hash-key
-                    distinct-table-p))
-                (push
-                 table
-                 tables)
+                    "%S-%S"
+                    production-lhs
+                    dot-look-ahead)))
+              (if (gethash table-hash-key distinct-table-p)
+                  (let ((existing-table-key
+                         (gethash table-hash-key distinct-table-p)))
+                    (puthash
+                     existing-table-key
+                     (push
+                      table
+                      (gethash existing-table-key tables))
+                     tables))
                 (puthash
                  table-hash-key
-                 table
-                 distinct-table-p)))))
+                 table-count
+                 distinct-table-p)
+                (puthash
+                 table-count
+                 (list table)
+                 tables)
+                (setq table-count (1+ table-count))))))
 
         (parser-generator--debug
          (message "\nproduction-lhs: %S" production-lhs)
@@ -180,9 +202,16 @@
          (message "first-dot-look-ahead: %S" first-dot-look-ahead)
          (message "look-aheads: %S" look-aheads))))
 
-    (sort
-     tables
-     'parser-generator--sort-list)))
+    (let ((sorted-tables))
+      (maphash
+       (lambda (k v)
+         (push
+          (list k (sort v 'parser-generator--sort-list))
+          sorted-tables))
+       tables)
+      (sort
+       (reverse sorted-tables)
+       (lambda (a b) (< (car a) (car b)))))))
 
 
 ;; TODO
