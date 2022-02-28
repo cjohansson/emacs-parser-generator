@@ -41,7 +41,15 @@
    )
   (parser-generator-process-grammar)
   (let ((tables (parser-generator-ll--generate-tables)))
-    (message "tables: %S" tables))
+    ;; (message "tables: %S" tables)
+    (should
+     (equal
+      tables
+      '(
+        (0 (((S) nil (a b) (a A a a)) ((S) nil (a a) (a A a a)) ((S) nil (b b) (b A b a))))
+        (1 (((A) (a a) (a a) (e)) ((A) (a a) (b a) (b))))
+        (2 (((A) (b a) (b b) (b)) ((A) (b a) (b a) (e))))
+        ))))
 
   (message "Passed tests for (parser-generator-ll--generate-parsing-table)"))
 

@@ -41,7 +41,6 @@
 ;;; Algorithms
 
 
-;; TODO
 ;; Algorithm 5.2 p. 350
 (defun parser-generator-ll--generate-tables ()
   "Construction of LL(k)-tables.  Output the set of LL(k) tables needed to construct a parsing table for the grammar G."
@@ -113,41 +112,43 @@
         ;; For each non-terminal in the production right-hand side
         ;; push a new item to stack with a local-follow
         ;; and a new left-hand-side
-        (let ((sub-symbol-index 0))
-          (dolist (sub-symbol production-rhs)
-            (when (parser-generator--valid-non-terminal-p
-                   sub-symbol)
-              (let* ((follow-set
-                      (nthcdr (1+ sub-symbol-index) production-rhs))
-                     (merged-follow
-                      (append follow-set parent-follow))
-                     (local-follow-set
-                      (parser-generator--first merged-follow nil t t))
-                     (sub-symbol-rhss
-                      (parser-generator--get-grammar-rhs
-                       sub-symbol)))
-                (parser-generator--debug
-                 (message "\nfollow-set: %S" follow-set)
-                 (message "merged-follow: %S" follow-set)
-                 (message "local-follow-set: %S" local-follow-set)
-                 (message "sub-symbol-rhss: %S" sub-symbol-rhss))
-                (dolist (local-follow local-follow-set)
-                  (dolist (sub-symbol-rhs sub-symbol-rhss)
-                    (let* ((sub-symbol-production
-                            (list (list sub-symbol) sub-symbol-rhs))
-                           (new-stack-item
-                            (list
-                             (list sub-symbol)
-                             sub-symbol-rhs
-                             local-follow)))
-                      (parser-generator--debug
-                       (message "new-stack-item: %S" new-stack-item))
-                      (push
-                       new-stack-item
-                       stack)))))))
-          (setq
-           sub-symbol-index
-           (1+ sub-symbol-index)))
+        (let ((sub-symbol-index 0)
+              (sub-symbol-length (length production-rhs)))
+          (while (< sub-symbol-index sub-symbol-length)
+            (let ((sub-symbol (nth sub-symbol-index production-rhs)))
+              (when (parser-generator--valid-non-terminal-p
+                     sub-symbol)
+                (let* ((follow-set
+                        (nthcdr (1+ sub-symbol-index) production-rhs))
+                       (merged-follow
+                        (append follow-set parent-follow))
+                       (local-follow-set
+                        (parser-generator--first merged-follow nil t t))
+                       (sub-symbol-rhss
+                        (parser-generator--get-grammar-rhs
+                         sub-symbol)))
+                  (parser-generator--debug
+                   (message "\nfollow-set: %S for %S in %S" follow-set (nth sub-symbol-index production-rhs) production-rhs)
+                   (message "merged-follow: %S" follow-set)
+                   (message "local-follow-set: %S" local-follow-set)
+                   (message "sub-symbol-rhss: %S" sub-symbol-rhss))
+                  (dolist (local-follow local-follow-set)
+                    (dolist (sub-symbol-rhs sub-symbol-rhss)
+                      (let* ((sub-symbol-production
+                              (list (list sub-symbol) sub-symbol-rhs))
+                             (new-stack-item
+                              (list
+                               (list sub-symbol)
+                               sub-symbol-rhs
+                               local-follow)))
+                        (parser-generator--debug
+                         (message "new-stack-item: %S" new-stack-item))
+                        (push
+                         new-stack-item
+                         stack)))))))
+            (setq
+             sub-symbol-index
+             (1+ sub-symbol-index))))
 
         ;; Add all distinct combinations of left-hand-side,
         ;; look-ahead and parent-follow to tables list here
