@@ -223,9 +223,9 @@
 
 ;; TODO
 ;; Algorithm 5.3 p. 351
-(defun parser-generator-ll--generate-parsing-table ()
-  "A parsing table for an LL(k) grammar G.  Output M, a valid parsing table for G."
-  )
+(defun parser-generator-ll--generate-parsing-table (tables)
+  "Generate a parsing table for an LL(k) grammar G and TABLES.  Output M, a valid parsing table for G."
+  nil)
 
 
 ;; TODO

@@ -16,15 +16,7 @@
   "Test `parser-generator-ll--generate-tables'."
   (message "Started tests for (parser-generator-ll--generate-tables)")
 
-
-  (message "Passed tests for (parser-generator-ll--generate-tables)"))
-
-(defun parser-generator-ll-test--generate-parsing-table ()
-  "Test `parser-generator-ll--generate-parsing-table'."
-  (message "Started tests for (parser-generator-ll--generate-parsing-table)")
-
-  ;; TODO Example 5.14 p. 350 here
-
+  ;; Example 5.14 p. 350
   ;; Example 5.15 p. 351
   (parser-generator-set-e-identifier 'e)
   (parser-generator-set-look-ahead-number 2)
@@ -49,7 +41,29 @@
         (0 (((S) nil (a b) (a A a a)) ((S) nil (a a) (a A a a)) ((S) nil (b b) (b A b a))))
         (1 (((A) (a a) (a a) (e)) ((A) (a a) (b a) (b))))
         (2 (((A) (b a) (b b) (b)) ((A) (b a) (b a) (e))))
-        ))))
+        )))
+    tables
+    )
+
+  (message "Passed tests for (parser-generator-ll--generate-tables)"))
+
+(defun parser-generator-ll-test--generate-parsing-table ()
+  "Test `parser-generator-ll--generate-parsing-table'."
+  (message "Started tests for (parser-generator-ll--generate-parsing-table)")
+
+  (let* ((tables
+         '(
+           (0 (((S) nil (a b) (a A a a)) ((S) nil (a a) (a A a a)) ((S) nil (b b) (b A b a))))
+           (1 (((A) (a a) (a a) (e)) ((A) (a a) (b a) (b))))
+           (2 (((A) (b a) (b b) (b)) ((A) (b a) (b a) (e))))))
+         (parser-tables
+          (parser-generator-ll--generate-parsing-table
+           tables)))
+    (message "parser-tables: %S" parser-tables)
+
+    ;; TODO Add test here
+
+    )
 
   (message "Passed tests for (parser-generator-ll--generate-parsing-table)"))
 
