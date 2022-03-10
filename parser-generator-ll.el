@@ -46,8 +46,6 @@
   "Construction of LL(k)-tables.  Output the set of LL(k) tables needed to construct a parsing table for the grammar G."
 
   (let ((tables (make-hash-table :test 'equal))
-        (table-count 0)
-        (distinct-table-number (make-hash-table :test 'equal))
         (distinct-item-p (make-hash-table :test 'equal))
         (stack)
         (stack-item)
@@ -128,10 +126,20 @@
                         (parser-generator--get-grammar-rhs
                          sub-symbol)))
                   (parser-generator--debug
-                   (message "\nfollow-set: %S for %S in %S" follow-set (nth sub-symbol-index production-rhs) production-rhs)
-                   (message "merged-follow: %S" follow-set)
-                   (message "local-follow-set: %S" local-follow-set)
-                   (message "sub-symbol-rhss: %S" sub-symbol-rhss))
+                   (message
+                    "\nfollow-set: %S for %S in %S"
+                    follow-set
+                    (nth sub-symbol-index production-rhs)
+                    production-rhs)
+                   (message
+                    "merged-follow: %S"
+                    follow-set)
+                   (message
+                    "local-follow-set: %S"
+                    local-follow-set)
+                   (message
+                    "sub-symbol-rhss: %S"
+                    sub-symbol-rhss))
                   (dolist (local-follow local-follow-set)
                     (dolist (sub-symbol-rhs sub-symbol-rhss)
                       (let* ((sub-symbol-production
@@ -156,8 +164,6 @@
           (dolist (look-ahead look-aheads)
             (let ((table
                    (list
-                    production-lhs
-                    parent-follow
                     look-ahead
                     production-rhs))
                   (item-hash-key
@@ -167,39 +173,32 @@
                     parent-follow
                     look-ahead))
                   (table-hash-key
-                   (format
-                    "%S-%S"
+                   (list
                     production-lhs
                     parent-follow)))
+
+              ;; Only add distinct items
               (unless (gethash item-hash-key distinct-item-p)
                 (puthash
                  item-hash-key
                  t
                  distinct-item-p)
-                (let ((existing-table-number
-                       (gethash
-                        table-hash-key
-                        distinct-table-number)))
-                  (if existing-table-number
-                      (puthash
-                       existing-table-number
-                       (push
-                        table
-                        (gethash
-                         existing-table-number
-                         tables))
-                       tables)
+                (if (gethash
+                     table-hash-key
+                     tables)
                     (puthash
                      table-hash-key
-                     table-count
-                     distinct-table-number)
-                    (puthash
-                     table-count
-                     (list table)
+                     (push
+                      table
+                      (gethash
+                       table-hash-key
+                       tables))
                      tables)
-                    (setq
-                     table-count
-                     (1+ table-count))))))))
+                  (puthash
+                   table-hash-key
+                   (list table)
+                   tables)
+                  )))))
 
         (parser-generator--debug
          (message "\nproduction-lhs: %S" production-lhs)
@@ -209,16 +208,15 @@
          (message "first-parent-follow: %S" first-parent-follow)
          (message "look-aheads: %S" look-aheads))))
 
+    ;; TODO Add deterministic sorting here
     (let ((sorted-tables))
       (maphash
        (lambda (k v)
          (push
-          (list k (sort v 'parser-generator--sort-list))
+          (list k v)
           sorted-tables))
        tables)
-      (sort
-       (reverse sorted-tables)
-       (lambda (a b) (< (car a) (car b)))))))
+      sorted-tables)))
 
 
 ;; TODO
