@@ -51,6 +51,9 @@
   "Test `parser-generator-ll--generate-parsing-table'."
   (message "Started tests for (parser-generator-ll--generate-parsing-table)")
 
+  (parser-generator-set-eof-identifier '$)
+  (parser-generator-set-e-identifier 'e)
+  (parser-generator-set-look-ahead-number 2)
   (let* ((tables
          '(
            (0 (((S) nil (a b) (a A a a)) ((S) nil (a a) (a A a a)) ((S) nil (b b) (b A b a))))
@@ -62,6 +65,43 @@
     (message "parser-tables: %S" parser-tables)
 
     ;; TODO Add test here
+    (should
+     (equal
+      '(
+        (T0 (
+             ((a a) reduce (a T1 a a) 1)
+             ((a b) reduce (a T1 a a) 1)
+             ((b b) reduce (b T2 b a) 2)
+             )
+            )
+        (T1 (
+             ((a a) reduce (e) 4)
+             ((b a) reduce (b) 3)
+             )
+            )
+        (T2 (
+             ((b a) reduce (e) 4)
+             ((b b) reduce (b) 3)
+             )
+            )
+        (a (
+            ((a a) pop)
+            ((a b) pop)
+            ((a $) pop)
+            )
+           )
+        (b (
+            ((b a) pop)
+            ((b b) pop)
+            ((b $) pop)
+            )
+           )
+        ($ (
+            (($ $) accept)
+            )
+           )
+        )
+      ))
 
     )
 

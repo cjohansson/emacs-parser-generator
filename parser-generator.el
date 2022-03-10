@@ -662,6 +662,14 @@
     (error "E-identifier must be a symbol or string!"))
   (setq parser-generator--e-identifier e-identifier))
 
+(defun parser-generator-set-eof-identifier (eof-identifier)
+  "Set EOF-IDENTIFIER."
+  (unless (or
+           (stringp eof-identifier)
+           (symbolp eof-identifier))
+    (error "EOF-identifier must be a symbol or string!"))
+  (setq parser-generator--eof-identifier eof-identifier))
+
 (defun parser-generator-set-look-ahead-number (k)
   "Set look-ahead number K."
   (unless (parser-generator--valid-look-ahead-number-p k)

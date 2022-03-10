@@ -225,7 +225,22 @@
 ;; Algorithm 5.3 p. 351
 (defun parser-generator-ll--generate-parsing-table (tables)
   "Generate a parsing table for an LL(k) grammar G and TABLES.  Output M, a valid parsing table for G."
-  nil)
+  (let ((parsing-table))
+
+    ;; (2) M(a, av) = pop for all v in E where |E| = k-1
+
+    ;; (3) M($, e) = accept
+    (push
+     `(,parser-generator--eof-identifier
+       (
+        ,(parser-generator--generate-list-of-symbol
+          parser-generator--look-ahead-number
+          parser-generator--eof-identifier)
+        accept)
+       )
+     parsing-table)
+
+    parsing-table))
 
 
 ;; TODO
