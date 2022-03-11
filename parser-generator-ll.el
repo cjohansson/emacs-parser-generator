@@ -44,7 +44,6 @@
 ;; Algorithm 5.2 p. 350
 (defun parser-generator-ll--generate-tables ()
   "Construction of LL(k)-tables.  Output the set of LL(k) tables needed to construct a parsing table for the grammar G."
-
   (let ((tables (make-hash-table :test 'equal))
         (distinct-item-p (make-hash-table :test 'equal))
         (stack)
@@ -78,7 +77,9 @@
               (parser-generator--first production-rhs nil t t))
              (first-parent-follow
               (parser-generator--first parent-follow nil t t))
-             (look-aheads))
+             (look-aheads)
+             (sets)
+             (distinct-set-item-p (make-hash-table :test 'equal)))
 
         (cond
          ((and first-rhs
@@ -149,6 +150,16 @@
                                (list sub-symbol)
                                sub-symbol-rhs
                                local-follow)))
+                        (unless (gethash
+                                 local-follow
+                                 distinct-set-item-p)
+                          (puthash
+                           local-follow
+                           t
+                           distinct-set-item-p)
+                          (push
+                           local-follow
+                           sets))
                         (parser-generator--debug
                          (message "new-stack-item: %S" new-stack-item))
                         (push
@@ -165,7 +176,8 @@
             (let ((table
                    (list
                     look-ahead
-                    production-rhs))
+                    production-rhs
+                    sets))
                   (item-hash-key
                    (format
                     "%S-%S-%S"
@@ -208,12 +220,11 @@
          (message "first-parent-follow: %S" first-parent-follow)
          (message "look-aheads: %S" look-aheads))))
 
-    ;; TODO Add deterministic sorting here
     (let ((sorted-tables))
       (maphash
        (lambda (k v)
          (push
-          (list k v)
+          (list k (sort v 'parser-generator--sort-list))
           sorted-tables))
        tables)
       sorted-tables)))
@@ -224,19 +235,20 @@
 (defun parser-generator-ll--generate-parsing-table (tables)
   "Generate a parsing table for an LL(k) grammar G and TABLES.  Output M, a valid parsing table for G."
   (let ((parsing-table))
+    (dolist (table tables)
+      (let* ((key (nth 0 table))
+             (value (nth 1 table))
+             (stack-symbol (car (nth 0 key)))
+             (local-follow-set (nth 1 key)))
+        (dolist (look-ahead-row value)
+          (let ((look-ahead (nth 0 look-ahead-row))
+                (right-hand-side (nth 1 look-ahead-row)))
+            (dolist (right-hand-symbol right-hand-side))
+            ))))
 
-    ;; (2) M(a, av) = pop for all v in E where |E| = k-1
-
-    ;; (3) M($, e) = accept
-    (push
-     `(,parser-generator--eof-identifier
-       (
-        ,(parser-generator--generate-list-of-symbol
-          parser-generator--look-ahead-number
-          parser-generator--eof-identifier)
-        accept)
-       )
-     parsing-table)
+    ;; 
+    ;; (2) M(a, av) = pop for all v in E where |E| = k-1 -> move to parser logic
+    ;; (3) M($, e) = accept -> move to parser logic
 
     parsing-table))
 

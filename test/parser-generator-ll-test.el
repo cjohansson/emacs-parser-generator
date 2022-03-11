@@ -33,34 +33,35 @@
    )
   (parser-generator-process-grammar)
   (let ((tables (parser-generator-ll--generate-tables)))
-    (message "tables: %S" tables)
+    ;; (message "tables: %S" tables)
     (should
      (equal
       tables
       '(
         (
-         ((S) nil)
+         ((A) (b a))
          (
-          ((a b) (a A a a))
-          ((a a) (a A a a))
-          ((b b) (b A b a))
+          ((b b) (b) nil)
+          ((b a) (e) nil)
           )
          )
         (
          ((A) (a a))
          (
-          ((a a) (e))
-          ((b a) (b))
+          ((a a) (e) nil)
+          ((b a) (b) nil)
           )
          )
         (
-         ((A) (b a))
+         ((S) nil)
          (
-          ((b b) (b))
-          ((b a) (e))
+          ((a b) (a A a a) ((a a)))
+          ((a a) (a A a a) ((a a)))
+          ((b b) (b A b a) ((b a)))
           )
          )
-        )))
+        )
+      ))
     tables)
 
   (message "Passed tests for (parser-generator-ll--generate-tables)"))
@@ -73,10 +74,9 @@
   (parser-generator-set-e-identifier 'e)
   (parser-generator-set-look-ahead-number 2)
   (let* ((tables
-         '(
-           (0 (((S) nil (a b) (a A a a)) ((S) nil (a a) (a A a a)) ((S) nil (b b) (b A b a))))
-           (1 (((A) (a a) (a a) (e)) ((A) (a a) (b a) (b))))
-           (2 (((A) (b a) (b b) (b)) ((A) (b a) (b a) (e))))))
+          '((((A) (b a)) (((b b) (b) nil) ((b a) (e) nil)))
+            (((A) (a a)) (((a a) (e) nil) ((b a) (b) nil)))
+            (((S) nil) (((a b) (a A a a) ((a a))) ((a a) (a A a a) ((a a))) ((b b) (b A b a) ((b a)))))))
          (parser-tables
           (parser-generator-ll--generate-parsing-table
            tables)))
@@ -86,42 +86,30 @@
     (should
      (equal
       '(
-        (T0 (
-             ((a a) reduce (a T1 a a) 1)
-             ((a b) reduce (a T1 a a) 1)
-             ((b b) reduce (b T2 b a) 2)
-             )
-            )
-        (T1 (
-             ((a a) reduce (e) 4)
-             ((b a) reduce (b) 3)
-             )
-            )
-        (T2 (
-             ((b a) reduce (e) 4)
-             ((b b) reduce (b) 3)
-             )
-            )
-        (a (
-            ((a a) pop)
-            ((a b) pop)
-            ((a $) pop)
-            )
-           )
-        (b (
-            ((b a) pop)
-            ((b b) pop)
-            ((b $) pop)
-            )
-           )
-        ($ (
-            (($ $) accept)
-            )
-           )
+        (
+         ((S) nil)
+         (
+          ((a a) reduce (a T1 a a) 1)
+          ((a b) reduce (a T1 a a) 1)
+          ((b b) reduce (b T2 b a) 2)
+          )
+         )
+        (
+         ((A) (a a))
+         (
+          ((a a) reduce (e) 4)
+          ((b a) reduce (b) 3)
+          )
+         )
+        (
+         ((A) (a b))
+         (
+          ((b a) reduce (e) 4)
+          ((b b) reduce (b) 3)
+          )
+         )
         )
-      ))
-
-    )
+      parser-tables)))
 
   (message "Passed tests for (parser-generator-ll--generate-parsing-table)"))
 
