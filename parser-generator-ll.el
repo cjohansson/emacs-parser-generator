@@ -232,13 +232,28 @@
     (dolist (table tables)
       (let* ((key (nth 0 table))
              (value (nth 1 table))
-             (stack-symbol (car (nth 0 key)))
-             (local-follow-set (nth 1 key)))
+             (key-stack-symbol (car (nth 0 key)))
+             (key-parent-follow-set (nth 1 key))
+             (parse-table))
         (dolist (look-ahead-row value)
-          (let ((look-ahead (nth 0 look-ahead-row))
-                (right-hand-side (nth 1 look-ahead-row)))
-            (dolist (right-hand-symbol right-hand-side))
-            ))))
+          (let* ((look-ahead (nth 0 look-ahead-row))
+                 (right-hand-side (nth 1 look-ahead-row))
+                 (local-follow-sets (nth 2 look-ahead-row))
+                 (non-terminal-index 0)
+                 (sub-symbol-index 0)
+                 (sub-symbol-length (length right-hand-side)))
+          (while (< sub-symbol-index sub-symbol-length)
+            (let ((sub-symbol (nth sub-symbol-index right-hand-side)))
+              (when (parser-generator--valid-non-terminal-p
+                     sub-symbol)
+                (let ((local-follow (nth non-terminal-index local-follow-sets)))
+                  )
+                (setq
+                 non-terminal-index
+                 (1+ non-terminal-index))))
+            (setq
+             sub-symbol-index
+             (1+ sub-symbol-index)))))))
 
     ;; 
     ;; (2) M(a, av) = pop for all v in E where |E| = k-1 -> move to parser logic

@@ -74,9 +74,31 @@
   (parser-generator-set-e-identifier 'e)
   (parser-generator-set-look-ahead-number 2)
   (let* ((tables
-          '((((A) (b a)) (((b b) (b) nil) ((b a) (e) nil)))
-            (((A) (a a)) (((a a) (e) nil) ((b a) (b) nil)))
-            (((S) nil) (((a b) (a A a a) ((a a))) ((a a) (a A a a) ((a a))) ((b b) (b A b a) ((b a)))))))
+          '(
+            (
+             ((A) (b a))
+             (
+              ((b b) (b) nil)
+              ((b a) (e) nil)
+              )
+             )
+            (
+             ((A) (a a))
+             (
+              ((a a) (e) nil)
+              ((b a) (b) nil)
+              )
+             )
+            (
+             ((S) nil)
+             (
+              ((a b) (a A a a) ((a a)))
+              ((a a) (a A a a) ((a a)))
+              ((b b) (b A b a) ((b a)))
+              )
+             )
+            )
+          )
          (parser-tables
           (parser-generator-ll--generate-parsing-table
            tables)))
@@ -87,22 +109,22 @@
      (equal
       '(
         (
-         ((S) nil)
+         ((S) nil) ;; T0
          (
-          ((a a) reduce (a T1 a a) 1)
-          ((a b) reduce (a T1 a a) 1)
-          ((b b) reduce (b T2 b a) 2)
+          ((a a) reduce (a ((A) (a a)) a a) 1)
+          ((a b) reduce (a ((A) (a a)) a a) 1)
+          ((b b) reduce (b ((A) (b a)) b a) 2)
           )
          )
         (
-         ((A) (a a))
+         ((A) (a a)) ;; T1
          (
           ((a a) reduce (e) 4)
           ((b a) reduce (b) 3)
           )
          )
         (
-         ((A) (a b))
+         ((A) (a b)) ;; T2
          (
           ((b a) reduce (e) 4)
           ((b b) reduce (b) 3)
