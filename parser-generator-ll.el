@@ -78,8 +78,7 @@
              (first-parent-follow
               (parser-generator--first parent-follow nil t t))
              (look-aheads)
-             (sets)
-             (distinct-set-item-p (make-hash-table :test 'equal)))
+             (sets))
 
         (cond
          ((and first-rhs
@@ -142,6 +141,9 @@
                     "sub-symbol-rhss: %S"
                     sub-symbol-rhss))
                   (dolist (local-follow local-follow-set)
+                    (push
+                     local-follow
+                     sets)
                     (dolist (sub-symbol-rhs sub-symbol-rhss)
                       (let* ((sub-symbol-production
                               (list (list sub-symbol) sub-symbol-rhs))
@@ -150,18 +152,10 @@
                                (list sub-symbol)
                                sub-symbol-rhs
                                local-follow)))
-                        (unless (gethash
-                                 local-follow
-                                 distinct-set-item-p)
-                          (puthash
-                           local-follow
-                           t
-                           distinct-set-item-p)
-                          (push
-                           local-follow
-                           sets))
                         (parser-generator--debug
-                         (message "new-stack-item: %S" new-stack-item))
+                         (message
+                          "new-stack-item: %S"
+                          new-stack-item))
                         (push
                          new-stack-item
                          stack)))))))
