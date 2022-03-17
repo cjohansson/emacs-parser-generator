@@ -102,7 +102,7 @@
          (parser-tables
           (parser-generator-ll--generate-parsing-table
            tables)))
-    (message "parser-tables: %S" parser-tables)
+    ;; (message "parser-tables: %S" parser-tables)
 
     ;; TODO Make this pass
     (should
@@ -111,23 +111,23 @@
         (
          ((S) nil) ;; T0
          (
-          ((a a) reduce (a ((A) (a a)) a a) 1)
-          ((a b) reduce (a ((A) (a a)) a a) 1)
-          ((b b) reduce (b ((A) (b a)) b a) 2)
+          ((b b) reduce (b ((A) (b a)) b a) 1)
+          ((a a) reduce (a ((A) (a a)) a a) 0)
+          ((a b) reduce (a ((A) (a a)) a a) 0)
           )
          )
         (
          ((A) (a a)) ;; T1
          (
-          ((a a) reduce (e) 4)
-          ((b a) reduce (b) 3)
+          ((b a) reduce (b) 2)
+          ((a a) reduce (e) 3)
           )
          )
         (
-         ((A) (a b)) ;; T2
+         ((A) (b a)) ;; T2
          (
-          ((b a) reduce (e) 4)
-          ((b b) reduce (b) 3)
+          ((b a) reduce (e) 3)
+          ((b b) reduce (b) 2)
           )
          )
         )

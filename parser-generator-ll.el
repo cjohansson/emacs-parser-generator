@@ -234,6 +234,7 @@
              (value (nth 1 table))
              (key-stack-symbol (car (nth 0 key)))
              (key-parent-follow-set (nth 1 key))
+             (left-hand-side (nth 0 key))
              (parse-table))
         (dolist (look-ahead-row value)
           (let* ((look-ahead (nth 0 look-ahead-row))
@@ -241,21 +242,48 @@
                  (local-follow-sets (nth 2 look-ahead-row))
                  (non-terminal-index 0)
                  (sub-symbol-index 0)
-                 (sub-symbol-length (length right-hand-side)))
-          (while (< sub-symbol-index sub-symbol-length)
-            (let ((sub-symbol (nth sub-symbol-index right-hand-side)))
-              (when (parser-generator--valid-non-terminal-p
+                 (sub-symbol-length (length right-hand-side))
+                 (production (list left-hand-side right-hand-side))
+                 (production-number
+                  (parser-generator--get-grammar-production-number
+                   production))
+                 (modified-right-hand-side))
+            (while (< sub-symbol-index sub-symbol-length)
+              (let ((sub-symbol (nth sub-symbol-index right-hand-side)))
+                (if (parser-generator--valid-non-terminal-p
                      sub-symbol)
-                (let ((local-follow (nth non-terminal-index local-follow-sets)))
-                  )
-                (setq
-                 non-terminal-index
-                 (1+ non-terminal-index))))
+                    (let ((local-follow (nth non-terminal-index local-follow-sets)))
+                      (push
+                       (list
+                        (list sub-symbol)
+                        local-follow)
+                       modified-right-hand-side)
+                      (setq
+                       non-terminal-index
+                       (1+ non-terminal-index)))
+                  (push
+                   sub-symbol
+                   modified-right-hand-side)))
+              (setq
+               sub-symbol-index
+               (1+ sub-symbol-index)))
             (setq
-             sub-symbol-index
-             (1+ sub-symbol-index)))))))
+             modified-right-hand-side
+             (reverse modified-right-hand-side))
 
-    ;; 
+            (push
+             (list
+              look-ahead
+              'reduce
+              modified-right-hand-side
+              production-number)
+             parse-table)))
+        (push
+         (list
+          key
+          parse-table)
+         parsing-table)))
+
     ;; (2) M(a, av) = pop for all v in E where |E| = k-1 -> move to parser logic
     ;; (3) M($, e) = accept -> move to parser logic
 
