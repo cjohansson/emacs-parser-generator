@@ -104,7 +104,6 @@
            tables)))
     ;; (message "parser-tables: %S" parser-tables)
 
-    ;; TODO Make this pass
     (should
      (equal
       '(
@@ -124,11 +123,31 @@
           )
          )
         (
-         ((A) (b a)) ;; T2
+         ((A) (b a));; T2
          (
           ((b a) reduce (e) 3)
           ((b b) reduce (b) 2)
           )
+         )
+        (
+         b
+         (
+          ((b b) pop)
+          ((b a) pop)
+          ((b $) pop)
+          )
+         )
+        (
+         a
+         (
+          ((a b) pop)
+          ((a a) pop)
+          ((a $) pop)
+          )
+         )
+        (
+         $
+         (($ $) accept)
          )
         )
       parser-tables)))

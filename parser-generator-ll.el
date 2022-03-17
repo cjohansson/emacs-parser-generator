@@ -224,11 +224,58 @@
       sorted-tables)))
 
 
-;; TODO
 ;; Algorithm 5.3 p. 351
 (defun parser-generator-ll--generate-parsing-table (tables)
   "Generate a parsing table for an LL(k) grammar G and TABLES.  Output M, a valid parsing table for G."
   (let ((parsing-table))
+
+    ;; (3) M($, e) = accept
+    ;; (2) M(a, av) = pop for all v in E where |E| = k-1
+    (let ((eof-look-ahead
+           (parser-generator--generate-list-of-symbol
+            parser-generator--look-ahead-number
+            parser-generator--eof-identifier))
+          (terminal-mutations
+           (parser-generator--get-grammar-look-aheads))
+          (terminal-buffer)
+          (last-terminal))
+      (dolist (terminal-mutation terminal-mutations)
+        (if (equal terminal-mutation eof-look-ahead)
+            (push
+             (list
+              parser-generator--eof-identifier
+              (list
+               eof-look-ahead
+               'accept))
+             parsing-table)
+          (let ((stack-item (nth 0 terminal-mutation)))
+            (when (and
+                   last-terminal
+                   (not (equal last-terminal stack-item)))
+              (push
+               (list
+                last-terminal
+                terminal-buffer)
+               parsing-table)
+              (setq
+               terminal-buffer
+               nil))
+
+            (push
+             (list terminal-mutation 'pop)
+             terminal-buffer)
+            (setq
+             last-terminal
+             stack-item))))
+      (when (and
+             last-terminal
+             terminal-buffer)
+        (push
+         (list
+          last-terminal
+          terminal-buffer)
+         parsing-table)))
+
     (dolist (table tables)
       (let* ((key (nth 0 table))
              (value (nth 1 table))
@@ -283,9 +330,6 @@
           key
           parse-table)
          parsing-table)))
-
-    ;; (2) M(a, av) = pop for all v in E where |E| = k-1 -> move to parser logic
-    ;; (3) M($, e) = accept -> move to parser logic
 
     parsing-table))
 
