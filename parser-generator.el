@@ -1793,7 +1793,9 @@
             (setq
              expanded-lists-index
              (1+ expanded-lists-index)))
-          (when (>= minimum-terminal-count k)
+          (when (and
+                 minimum-terminal-count
+                 (>= minimum-terminal-count k))
             (setq still-looking nil)
             (parser-generator--debug
              (message

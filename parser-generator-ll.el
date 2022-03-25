@@ -334,11 +334,93 @@
     parsing-table))
 
 
-;; TODO
 ;; Algorithm 5.4 p. 357
 (defun parser-generator-ll--valid-grammar-p ()
-  "Test for LL(k)-ness.  Output t if grammar G is LL(k).  nil otherwise."
-  )
+  "Test for LL(k)-ness.  Output t if grammar is LL(k).  nil otherwise."
+  (let ((stack)
+        (stack-item)
+        (k (max 1 parser-generator--look-ahead-number))
+        (distinct-production-p (make-hash-table :test 'equal))
+        (valid t))
+
+    ;; (1) Construct T_0, the LL(k) table associated with S {e}
+    (let* ((start (parser-generator--get-grammar-start))
+           (start-rhss (parser-generator--get-grammar-rhs start)))
+      (dolist (start-rhs start-rhss)
+        (let* ((production (list (list start) start-rhs)))
+          (push
+           production
+           stack)
+          (puthash
+           production
+           t
+           distinct-production-p))))
+    (setq stack (nreverse stack))
+    (parser-generator--debug
+     (message "stack: %S" stack))
+
+    (while (and
+            stack
+            valid)
+      (setq stack-item (pop stack))
+      (let ((production-lhs
+             (nth 0 stack-item))
+            (production-rhs
+             (nth 1 stack-item)))
+
+        ;; For each non-terminal in the production right-hand side
+        ;; push a new item to stack with a local-follow
+        ;; and a new left-hand-side
+        (let ((sub-symbol-index 0)
+              (sub-symbol-length (length production-rhs)))
+          (while (< sub-symbol-index sub-symbol-length)
+            (let ((sub-symbol (nth sub-symbol-index production-rhs)))
+              (when (parser-generator--valid-non-terminal-p
+                     sub-symbol)
+                (let* ((local-follow
+                        (nthcdr (1+ sub-symbol-index) production-rhs))
+                       (first-local-follow-sets
+                        (parser-generator--first local-follow nil t t))
+                       (sub-symbol-rhss
+                        (parser-generator--get-grammar-rhs sub-symbol))
+                       (first-sub-symbol-rhss-sets
+                        (parser-generator--first sub-symbol-rhss nil t t))
+                       (merged-terminal-sets
+                        (parser-generator--merge-max-terminal-sets
+                         first-local-follow-sets
+                         first-sub-symbol-rhss-sets))
+                       (distinct-item-p
+                        (make-hash-table :test 'equal)))
+                  (dolist (merged-terminal-set merged-terminal-sets)
+                    (if (gethash
+                         merged-terminal-set
+                         distinct-item-p)
+                        (progn
+                          (setq valid nil)
+                          (message "merged-terminal-set: %S was not distinct" merged-terminal-set))
+                      (puthash
+                       merged-terminal-set
+                       t
+                       distinct-item-p)))
+                  (let ((production
+                         (list
+                          (list sub-symbol)
+                          sub-symbol-rhss)))
+                    (unless
+                        (gethash
+                         production
+                         distinct-production-p)
+                      (push
+                       production
+                       stack)
+                      (puthash
+                       production
+                       t
+                       distinct-production-p))))))
+            (setq
+             sub-symbol-index
+             (1+ sub-symbol-index))))))
+    valid))
 
 
 (provide 'parser-generator-ll)
