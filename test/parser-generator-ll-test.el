@@ -73,6 +73,7 @@
   (parser-generator-set-eof-identifier '$)
   (parser-generator-set-e-identifier 'e)
   (parser-generator-set-look-ahead-number 2)
+  (parser-generator-process-grammar)
   (let* ((tables
           '(
             (
@@ -183,9 +184,11 @@
          ((S) nil)
          (
           ((a b) reduce ()
+           )
+          )
          )
         )
-      parser-tables)))))
+      parser-tables)))
   (message "Passed example 5.17")
 
   (message "Passed tests for (parser-generator-ll--generate-parsing-table)"))
