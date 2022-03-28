@@ -174,15 +174,12 @@
      )
    )
   (parser-generator-process-grammar)
-  (parser-generator-ll--valid-grammar-p)
   (should
    (equal
     (parser-generator-ll--valid-grammar-p)
     t))
   (message "Passed first valid test")
 
-  ;; Example 5.14 p. 350
-  ;; Example 5.15 p. 351
   (parser-generator-set-e-identifier 'e)
   (parser-generator-set-look-ahead-number 2)
   (parser-generator-set-grammar
@@ -202,7 +199,6 @@
     (parser-generator-ll--valid-grammar-p)
     nil))
   (message "Passed second valid test")
-
 
   (message "Passed tests for (parser-generator-ll--valid-grammar-p)"))
 
