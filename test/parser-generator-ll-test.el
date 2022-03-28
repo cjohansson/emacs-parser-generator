@@ -151,6 +151,42 @@
          )
         )
       parser-tables)))
+  (message "Passed Example 5.16")
+
+  ;; TODO Test Example 5.17 here
+  (parser-generator-set-eof-identifier '$)
+  (parser-generator-set-e-identifier 'e)
+  (parser-generator-set-look-ahead-number 2)
+  (parser-generator-set-grammar
+   '(
+     (S A)
+     (a b)
+     (
+      (S e (a b A))
+      (A (S a a) b)
+      )
+     S
+     )
+   )
+  (parser-generator-process-grammar)
+  (let* ((tables
+          (parser-generator-ll--generate-tables))
+         (parser-tables
+          (parser-generator-ll--generate-parsing-table
+           tables)))
+    (message "tables: %S" tables)
+    (message "parser-tables: %S" parser-tables)
+    (should
+     (equal
+      '(
+        (
+         ((S) nil)
+         (
+          ((a b) reduce ()
+         )
+        )
+      parser-tables)))))
+  (message "Passed example 5.17")
 
   (message "Passed tests for (parser-generator-ll--generate-parsing-table)"))
 
@@ -199,6 +235,8 @@
     (parser-generator-ll--valid-grammar-p)
     nil))
   (message "Passed second valid test")
+
+  ;; TODO Example 5.19
 
   (message "Passed tests for (parser-generator-ll--valid-grammar-p)"))
 
