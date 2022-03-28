@@ -383,40 +383,56 @@
                         (parser-generator--first local-follow nil t t))
                        (sub-symbol-rhss
                         (parser-generator--get-grammar-rhs sub-symbol))
-                       (first-sub-symbol-rhss-sets
-                        (parser-generator--first sub-symbol-rhss nil t t))
-                       (merged-terminal-sets
-                        (parser-generator--merge-max-terminal-sets
-                         first-local-follow-sets
-                         first-sub-symbol-rhss-sets))
                        (distinct-item-p
                         (make-hash-table :test 'equal)))
-                  (dolist (merged-terminal-set merged-terminal-sets)
-                    (if (gethash
-                         merged-terminal-set
-                         distinct-item-p)
-                        (progn
-                          (setq valid nil)
-                          (message "merged-terminal-set: %S was not distinct" merged-terminal-set))
-                      (puthash
-                       merged-terminal-set
-                       t
-                       distinct-item-p)))
-                  (let ((production
-                         (list
-                          (list sub-symbol)
-                          sub-symbol-rhss)))
-                    (unless
-                        (gethash
+                  (parser-generator--debug
+                   (message "\nsub-symbol: %S" sub-symbol)
+                   (message "local-follow: %S" local-follow)
+                   (message "first-local-follow-sets: %S" first-local-follow-sets)
+                   (message "sub-symbol-rhss: %S" sub-symbol-rhss))
+
+                  ;; Calculate following terminals to see if there is a conflict
+                  (dolist (sub-symbol-rhs sub-symbol-rhss)
+                    (let ((first-sub-symbol-rhs (parser-generator--first sub-symbol-rhs nil t t)))
+                      (let ((merged-terminal-sets
+                             (parser-generator--merge-max-terminal-sets
+                              first-sub-symbol-rhs
+                              first-local-follow-sets)))
+                        (parser-generator--debug
+                         (message "sub-symbol-rhs: %S" sub-symbol-rhs)
+                         (message "first-sub-symbol-rhs: %S" first-sub-symbol-rhs)
+                         (message "merged-terminal-sets: %S" merged-terminal-sets))
+                        (dolist (merged-terminal-set merged-terminal-sets)
+                          (if (gethash
+                               merged-terminal-set
+                               distinct-item-p)
+                              (progn
+                                (setq valid nil)
+                                (parser-generator--debug
+                                 (message
+                                  "merged-terminal-set: %S was not distinct"
+                                  merged-terminal-set)))
+                            (puthash
+                             merged-terminal-set
+                             t
+                             distinct-item-p)))))
+
+                    ;; Add production to stack if it has not been added already
+                    (let ((production
+                           (list
+                            (list sub-symbol)
+                            sub-symbol-rhs)))
+                      (unless
+                          (gethash
+                           production
+                           distinct-production-p)
+                        (push
                          production
-                         distinct-production-p)
-                      (push
-                       production
-                       stack)
-                      (puthash
-                       production
-                       t
-                       distinct-production-p))))))
+                         stack)
+                        (puthash
+                         production
+                         t
+                         distinct-production-p)))))))
             (setq
              sub-symbol-index
              (1+ sub-symbol-index))))))
