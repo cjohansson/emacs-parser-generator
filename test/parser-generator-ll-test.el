@@ -33,27 +33,27 @@
    )
   (parser-generator-process-grammar)
   (let ((tables (parser-generator-ll--generate-tables)))
-    ;; (message "tables: %S" tables)
+    (message "tables: %S" tables)
     (should
      (equal
       tables
       '(
         (
-         ((A) (b a))
+         ((A) (b a)) ;; T A,{ba}
          (
           ((b b) (b) nil)
           ((b a) (e) nil)
           )
          )
         (
-         ((A) (a a))
+         ((A) (a a)) ;; T A,{aa}
          (
           ((a a) (e) nil)
           ((b a) (b) nil)
           )
          )
         (
-         ((S) nil)
+         ((S) ($)) ;; T0
          (
           ((a b) (a A a a) ((a a)))
           ((a a) (a A a a) ((a a)))
@@ -61,8 +61,66 @@
           )
          )
         )
+      )
+     ))
+
+  ;; TODO Pass Example 5.17 here
+  (parser-generator-set-eof-identifier '$)
+  (parser-generator-set-e-identifier 'e)
+  (parser-generator-set-look-ahead-number 2)
+  (parser-generator-set-grammar
+   '(
+     (S A)
+     (a b)
+     (
+      (S e (a b A))
+      (A (S a a) b)
+      )
+     S
+     )
+   )
+  (parser-generator-process-grammar)
+  (let* ((tables
+          (parser-generator-ll--generate-tables)))
+    (message "tables: %S" tables)
+    (should
+     (equal
+      tables
+      '(
+        (
+         ((S) nil) ;; T0
+         (
+          (($ $) (e) nil)
+          ((a b) (a b A) $)
+          )
+         )
+        (
+         ((A) nil) ;; T1
+         (
+          ((b $) (b) nil)
+          ((a a) (S a a) ((a a)))
+          ((a b) (S a a) ((a a)))
+          )
+         )
+        (
+         ((S) (a a)) ;; T2
+         (
+          ((a a) (e) nil)
+          ((a b) (a B a) ((a a)))
+          )
+         )
+        (
+         ((A) (a a)) ;; T3
+         (
+          ((a a) (S a a) ((a a)))
+          ((a b) (S a a) ((a a)))
+          ((b a) (b) nil)
+          )
+         )
+        )
       ))
-    tables)
+    )
+
 
   (message "Passed tests for (parser-generator-ll--generate-tables)"))
 
@@ -171,11 +229,10 @@
    )
   (parser-generator-process-grammar)
   (let* ((tables
-          (parser-generator-ll--generate-tables))
+          (parser-generator-ll--generate-tables)) ;; TODO Replace with hard-coded value here
          (parser-tables
           (parser-generator-ll--generate-parsing-table
            tables)))
-    (message "tables: %S" tables)
     (message "parser-tables: %S" parser-tables)
     (should
      (equal

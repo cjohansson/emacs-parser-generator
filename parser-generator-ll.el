@@ -59,7 +59,7 @@
            (list
             (list start)
             start-rhs
-            nil)
+            (list parser-generator--eof-identifier))
            stack))))
     (setq stack (nreverse stack))
     (parser-generator--debug
@@ -79,6 +79,10 @@
               (parser-generator--first parent-follow nil t t))
              (look-aheads)
              (sets))
+        (parser-generator--debug
+         (message "\nproduction-lhs: %S" production-lhs)
+         (message "production-rhs: %S" production-rhs)
+         (message "parent-follow: %S" parent-follow))
 
         (cond
          ((and first-rhs
@@ -106,6 +110,9 @@
              "Unexpected empty FIRST for production: %S and parent-follow: %S"
              production
              parent-follow)))
+        (parser-generator--debug
+         (message "look-aheads: %S" look-aheads))
+        ;; TODO merge-max-terminal-sets should do the right thing
 
         ;; For each non-terminal in the production right-hand side
         ;; push a new item to stack with a local-follow
@@ -116,6 +123,9 @@
             (let ((sub-symbol (nth sub-symbol-index production-rhs)))
               (when (parser-generator--valid-non-terminal-p
                      sub-symbol)
+                (parser-generator--debug
+                 (message
+                  "\nnon-terminal sub-symbol: %S" sub-symbol))
                 (let* ((follow-set
                         (nthcdr (1+ sub-symbol-index) production-rhs))
                        (merged-follow
@@ -127,7 +137,7 @@
                          sub-symbol)))
                   (parser-generator--debug
                    (message
-                    "\nfollow-set: %S for %S in %S"
+                    "follow-set: %S for %S in %S"
                     follow-set
                     (nth sub-symbol-index production-rhs)
                     production-rhs)
@@ -189,6 +199,8 @@
                  item-hash-key
                  t
                  distinct-item-p)
+                (parser-generator--debug
+                 (message "new table: %S" table))
                 (if (gethash
                      table-hash-key
                      tables)
