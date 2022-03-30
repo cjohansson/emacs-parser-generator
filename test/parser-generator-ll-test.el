@@ -33,7 +33,7 @@
    )
   (parser-generator-process-grammar)
   (let ((tables (parser-generator-ll--generate-tables)))
-    (message "tables: %S" tables)
+    (message "tables 1: %S" tables)
     (should
      (equal
       tables

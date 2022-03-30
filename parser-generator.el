@@ -1238,8 +1238,8 @@
          look-ahead)))
     (nreverse look-ahead)))
 
-(defun parser-generator--merge-max-terminal-sets (a b)
-  "Calculate list of all lists of L1 (+) L2 which is a merge of all terminals in lists A combined with all terminals in lists B but with maximum length of the set look-ahead number."
+(defun parser-generator--merge-max-terminal-sets (a b &optional abort-on-e-identifier)
+  "Calculate list of all lists of L1 (+) L2 which is a merge of all terminals in lists A combined with all terminals in lists B but with maximum length of the set look-ahead number, optionally ABORT-ON-E-IDENTIFIER."
   (let ((a-length (length a))
         (a-index 0)
         (b-length (length b))
@@ -1255,7 +1255,8 @@
                   ((merged-element
                     (parser-generator--merge-max-terminals
                      a-element
-                     b-element)))
+                     b-element
+                     abort-on-e-identifier)))
                 (if merged-lists
                     (setq
                      merged-lists
@@ -1274,7 +1275,8 @@
               ((merged-element
                 (parser-generator--merge-max-terminals
                  a-element
-                 nil)))
+                 nil
+                 abort-on-e-identifier)))
             (if merged-lists
                 (setq
                  merged-lists
@@ -1294,7 +1296,8 @@
                 ((merged-element
                   (parser-generator--merge-max-terminals
                    nil
-                   b-element)))
+                   b-element
+                   abort-on-e-identifier)))
               (if merged-lists
                   (setq
                    merged-lists
@@ -1317,8 +1320,8 @@
     merged-lists))
 
 ;; Lemma 5.1 p. 348
-(defun parser-generator--merge-max-terminals (a b)
-  "Calculate L1 (+) L2 which is a merge of all terminals in A and B but with exactly length of the set look-ahead number."
+(defun parser-generator--merge-max-terminals (a b &optional abort-on-e-identifier)
+  "Calculate L1 (+) L2 which is a merge of all terminals in A and B but with exactly length of the set look-ahead number, optionally ABORT-ON-E-IDENTIFIER."
   (let ((k (max 1 parser-generator--look-ahead-number))
         (merged)
         (merge-count 0)
@@ -1327,20 +1330,27 @@
         (a-length (length a))
         (b-element)
         (b-index 0)
-        (b-length (length b)))
+        (b-length (length b))
+        (continue t))
     (while (and
+            continue
             (< a-index a-length)
             (< merge-count k))
       (setq a-element (nth a-index a))
-      (unless (parser-generator--valid-e-p a-element)
+      (if (parser-generator--valid-e-p a-element)
+          (when abort-on-e-identifier
+            (setq continue nil))
         (push a-element merged)
         (setq merge-count (1+ merge-count)))
       (setq a-index (1+ a-index)))
     (while (and
+            continue
             (< b-index b-length)
             (< merge-count k))
       (setq b-element (nth b-index b))
-      (unless (parser-generator--valid-e-p b-element)
+      (if (parser-generator--valid-e-p b-element)
+          (when abort-on-e-identifier
+            (setq continue nil))
         (push b-element merged)
         (setq merge-count (1+ merge-count)))
       (setq b-index (1+ b-index)))

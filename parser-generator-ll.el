@@ -91,21 +91,24 @@
            look-aheads
            (parser-generator--merge-max-terminal-sets
             first-rhs
-            nil)))
+            nil
+            t)))
          ((and first-parent-follow
                (not first-rhs))
           (setq
            look-aheads
            (parser-generator--merge-max-terminal-sets
             nil
-            first-parent-follow)))
+            first-parent-follow
+            t)))
          ((and first-rhs
                first-parent-follow)
           (setq
            look-aheads
            (parser-generator--merge-max-terminal-sets
             first-rhs
-            first-parent-follow)))
+            first-parent-follow
+            t)))
          (t (error
              "Unexpected empty FIRST for production: %S and parent-follow: %S"
              production
@@ -409,7 +412,8 @@
                       (let ((merged-terminal-sets
                              (parser-generator--merge-max-terminal-sets
                               first-sub-symbol-rhs
-                              first-local-follow-sets)))
+                              first-local-follow-sets
+                              t)))
                         (parser-generator--debug
                          (message "sub-symbol-rhs: %S" sub-symbol-rhs)
                          (message "first-sub-symbol-rhs: %S" first-sub-symbol-rhs)
