@@ -47,6 +47,7 @@
   (let ((tables (make-hash-table :test 'equal))
         (distinct-item-p (make-hash-table :test 'equal))
         (stack)
+        (distinct-stack-item-p (make-hash-table :test 'equal))
         (stack-item)
         (k (max 1 parser-generator--look-ahead-number)))
 
@@ -54,13 +55,21 @@
     (let* ((start (parser-generator--get-grammar-start))
            (start-rhss (parser-generator--get-grammar-rhs start)))
       (dolist (start-rhs start-rhss)
-        (let* ((production (list (list start) start-rhs)))
+        (let* ((production
+                (list (list start) start-rhs))
+               (initial-stack-item
+                (list
+                 (list start)
+                 start-rhs
+                 (list parser-generator--eof-identifier))))
+          (puthash
+           initial-stack-item
+           t
+           distinct-stack-item-p)
           (push
-           (list
-            (list start)
-            start-rhs
-            (list parser-generator--eof-identifier))
+           initial-stack-item
            stack))))
+
     (setq stack (nreverse stack))
     (parser-generator--debug
      (message "stack: %S" stack))
@@ -171,13 +180,20 @@
                                (list sub-symbol)
                                sub-symbol-rhs
                                local-follow)))
-                        (parser-generator--debug
-                         (message
-                          "new-stack-item: %S"
-                          new-stack-item))
-                        (push
-                         new-stack-item
-                         stack)))))))
+                        (unless (gethash
+                                 new-stack-item
+                                 distinct-stack-item-p)
+                          (parser-generator--debug
+                           (message
+                            "new-stack-item: %S"
+                            new-stack-item))
+                          (puthash
+                           new-stack-item
+                           t
+                           distinct-stack-item-p)
+                          (push
+                           new-stack-item
+                           stack))))))))
             (setq
              sub-symbol-index
              (1+ sub-symbol-index))))

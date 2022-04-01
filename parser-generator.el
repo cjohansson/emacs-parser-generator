@@ -2090,13 +2090,16 @@
 
 (defun parser-generator-generate-terminal-saturated-first-set (first-set)
   "Generated a set from FIRST-SET with items that does not end with the e-identifier if there is alternative items that continues with terminals."
-  (let* ((max-terminal-count
-          (parser-generator-calculate-max-terminal-count
-           first-set))
-         (saturated-list
-          (parser-generator-generate-sets-of-terminals
-           first-set
-           max-terminal-count)))
+  (let ((max-terminal-count
+         (parser-generator-calculate-max-terminal-count
+          first-set))
+        (saturated-list))
+    (when (> max-terminal-count 0)
+      (setq
+       saturated-list
+       (parser-generator-generate-sets-of-terminals
+        first-set
+        max-terminal-count)))
     saturated-list))
 
 (defun parser-generator-generate-sets-of-terminals (sets count)
