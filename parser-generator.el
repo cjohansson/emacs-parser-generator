@@ -2101,20 +2101,27 @@
 
 (defun parser-generator-generate-sets-of-terminals (sets count)
   "Generate set of terminals in sequence from SETS with COUNT."
-  (let ((sets-of-terminals))
+  (let ((sets-of-terminals)
+        (terminal-set-exists-p (make-hash-table :test 'equal)))
     (dolist (set sets)
       (let ((item-count (length set))
             (item-index 0)
             (only-terminals t)
-            (terminal-count 0))
+            (terminal-count 0)
+            (terminals))
         (while (and
                 only-terminals
+                (< terminal-count count)
                 (< item-index item-count))
           (let ((item (nth item-index set)))
             (if (parser-generator--valid-terminal-p item)
-                (setq
-                 terminal-count
-                 (1+ terminal-count))
+                (progn
+                  (push
+                   item
+                   terminals)
+                  (setq
+                   terminal-count
+                   (1+ terminal-count)))
               (setq
                only-terminals
                nil)))
@@ -2123,9 +2130,17 @@
            (1+ item-index)))
         (when (and
                only-terminals
-               (= terminal-count count))
+               (= terminal-count count)
+               (not
+                (gethash
+                 terminals
+                 terminal-set-exists-p)))
+          (puthash
+           terminals
+           t
+           terminal-set-exists-p)
           (push
-           set
+           (reverse terminals)
            sets-of-terminals))))
     (reverse sets-of-terminals)))
 

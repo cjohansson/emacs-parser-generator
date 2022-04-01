@@ -85,41 +85,43 @@
         (parser-generator--debug
          (message "\nproduction-lhs: %S" production-lhs)
          (message "production-rhs: %S" production-rhs)
-         (message "parent-follow: %S" parent-follow))
+         (message "parent-follow: %S" parent-follow)
+         (message "first-rhs: %S" first-rhs)
+         (message "satured-first-rhs: %S" satured-first-rhs))
 
         ;; TODO Remove items in first-rhs that ends with the e-identifier
         ;; TODO but only if it has other items that does not end with the e-identifier
         ;; F('((a e) (a a))) = ((a a))
 
         (cond
-         ((and first-rhs
+         ((and satured-first-rhs
                (not first-parent-follow))
           (setq
            look-aheads
            (parser-generator--merge-max-terminal-sets
-            first-rhs
+            satured-first-rhs
             nil)))
          ((and first-parent-follow
-               (not first-rhs))
+               (not satured-first-rhs))
           (setq
            look-aheads
            (parser-generator--merge-max-terminal-sets
             nil
             first-parent-follow)))
-         ((and first-rhs
+         ((and satured-first-rhs
                first-parent-follow)
           (setq
            look-aheads
            (parser-generator--merge-max-terminal-sets
-            first-rhs
+            satured-first-rhs
             first-parent-follow)))
          (t (error
              "Unexpected empty FIRST for production: %S and parent-follow: %S"
              production
              parent-follow)))
+
         (parser-generator--debug
          (message "look-aheads: %S" look-aheads))
-        ;; TODO merge-max-terminal-sets should do the right thing
 
         ;; For each non-terminal in the production right-hand side
         ;; push a new item to stack with a local-follow

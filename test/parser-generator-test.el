@@ -1085,20 +1085,19 @@
   (parser-generator-set-grammar '((S A B) ("a" "b") ((S A) (S (B)) (B "a") (A "a") (A ("b" "a"))) S))
   (parser-generator-process-grammar)
 
-  ;; TODO Test here
   (should
    (equal
     (parser-generator-generate-sets-of-terminals
      '(("a" "a") ("b") ("b" "a") ("a" "b" "a") ("a" e S "b" "a") ("b" "b" A))
      2)
-    '(("a" "a") ("b" "a"))))
+    '(("a" "a") ("b" "a") ("a" "b") ("b" "b"))))
 
   (should
    (equal
     (parser-generator-generate-sets-of-terminals
      '(("a" "a") ("b") ("b" "a") ("a" "b" "a") ("a" e S "b" "a") ("b" "b" A))
      1)
-    '(("b"))))
+    '(("a") ("b"))))
 
   (should
    (equal
@@ -1106,6 +1105,13 @@
      '(("a" "a") ("b") ("b" "a") ("a" "b" "a") ("a" e S "b" "a") ("b" "b" A))
      3)
     '(("a" "b" "a"))))
+
+  (should
+   (equal
+    (parser-generator-generate-sets-of-terminals
+     '(("a" e) ("b") ("b" "a") ("a" "b" "a") ("a" e S "b" "a") ("b" "b" A))
+     1)
+    '(("a") ("b"))))
 
   (message "Passed tests for (parser-generator--generate-sets-of-terminals)"))
 
@@ -1121,12 +1127,13 @@
    (equal
     (parser-generator-generate-terminal-saturated-first-set
      '(("a" "b") ("a" "a" e) ("b") ("a" e)))
-    '(("a" "b"))))
+    '(("a" "b") ("a" "a"))))
+
   (should
    (equal
     (parser-generator-generate-terminal-saturated-first-set
      '(("a" "b") ("a" "a" e) ("b" "b") ("a" e)))
-    '(("a" "b") ("b" "b"))))
+    '(("a" "b") ("a" "a") ("b" "b"))))
 
   (message "Passed tests for (parser-generator-generate-terminal-saturated-first-set)"))
 
