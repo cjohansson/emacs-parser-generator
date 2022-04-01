@@ -1238,8 +1238,8 @@
          look-ahead)))
     (nreverse look-ahead)))
 
-(defun parser-generator--merge-max-terminal-sets (a b &optional abort-on-e-identifier)
-  "Calculate list of all lists of L1 (+) L2 which is a merge of all terminals in lists A combined with all terminals in lists B but with maximum length of the set look-ahead number, optionally ABORT-ON-E-IDENTIFIER."
+(defun parser-generator--merge-max-terminal-sets (a b)
+  "Calculate list of all lists of L1 (+) L2 which is a merge of all terminals in lists A combined with all terminals in lists B but with maximum length of the set look-ahead number."
   (let ((a-length (length a))
         (a-index 0)
         (b-length (length b))
@@ -1255,8 +1255,7 @@
                   ((merged-element
                     (parser-generator--merge-max-terminals
                      a-element
-                     b-element
-                     abort-on-e-identifier)))
+                     b-element)))
                 (if merged-lists
                     (setq
                      merged-lists
@@ -1275,8 +1274,7 @@
               ((merged-element
                 (parser-generator--merge-max-terminals
                  a-element
-                 nil
-                 abort-on-e-identifier)))
+                 nil)))
             (if merged-lists
                 (setq
                  merged-lists
@@ -1296,8 +1294,7 @@
                 ((merged-element
                   (parser-generator--merge-max-terminals
                    nil
-                   b-element
-                   abort-on-e-identifier)))
+                   b-element)))
               (if merged-lists
                   (setq
                    merged-lists
@@ -1320,8 +1317,8 @@
     merged-lists))
 
 ;; Lemma 5.1 p. 348
-(defun parser-generator--merge-max-terminals (a b &optional abort-on-e-identifier)
-  "Calculate L1 (+) L2 which is a merge of all terminals in A and B but with exactly length of the set look-ahead number, optionally ABORT-ON-E-IDENTIFIER."
+(defun parser-generator--merge-max-terminals (a b)
+  "Calculate L1 (+) L2 which is a merge of all terminals in A and B but with exactly length of the set look-ahead number."
   (let ((k (max 1 parser-generator--look-ahead-number))
         (merged)
         (merge-count 0)
@@ -1330,31 +1327,24 @@
         (a-length (length a))
         (b-element)
         (b-index 0)
-        (b-length (length b))
-        (continue t))
+        (b-length (length b)))
     (while (and
-            continue
             (< a-index a-length)
             (< merge-count k))
       (setq a-element (nth a-index a))
-      (if (parser-generator--valid-e-p a-element)
-          (when abort-on-e-identifier
-            (setq continue nil))
+      (unless (parser-generator--valid-e-p a-element)
         (push a-element merged)
         (setq merge-count (1+ merge-count)))
       (setq a-index (1+ a-index)))
     (while (and
-            continue
             (< b-index b-length)
             (< merge-count k))
       (setq b-element (nth b-index b))
-      (if (parser-generator--valid-e-p b-element)
-          (when abort-on-e-identifier
-            (setq continue nil))
+      (unless (parser-generator--valid-e-p b-element)
         (push b-element merged)
         (setq merge-count (1+ merge-count)))
       (setq b-index (1+ b-index)))
-    (if (= merge-count k)
+    (if (> merge-count 0)
         (nreverse merged)
       nil)))
 
@@ -2097,6 +2087,75 @@
       (setq follow-set
             (parser-generator--distinct follow-set)))
     follow-set))
+
+(defun parser-generator-generate-terminal-saturated-first-set (first-set)
+  "Generated a set from FIRST-SET with items that does not end with the e-identifier if there is alternative items that continues with terminals."
+  (let* ((max-terminal-count
+          (parser-generator-calculate-max-terminal-count
+           first-set))
+         (saturated-list
+          (parser-generator-generate-sets-of-terminals
+           first-set
+           max-terminal-count)))
+    saturated-list))
+
+(defun parser-generator-generate-sets-of-terminals (sets count)
+  "Generate set of terminals in sequence from SETS with COUNT."
+  (let ((sets-of-terminals))
+    (dolist (set sets)
+      (let ((item-count (length set))
+            (item-index 0)
+            (only-terminals t)
+            (terminal-count 0))
+        (while (and
+                only-terminals
+                (< item-index item-count))
+          (let ((item (nth item-index set)))
+            (if (parser-generator--valid-terminal-p item)
+                (setq
+                 terminal-count
+                 (1+ terminal-count))
+              (setq
+               only-terminals
+               nil)))
+          (setq
+           item-index
+           (1+ item-index)))
+        (when (and
+               only-terminals
+               (= terminal-count count))
+          (push
+           set
+           sets-of-terminals))))
+    (reverse sets-of-terminals)))
+
+(defun parser-generator-calculate-max-terminal-count (sets)
+  "Calculate maximum number of terminals in sequence in SETS."
+  (let ((max-terminal-count 0))
+    (dolist (set sets)
+      (let ((item-count (length set))
+            (item-index 0)
+            (only-terminals t)
+            (terminal-count 0))
+        (while (and
+                only-terminals
+                (< item-index item-count))
+          (let ((item (nth item-index set)))
+            (if (parser-generator--valid-terminal-p item)
+                (setq
+                 terminal-count
+                 (1+ terminal-count))
+              (setq
+               only-terminals
+               nil)))
+          (setq
+           item-index
+           (1+ item-index)))
+        (when (> terminal-count max-terminal-count)
+          (setq
+           max-terminal-count
+           terminal-count))))
+    max-terminal-count))
 
 
 (provide 'parser-generator)

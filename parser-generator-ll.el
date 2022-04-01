@@ -75,6 +75,9 @@
               (nth 2 stack-item))
              (first-rhs
               (parser-generator--first production-rhs nil t t))
+             (satured-first-rhs
+              (parser-generator-generate-terminal-saturated-first-set
+               first-rhs))
              (first-parent-follow
               (parser-generator--first parent-follow nil t t))
              (look-aheads)
@@ -84,6 +87,10 @@
          (message "production-rhs: %S" production-rhs)
          (message "parent-follow: %S" parent-follow))
 
+        ;; TODO Remove items in first-rhs that ends with the e-identifier
+        ;; TODO but only if it has other items that does not end with the e-identifier
+        ;; F('((a e) (a a))) = ((a a))
+
         (cond
          ((and first-rhs
                (not first-parent-follow))
@@ -91,24 +98,21 @@
            look-aheads
            (parser-generator--merge-max-terminal-sets
             first-rhs
-            nil
-            t)))
+            nil)))
          ((and first-parent-follow
                (not first-rhs))
           (setq
            look-aheads
            (parser-generator--merge-max-terminal-sets
             nil
-            first-parent-follow
-            t)))
+            first-parent-follow)))
          ((and first-rhs
                first-parent-follow)
           (setq
            look-aheads
            (parser-generator--merge-max-terminal-sets
             first-rhs
-            first-parent-follow
-            t)))
+            first-parent-follow)))
          (t (error
              "Unexpected empty FIRST for production: %S and parent-follow: %S"
              production
@@ -412,8 +416,7 @@
                       (let ((merged-terminal-sets
                              (parser-generator--merge-max-terminal-sets
                               first-sub-symbol-rhs
-                              first-local-follow-sets
-                              t)))
+                              first-local-follow-sets)))
                         (parser-generator--debug
                          (message "sub-symbol-rhs: %S" sub-symbol-rhs)
                          (message "first-sub-symbol-rhs: %S" first-sub-symbol-rhs)
