@@ -33,7 +33,7 @@
    )
   (parser-generator-process-grammar)
   (let ((tables (parser-generator-ll--generate-tables)))
-    (message "tables 1: %S" tables)
+    ;; (message "tables 1: %S" tables)
     (should
      (equal
       tables
@@ -63,6 +63,7 @@
         )
       )
      ))
+  (message "Passed Example 5.14 p. 350")
 
   ;; TODO Pass Example 5.17 here
   (parser-generator-set-eof-identifier '$)
@@ -88,14 +89,14 @@
       tables
       '(
         (
-         ((S) nil) ;; T0
+         ((S) ($)) ;; T0
          (
           (($ $) (e) nil)
           ((a b) (a b A) $)
           )
          )
         (
-         ((A) nil) ;; T1
+         ((A) ($)) ;; T1
          (
           ((b $) (b) nil)
           ((a a) (S a a) ((a a)))
@@ -120,6 +121,7 @@
         )
       ))
     )
+  (message "Passed Example 5.17")
 
 
   (message "Passed tests for (parser-generator-ll--generate-tables)"))

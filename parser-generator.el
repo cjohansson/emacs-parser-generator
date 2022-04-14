@@ -1327,23 +1327,55 @@
         (a-length (length a))
         (b-element)
         (b-index 0)
-        (b-length (length b)))
+        (b-length (length b))
+        (only-eof))
+
     (while (and
             (< a-index a-length)
             (< merge-count k))
       (setq a-element (nth a-index a))
-      (unless (parser-generator--valid-e-p a-element)
+
+      (when (parser-generator--valid-eof-p
+             a-element)
+        (setq only-eof t))
+
+      (when (or
+             (and
+              only-eof
+              (parser-generator--valid-eof-p
+               a-element))
+             (and
+              (not only-eof)
+              (parser-generator--valid-terminal-p
+               a-element)))
         (push a-element merged)
         (setq merge-count (1+ merge-count)))
+
       (setq a-index (1+ a-index)))
+
     (while (and
             (< b-index b-length)
             (< merge-count k))
       (setq b-element (nth b-index b))
-      (unless (parser-generator--valid-e-p b-element)
+
+      (when (parser-generator--valid-eof-p
+             b-element)
+        (setq only-eof t))
+
+      (when (or
+             (and
+              only-eof
+              (parser-generator--valid-eof-p
+               b-element))
+             (and
+              (not only-eof)
+              (parser-generator--valid-terminal-p
+               b-element)))
         (push b-element merged)
         (setq merge-count (1+ merge-count)))
+
       (setq b-index (1+ b-index)))
+
     (if (> merge-count 0)
         (nreverse merged)
       nil)))
@@ -1599,8 +1631,8 @@
 
 ;; Algorithm 5.5, p. 357
 (defun parser-generator--first
-    (β &optional disallow-e-first ignore-validation skip-sorting)
-  "For sentential-form Β, calculate first terminals, optionally DISALLOW-E-FIRST, IGNORE-VALIDATION and SKIP-SORTING."
+    (β &optional disallow-e-first ignore-validation skip-sorting use-eof-for-trailing-symbols)
+  "For sentential-form Β, calculate first terminals, optionally DISALLOW-E-FIRST, IGNORE-VALIDATION, SKIP-SORTING and USE-EOF-FOR-TRAILING-SYMBOLS."
 
   ;; Make sure we are dealing with a list of symbols
   (unless (listp β)
@@ -1955,14 +1987,18 @@
                           (missing-symbol-index 0))
                       (while (< missing-symbol-index missing-symbol-count)
                         (push
-                         parser-generator--e-identifier
+                         (if use-eof-for-trailing-symbols
+                             parser-generator--eof-identifier
+                             parser-generator--e-identifier)
                          processed-list)
                         (setq
                          missing-symbol-index
                          (1+ missing-symbol-index)))
                       (parser-generator--debug
                        (message
-                        "Added %d trailing e-identifiers to set"
+                        (if use-eof-for-trailing-symbols
+                          "Added %d trailing EOF-identifiers to set"
+                          "Added %d trailing e-identifiers to set")
                         missing-symbol-count))))
 
                   (when (> (length processed-list) k)

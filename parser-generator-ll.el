@@ -88,7 +88,7 @@
               (parser-generator-generate-terminal-saturated-first-set
                first-rhs))
              (first-parent-follow
-              (parser-generator--first parent-follow nil t t))
+              (parser-generator--first parent-follow nil t t t))
              (look-aheads)
              (sets))
         (parser-generator--debug
@@ -97,10 +97,6 @@
          (message "parent-follow: %S" parent-follow)
          (message "first-rhs: %S" first-rhs)
          (message "satured-first-rhs: %S" satured-first-rhs))
-
-        ;; TODO Remove items in first-rhs that ends with the e-identifier
-        ;; TODO but only if it has other items that does not end with the e-identifier
-        ;; F('((a e) (a a))) = ((a a))
 
         (cond
          ((and satured-first-rhs

@@ -971,6 +971,9 @@
   "Test `parser-generator--merge-max-terminal-sets'."
   (message "Starting tests for (parser-generator--merge-max-terminal-sets)")
 
+  (parser-generator-set-grammar '((S A B) (a b) ((S A) (S (B)) (B a) (A a) (A (b a))) S))
+  (parser-generator-process-grammar)
+
   ;; Example 5.13 p. 348
   (parser-generator-set-e-identifier 'e)
   (parser-generator-set-look-ahead-number 2)
@@ -982,15 +985,24 @@
      '((b) (b a b)))))
 
   ;; Example 5.14 p. 350
-    (parser-generator-set-e-identifier 'e)
-    (parser-generator-set-look-ahead-number 2)
-    (should
-     (equal
-      '((a a) (a b) (b b))
-      (parser-generator--merge-max-terminal-sets
-       '((a b) (a e a) (b b) (b e b))
-       nil)))
+  (parser-generator-set-e-identifier 'e)
+  (parser-generator-set-look-ahead-number 2)
+  (should
+   (equal
+    '((a a) (a b) (b b))
+    (parser-generator--merge-max-terminal-sets
+     '((a b) (a e a) (b b) (b e b))
+     nil)))
 
+  (parser-generator-set-eof-identifier '$)
+  (parser-generator-set-e-identifier 'e)
+  (parser-generator-set-look-ahead-number 2)
+  (should
+   (equal
+    '(($ $) (a $) (a a))
+    (parser-generator--merge-max-terminal-sets
+     '((a e) ($))
+     '(($ $) (a $)))))
 
   (message "Passed tests for (parser-generator--merge-max-terminal-sets)"))
 
