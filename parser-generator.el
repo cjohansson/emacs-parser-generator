@@ -1763,8 +1763,13 @@
            (parser-generator--valid-eof-p input-symbol)
            (parser-generator--valid-terminal-p input-symbol))
           (parser-generator--debug
-           (message
-            "symbol is a terminal, the e-identifier or the EOF-identifier"))
+           (cond
+            ((parser-generator--valid-e-p input-symbol)
+             (message "symbol is the e-identifier"))
+            ((parser-generator--valid-eof-p input-symbol)
+             (message "symbol is the EOF-identifier"))
+            ((parser-generator--valid-terminal-p input-symbol)
+             (message "symbol is a terminal"))))
           (let ((expanded-list-index 0)
                 (expanded-list-count
                  (length expanded-lists)))

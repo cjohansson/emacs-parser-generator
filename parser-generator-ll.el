@@ -149,6 +149,11 @@
                        (sub-symbol-rhss
                         (parser-generator--get-grammar-rhs
                          sub-symbol)))
+
+                  ;; TODO local-follow-set needs to be a merge-max-terminal-sets of
+                  ;; the first set of follow-set combined with the first
+                  ;; set of the parent follow set
+                  
                   (parser-generator--debug
                    (message
                     "follow-set: %S for %S in %S"
