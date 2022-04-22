@@ -28,10 +28,11 @@
 (defun parser-generator-ll-generate-parser-tables ()
   "Generate parsing tables for grammar."
   (message "\n;; Starting generation of LL(k) parser-tables..\n")
-  (unless (parser-generator-ll--valid-llk-p parser-generator--grammar)
+  (unless (parser-generator-ll--valid-grammar-p)
     (error "Invalid grammar specified!"))
-  (let* ((tables (parser-generator-ll--generate-tables))
-         (parsing-table (parser-generator-ll--generate-parsing-table)))
+  (let ((parsing-table
+         (parser-generator-ll--generate-parsing-table
+          (parser-generator-ll--generate-tables))))
     (setq
      parser-generator-ll--parsing-table
      parsing-table)
@@ -48,16 +49,13 @@
         (distinct-item-p (make-hash-table :test 'equal))
         (stack)
         (distinct-stack-item-p (make-hash-table :test 'equal))
-        (stack-item)
-        (k (max 1 parser-generator--look-ahead-number)))
+        (stack-item))
 
     ;; (1) Construct T_0, the LL(k) table associated with S {e}
     (let* ((start (parser-generator--get-grammar-start))
            (start-rhss (parser-generator--get-grammar-rhs start)))
       (dolist (start-rhs start-rhss)
-        (let* ((production
-                (list (list start) start-rhs))
-               (initial-stack-item
+        (let* ((initial-stack-item
                 (list
                  (list start)
                  start-rhs
@@ -122,7 +120,7 @@
             first-parent-follow)))
          (t (error
              "Unexpected empty FIRST for production: %S and parent-follow: %S"
-             production
+             (list production-lhs production-rhs)
              parent-follow)))
 
         (parser-generator--debug
@@ -185,9 +183,7 @@
                      local-follow
                      sets)
                     (dolist (sub-symbol-rhs sub-symbol-rhss)
-                      (let* ((sub-symbol-production
-                              (list (list sub-symbol) sub-symbol-rhs))
-                             (new-stack-item
+                      (let* ((new-stack-item
                               (list
                                (list sub-symbol)
                                sub-symbol-rhs
@@ -328,8 +324,6 @@
     (dolist (table tables)
       (let* ((key (nth 0 table))
              (value (nth 1 table))
-             (key-stack-symbol (car (nth 0 key)))
-             (key-parent-follow-set (nth 1 key))
              (left-hand-side (nth 0 key))
              (parse-table))
         (dolist (look-ahead-row value)
@@ -388,7 +382,6 @@
   "Test for LL(k)-ness.  Output t if grammar is LL(k).  nil otherwise."
   (let ((stack)
         (stack-item)
-        (k (max 1 parser-generator--look-ahead-number))
         (distinct-production-p (make-hash-table :test 'equal))
         (valid t))
 
@@ -412,9 +405,7 @@
             stack
             valid)
       (setq stack-item (pop stack))
-      (let ((production-lhs
-             (nth 0 stack-item))
-            (production-rhs
+      (let ((production-rhs
              (nth 1 stack-item)))
 
         ;; For each non-terminal in the production right-hand side

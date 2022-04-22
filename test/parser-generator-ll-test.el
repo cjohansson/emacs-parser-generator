@@ -31,7 +31,6 @@
    )
   (parser-generator-process-grammar)
   (let ((tables (parser-generator-ll--generate-tables)))
-    ;; (message "tables 1: %S" tables)
     (should
      (equal
       tables
@@ -126,44 +125,29 @@
   "Test `parser-generator-ll--generate-parsing-table'."
   (message "Started tests for (parser-generator-ll--generate-parsing-table)")
 
-  (parser-generator-set-eof-identifier '$)
   (parser-generator-set-e-identifier 'e)
   (parser-generator-set-look-ahead-number 2)
+  (parser-generator-set-grammar
+   '(
+     (S A)
+     (a b)
+     (
+      (S (a A a a) (b A b a))
+      (A b e)
+      )
+     S
+     )
+   )
   (parser-generator-process-grammar)
-  (let* ((tables
-          '(
-            (
-             ((A) (b a))
-             (
-              ((b b) (b) nil)
-              ((b a) (e) nil)
-              )
-             )
-            (
-             ((A) (a a))
-             (
-              ((a a) (e) nil)
-              ((b a) (b) nil)
-              )
-             )
-            (
-             ((S) nil)
-             (
-              ((a b) (a A a a) ((a a)))
-              ((a a) (a A a a) ((a a)))
-              ((b b) (b A b a) ((b a)))
-              )
-             )
-            )
-          )
-         (parser-tables
-          (parser-generator-ll--generate-parsing-table
-           tables)))
+  (let ((parser-tables
+         (parser-generator-ll--generate-parsing-table
+          (parser-generator-ll--generate-tables))))
+    ;; (message "parser-tables: %S" parser-tables)
     (should
      (equal
       '(
         (
-         ((S) nil) ;; T0
+         ((S) ($)) ;; T0
          (
           ((b b) reduce (b ((A) (b a)) b a) 1)
           ((a a) reduce (a ((A) (a a)) a a) 0)
@@ -178,7 +162,7 @@
           )
          )
         (
-         ((A) (b a));; T2
+         ((A) (b a)) ;; T2
          (
           ((b a) reduce (e) 3)
           ((b b) reduce (b) 2)
@@ -206,9 +190,8 @@
          )
         )
       parser-tables)))
-  (message "Passed Example 5.16 p. 352")
+  (message "Passed Example 5.15 p. 351 and 5.16 p. 352")
 
-  ;; TODO Make this pass
   (parser-generator-set-eof-identifier '$)
   (parser-generator-set-e-identifier 'e)
   (parser-generator-set-look-ahead-number 2)
@@ -224,25 +207,66 @@
      )
    )
   (parser-generator-process-grammar)
-  (let* ((tables
-          (parser-generator-ll--generate-tables)) ;; TODO Replace with hard-coded value here
-         (parser-tables
-          (parser-generator-ll--generate-parsing-table
-           tables)))
-    (message "parser-tables: %S" parser-tables)
+  (let ((parser-tables
+         (parser-generator-ll--generate-parsing-table
+          (parser-generator-ll--generate-tables))))
+    ;; (message "parser-tables: %S" parser-tables)
     (should
      (equal
       '(
         (
-         ((S) nil)
+         ((S) ($)) ;; T0
          (
-          ((a b) reduce ()
-           )
+          ((a b) reduce (a b ((A) ($))) 1)
+          (($ $) reduce (e) 0)
           )
+         )
+        (
+         ((A) ($)) ;; T1
+         (
+          ((b $) reduce (b) 3)
+          ((a a) reduce (((S) (a a)) a a) 2)
+          ((a b) reduce (((S) (a a)) a a) 2)
+          )
+         )
+        (
+         ((S) (a a)) ;; T2
+         (
+          ((a a) reduce (e) 0)
+          ((a b) reduce (a b ((A) (a a))) 1)
+          )
+         )
+        (
+         ((A) (a a)) ;; T3
+         (
+          ((b a) reduce (b) 3)
+          ((a a) reduce (((S) (a a)) a a) 2)
+          ((a b) reduce (((S) (a a)) a a) 2)
+          )
+         )
+        (
+         b
+         (
+          ((b b) pop)
+          ((b a) pop)
+          ((b $) pop)
+          )
+         )
+        (
+         a
+         (
+          ((a b) pop)
+          ((a a) pop)
+          ((a $) pop)
+          )
+         )
+        (
+         $
+         (($ $) accept)
          )
         )
       parser-tables)))
-  (message "Passed example 5.17 p. 354")
+  (message "Passed example 5.17 p. 356")
 
   (message "Passed tests for (parser-generator-ll--generate-parsing-table)"))
 
