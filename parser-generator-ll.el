@@ -30,13 +30,11 @@
   (message "\n;; Starting generation of LL(k) parser-tables..\n")
   (unless (parser-generator-ll--valid-grammar-p)
     (error "Invalid grammar specified!"))
-  (let ((parsing-table
-         (parser-generator-ll--generate-parsing-table
-          (parser-generator-ll--generate-tables))))
-    (setq
-     parser-generator-ll--parsing-table
-     parsing-table)
-    (message "\n;; Completed generation of LL(k) parser-tables.\n")))
+  (setq
+   parser-generator-ll--parsing-table
+   (parser-generator-ll--generate-parsing-table
+    (parser-generator-ll--generate-tables)))
+  (message "\n;; Completed generation of LL(k) parser-tables.\n"))
 
 
 ;;; Algorithms
@@ -474,10 +472,68 @@
              (1+ sub-symbol-index))))))
     valid))
 
-;; TODO Implement this .p 339
+;; Generally described at .p 339
 (defun parser-generator-ll--parse ()
-  "Parse input via lex-analyzer and return stuff."
-  )
+  "Parse input via lex-analyzer and return parse trail."
+  (let ((accept)
+        (stack
+         (list
+          (list
+           (parser-generator--get-grammar-start)
+           parser-generator--eof-identifier)))
+        (output))
+    (while accept
+      (let* ((state (car stack))
+             (state-action-table
+              (gethash
+               state
+               parser-generator-ll--parsing-table))
+             (look-ahead
+              (parser-generator-lex-analyzer--peek-next-look-ahead)))
+
+        (unless look-ahead
+          (signal
+           'error
+           (format
+            "Reached end of input without accepting!")))
+
+        (unless (gethash look-ahead state-action-table)
+          (let ((possible-look-aheads))
+            (maphash
+             (lambda (k _v) (push k possible-look-aheads))
+             state-action-table)
+            (setq
+             possible-look-aheads
+             (sort state-action-table))
+            (signal
+             'error
+             (format
+              "Invalid look-ahead '%S' in state: '%S', valid look-aheads: '%S'"
+              look-ahead
+              state
+              possible-look-aheads))))
+
+        (let* ((action (gethash look-ahead state-action-table))
+               (action-type action))
+          (when (listp action)
+            (setq action-type (car action)))
+          (cond
+           ((equal action-type 'pop)
+            (push
+             (parser-generator-lex-analyzer--pop-token)
+             stack))
+
+           ((equal action-type 'reduce)
+            (push
+             (nth 1 action)
+             stack)
+            (push
+             (nth 2 action)
+             output))
+
+           ((equal action-type 'accept)
+            (setq accept t))))))
+    output))
 
 
 (provide 'parser-generator-ll)
