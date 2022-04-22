@@ -74,17 +74,28 @@
         (stack
          (list
           (list
-           (parser-generator--get-grammar-start)
-           parser-generator--eof-identifier)))
+           (list
+            (parser-generator--get-grammar-start))
+           (list
+            parser-generator--eof-identifier))))
         (output))
-    (while accept
+    (parser-generator-lex-analyzer--reset)
+    (while (not accept)
       (let* ((state (car stack))
              (state-action-table
               (gethash
                state
                parser-generator-ll--parsing-table))
-             (look-ahead
-              (parser-generator-lex-analyzer--peek-next-look-ahead)))
+             (look-ahead-list
+              (parser-generator-lex-analyzer--peek-next-look-ahead))
+             (look-ahead))
+
+        (unless state-action-table
+          (signal
+           'error
+           (format
+            "State action table lacks actions for state: '%S'!"
+            state)))
 
         (unless look-ahead
           (signal
@@ -92,14 +103,15 @@
            (format
             "Reached end of input without accepting!")))
 
+        (setq
+         look-ahead
+         (car (car look-ahead-list)))
+
         (unless (gethash look-ahead state-action-table)
           (let ((possible-look-aheads))
             (maphash
              (lambda (k _v) (push k possible-look-aheads))
              state-action-table)
-            (setq
-             possible-look-aheads
-             (sort state-action-table 'string>))
             (signal
              'error
              (format
@@ -115,7 +127,7 @@
           (cond
            ((equal action-type 'pop)
             (push
-             (parser-generator-lex-analyzer--pop-token)
+             (car (parser-generator-lex-analyzer--pop-token))
              stack))
 
            ((equal action-type 'reduce)

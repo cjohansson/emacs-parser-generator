@@ -118,7 +118,6 @@
     )
   (message "Passed Example 5.17 p. 354")
 
-
   (message "Passed tests for (parser-generator-ll--generate-tables)"))
 
 (defun parser-generator-ll-test--generate-parsing-table ()
@@ -278,7 +277,48 @@
   "Test `parser-generator-ll-parse'."
   (message "Started tests for (parser-generator-ll-parse)")
 
+  (parser-generator-set-eof-identifier '$)
+  (parser-generator-set-e-identifier 'e)
+  (parser-generator-set-look-ahead-number 1)
+  (parser-generator-set-grammar
+   '(
+     (S A)
+     (a b)
+     (
+      (S (a A S) b)
+      (A a (b S a))
+      )
+     S
+     )
+   )
+  (parser-generator-process-grammar)
+  (parser-generator-ll-generate-parser-tables)
+  (message "parser-generator-ll--parsing-table: %S" parser-generator-ll--parsing-table)
+  (setq
+   parser-generator-lex-analyzer--function
+   (lambda (index)
+     (let* ((string '((a 1 . 2) (b 2 . 3) (b 3 . 4) (a 4 . 5) (b 5 . 6)))
+            (string-length (length string))
+            (max-index index)
+            (tokens))
+       (while (and
+               (< (1- index) string-length)
+               (< (1- index) max-index))
+         (push (nth (1- index) string) tokens)
+         (setq index (1+ index)))
+       (nreverse tokens))))
+  (setq
+   parser-generator-lex-analyzer--get-function
+   (lambda (token)
+     (car token)))
+  (parser-generator-ll-parse)
+  (should
+   (equal
+    '(1 4 2 3 2)
+    (parser-generator-ll-parse)))
   ;; TODO Test example 5.5 p. 340
+
+
   ;; TODO Test example 5.12 p. 346-347
   ;; TODO Test example 5.16 p. 352
   ;; TODO Test example 5.17 p. 355
