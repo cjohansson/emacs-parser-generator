@@ -156,7 +156,7 @@ Calculate the first look-ahead number of terminals of the sentential-form `S`, e
 
 ### E-FREE-FIRST(S)
 
-Calculate the e-free-first look-ahead number of terminals of sentential-form `S`, if you have multiple symbols the e-free-first will only affect the first symbol, the rest will be treated via first-function (above). Example:
+Calculate the e-free-first look-ahead number of terminals of sentential-form `S`, if you have multiple symbols the e-free-first will only affect the first symbol, the rest will be treated via the first-function (above). Example:
 
 ``` emacs-lisp
 (require 'parser-generator)
