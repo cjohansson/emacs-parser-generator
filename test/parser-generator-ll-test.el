@@ -16,8 +16,6 @@
   "Test `parser-generator-ll--generate-tables'."
   (message "Started tests for (parser-generator-ll--generate-tables)")
 
-  ;; Example 5.14 p. 350
-  ;; Example 5.15 p. 351
   (parser-generator-set-e-identifier 'e)
   (parser-generator-set-look-ahead-number 2)
   (parser-generator-set-grammar
@@ -63,9 +61,8 @@
         )
       )
      ))
-  (message "Passed Example 5.14 p. 350")
+  (message "Passed Example 5.14 p. 350 and 5.15 p. 351")
 
-  ;; TODO Pass Example 5.17 here
   (parser-generator-set-eof-identifier '$)
   (parser-generator-set-e-identifier 'e)
   (parser-generator-set-look-ahead-number 2)
@@ -83,45 +80,44 @@
   (parser-generator-process-grammar)
   (let* ((tables
           (parser-generator-ll--generate-tables)))
-    (message "tables: %S" tables)
     (should
      (equal
       tables
       '(
         (
-         ((S) ($)) ;; T0
+         ((A) (a a)) ;; T3
          (
-          (($ $) (e) nil)
-          ((a b) (a b A) $)
-          )
-         )
-        (
-         ((A) ($)) ;; T1
-         (
-          ((b $) (b) nil)
-          ((a a) (S a a) ((a a)))
           ((a b) (S a a) ((a a)))
+          ((a a) (S a a) ((a a)))
+          ((b a) (b) nil)
           )
          )
         (
          ((S) (a a)) ;; T2
          (
+          ((a b) (a b A) ((a a)))
           ((a a) (e) nil)
-          ((a b) (a B a) ((a a)))
           )
          )
         (
-         ((A) (a a)) ;; T3
+         ((A) ($)) ;; T1
          (
-          ((a a) (S a a) ((a a)))
           ((a b) (S a a) ((a a)))
-          ((b a) (b) nil)
+          ((a a) (S a a) ((a a)))
+          ((b $) (b) nil)
+          )
+         )
+        (
+         ((S) ($)) ;; T0
+         (
+          (($ $) (e) nil)
+          ((a b) (a b A) (($)))
           )
          )
         )
       ))
     )
-  (message "Passed Example 5.17")
+  (message "Passed Example 5.17 p. 354")
 
 
   (message "Passed tests for (parser-generator-ll--generate-tables)"))
@@ -163,8 +159,6 @@
          (parser-tables
           (parser-generator-ll--generate-parsing-table
            tables)))
-    ;; (message "parser-tables: %S" parser-tables)
-
     (should
      (equal
       '(
@@ -212,9 +206,9 @@
          )
         )
       parser-tables)))
-  (message "Passed Example 5.16")
+  (message "Passed Example 5.16 p. 352")
 
-  ;; TODO Test Example 5.17 here
+  ;; TODO Make this pass
   (parser-generator-set-eof-identifier '$)
   (parser-generator-set-e-identifier 'e)
   (parser-generator-set-look-ahead-number 2)
@@ -248,7 +242,7 @@
          )
         )
       parser-tables)))
-  (message "Passed example 5.17")
+  (message "Passed example 5.17 p. 354")
 
   (message "Passed tests for (parser-generator-ll--generate-parsing-table)"))
 

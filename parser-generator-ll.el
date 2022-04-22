@@ -142,10 +142,15 @@
                   "\nnon-terminal sub-symbol: %S" sub-symbol))
                 (let* ((follow-set
                         (nthcdr (1+ sub-symbol-index) production-rhs))
-                       (merged-follow
-                        (append follow-set parent-follow))
+                       (first-follow-set
+                        (parser-generator--first follow-set nil t t))
+                       (saturated-first-follow-set
+                        (parser-generator-generate-terminal-saturated-first-set
+                         first-follow-set))
                        (local-follow-set
-                        (parser-generator--first merged-follow nil t t))
+                        (parser-generator--merge-max-terminal-sets
+                         saturated-first-follow-set
+                         (list parent-follow)))
                        (sub-symbol-rhss
                         (parser-generator--get-grammar-rhs
                          sub-symbol)))
@@ -156,13 +161,19 @@
                   
                   (parser-generator--debug
                    (message
-                    "follow-set: %S for %S in %S"
+                    "\nfollow-set: %S for %S in %S"
                     follow-set
                     (nth sub-symbol-index production-rhs)
                     production-rhs)
                    (message
-                    "merged-follow: %S"
-                    follow-set)
+                    "first-follow-set: %S"
+                    first-follow-set)
+                   (message
+                    "saturated-first-follow-set: %S"
+                    saturated-first-follow-set)
+                   (message
+                    "parent-follow: %S"
+                    parent-follow)
                    (message
                     "local-follow-set: %S"
                     local-follow-set)
