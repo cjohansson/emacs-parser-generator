@@ -367,7 +367,10 @@
     (if (hash-table-p hash-table)
         (progn
           (maphash
-           (lambda (k v) (push (list k v) result))
+           (lambda (k v)
+             (if (hash-table-p v)
+                 (push (list k (parser-generator--hash-to-list v un-sorted)) result)
+               (push (list k v) result)))
            hash-table)
           (if un-sorted
               (nreverse result)

@@ -99,7 +99,7 @@
              state-action-table)
             (setq
              possible-look-aheads
-             (sort state-action-table))
+             (sort state-action-table 'string>))
             (signal
              'error
              (format

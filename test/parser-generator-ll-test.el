@@ -305,12 +305,19 @@
    )
   (parser-generator-process-grammar)
   (parser-generator-ll-generate-parser-tables)
-  (message "parser-generator-ll--parsing-table: %S" parser-generator-ll--parsing-table)
   (should
    (equal
-    #s(hash-table size 65 test equal rehash-size 1.5 rehash-threshold 0.8125 data (((S) ($)) #s(hash-table size 65 test equal rehash-size 1.5 rehash-threshold 0.8125 data ((a b) (reduce (a b ((A) ($))) 1) ($ $) (reduce (e) 0))) ((A) ($)) #s(hash-table size 65 test equal rehash-size 1.5 rehash-threshold 0.8125 data ((b $) (reduce (b) 3) (a a) (reduce (((S) (a a)) a a) 2) (a b) (reduce (((S) (a a)) a a) 2))) ((S) (a a)) #s(hash-table size 65 test equal rehash-size 1.5 rehash-threshold 0.8125 data ((a a) (reduce (e) 0) (a b) (reduce (a b ((A) (a a))) 1))) ((A) (a a)) #s(hash-table size 65 test equal rehash-size 1.5 rehash-threshold 0.8125 data ((b a) (reduce (b) 3) (a a) (reduce (((S) (a a)) a a) 2) (a b) (reduce (((S) (a a)) a a) 2))) b #s(hash-table size 65 test equal rehash-size 1.5 rehash-threshold 0.8125 data ((b b) pop (b a) pop (b $) pop)) a #s(hash-table size 65 test equal rehash-size 1.5 rehash-threshold 0.8125 data ((a b) pop (a a) pop (a $) pop)) $ #s(hash-table size 65 test equal rehash-size 1.5 rehash-threshold 0.8125 data (($ $) accept))))
-    parser-generator-ll--parsing-table))
-  ;; TODO Make this pass
+    '(
+      (((S) ($)) (((a b) (reduce (a b ((A) ($))) 1)) (($ $) (reduce (e) 0))))
+      (((A) ($)) (((b $) (reduce (b) 3)) ((a a) (reduce (((S) (a a)) a a) 2)) ((a b) (reduce (((S) (a a)) a a) 2))))
+      (((S) (a a)) (((a a) (reduce (e) 0)) ((a b) (reduce (a b ((A) (a a))) 1))))
+      (((A) (a a)) (((b a) (reduce (b) 3)) ((a a) (reduce (((S) (a a)) a a) 2)) ((a b) (reduce (((S) (a a)) a a) 2))))
+      (b (((b b) pop) ((b a) pop) ((b $) pop)))
+      (a (((a b) pop) ((a a) pop) ((a $) pop)))
+      ($ ((($ $) accept))))
+    (parser-generator--hash-to-list
+     parser-generator-ll--parsing-table
+     t)))
 
   (message "Passed tests for (parser-generator-ll-generate-parser-tables)"))
 
