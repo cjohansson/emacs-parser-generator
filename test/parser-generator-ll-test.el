@@ -270,6 +270,25 @@
 
   (message "Passed tests for (parser-generator-ll--generate-parsing-table)"))
 
+(defun parser-generator-ll-test--parse ()
+  "Test `parser-generator-ll-parse'."
+  (message "Started tests for (parser-generator-ll-parse)")
+
+  ;; TODO Test example 5.5 p. 340
+  ;; TODO Test example 5.12 p. 346-347
+  ;; TODO Test example 5.16 p. 352
+  ;; TODO Test example 5.17 p. 355
+
+  (message "Passed tests for (parser-generator-ll-parse)"))
+
+(defun parser-generator-ll-test--generate-parser-tables ()
+  "Test `parser-generator-ll-generate-parser-tables'."
+  (message "Started tests for (parser-generator-ll-generate-parser-tables)")
+
+  ;; TODO Do testing of hash-table generation here
+
+  (message "Passed tests for (parser-generator-ll-generate-parser-tables)"))
+
 (defun parser-generator-ll-test--valid-grammar-p ()
   "Test `parser-generator-ll--valid-grammar-p'."
   (message "Started tests for (parser-generator-ll--valid-grammar-p)")
@@ -323,9 +342,14 @@
 
 (defun parser-generator-ll-test ()
   "Run test."
+  ;; Helpers
   (parser-generator-ll-test--generate-tables)
   (parser-generator-ll-test--generate-parsing-table)
-  (parser-generator-ll-test--valid-grammar-p))
+  (parser-generator-ll-test--valid-grammar-p)
+
+  ;; Main stuff
+  (parser-generator-ll-test--generate-parser-tables)
+  (parser-generator-ll-test--parse))
 
 
 (provide 'parser-generator-ll-test)
