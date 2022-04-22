@@ -30,13 +30,40 @@
   (message "\n;; Starting generation of LL(k) parser-tables..\n")
   (unless (parser-generator-ll--valid-grammar-p)
     (error "Invalid grammar specified!"))
-  (let ((parsing-table)
-        (parser-generator-ll--generate-parsing-table
-         (parser-generator-ll--generate-tables)))
-    ;; TODO Generate hash-based parsing table here
+  (let ((list-parsing-table
+         (parser-generator-ll--generate-parsing-table
+          (parser-generator-ll--generate-tables)))
+        (hash-parsing-table (make-hash-table :test 'equal)))
+    (dolist (state-list list-parsing-table)
+      (let ((state-key (nth 0 state-list))
+            (state-look-aheads (nth 1 state-list))
+            (state-hash-table (make-hash-table :test 'equal)))
+        (dolist (state-look-ahead-list state-look-aheads)
+          (let ((state-look-ahead-string (nth 0 state-look-ahead-list))
+                (state-look-ahead-action (nth 1 state-look-ahead-list)))
+            (if (equal state-look-ahead-action 'reduce)
+                (let ((state-look-ahead-reduction
+                       (nth 2 state-look-ahead-list))
+                      (state-look-ahead-production-number
+                       (nth 3 state-look-ahead-list)))
+                  (puthash
+                   state-look-ahead-string
+                   (list
+                    state-look-ahead-action
+                    state-look-ahead-reduction
+                    state-look-ahead-production-number)
+                   state-hash-table))
+              (puthash
+               state-look-ahead-string
+               state-look-ahead-action
+               state-hash-table))))
+        (puthash
+         state-key
+         state-hash-table
+         hash-parsing-table)))
     (setq
      parser-generator-ll--parsing-table
-     parsing-table))
+     hash-parsing-table))
   (message "\n;; Completed generation of LL(k) parser-tables.\n"))
 
 
@@ -351,8 +378,9 @@
              (list
               parser-generator--eof-identifier
               (list
-               eof-look-ahead
-               'accept))
+               (list
+                eof-look-ahead
+                'accept)))
              parsing-table)
           (let ((stack-item (nth 0 terminal-mutation)))
             (when (and
