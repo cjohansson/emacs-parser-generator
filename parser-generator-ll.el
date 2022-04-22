@@ -152,10 +152,6 @@
                        (sub-symbol-rhss
                         (parser-generator--get-grammar-rhs
                          sub-symbol)))
-
-                  ;; TODO local-follow-set needs to be a merge-max-terminal-sets of
-                  ;; the first set of follow-set combined with the first
-                  ;; set of the parent follow set
                   
                   (parser-generator--debug
                    (message
@@ -477,6 +473,11 @@
              sub-symbol-index
              (1+ sub-symbol-index))))))
     valid))
+
+;; TODO Implement this .p 339
+(defun parser-generator-ll--parse ()
+  "Parse input via lex-analyzer and return stuff."
+  )
 
 
 (provide 'parser-generator-ll)
