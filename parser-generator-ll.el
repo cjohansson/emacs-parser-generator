@@ -47,18 +47,18 @@
                       (state-look-ahead-production-number
                        (nth 3 state-look-ahead-list)))
                   (puthash
-                   state-look-ahead-string
+                   (format "%S" state-look-ahead-string)
                    (list
                     state-look-ahead-action
                     state-look-ahead-reduction
                     state-look-ahead-production-number)
                    state-hash-table))
               (puthash
-               state-look-ahead-string
+               (format "%S" state-look-ahead-string)
                state-look-ahead-action
                state-hash-table))))
         (puthash
-         state-key
+         (format "%S" state-key)
          state-hash-table
          hash-parsing-table)))
     (setq
@@ -84,30 +84,37 @@
       (let* ((state (car stack))
              (state-action-table
               (gethash
-               state
+               (format "%S" state)
                parser-generator-ll--parsing-table))
              (look-ahead-list
               (parser-generator-lex-analyzer--peek-next-look-ahead))
              (look-ahead))
+        (message "\nstate: %S" state)
+        (message "\nstate-action-table: %S" state-action-table)
 
         (unless state-action-table
           (signal
            'error
-           (format
-            "State action table lacks actions for state: '%S'!"
-            state)))
+           (list
+            (format
+             "State action table lacks actions for state: '%S'!"
+             state))))
 
-        (unless look-ahead
-          (signal
-           'error
-           (format
-            "Reached end of input without accepting!")))
+        (if look-ahead-list
+            (progn
+              (message "look-ahead-list: %S" look-ahead-list)
+              (setq
+               look-ahead
+               (list (car (car look-ahead-list)))))
+          (setq
+           look-ahead
+           (list parser-generator--eof-identifier)))
 
-        (setq
-         look-ahead
-         (car (car look-ahead-list)))
+        (message "look-ahead: %S" look-ahead)
 
-        (unless (gethash look-ahead state-action-table)
+        (unless (gethash
+                 (format "%S" look-ahead)
+                 state-action-table)
           (let ((possible-look-aheads))
             (maphash
              (lambda (k _v) (push k possible-look-aheads))
@@ -120,17 +127,24 @@
               state
               possible-look-aheads))))
 
-        (let* ((action (gethash look-ahead state-action-table))
+        (let* ((action
+                (gethash
+                 (format "%S" look-ahead)
+                 state-action-table))
                (action-type action))
+          (message "action: %S" action)
           (when (listp action)
             (setq action-type (car action)))
+          (message "action-type: %S" action-type)
           (cond
            ((equal action-type 'pop)
+            (message "pushed: %S" look-ahead-list)
             (push
              (car (parser-generator-lex-analyzer--pop-token))
              stack))
 
            ((equal action-type 'reduce)
+            (message "reduced: %S" (nth 1 action))
             (push
              (nth 1 action)
              stack)

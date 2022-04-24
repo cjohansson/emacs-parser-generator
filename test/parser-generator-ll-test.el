@@ -293,7 +293,7 @@
    )
   (parser-generator-process-grammar)
   (parser-generator-ll-generate-parser-tables)
-  (message "parser-generator-ll--parsing-table: %S" parser-generator-ll--parsing-table)
+  ;; (message "parser-generator-ll--parsing-table: %S" parser-generator-ll--parsing-table)
   (setq
    parser-generator-lex-analyzer--function
    (lambda (index)
@@ -348,13 +348,52 @@
   (should
    (equal
     '(
-      (((S) ($)) (((a b) (reduce (a b ((A) ($))) 1)) (($ $) (reduce (e) 0))))
-      (((A) ($)) (((b $) (reduce (b) 3)) ((a a) (reduce (((S) (a a)) a a) 2)) ((a b) (reduce (((S) (a a)) a a) 2))))
-      (((S) (a a)) (((a a) (reduce (e) 0)) ((a b) (reduce (a b ((A) (a a))) 1))))
-      (((A) (a a)) (((b a) (reduce (b) 3)) ((a a) (reduce (((S) (a a)) a a) 2)) ((a b) (reduce (((S) (a a)) a a) 2))))
-      (b (((b b) pop) ((b a) pop) ((b $) pop)))
-      (a (((a b) pop) ((a a) pop) ((a $) pop)))
-      ($ ((($ $) accept))))
+      ("((S) ($))"
+       (
+        ("(a b)" (reduce (a b ((A) ($))) 1))
+        ("($ $)" (reduce (e) 0))
+        )
+       )
+      ("((A) ($))"
+       (
+        ("(b $)" (reduce (b) 3))
+        ("(a a)" (reduce (((S) (a a)) a a) 2))
+        ("(a b)" (reduce (((S) (a a)) a a) 2))
+        )
+       )
+      ("((S) (a a))"
+       (
+        ("(a a)" (reduce (e) 0))
+        ("(a b)" (reduce (a b ((A) (a a))) 1))
+        )
+       )
+      ("((A) (a a))"
+       (
+        ("(b a)" (reduce (b) 3))
+        ("(a a)" (reduce (((S) (a a)) a a) 2))
+        ("(a b)" (reduce (((S) (a a)) a a) 2))
+        )
+       )
+      ("b"
+       (
+        ("(b b)" pop)
+        ("(b a)" pop)
+        ("(b $)" pop)
+        )
+       )
+      ("a"
+       (
+        ("(a b)" pop)
+        ("(a a)" pop)
+        ("(a $)" pop)
+        )
+       )
+      ("$"
+       (
+        ("($ $)" accept)
+        )
+       )
+      )
     (parser-generator--hash-to-list
      parser-generator-ll--parsing-table
      t)))
