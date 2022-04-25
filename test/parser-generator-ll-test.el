@@ -519,8 +519,8 @@
      (S A)
      (a b)
      (
-      (S e (a b A))
-      (A (S a a) b)
+      (S (a A S) b)
+      (A a (b S A))
       )
      S
      )
@@ -530,7 +530,7 @@
   (setq
    parser-generator-lex-analyzer--function
    (lambda (index)
-     (let* ((string '((a 1 . 2) (b 2 . 3) (a 3 . 4) (a 4 . 5)))
+     (let* ((string '((a 1 . 2) (b 2 . 3) (b 3 . 4) (a 4 . 5) (b 5 . 6)))
             (string-length (length string))
             (max-index index)
             (tokens))
@@ -547,9 +547,10 @@
   (parser-generator-ll-parse)
   (should
    (equal
-    '(1 2 0) ;; Example is indexed from 1 so that is why they have '(2 3 1)
+    '(0 3 1 2 1) ;; Example is indexed from 1 so that is why they have '(1 4 2 3 2)
     (parser-generator-ll-parse)))
-  ;; TODO Test example 5.5 p. 340
+  (message "Passed example 5.5 p. 340")
+  ;; TODO Make this pass
 
   (message "Passed tests for (parser-generator-ll-parse)"))
 
