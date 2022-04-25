@@ -374,7 +374,117 @@
      )
    )
   (parser-generator-process-grammar)
+  (let ((tables (parser-generator-ll--generate-tables)))
+    (message "tables: %S" tables)
+    '(
+      (
+       ((E2) (")"))
+       (
+        ((")") (e) nil)
+        (("+") ("+" T E2) ((")") ("+")))
+        )
+       )
+      (
+       ((E) (")"))
+       (
+        (("(") (T E2) ((")") ("+")))
+        (("a") (T E2) ((")") ("+")))
+        )
+       )
+      (
+       ((F) ("*"))
+       (
+        (("(") ("(" E ")") ((")")))
+        (("a") ("a") nil)
+        )
+       )
+      (
+       ((T2) ("+"))
+       (
+        (("*") ("*" F T2) (("+") ("*")))
+        (("+") (e) nil)
+        )
+       )
+      (
+       ((T) ("+"))
+       (
+        (("(") (F T2) (("+") ("*")))
+        (("a") (F T2) (("+") ("*")))
+        )
+       )
+      (
+       ((E2) ($))
+       (
+        (($) (e) nil)
+        (("+") ("+" T E2) (($) ("+")))
+        )
+       )
+      (
+       ((E) ($))
+       (
+        (("(") (T E2) (($) ("+")))
+        (("a") (T E2) (($) ("+")))
+        )
+       )
+      ))
+
   (parser-generator-ll-generate-parser-tables)
+  (message
+   "parser-generator-ll--parsing-table: %S"
+   (parser-generator--hash-to-list
+    parser-generator-ll--parsing-table
+    t))
+  ;; Local-follow-should exceed k
+  '(
+    ("((E) ($))"
+     (
+      ("(\"a\")" (reduce (((T) ($)) ((E2) ("+"))) 0))
+      ("(\"(\")" (reduce (((T) ($)) ((E2) ("+"))) 0))
+      )
+     )
+    ("((E2) ($))"
+     (
+      ("(\"+\")" (reduce ("+" ((T) ($)) ((E2) ("+"))) 1))
+      ("($)" (reduce (e) 2))
+      )
+     )
+    ("((T) (\"+\"))"
+     (
+      ("(\"a\")" (reduce (((F) ("+")) ((T2) ("*"))) 3))
+      ("(\"(\")" (reduce (((F) ("+")) ((T2) ("*"))) 3))
+      )
+     )
+    ("((T2) (\"+\"))"
+     (
+      ("(\"+\")" (reduce (e) 5))
+      ("(\"*\")" (reduce ("*" ((F) ("+")) ((T2) ("*"))) 4))
+      )
+     )
+    ("((F) (\"*\"))"
+     (
+      ("(\"a\")" (reduce ("a") 7))
+      ("(\"(\")" (reduce ("(" ((E) (")")) ")") 6))
+      )
+     )
+    ("((E) (\")\"))"
+     (
+      ("(\"a\")" (reduce (((T) (")")) ((E2) ("+"))) 0))
+      ("(\"(\")" (reduce (((T) (")")) ((E2) ("+"))) 0))
+      )
+     )
+    ("((E2) (\")\"))"
+     (
+      ("(\"+\")" (reduce ("+" ((T) (")")) ((E2) ("+"))) 1))
+      ("(\")\")" (reduce (e) 2))
+      )
+     )
+    ("\"a\""(("(\"a\")" pop)))
+    ("\"+\"" (("(\"+\")" pop)))
+    ("\"*\"" (("(\"*\")" pop)))
+    ("\")\"" (("(\")\")" pop)))
+    ("\"(\"" (("(\"(\")" pop)))
+    ("$" (("($)" accept)))
+    )
   ;; (message "parser-generator-ll--parsing-table: %S" parser-generator-ll--parsing-table)
   (setq
    parser-generator-lex-analyzer--function
@@ -399,6 +509,7 @@
     '(0 3 6 0 3 7 5 2 5) ;; Example is 1-indexed '(1 4 7 1 4 8 5 8 6 3 6 3)
     (parser-generator-ll-parse)))
   (message "Passed example 5.12 p. 346-347")
+  ;; TODO Make this pass
 
   (parser-generator-set-eof-identifier '$)
   (parser-generator-set-e-identifier 'e)
