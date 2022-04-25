@@ -77,8 +77,15 @@
            (list
             (parser-generator--get-grammar-start))
            (list
-            parser-generator--eof-identifier))))
-        (output))
+            parser-generator--eof-identifier))
+          parser-generator--eof-identifier))
+        (output)
+        (eof-look-ahead
+         (parser-generator--generate-list-of-symbol
+          parser-generator--look-ahead-number
+          parser-generator--eof-identifier))
+        (e-reduction
+         (list parser-generator--e-identifier)))
     (parser-generator-lex-analyzer--reset)
     (while (not accept)
       (let* ((state (car stack))
@@ -89,8 +96,10 @@
              (look-ahead-list
               (parser-generator-lex-analyzer--peek-next-look-ahead))
              (look-ahead))
-        (message "\nstate: %S" state)
-        (message "\nstate-action-table: %S" state-action-table)
+        (message "\nstack: %S" stack)
+        (message "output: %S" output)
+        (message "state: %S" state)
+        (message "state-action-table: %S" state-action-table)
 
         (unless state-action-table
           (signal
@@ -103,12 +112,12 @@
         (if look-ahead-list
             (progn
               (message "look-ahead-list: %S" look-ahead-list)
-              (setq
-               look-ahead
-               (list (car (car look-ahead-list)))))
+              (dolist (look-ahead-list-item look-ahead-list)
+                (push (car look-ahead-list-item) look-ahead))
+              (setq look-ahead (reverse look-ahead)))
           (setq
            look-ahead
-           (list parser-generator--eof-identifier)))
+           eof-look-ahead))
 
         (message "look-ahead: %S" look-ahead)
 
@@ -137,24 +146,25 @@
             (setq action-type (car action)))
           (message "action-type: %S" action-type)
           (cond
+
            ((equal action-type 'pop)
-            (message "pushed: %S" look-ahead-list)
-            (push
-             (car (parser-generator-lex-analyzer--pop-token))
-             stack))
+            (message "pushed: %S" look-ahead)
+            (parser-generator-lex-analyzer--pop-token)
+            (pop stack))
 
            ((equal action-type 'reduce)
             (message "reduced: %S" (nth 1 action))
-            (push
-             (nth 1 action)
-             stack)
+            (pop stack)
+            (unless (equal (nth 1 action) e-reduction)
+              (dolist (reduce-item (reverse (nth 1 action)))
+                (push reduce-item stack)))
             (push
              (nth 2 action)
              output))
 
            ((equal action-type 'accept)
             (setq accept t))))))
-    output))
+    (reverse output)))
 
 
 ;;; Algorithms

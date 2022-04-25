@@ -279,25 +279,63 @@
 
   (parser-generator-set-eof-identifier '$)
   (parser-generator-set-e-identifier 'e)
-  (parser-generator-set-look-ahead-number 1)
+  (parser-generator-set-look-ahead-number 2)
   (parser-generator-set-grammar
    '(
      (S A)
      (a b)
      (
-      (S (a A S) b)
-      (A a (b S a))
+      (S (a A a a) (b A b a))
+      (A b e)
       )
      S
      )
    )
   (parser-generator-process-grammar)
   (parser-generator-ll-generate-parser-tables)
-  ;; (message "parser-generator-ll--parsing-table: %S" parser-generator-ll--parsing-table)
   (setq
    parser-generator-lex-analyzer--function
    (lambda (index)
-     (let* ((string '((a 1 . 2) (b 2 . 3) (b 3 . 4) (a 4 . 5) (b 5 . 6)))
+     (let* ((string '((b 1 . 2) (b 2 . 3) (a 3 . 4)))
+            (string-length (length string))
+            (max-index index)
+            (tokens))
+       (while (and
+               (< (1- index) string-length)
+               (< (1- index) max-index))
+         (push (nth (1- index) string) tokens)
+         (setq index (1+ index)))
+       (nreverse tokens))))
+  (setq
+   parser-generator-lex-analyzer--get-function
+   (lambda (token)
+     (car token)))
+  (should
+   (equal
+    '(1 3) ;; Example is indexed from 1 so that is why they have '(2 4)
+    (parser-generator-ll-parse)))
+  (message "Passed example 5.16 p. 352")
+
+  (parser-generator-set-eof-identifier '$)
+  (parser-generator-set-e-identifier 'e)
+  (parser-generator-set-look-ahead-number 2)
+  (parser-generator-set-grammar
+   '(
+     (S A)
+     (a b)
+     (
+      (S e (a b A))
+      (A (S a a) b)
+      )
+     S
+     )
+   )
+  (parser-generator-process-grammar)
+  (parser-generator-ll-generate-parser-tables)
+  (setq
+   parser-generator-lex-analyzer--function
+   (lambda (index)
+     (let* ((string '((a 1 . 2) (b 2 . 3) (a 3 . 4) (a 4 . 5)))
             (string-length (length string))
             (max-index index)
             (tokens))
@@ -314,14 +352,93 @@
   (parser-generator-ll-parse)
   (should
    (equal
-    '(1 4 2 3 2)
+    '(1 2 0) ;; Example is indexed from 1 so that is why they have '(2 3 1)
+    (parser-generator-ll-parse)))
+  (message "Passed example 5.17 p. 355")
+
+  (parser-generator-set-eof-identifier '$)
+  (parser-generator-set-e-identifier 'e)
+  (parser-generator-set-look-ahead-number 1)
+  (parser-generator-set-grammar
+   '(
+     (E E2 T T2 F)
+     ("a" "(" ")" "+" "*")
+     (
+      (E (T E2))
+      (E2 ("+" T E2) e)
+      (T (F T2))
+      (T2 ("*" F T2) e)
+      (F ("(" E ")") "a")
+      )
+     E
+     )
+   )
+  (parser-generator-process-grammar)
+  (parser-generator-ll-generate-parser-tables)
+  ;; (message "parser-generator-ll--parsing-table: %S" parser-generator-ll--parsing-table)
+  (setq
+   parser-generator-lex-analyzer--function
+   (lambda (index)
+     (let* ((string '(("(" 1 . 2) ("a" 2 . 3) ("*" 3 . 4) ("a" 4 . 5) (")" 5 . 6)))
+            (string-length (length string))
+            (max-index index)
+            (tokens))
+       (while (and
+               (< (1- index) string-length)
+               (< (1- index) max-index))
+         (push (nth (1- index) string) tokens)
+         (setq index (1+ index)))
+       (nreverse tokens))))
+  (setq
+   parser-generator-lex-analyzer--get-function
+   (lambda (token)
+     (car token)))
+  (parser-generator-ll-parse)
+  (should
+   (equal
+    '(0 3 6 0 3 7 5 2 5) ;; Example is 1-indexed '(1 4 7 1 4 8 5 8 6 3 6 3)
+    (parser-generator-ll-parse)))
+  (message "Passed example 5.12 p. 346-347")
+
+  (parser-generator-set-eof-identifier '$)
+  (parser-generator-set-e-identifier 'e)
+  (parser-generator-set-look-ahead-number 2)
+  (parser-generator-set-grammar
+   '(
+     (S A)
+     (a b)
+     (
+      (S e (a b A))
+      (A (S a a) b)
+      )
+     S
+     )
+   )
+  (parser-generator-process-grammar)
+  (parser-generator-ll-generate-parser-tables)
+  (setq
+   parser-generator-lex-analyzer--function
+   (lambda (index)
+     (let* ((string '((a 1 . 2) (b 2 . 3) (a 3 . 4) (a 4 . 5)))
+            (string-length (length string))
+            (max-index index)
+            (tokens))
+       (while (and
+               (< (1- index) string-length)
+               (< (1- index) max-index))
+         (push (nth (1- index) string) tokens)
+         (setq index (1+ index)))
+       (nreverse tokens))))
+  (setq
+   parser-generator-lex-analyzer--get-function
+   (lambda (token)
+     (car token)))
+  (parser-generator-ll-parse)
+  (should
+   (equal
+    '(1 2 0) ;; Example is indexed from 1 so that is why they have '(2 3 1)
     (parser-generator-ll-parse)))
   ;; TODO Test example 5.5 p. 340
-
-
-  ;; TODO Test example 5.12 p. 346-347
-  ;; TODO Test example 5.16 p. 352
-  ;; TODO Test example 5.17 p. 355
 
   (message "Passed tests for (parser-generator-ll-parse)"))
 
