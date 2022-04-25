@@ -118,6 +118,71 @@
     )
   (message "Passed Example 5.17 p. 354")
 
+  (parser-generator-set-eof-identifier '$)
+  (parser-generator-set-e-identifier 'e)
+  (parser-generator-set-look-ahead-number 1)
+  (parser-generator-set-grammar
+   '(
+     (S A)
+     (a b)
+     (
+      (S (a A S) b)
+      (A a (b S A))
+      )
+     S
+     )
+   )
+  (parser-generator-process-grammar)
+  (let* ((tables
+          (parser-generator-ll--generate-tables)))
+    (message "tables: %S" tables)
+    (should
+     (equal
+      tables
+      '(
+        (
+         ((A) (a))
+         (
+          ((a) (a) nil)
+          ((b) (b S A) ((a) (b) (a)))
+          )
+         )
+        (
+         ((S) (a))
+         (
+          ((a) (a A S) ((a) (b) (a)))
+          ((b) (b) nil)
+          )
+         )
+        (
+         ((S) (b))
+         (
+          ((a) (a A S) ((b) (b) (a)))
+          ((b) (b) nil)
+          )
+         )
+        (
+         ((A) (b))
+         (
+          ((a) (a) nil)
+          ((b) (b S A) ((b) (b) (a)))
+          )
+         )
+        (
+         ((S) ($))
+         (
+          ((a) (a A S) (($) (b) (a))) ;; WEIRD?
+          ((b) (b) nil)
+          )
+         )
+        )
+      ))
+    )
+  ;; TODO Verify above
+  (message "Passed Example 5.5 p. 340")
+
+  ;; TODO Example 5.12 p. 346-347
+
   (message "Passed tests for (parser-generator-ll--generate-tables)"))
 
 (defun parser-generator-ll-test--generate-parsing-table ()
@@ -361,6 +426,47 @@
   (parser-generator-set-look-ahead-number 1)
   (parser-generator-set-grammar
    '(
+     (S A)
+     (a b)
+     (
+      (S (a A S) b)
+      (A a (b S A))
+      )
+     S
+     )
+   )
+  (parser-generator-process-grammar)
+  (parser-generator-ll-generate-parser-tables)
+  (setq
+   parser-generator-lex-analyzer--function
+   (lambda (index)
+     (let* ((string '((a 1 . 2) (b 2 . 3) (b 3 . 4) (a 4 . 5) (b 5 . 6)))
+            (string-length (length string))
+            (max-index index)
+            (tokens))
+       (while (and
+               (< (1- index) string-length)
+               (< (1- index) max-index))
+         (push (nth (1- index) string) tokens)
+         (setq index (1+ index)))
+       (nreverse tokens))))
+  (setq
+   parser-generator-lex-analyzer--get-function
+   (lambda (token)
+     (car token)))
+  (parser-generator-ll-parse)
+  (should
+   (equal
+    '(0 3 1 2 1) ;; Example is indexed from 1 so that is why they have '(1 4 2 3 2)
+    (parser-generator-ll-parse)))
+  (message "Passed example 5.5 p. 340")
+  ;; TODO Make this pass
+
+  (parser-generator-set-eof-identifier '$)
+  (parser-generator-set-e-identifier 'e)
+  (parser-generator-set-look-ahead-number 1)
+  (parser-generator-set-grammar
+   '(
      (E E2 T T2 F)
      ("a" "(" ")" "+" "*")
      (
@@ -427,7 +533,6 @@
         )
        )
       ))
-
   (parser-generator-ll-generate-parser-tables)
   (message
    "parser-generator-ll--parsing-table: %S"
@@ -509,47 +614,6 @@
     '(0 3 6 0 3 7 5 2 5) ;; Example is 1-indexed '(1 4 7 1 4 8 5 8 6 3 6 3)
     (parser-generator-ll-parse)))
   (message "Passed example 5.12 p. 346-347")
-  ;; TODO Make this pass
-
-  (parser-generator-set-eof-identifier '$)
-  (parser-generator-set-e-identifier 'e)
-  (parser-generator-set-look-ahead-number 2)
-  (parser-generator-set-grammar
-   '(
-     (S A)
-     (a b)
-     (
-      (S (a A S) b)
-      (A a (b S A))
-      )
-     S
-     )
-   )
-  (parser-generator-process-grammar)
-  (parser-generator-ll-generate-parser-tables)
-  (setq
-   parser-generator-lex-analyzer--function
-   (lambda (index)
-     (let* ((string '((a 1 . 2) (b 2 . 3) (b 3 . 4) (a 4 . 5) (b 5 . 6)))
-            (string-length (length string))
-            (max-index index)
-            (tokens))
-       (while (and
-               (< (1- index) string-length)
-               (< (1- index) max-index))
-         (push (nth (1- index) string) tokens)
-         (setq index (1+ index)))
-       (nreverse tokens))))
-  (setq
-   parser-generator-lex-analyzer--get-function
-   (lambda (token)
-     (car token)))
-  (parser-generator-ll-parse)
-  (should
-   (equal
-    '(0 3 1 2 1) ;; Example is indexed from 1 so that is why they have '(1 4 2 3 2)
-    (parser-generator-ll-parse)))
-  (message "Passed example 5.5 p. 340")
   ;; TODO Make this pass
 
   (message "Passed tests for (parser-generator-ll-parse)"))
