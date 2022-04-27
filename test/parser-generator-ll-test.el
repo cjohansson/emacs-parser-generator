@@ -135,7 +135,7 @@
   (parser-generator-process-grammar)
   (let* ((tables
           (parser-generator-ll--generate-tables)))
-    (message "tables: %S" tables)
+    ;; (message "tables: %S" tables)
     (should
      (equal
       tables
@@ -144,20 +144,20 @@
          ((A) (a))
          (
           ((a) (a) nil)
-          ((b) (b S A) ((a) (b) (a)))
+          ((b) (b S A) ((b) (a)))
           )
          )
         (
          ((S) (a))
          (
-          ((a) (a A S) ((a) (b) (a)))
+          ((a) (a A S) ((b) (a)))
           ((b) (b) nil)
           )
          )
         (
          ((S) (b))
          (
-          ((a) (a A S) ((b) (b) (a)))
+          ((a) (a A S) ((b) (a)))
           ((b) (b) nil)
           )
          )
@@ -165,20 +165,20 @@
          ((A) (b))
          (
           ((a) (a) nil)
-          ((b) (b S A) ((b) (b) (a)))
+          ((b) (b S A) ((b) (a)))
           )
          )
         (
          ((S) ($))
          (
-          ((a) (a A S) (($) (b) (a))) ;; WEIRD?
+          ((a) (a A S) ((b) (a)))
           ((b) (b) nil)
           )
          )
         )
-      ))
+      )
+     )
     )
-  ;; TODO Verify above
   (message "Passed Example 5.5 p. 340")
 
   ;; TODO Example 5.12 p. 346-347
@@ -460,7 +460,6 @@
     '(0 3 1 2 1) ;; Example is indexed from 1 so that is why they have '(1 4 2 3 2)
     (parser-generator-ll-parse)))
   (message "Passed example 5.5 p. 340")
-  ;; TODO Make this pass
 
   (parser-generator-set-eof-identifier '$)
   (parser-generator-set-e-identifier 'e)

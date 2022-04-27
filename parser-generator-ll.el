@@ -224,6 +224,7 @@
          (message "first-rhs: %S" first-rhs)
          (message "satured-first-rhs: %S" satured-first-rhs))
 
+        ;; Calculate look-aheads
         (cond
          ((and satured-first-rhs
                (not first-parent-follow))
@@ -258,14 +259,12 @@
         ;; push a new item to stack with a local-follow
         ;; and a new left-hand-side
         (let ((sub-symbol-index 0)
-              (sub-symbol-length (length production-rhs)))
+              (sub-symbol-length (length production-rhs))
+              (found-first-non-terminal-p))
           (while (< sub-symbol-index sub-symbol-length)
             (let ((sub-symbol (nth sub-symbol-index production-rhs)))
               (when (parser-generator--valid-non-terminal-p
                      sub-symbol)
-                (parser-generator--debug
-                 (message
-                  "\nnon-terminal sub-symbol: %S" sub-symbol))
                 (let* ((follow-set
                         (nthcdr (1+ sub-symbol-index) production-rhs))
                        (first-follow-set
@@ -280,10 +279,11 @@
                        (sub-symbol-rhss
                         (parser-generator--get-grammar-rhs
                          sub-symbol)))
-                  
                   (parser-generator--debug
                    (message
-                    "\nfollow-set: %S for %S in %S"
+                    "\nnon-terminal sub-symbol: %S" sub-symbol)
+                   (message
+                    "follow-set: %S for %S in %S"
                     follow-set
                     (nth sub-symbol-index production-rhs)
                     production-rhs)
@@ -303,9 +303,14 @@
                     "sub-symbol-rhss: %S"
                     sub-symbol-rhss))
                   (dolist (local-follow local-follow-set)
-                    (push
-                     local-follow
-                     sets)
+                    (unless found-first-non-terminal-p
+                      (parser-generator--debug
+                       (message
+                        "pushed local follow to set: %S"
+                        local-follow))
+                      (push
+                       local-follow
+                       sets))
                     (dolist (sub-symbol-rhs sub-symbol-rhss)
                       (let* ((new-stack-item
                               (list
@@ -325,13 +330,17 @@
                            distinct-stack-item-p)
                           (push
                            new-stack-item
-                           stack))))))))
+                           stack)))))
+                  (unless found-first-non-terminal-p
+                    (setq
+                     found-first-non-terminal-p
+                     t)))))
             (setq
              sub-symbol-index
              (1+ sub-symbol-index))))
 
         ;; Add all distinct combinations of left-hand-side,
-        ;; look-ahead and parent-follow to tables list here
+        ;; look-aheads and parent-follow to tables list here
         (when look-aheads
           (dolist (look-ahead look-aheads)
             (let ((table
@@ -357,7 +366,7 @@
                  t
                  distinct-item-p)
                 (parser-generator--debug
-                 (message "new table: %S" table))
+                 (message "\nnew table: %S" table))
                 (if (gethash
                      table-hash-key
                      tables)
