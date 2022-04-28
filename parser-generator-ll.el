@@ -259,8 +259,7 @@
         ;; push a new item to stack with a local-follow
         ;; and a new left-hand-side
         (let ((sub-symbol-index 0)
-              (sub-symbol-length (length production-rhs))
-              (found-first-non-terminal-p))
+              (sub-symbol-length (length production-rhs)))
           (while (< sub-symbol-index sub-symbol-length)
             (let ((sub-symbol (nth sub-symbol-index production-rhs)))
               (when (parser-generator--valid-non-terminal-p
@@ -302,15 +301,14 @@
                    (message
                     "sub-symbol-rhss: %S"
                     sub-symbol-rhss))
+                  (push
+                   local-follow-set
+                   sets)
+                  (parser-generator--debug
+                   (message
+                    "pushed local follow set to sets: %S"
+                    local-follow-set))
                   (dolist (local-follow local-follow-set)
-                    (unless found-first-non-terminal-p
-                      (parser-generator--debug
-                       (message
-                        "pushed local follow to set: %S"
-                        local-follow))
-                      (push
-                       local-follow
-                       sets))
                     (dolist (sub-symbol-rhs sub-symbol-rhss)
                       (let* ((new-stack-item
                               (list
@@ -330,14 +328,16 @@
                            distinct-stack-item-p)
                           (push
                            new-stack-item
-                           stack)))))
-                  (unless found-first-non-terminal-p
-                    (setq
-                     found-first-non-terminal-p
-                     t)))))
+                           stack))))))))
             (setq
              sub-symbol-index
              (1+ sub-symbol-index))))
+
+        (setq sets (reverse sets))
+        (parser-generator--debug
+         (message
+          "\nsets: %S"
+          sets))
 
         ;; Add all distinct combinations of left-hand-side,
         ;; look-aheads and parent-follow to tables list here
@@ -381,8 +381,7 @@
                   (puthash
                    table-hash-key
                    (list table)
-                   tables)
-                  )))))
+                   tables))))))
 
         (parser-generator--debug
          (message "\nproduction-lhs: %S" production-lhs)

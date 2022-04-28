@@ -31,6 +31,7 @@
    )
   (parser-generator-process-grammar)
   (let ((tables (parser-generator-ll--generate-tables)))
+    ;; (message "tables: %S" tables)
     (should
      (equal
       tables
@@ -52,9 +53,9 @@
         (
          ((S) ($)) ;; T0
          (
-          ((a b) (a A a a) ((a a)))
-          ((a a) (a A a a) ((a a)))
-          ((b b) (b A b a) ((b a)))
+          ((a b) (a A a a) (((a a))))
+          ((a a) (a A a a) (((a a))))
+          ((b b) (b A b a) (((b a))))
           )
          )
         )
@@ -79,6 +80,7 @@
   (parser-generator-process-grammar)
   (let* ((tables
           (parser-generator-ll--generate-tables)))
+    ;; (message "tables: %S" tables)
     (should
      (equal
       tables
@@ -86,23 +88,23 @@
         (
          ((A) (a a)) ;; T3
          (
-          ((a b) (S a a) ((a a)))
-          ((a a) (S a a) ((a a)))
+          ((a b) (S a a) (((a a))))
+          ((a a) (S a a) (((a a))))
           ((b a) (b) nil)
           )
          )
         (
          ((S) (a a)) ;; T2
          (
-          ((a b) (a b A) ((a a)))
+          ((a b) (a b A) (((a a))))
           ((a a) (e) nil)
           )
          )
         (
          ((A) ($)) ;; T1
          (
-          ((a b) (S a a) ((a a)))
-          ((a a) (S a a) ((a a)))
+          ((a b) (S a a) (((a a))))
+          ((a a) (S a a) (((a a))))
           ((b $) (b) nil)
           )
          )
@@ -110,7 +112,7 @@
          ((S) ($)) ;; T0
          (
           (($ $) (e) nil)
-          ((a b) (a b A) (($)))
+          ((a b) (a b A) ((($))))
           )
          )
         )
@@ -144,20 +146,20 @@
          ((A) (a))
          (
           ((a) (a) nil)
-          ((b) (b S A) ((b) (a)))
+          ((b) (b S A) (((a) (b)) ((a))))
           )
          )
         (
          ((S) (a))
          (
-          ((a) (a A S) ((b) (a)))
+          ((a) (a A S) (((a) (b)) ((a))))
           ((b) (b) nil)
           )
          )
         (
          ((S) (b))
          (
-          ((a) (a A S) ((b) (a)))
+          ((a) (a A S) (((a) (b)) ((b))))
           ((b) (b) nil)
           )
          )
@@ -165,20 +167,19 @@
          ((A) (b))
          (
           ((a) (a) nil)
-          ((b) (b S A) ((b) (a)))
+          ((b) (b S A) (((a) (b)) ((b))))
           )
          )
         (
          ((S) ($))
          (
-          ((a) (a A S) ((b) (a)))
+          ((a) (a A S) (((a) (b)) (($))))
           ((b) (b) nil)
           )
          )
         )
-      )
      )
-    )
+    ))
   (message "Passed Example 5.5 p. 340")
 
   (parser-generator-set-eof-identifier '$)
@@ -203,59 +204,62 @@
     (message "tables: %S" tables)
     (should
      (equal
-      '(
+      '
+      (
+       (
+        ((E2) (")"))
         (
-         ((E2) (")"))
-         (
-          ((")") (e) nil)
-          (("+") ("+" T E2) (("+")))
-          )
-         )
-        (
-         ((E) (")"))
-         (
-          (("(") (T E2) (("+")))
-          (("a") (T E2) (("+")))
-          )
-         )
-        (
-         ((F) ("*"))
-         (
-          (("(") ("(" E ")") ((")")))
-          (("a") ("a") nil)
-          )
-         )
-        (
-         ((T2) ("+"))
-         (
-          (("*") ("*" F T2) (("*")))
-          (("+") (e) nil)
-          )
-         )
-        (
-         ((T) ("+"))
-         (
-          (("(") (F T2) (("*")))
-          (("a") (F T2) (("*")))
-          )
-         )
-        (
-         ((E2) ($))
-         (
-          (($) (e) nil)
-          (("+") ("+" T E2) (("+")))
-          )
-         )
-        (
-         ((E) ($))
-         (
-          (("(") (T E2) (("+")))
-          (("a") (T E2) (("+")))
-          )
+         ((")") (e) nil)
+         (("+") ("+" T E2) ((("+") (")")) ((")"))))
          )
         )
+       (
+        ((E) (")"))
+        (
+         (("(") (T E2) ((("+") (")")) ((")"))))
+         (("a") (T E2) ((("+") (")")) ((")"))))
+         )
+        )
+       (
+        ((F) ("*"))
+        (
+         (("(") ("(" E ")") (((")"))))
+         (("a") ("a") nil)
+         )
+        )
+       (
+        ((T2) ("+"))
+        (
+         (("*") ("*" F T2) ((("*") ("+")) (("+"))))
+         (("+") (e) nil)
+         )
+        )
+       (
+        ((T) ("+"))
+        (
+         (("(") (F T2) ((("*") ("+")) (("+"))))
+         (("a") (F T2) ((("*") ("+")) (("+"))))
+         )
+        )
+       (
+        ((E2) ($))
+        (
+         (($) (e) nil)
+         (("+") ("+" T E2) ((("+") ($)) (($))))
+         )
+        )
+       (
+        ((E) ($))
+        (
+         (("(") (T E2) ((("+") ($)) (($))))
+         (("a") (T E2) ((("+") ($)) (($))))
+         )
+        )
+       )
       tables)))
-  ;; TODO Verify above
+  ;; TODO Make above pass
+  ;; TODO There are issues calculating Y for a non-terminal
+  ;; were a non-terminal follows that has a alternative e-rule
   (message "Passed Example 5.12 p. 346-347")
 
   (message "Passed tests for (parser-generator-ll--generate-tables)"))
