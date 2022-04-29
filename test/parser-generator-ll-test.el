@@ -330,16 +330,16 @@
   (let ((parser-tables
          (parser-generator-ll--generate-parsing-table
           (parser-generator-ll--generate-tables))))
-    ;; (message "parser-tables: %S" parser-tables)
+    (message "parser-tables: %S" parser-tables)
     (should
      (equal
       '(
         (
-         ((S) ($)) ;; T0
+         ((S) ($ $)) ;; T0
          (
-          ((b b) reduce (b ((A) (b a)) b a) 1)
-          ((a a) reduce (a ((A) (a a)) a a) 0)
-          ((a b) reduce (a ((A) (a a)) a a) 0)
+          ((b b) reduce (b ((A) ((b a))) b a) 1)
+          ((a a) reduce (a ((A) ((a a))) a a) 0)
+          ((a b) reduce (a ((A) ((a a))) a a) 0)
           )
          )
         (
@@ -356,28 +356,9 @@
           ((b b) reduce (b) 2)
           )
          )
-        (
-         b
-         (
-          ((b b) pop)
-          ((b a) pop)
-          ((b $) pop)
-          )
-         )
-        (
-         a
-         (
-          ((a b) pop)
-          ((a a) pop)
-          ((a $) pop)
-          )
-         )
-        (
-         $
-         (
-          (($ $) accept)
-          )
-         )
+        (b (((b b) pop) ((b a) pop) ((b $) pop)))
+        (a (((a b) pop) ((a a) pop) ((a $) pop)))
+        ($ ((($ $) accept)))
         )
       parser-tables)))
   (message "Passed Example 5.15 p. 351 and 5.16 p. 352")
@@ -397,22 +378,25 @@
      )
    )
   (parser-generator-process-grammar)
-  (let ((parser-tables
-         (parser-generator-ll--generate-parsing-table
-          (parser-generator-ll--generate-tables))))
-    ;; (message "parser-tables: %S" parser-tables)
+  (let* ((tables
+          (parser-generator-ll--generate-tables))
+          (parser-tables
+           (parser-generator-ll--generate-parsing-table
+            tables)))
+    (message "tables: %S" tables)
+    (message "parser-tables: %S" parser-tables)
     (should
      (equal
       '(
         (
-         ((S) ($)) ;; T0
+         ((S) ($ $)) ;; T0
          (
           ((a b) reduce (a b ((A) ($))) 1)
           (($ $) reduce (e) 0)
           )
          )
         (
-         ((A) ($)) ;; T1
+         ((A) ($ $)) ;; T1
          (
           ((b $) reduce (b) 3)
           ((a a) reduce (((S) (a a)) a a) 2)
@@ -458,7 +442,8 @@
          )
         )
       parser-tables)))
-  (message "Passed example 5.17 p. 356")
+  (message "Passed Example 5.17 p. 356")
+  ;; TODO Make this pass
 
   (parser-generator-set-eof-identifier '$)
   (parser-generator-set-e-identifier 'e)
