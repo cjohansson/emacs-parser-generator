@@ -1241,7 +1241,7 @@
          look-ahead)))
     (nreverse look-ahead)))
 
-(defun parser-generator--merge-max-terminal-sets (a b)
+(defun parser-generator--merge-max-terminal-sets (a &optional b allow-any-length)
   "Calculate list of all lists of L1 (+) L2 which is a merge of all terminals in lists A combined with all terminals in lists B but with maximum length of the set look-ahead number."
   (let ((a-length (length a))
         (a-index 0)
@@ -1258,7 +1258,8 @@
                   ((merged-element
                     (parser-generator--merge-max-terminals
                      a-element
-                     b-element)))
+                     b-element
+                     allow-any-length)))
                 (if merged-lists
                     (setq
                      merged-lists
@@ -1277,7 +1278,8 @@
               ((merged-element
                 (parser-generator--merge-max-terminals
                  a-element
-                 nil)))
+                 nil
+                 allow-any-length)))
             (if merged-lists
                 (setq
                  merged-lists
@@ -1297,7 +1299,8 @@
                 ((merged-element
                   (parser-generator--merge-max-terminals
                    nil
-                   b-element)))
+                   b-element
+                   allow-any-length)))
               (if merged-lists
                   (setq
                    merged-lists
@@ -1320,8 +1323,8 @@
     merged-lists))
 
 ;; Lemma 5.1 p. 348
-(defun parser-generator--merge-max-terminals (a b)
-  "Calculate L1 (+) L2 which is a merge of all terminals in A and B but with exactly length of the set look-ahead number."
+(defun parser-generator--merge-max-terminals (a b &optional allow-any-length)
+  "Calculate L1 (+) L2 which is a merge of all terminals in A and B but with exactly length of the set look-ahead number. Optionally ALLOW-ANY-LENGTH."
   (let ((k (max 1 parser-generator--look-ahead-number))
         (merged)
         (merge-count 0)
@@ -1379,7 +1382,12 @@
 
       (setq b-index (1+ b-index)))
 
-    (if (> merge-count 0)
+    (if (or
+         (and
+          allow-any-length
+          (> merge-count 0))
+         (and (not allow-any-length)
+              (= merge-count k)))
         (nreverse merged)
       nil)))
 

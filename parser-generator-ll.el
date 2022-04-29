@@ -187,7 +187,9 @@
                 (list
                  (list start)
                  start-rhs
-                 (list parser-generator--eof-identifier))))
+                 (parser-generator--generate-list-of-symbol
+                  parser-generator--look-ahead-number
+                  parser-generator--eof-identifier))))
           (puthash
            initial-stack-item
            t
@@ -208,51 +210,21 @@
               (nth 1 stack-item))
              (parent-follow
               (nth 2 stack-item))
-             (first-rhs
-              (parser-generator--first production-rhs nil t t))
-             (satured-first-rhs
-              (parser-generator-generate-terminal-saturated-first-set
-               first-rhs))
-             (first-parent-follow
-              (parser-generator--first parent-follow nil t t t))
-             (look-aheads)
+             (concatenated-follow
+              (append production-rhs parent-follow))
+             (first-concatenated-follow
+              (parser-generator--first concatenated-follow nil t t))
+             (look-aheads
+              (parser-generator--merge-max-terminal-sets
+               first-concatenated-follow))
              (sets))
+
         (parser-generator--debug
          (message "\nproduction-lhs: %S" production-lhs)
          (message "production-rhs: %S" production-rhs)
          (message "parent-follow: %S" parent-follow)
-         (message "first-rhs: %S" first-rhs)
-         (message "satured-first-rhs: %S" satured-first-rhs))
-
-        ;; Calculate look-aheads
-        (cond
-         ((and satured-first-rhs
-               (not first-parent-follow))
-          (setq
-           look-aheads
-           (parser-generator--merge-max-terminal-sets
-            satured-first-rhs
-            nil)))
-         ((and first-parent-follow
-               (not satured-first-rhs))
-          (setq
-           look-aheads
-           (parser-generator--merge-max-terminal-sets
-            nil
-            first-parent-follow)))
-         ((and satured-first-rhs
-               first-parent-follow)
-          (setq
-           look-aheads
-           (parser-generator--merge-max-terminal-sets
-            satured-first-rhs
-            first-parent-follow)))
-         (t (error
-             "Unexpected empty FIRST for production: %S and parent-follow: %S"
-             (list production-lhs production-rhs)
-             parent-follow)))
-
-        (parser-generator--debug
+         (message "concatenated-follow: %S" concatenated-follow)
+         (message "first-concatenated-follow: %S" first-concatenated-follow)
          (message "look-aheads: %S" look-aheads))
 
         ;; For each non-terminal in the production right-hand side
@@ -266,15 +238,15 @@
                      sub-symbol)
                 (let* ((follow-set
                         (nthcdr (1+ sub-symbol-index) production-rhs))
-                       (first-follow-set
-                        (parser-generator--first follow-set nil t t))
-                       (saturated-first-follow-set
-                        (parser-generator-generate-terminal-saturated-first-set
-                         first-follow-set))
+                       (concatenated-follow-set
+                        (append follow-set parent-follow))
+                       (first-concatenated-follow-set
+                        (parser-generator--first concatenated-follow-set nil t t))
                        (local-follow-set
                         (parser-generator--merge-max-terminal-sets
-                         saturated-first-follow-set
-                         (list parent-follow)))
+                         first-concatenated-follow-set
+                         nil
+                         t))
                        (sub-symbol-rhss
                         (parser-generator--get-grammar-rhs
                          sub-symbol)))
@@ -287,20 +259,19 @@
                     (nth sub-symbol-index production-rhs)
                     production-rhs)
                    (message
-                    "first-follow-set: %S"
-                    first-follow-set)
+                    "concatenated-follow-set: %S"
+                    concatenated-follow-set)
                    (message
-                    "saturated-first-follow-set: %S"
-                    saturated-first-follow-set)
-                   (message
-                    "parent-follow: %S"
-                    parent-follow)
+                    "first-concatenated-follow-set: %S"
+                    first-concatenated-follow-set)
                    (message
                     "local-follow-set: %S"
                     local-follow-set)
                    (message
                     "sub-symbol-rhss: %S"
                     sub-symbol-rhss))
+                  (unless local-follow-set
+                    (setq local-follow-set '(nil)))
                   (push
                    local-follow-set
                    sets)
@@ -381,15 +352,7 @@
                   (puthash
                    table-hash-key
                    (list table)
-                   tables))))))
-
-        (parser-generator--debug
-         (message "\nproduction-lhs: %S" production-lhs)
-         (message "production-rhs: %S" production-rhs)
-         (message "parent-follow: %S" parent-follow)
-         (message "first-rhs: %S" first-rhs)
-         (message "first-parent-follow: %S" first-parent-follow)
-         (message "look-aheads: %S" look-aheads))))
+                   tables))))))))
 
     (let ((sorted-tables))
       (maphash
