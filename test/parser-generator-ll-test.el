@@ -313,6 +313,8 @@
   "Test `parser-generator-ll--generate-parsing-table'."
   (message "Started tests for (parser-generator-ll--generate-parsing-table)")
 
+  ;; TODO Need to make this tests pass, RHS after reduction should be single dimension list
+
   (parser-generator-set-e-identifier 'e)
   (parser-generator-set-look-ahead-number 2)
   (parser-generator-set-grammar
@@ -337,9 +339,9 @@
         (
          ((S) ($ $)) ;; T0
          (
-          ((b b) reduce (b ((A) ((b a))) b a) 1)
-          ((a a) reduce (a ((A) ((a a))) a a) 0)
-          ((a b) reduce (a ((A) ((a a))) a a) 0)
+          ((b b) reduce (b ((A) (b a)) b a) 1)
+          ((a a) reduce (a ((A) (a a)) a a) 0)
+          ((a b) reduce (a ((A) (a a)) a a) 0)
           )
          )
         (
@@ -391,7 +393,7 @@
         (
          ((S) ($ $)) ;; T0
          (
-          ((a b) reduce (a b ((A) (($ $)))) 1)
+          ((a b) reduce (a b ((A) ($ $))) 1)
           (($ $) reduce (e) 0)
           )
          )
@@ -399,23 +401,23 @@
          ((A) ($ $)) ;; T1
          (
           ((b $) reduce (b) 3)
-          ((a a) reduce (((S) ((a a))) a a) 2)
-          ((a b) reduce (((S) ((a a))) a a) 2)
+          ((a a) reduce (((S) (a a)) a a) 2)
+          ((a b) reduce (((S) (a a)) a a) 2)
           )
          )
         (
          ((S) (a a)) ;; T2
          (
           ((a a) reduce (e) 0)
-          ((a b) reduce (a b ((A) ((a a)))) 1)
+          ((a b) reduce (a b ((A) (a a))) 1)
           )
          )
         (
          ((A) (a a)) ;; T3
          (
           ((b a) reduce (b) 3)
-          ((a a) reduce (((S) ((a a))) a a) 2)
-          ((a b) reduce (((S) ((a a))) a a) 2)
+          ((a a) reduce (((S) (a a)) a a) 2)
+          ((a b) reduce (((S) (a a)) a a) 2)
           )
          )
         (b (((b b) pop) ((b a) pop) ((b $) pop)))
@@ -457,63 +459,63 @@
         (
          ((E) ($))
          (
-          (("a") reduce (((T) (($) ("+"))) ((E2) (($)))) 0)
-          (("(") reduce (((T) (($) ("+"))) ((E2) (($)))) 0)
+          (("a") reduce (((T) ($ "+")) ((E2) ($))) 0)
+          (("(") reduce (((T) ($ "+")) ((E2) ($))) 0)
           )
          )
         (
          ((E2) ($))
          (
-          (("+") reduce ("+" ((T) (($) ("+"))) ((E2) (($)))) 1)
+          (("+") reduce ("+" ((T) ($ "+")) ((E2) ($))) 1)
           (($) reduce (e) 2)
           )
          )
         (
          ((T) ("+"))
          (
-          (("a") reduce (((F) (("*") ("+"))) ((T2) (("+")))) 3)
-          (("(") reduce (((F) (("*") ("+"))) ((T2) (("+")))) 3)
+          (("a") reduce (((F) ("*" "+")) ((T2) ("+"))) 3)
+          (("(") reduce (((F) ("*" "+")) ((T2) ("+"))) 3)
           )
          )
         (
          ((T2) ("+"))
          (
           (("+") reduce (e) 5)
-          (("*") reduce ("*" ((F) (("*") ("+"))) ((T2) (("+")))) 4)
+          (("*") reduce ("*" ((F) ("*" "+")) ((T2) ("+"))) 4)
           )
          )
         (
          ((F) ("+"))
          (
           (("a") reduce ("a") 7)
-          (("(") reduce ("(" ((E) ((")"))) ")") 6)
+          (("(") reduce ("(" ((E) (")")) ")") 6)
           )
          )
         (
          ((E) (")"))
          (
-          (("a") reduce (((T) ((")") ("+"))) ((E2) ((")")))) 0)
-          (("(") reduce (((T) ((")") ("+"))) ((E2) ((")")))) 0)
+          (("a") reduce (((T) (")" "+")) ((E2) (")"))) 0)
+          (("(") reduce (((T) (")" "+")) ((E2) (")"))) 0)
           )
          )
         (
          ((E2) (")"))
          (
-          (("+") reduce ("+" ((T) ((")") ("+"))) ((E2) ((")")))) 1)
+          (("+") reduce ("+" ((T) (")" "+")) ((E2) (")"))) 1)
           ((")") reduce (e) 2)
           )
          )
         (
          ((T) (")"))
          (
-          (("a") reduce (((F) ((")") ("*"))) ((T2) ((")")))) 3)
-          (("(") reduce (((F) ((")") ("*"))) ((T2) ((")")))) 3)
+          (("a") reduce (((F) (")" "*")) ((T2) (")"))) 3)
+          (("(") reduce (((F) (")" "*")) ((T2) (")"))) 3)
           )
          )
         (
          ((T2) (")"))
          (
-          (("*") reduce ("*" ((F) ((")") ("*"))) ((T2) ((")")))) 4)
+          (("*") reduce ("*" ((F) (")" "*")) ((T2) (")"))) 4)
           ((")") reduce (e) 5)
           )
          )
@@ -521,27 +523,27 @@
          ((F) (")"))
          (
           (("a") reduce ("a") 7)
-          (("(") reduce ("(" ((E) ((")"))) ")") 6)
+          (("(") reduce ("(" ((E) (")")) ")") 6)
           )
          )
         (
          ((F) ("*"))
          (
           (("a") reduce ("a") 7)
-          (("(") reduce ("(" ((E) ((")"))) ")") 6)
+          (("(") reduce ("(" ((E) (")")) ")") 6)
           )
          )
         (
          ((T) ($))
          (
-          (("a") reduce (((F) (($) ("*"))) ((T2) (($)))) 3)
-          (("(") reduce (((F) (($) ("*"))) ((T2) (($)))) 3)
+          (("a") reduce (((F) ($ "*")) ((T2) ($))) 3)
+          (("(") reduce (((F) ($ "*")) ((T2) ($))) 3)
           )
          )
         (
          ((T2) ($))
          (
-          (("*") reduce ("*" ((F) (($) ("*"))) ((T2) (($)))) 4)
+          (("*") reduce ("*" ((F) ($ "*")) ((T2) ($))) 4)
           (($) reduce (e) 5)
           )
          )
@@ -549,7 +551,7 @@
          ((F) ($))
          (
           (("a") reduce ("a") 7)
-          (("(") reduce ("(" ((E) ((")"))) ")") 6)
+          (("(") reduce ("(" ((E) (")")) ")") 6)
           )
          )
         ("a" ((("a") pop)))
