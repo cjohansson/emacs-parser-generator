@@ -76,7 +76,8 @@
           (list
            (list
             (parser-generator--get-grammar-start))
-           (list
+           (parser-generator--generate-list-of-symbol
+            parser-generator--look-ahead-number
             parser-generator--eof-identifier))
           parser-generator--eof-identifier))
         (output)

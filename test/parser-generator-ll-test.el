@@ -330,7 +330,7 @@
   (let ((parser-tables
          (parser-generator-ll--generate-parsing-table
           (parser-generator-ll--generate-tables))))
-    (message "parser-tables: %S" parser-tables)
+    ;; (message "parser-tables: %S" parser-tables)
     (should
      (equal
       '(
@@ -383,15 +383,15 @@
           (parser-tables
            (parser-generator-ll--generate-parsing-table
             tables)))
-    (message "tables: %S" tables)
-    (message "parser-tables: %S" parser-tables)
+    ;; (message "tables: %S" tables)
+    ;; (message "parser-tables: %S" parser-tables)
     (should
      (equal
       '(
         (
          ((S) ($ $)) ;; T0
          (
-          ((a b) reduce (a b ((A) ($))) 1)
+          ((a b) reduce (a b ((A) (($ $)))) 1)
           (($ $) reduce (e) 0)
           )
          )
@@ -399,51 +399,31 @@
          ((A) ($ $)) ;; T1
          (
           ((b $) reduce (b) 3)
-          ((a a) reduce (((S) (a a)) a a) 2)
-          ((a b) reduce (((S) (a a)) a a) 2)
+          ((a a) reduce (((S) ((a a))) a a) 2)
+          ((a b) reduce (((S) ((a a))) a a) 2)
           )
          )
         (
          ((S) (a a)) ;; T2
          (
           ((a a) reduce (e) 0)
-          ((a b) reduce (a b ((A) (a a))) 1)
+          ((a b) reduce (a b ((A) ((a a)))) 1)
           )
          )
         (
          ((A) (a a)) ;; T3
          (
           ((b a) reduce (b) 3)
-          ((a a) reduce (((S) (a a)) a a) 2)
-          ((a b) reduce (((S) (a a)) a a) 2)
+          ((a a) reduce (((S) ((a a))) a a) 2)
+          ((a b) reduce (((S) ((a a))) a a) 2)
           )
          )
-        (
-         b
-         (
-          ((b b) pop)
-          ((b a) pop)
-          ((b $) pop)
-          )
-         )
-        (
-         a
-         (
-          ((a b) pop)
-          ((a a) pop)
-          ((a $) pop)
-          )
-         )
-        (
-         $
-         (
-          (($ $) accept)
-          )
-         )
+        (b (((b b) pop) ((b a) pop) ((b $) pop)))
+        (a (((a b) pop) ((a a) pop) ((a $) pop)))
+        ($ ((($ $) accept)))
         )
       parser-tables)))
   (message "Passed Example 5.17 p. 356")
-  ;; TODO Make this pass
 
   (parser-generator-set-eof-identifier '$)
   (parser-generator-set-e-identifier 'e)
@@ -464,60 +444,112 @@
    )
   (parser-generator-process-grammar)
   (parser-generator-process-grammar)
-  (let ((parser-tables
-         (parser-generator-ll--generate-parsing-table
-          (parser-generator-ll--generate-tables))))
-    (message "parser-tables: %S" parser-tables)
+  (let* ((tables
+          (parser-generator-ll--generate-tables))
+          (parser-tables
+           (parser-generator-ll--generate-parsing-table
+            tables)))
+    ;; (message "tables: %S" tables)
+    ;; (message "parser-tables: %S" parser-tables)
     (should
      (equal
       '(
         (
          ((E) ($))
          (
-          (("a") reduce (((T) ("+")) ((E2) nil)) 0) ;; TODO Verify this
-          (("(") reduce (((T) ("+")) ((E2) nil)) 0) ;; TODO Verify this
+          (("a") reduce (((T) (($) ("+"))) ((E2) (($)))) 0)
+          (("(") reduce (((T) (($) ("+"))) ((E2) (($)))) 0)
           )
          )
         (
          ((E2) ($))
          (
-          (("+") reduce ("+" ((T) ("+")) ((E2) nil)) 1)
+          (("+") reduce ("+" ((T) (($) ("+"))) ((E2) (($)))) 1)
           (($) reduce (e) 2)
           )
          )
         (
          ((T) ("+"))
          (
-          (("a") reduce (((F) ("*")) ((T2) nil)) 3)
-          (("(") reduce (((F) ("*")) ((T2) nil)) 3)
+          (("a") reduce (((F) (("*") ("+"))) ((T2) (("+")))) 3)
+          (("(") reduce (((F) (("*") ("+"))) ((T2) (("+")))) 3)
           )
          )
         (
          ((T2) ("+"))
          (
           (("+") reduce (e) 5)
-          (("*") reduce ("*" ((F) ("*")) ((T2) nil)) 4)
+          (("*") reduce ("*" ((F) (("*") ("+"))) ((T2) (("+")))) 4)
+          )
+         )
+        (
+         ((F) ("+"))
+         (
+          (("a") reduce ("a") 7)
+          (("(") reduce ("(" ((E) ((")"))) ")") 6)
+          )
+         )
+        (
+         ((E) (")"))
+         (
+          (("a") reduce (((T) ((")") ("+"))) ((E2) ((")")))) 0)
+          (("(") reduce (((T) ((")") ("+"))) ((E2) ((")")))) 0)
+          )
+         )
+        (
+         ((E2) (")"))
+         (
+          (("+") reduce ("+" ((T) ((")") ("+"))) ((E2) ((")")))) 1)
+          ((")") reduce (e) 2)
+          )
+         )
+        (
+         ((T) (")"))
+         (
+          (("a") reduce (((F) ((")") ("*"))) ((T2) ((")")))) 3)
+          (("(") reduce (((F) ((")") ("*"))) ((T2) ((")")))) 3)
+          )
+         )
+        (
+         ((T2) (")"))
+         (
+          (("*") reduce ("*" ((F) ((")") ("*"))) ((T2) ((")")))) 4)
+          ((")") reduce (e) 5)
+          )
+         )
+        (
+         ((F) (")"))
+         (
+          (("a") reduce ("a") 7)
+          (("(") reduce ("(" ((E) ((")"))) ")") 6)
           )
          )
         (
          ((F) ("*"))
          (
           (("a") reduce ("a") 7)
-          (("(") reduce ("(" ((E) (")")) ")") 6)
+          (("(") reduce ("(" ((E) ((")"))) ")") 6)
           )
          )
         (
-         ((E) (")"))
+         ((T) ($))
          (
-          (("a") reduce (((T) ("+")) ((E2) nil)) 0)
-          (("(") reduce (((T) ("+")) ((E2) nil)) 0)
+          (("a") reduce (((F) (($) ("*"))) ((T2) (($)))) 3)
+          (("(") reduce (((F) (($) ("*"))) ((T2) (($)))) 3)
           )
          )
         (
-         ((E2) (")"))
+         ((T2) ($))
          (
-          (("+") reduce ("+" ((T) ("+")) ((E2) nil)) 1)
-          ((")") reduce (e) 2)
+          (("*") reduce ("*" ((F) (($) ("*"))) ((T2) (($)))) 4)
+          (($) reduce (e) 5)
+          )
+         )
+        (
+         ((F) ($))
+         (
+          (("a") reduce ("a") 7)
+          (("(") reduce ("(" ((E) ((")"))) ")") 6)
           )
          )
         ("a" ((("a") pop)))
@@ -525,7 +557,8 @@
         ("*" ((("*") pop)))
         (")" (((")") pop)))
         ("(" ((("(") pop)))
-        ($ ((($) accept))))
+        ($ ((($) accept)))
+        )
       parser-tables)))
   ;; TODO Verify above
   (message "Passed Example 5.12 p. 346-347")
@@ -569,6 +602,9 @@
    parser-generator-lex-analyzer--get-function
    (lambda (token)
      (car token)))
+  (message "parsing-table: %S" (parser-generator--hash-to-list
+     parser-generator-ll--parsing-table
+     t))
   (should
    (equal
     '(1 3) ;; Example is indexed from 1 so that is why they have '(2 4)
@@ -720,54 +756,39 @@
    )
   (parser-generator-process-grammar)
   (parser-generator-ll-generate-parser-tables)
+  ;; (message "parsing-table: %S" (parser-generator--hash-to-list parser-generator-ll--parsing-table t))
   (should
    (equal
     '(
-      ("((S) ($))"
+      ("((S) ($ $))"
        (
-        ("(a b)" (reduce (a b ((A) ($))) 1))
+        ("(a b)" (reduce (a b ((A) (($ $)))) 1))
         ("($ $)" (reduce (e) 0))
         )
        )
-      ("((A) ($))"
+      ("((A) ($ $))"
        (
         ("(b $)" (reduce (b) 3))
-        ("(a a)" (reduce (((S) (a a)) a a) 2))
-        ("(a b)" (reduce (((S) (a a)) a a) 2))
+        ("(a a)" (reduce (((S) ((a a))) a a) 2))
+        ("(a b)" (reduce (((S) ((a a))) a a) 2))
         )
        )
       ("((S) (a a))"
        (
         ("(a a)" (reduce (e) 0))
-        ("(a b)" (reduce (a b ((A) (a a))) 1))
+        ("(a b)" (reduce (a b ((A) ((a a)))) 1))
         )
        )
       ("((A) (a a))"
        (
         ("(b a)" (reduce (b) 3))
-        ("(a a)" (reduce (((S) (a a)) a a) 2))
-        ("(a b)" (reduce (((S) (a a)) a a) 2))
+        ("(a a)" (reduce (((S) ((a a))) a a) 2))
+        ("(a b)" (reduce (((S) ((a a))) a a) 2))
         )
        )
-      ("b"
-       (
-        ("(b b)" pop)
-        ("(b a)" pop)
-        ("(b $)" pop)
-        )
-       )
-      ("a"
-       (
-        ("(a b)" pop)
-        ("(a a)" pop)
-        ("(a $)" pop)
-        )
-       )
-      ("$"
-       (
-        ("($ $)" accept)
-        )
-       )
+      ("b" (("(b b)" pop) ("(b a)" pop) ("(b $)" pop)))
+      ("a" (("(a b)" pop) ("(a a)" pop) ("(a $)" pop)))
+      ("$" (("($ $)" accept)))
       )
     (parser-generator--hash-to-list
      parser-generator-ll--parsing-table
