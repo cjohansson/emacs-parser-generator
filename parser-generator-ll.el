@@ -108,7 +108,8 @@
            (list
             (format
              "State action table lacks actions for state: '%S'!"
-             state))))
+             state)
+            state)))
 
         (if look-ahead-list
             (progn
@@ -131,8 +132,12 @@
              state-action-table)
             (signal
              'error
-             (format
+             (list
+              (format
               "Invalid look-ahead '%S' in state: '%S', valid look-aheads: '%S'"
+              look-ahead
+              state
+              possible-look-aheads)
               look-ahead
               state
               possible-look-aheads))))
@@ -439,12 +444,13 @@
               (let ((sub-symbol (nth sub-symbol-index right-hand-side)))
                 (if (parser-generator--valid-non-terminal-p
                      sub-symbol)
-                    (let ((local-follow (nth non-terminal-index local-follow-sets)))
-                      (push
-                       (list
-                        (list sub-symbol)
-                        local-follow)
-                       modified-right-hand-side)
+                    (let ((local-follow-set (nth non-terminal-index local-follow-sets)))
+                      (dolist (local-follow local-follow-set)
+                        (push
+                         (list
+                          (list sub-symbol)
+                          local-follow)
+                         modified-right-hand-side))
                       (setq
                        non-terminal-index
                        (1+ non-terminal-index)))
