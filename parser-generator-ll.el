@@ -17,9 +17,9 @@
 
 
 (defvar
-  parser-generator-ll--parsing-table
+  parser-generator-ll--table
   nil
-  "Parsing-table for grammar.")
+  "Table for grammar.")
 
 
 ;;; Functions
@@ -27,11 +27,14 @@
 
 (defun parser-generator-ll-generate-tables ()
   "Generate tables for grammar."
-  (message "\n;; Starting generation of LL(k) tables..\n")
   (if (> parser-generator--look-ahead-number 1)
-      (parser-generator-ll--generate-parser-tables-k-gt-1)
-    (parser-generator-ll--generate-parser-tables-k-eq-1))
-  (message "\n;; Completed generation of LL(k) tables.\n"))
+      (progn
+        (message "\n;; Starting generation of LL(k) tables..\n")
+        (parser-generator-ll--generate-tables-k-gt-1)
+        (message "\n;; Completed generation of LL(k) tables.\n"))
+    (message "\n;; Starting generation of LL(1) tables..\n")
+    (parser-generator-ll--generate-tables-k-eq-1)
+    (message "\n;; Completed generation of LL(1) tables.\n")))
 
 ;; Generally described at .p 339
 (defun parser-generator-ll-parse ()
@@ -59,7 +62,7 @@
              (state-action-table
               (gethash
                (format "%S" state)
-               parser-generator-ll--parsing-table))
+               parser-generator-ll--table))
              (look-ahead-list
               (parser-generator-lex-analyzer--peek-next-look-ahead))
              (look-ahead))
@@ -142,16 +145,28 @@
 ;;; Algorithms
 
 
-(defun parser-generator-ll--generate-parser-tables-k-gt-1 ()
-  "Generate parsing tables for grammar k > 1."
-  (message "\n;; Starting generation of LL(k) parser-tables..\n")
-  (unless (parser-generator-ll--valid-grammar-p-k-gt-1)
-    (error "Invalid grammar specified!"))
+(defun parser-generator-ll--generate-table-k-eq-1 ()
+  "Generate table for LL(1) grammar."
+  (message "\n;; Starting generation of LL(1) table..\n")
+  (unless (parser-generator-ll--valid-grammar-p-k-eq-1)
+    (error "Invalid LL(1) grammar specified!"))
+  (let (hash-parsing-table (make-hash-table :test 'equal))
+    ;; TODO Iterate all non-terminals here
+    ;; TODO Add non-terminal -> FIRST(non-terminal) -> reduce RHS, production-number
+    ;; TODO Iterate all possible look-aheds
+    ;; TODO Added EOF symbol
+    (setq
+     parser-generator-ll--table
+     hash-parsing-table)))
+
+(defun parser-generator-ll--generate-table-k-gt-1 ()
+  "Generate table for LL(k) grammar."
+  (message "\n;; Starting generation of LL(k) table..\n")
+  (unless (parser-generator-ll--valid-grammar-k-gt-1-p)
+    (error "Invalid LL(k) grammar specified!"))
   (let ((list-parsing-table
-         (if (> parser-generator--look-ahead-number 1)
-             (parser-generator-ll--generate-parsing-table-k-gt-1
-              (parser-generator-ll--generate-tables-k-gt-1))
-           (parser-generator-ll--generate-parsing-table-k-eq-1)))
+         (parser-generator-ll--generate-action-table-k-gt-1
+          (parser-generator-ll--generate-goto-table-k-gt-1)))
         (hash-parsing-table (make-hash-table :test 'equal)))
     (dolist (state-list list-parsing-table)
       (let ((state-key (nth 0 state-list))
@@ -181,12 +196,12 @@
          state-hash-table
          hash-parsing-table)))
     (setq
-     parser-generator-ll--parsing-table
+     parser-generator-ll--table
      hash-parsing-table)))
 
 ;; Algorithm 5.2 p. 350
-(defun parser-generator-ll--generate-tables-k-gt-1 ()
-  "Construction of LL(k)-tables were k > 1.  Output the set of LL(k) tables needed to construct a parsing table for the grammar G."
+(defun parser-generator-ll--generate-goto-table-k-gt-1 ()
+  "Construction of LL(k) GOTO-table.  Output the set of LL(k) tables needed to construct a action table for the grammar G."
   (let ((tables (make-hash-table :test 'equal))
         (distinct-item-p (make-hash-table :test 'equal))
         (stack)
@@ -395,8 +410,8 @@
       sorted-tables)))
 
 ;; Algorithm 5.3 p. 351
-(defun parser-generator-ll--generate-parsing-table-k-gt-1 (tables)
-  "Generate a parsing table for an LL(k) grammar G and TABLES.  Output M, a valid parsing table for G."
+(defun parser-generator-ll--generate-action-table-k-gt-1 (tables)
+  "Generate a action table for an LL(k) grammar G and TABLES.  Output M, a valid parsing table for G."
   (let ((parsing-table))
 
     ;; (3) M($, e) = accept
@@ -503,9 +518,45 @@
 
     parsing-table))
 
+(defun parser-generator-ll--valid-grammar-k-eq-1-p ()
+  "Test for LL(1)-ness.  Output t if grammar is LL(1), nil otherwise."
+  (let* ((non-terminals (parser-generator--get-grammar-non-terminals))
+         (non-terminal-length (length non-terminals))
+         (non-terminal-index 0)
+         (non-terminal)
+         (valid t))
+    (while (and
+            valid
+            (< non-terminal-index non-terminal-length))
+      (setq non-terminal (nth non-terminal-index non-terminals))
+      (let* ((rhss (parser-generator--get-grammar-rhs non-terminals))
+             (rhss-length (length rhss))
+             (rhss-index 0)
+             (rhs)
+             (look-aheads (make-hash-table :test 'equal)))
+        (while (and
+                valid
+                (< rhss-index rhss-length))
+          (setq rhs (nth rhss-index rhss))
+          (let* ((firsts-rhs (parser-generator--first rhs))
+                 (firsts-rhs-length (length firsts-rhs))
+                 (firsts-index 0))
+            (while (and
+                    valid
+                    (< firsts-index firsts-rhs-length))
+              (setq first-rhs (nth firsts-index firsts-rhs))
+              (let ((first-rhs-hash (format "%S" first-rhs)))
+                (if (gethash first-rhs-hash look-aheads)
+                    (setq valid nil)
+                  (puthash first-rhs-hash t look-aheads)))
+              (setq firsts-index (1+ firsts-index))))
+          (setq rhss-index (1+ rhss-index))))
+      (setq non-terminal-index (1+ non-terminal-index)))
+    valid))
+
 ;; Algorithm 5.4 p. 357
-(defun parser-generator-ll--valid-grammar-p-k-gt-1 ()
-  "Test for LL(k)-ness.  Output t if grammar is LL(k).  nil otherwise."
+(defun parser-generator-ll--valid-grammar-k-gt-1-p ()
+  "Test for LL(k)-ness.  Output t if grammar is LL(k), nil otherwise."
   (let ((stack)
         (stack-item)
         (distinct-production-p (make-hash-table :test 'equal))
