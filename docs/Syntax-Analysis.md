@@ -11,6 +11,7 @@ We use push down transducer (PDT) based algorithms.
 
 ## Without Backtracking
 
+* LL(1) *WIP*
 * LL(k) *WIP*
 * [LR(k)](Syntax-Analysis/LRk.md)
 * [LR(0)](Syntax-Analysis/LR0.md)
