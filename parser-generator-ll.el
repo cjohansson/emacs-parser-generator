@@ -25,16 +25,67 @@
 ;;; Functions
 
 
-(defun parser-generator-ll-generate-tables ()
-  "Generate tables for grammar."
-  (if (> parser-generator--look-ahead-number 1)
-      (progn
-        (message "\n;; Starting generation of LL(k) tables..\n")
-        (parser-generator-ll--generate-tables-k-gt-1)
-        (message "\n;; Completed generation of LL(k) tables.\n"))
-    (message "\n;; Starting generation of LL(1) tables..\n")
-    (parser-generator-ll--generate-tables-k-eq-1)
-    (message "\n;; Completed generation of LL(1) tables.\n")))
+(defun parser-generator-ll-generate-table ()
+  "Generate table for grammar."
+  (let ((list-parsing-table)
+        (hash-parsing-table (make-hash-table :test 'equal)))
+
+    (if (> parser-generator--look-ahead-number 1)
+        (progn
+          (message "\n;; Starting generation of LL(k) tables..\n")
+
+          (unless (parser-generator-ll--valid-grammar-k-gt-1-p)
+            (error "Invalid LL(k) grammar specified!"))
+
+          (setq
+           list-parsing-table
+           (parser-generator-ll--generate-action-table-k-gt-1
+            (parser-generator-ll--generate-goto-table-k-gt-1))))
+
+      (message "\n;; Starting generation of LL(1) tables..\n")
+
+      (unless (parser-generator-ll--valid-grammar-p-k-eq-1)
+        (error "Invalid LL(1) grammar specified!"))
+
+      (setq
+       list-parsing-table
+       (parser-generator-ll--generate-table-k-eq-1)))
+
+    ;; Convert list-structure to hash-map
+    (dolist (state-list list-parsing-table)
+      (let ((state-key (nth 0 state-list))
+            (state-look-aheads (nth 1 state-list))
+            (state-hash-table (make-hash-table :test 'equal)))
+        (dolist (state-look-ahead-list state-look-aheads)
+          (let ((state-look-ahead-string (nth 0 state-look-ahead-list))
+                (state-look-ahead-action (nth 1 state-look-ahead-list)))
+            (if (equal state-look-ahead-action 'reduce)
+                (let ((state-look-ahead-reduction
+                       (nth 2 state-look-ahead-list))
+                      (state-look-ahead-production-number
+                       (nth 3 state-look-ahead-list)))
+                  (puthash
+                   (format "%S" state-look-ahead-string)
+                   (list
+                    state-look-ahead-action
+                    state-look-ahead-reduction
+                    state-look-ahead-production-number)
+                   state-hash-table))
+              (puthash
+               (format "%S" state-look-ahead-string)
+               state-look-ahead-action
+               state-hash-table))))
+        (puthash
+         (format "%S" state-key)
+         state-hash-table
+         hash-parsing-table)))
+    (setq
+     parser-generator-ll--table
+     hash-parsing-table)
+
+    (if (> parser-generator--look-ahead-number 1)
+        (message "\n;; Completed generation of LL(k) tables.\n")
+      (message "\n;; Completed generation of LL(1) tables.\n"))))
 
 ;; Generally described at .p 339
 (defun parser-generator-ll-parse ()
@@ -147,57 +198,77 @@
 
 (defun parser-generator-ll--generate-table-k-eq-1 ()
   "Generate table for LL(1) grammar."
-  (message "\n;; Starting generation of LL(1) table..\n")
-  (unless (parser-generator-ll--valid-grammar-p-k-eq-1)
-    (error "Invalid LL(1) grammar specified!"))
-  (let (hash-parsing-table (make-hash-table :test 'equal))
-    ;; TODO Iterate all non-terminals here
-    ;; TODO Add non-terminal -> FIRST(non-terminal) -> reduce RHS, production-number
-    ;; TODO Iterate all possible look-aheds
-    ;; TODO Added EOF symbol
-    (setq
-     parser-generator-ll--table
-     hash-parsing-table)))
+  (let ((parsing-table))
 
-(defun parser-generator-ll--generate-table-k-gt-1 ()
-  "Generate table for LL(k) grammar."
-  (message "\n;; Starting generation of LL(k) table..\n")
-  (unless (parser-generator-ll--valid-grammar-k-gt-1-p)
-    (error "Invalid LL(k) grammar specified!"))
-  (let ((list-parsing-table
-         (parser-generator-ll--generate-action-table-k-gt-1
-          (parser-generator-ll--generate-goto-table-k-gt-1)))
-        (hash-parsing-table (make-hash-table :test 'equal)))
-    (dolist (state-list list-parsing-table)
-      (let ((state-key (nth 0 state-list))
-            (state-look-aheads (nth 1 state-list))
-            (state-hash-table (make-hash-table :test 'equal)))
-        (dolist (state-look-ahead-list state-look-aheads)
-          (let ((state-look-ahead-string (nth 0 state-look-ahead-list))
-                (state-look-ahead-action (nth 1 state-look-ahead-list)))
-            (if (equal state-look-ahead-action 'reduce)
-                (let ((state-look-ahead-reduction
-                       (nth 2 state-look-ahead-list))
-                      (state-look-ahead-production-number
-                       (nth 3 state-look-ahead-list)))
-                  (puthash
-                   (format "%S" state-look-ahead-string)
-                   (list
-                    state-look-ahead-action
-                    state-look-ahead-reduction
-                    state-look-ahead-production-number)
-                   state-hash-table))
-              (puthash
-               (format "%S" state-look-ahead-string)
-               state-look-ahead-action
-               state-hash-table))))
-        (puthash
-         (format "%S" state-key)
-         state-hash-table
-         hash-parsing-table)))
-    (setq
-     parser-generator-ll--table
-     hash-parsing-table)))
+    ;; Iterate all possible look-aheads
+    ;; Add EOF symbol look-ahead
+    (let ((eof-look-ahead
+           (parser-generator--generate-list-of-symbol
+            parser-generator--look-ahead-number
+            parser-generator--eof-identifier))
+          (terminal-mutations
+           (parser-generator--get-grammar-look-aheads))
+          (terminal-buffer)
+          (last-terminal))
+      (dolist (terminal-mutation terminal-mutations)
+        (if (equal terminal-mutation eof-look-ahead)
+            (push
+             (list
+              parser-generator--eof-identifier
+              (list
+               (list
+                eof-look-ahead
+                'accept)))
+             parsing-table)
+          (let ((stack-item (nth 0 terminal-mutation)))
+            (when (and
+                   last-terminal
+                   (not (equal last-terminal stack-item)))
+              (push
+               (list
+                last-terminal
+                terminal-buffer)
+               parsing-table)
+              (setq
+               terminal-buffer
+               nil))
+            (push
+             (list terminal-mutation 'pop)
+             terminal-buffer)
+            (setq
+             last-terminal
+             stack-item))))
+      (when (and
+             last-terminal
+             terminal-buffer)
+        (push
+         (list
+          last-terminal
+          terminal-buffer)
+         parsing-table)))
+
+    ;; Add non-terminal -> FIRST(non-terminal) -> reduce RHS, production-number
+    (let ((non-terminals (parser-generator--get-grammar-non-terminals)))
+      (dolist (non-terminal non-terminals)
+        (let ((non-terminal-buffer))
+          (let ((rhss (parser-generator--get-grammar-rhs non-terminal)))
+            (dolist (rhs rhss)
+              (let ((firsts-rhs (parser-generator--first rhs))
+                    (production-number
+                     (parser-generator--get-grammar-production-number
+                      (list (list non-terminal) rhs))))
+                (dolist (first-rhs firsts-rhs)
+                  (push
+                   (list first-rhs 'reduce rhs production-number)
+                   non-terminal-buffer)))))
+          (when non-terminal-buffer
+            (push
+             (list
+              non-terminal
+              non-terminal-buffer)
+             parsing-table)))))
+
+    parsing-table))
 
 ;; Algorithm 5.2 p. 350
 (defun parser-generator-ll--generate-goto-table-k-gt-1 ()
@@ -308,13 +379,13 @@
                      'error
                      (list
                       (format
-                       "There are more than one follow set in state! %S -> %S + %S"
+                       "There are more than one possible follow set in state! %S -> %S + %S"
                        sub-symbol
                        production-rhs
-                       follow-set)
+                       local-follow-set)
                       sub-symbol
                       production-rhs
-                      follow-set)))
+                      local-follow-set)))
                   (setq
                    local-follow
                    (car local-follow-set))
@@ -529,7 +600,7 @@
             valid
             (< non-terminal-index non-terminal-length))
       (setq non-terminal (nth non-terminal-index non-terminals))
-      (let* ((rhss (parser-generator--get-grammar-rhs non-terminals))
+      (let* ((rhss (parser-generator--get-grammar-rhs non-terminal))
              (rhss-length (length rhss))
              (rhss-index 0)
              (rhs)
