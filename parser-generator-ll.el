@@ -25,47 +25,13 @@
 ;;; Functions
 
 
-(defun parser-generator-ll-generate-parser-tables ()
-  "Generate parsing tables for grammar."
-  (message "\n;; Starting generation of LL(k) parser-tables..\n")
-  (unless (parser-generator-ll--valid-grammar-p)
-    (error "Invalid grammar specified!"))
-  (let ((list-parsing-table
-         (parser-generator-ll--generate-parsing-table
-          (parser-generator-ll--generate-tables)))
-        (hash-parsing-table (make-hash-table :test 'equal)))
-    (dolist (state-list list-parsing-table)
-      (let ((state-key (nth 0 state-list))
-            (state-look-aheads (nth 1 state-list))
-            (state-hash-table (make-hash-table :test 'equal)))
-        (dolist (state-look-ahead-list state-look-aheads)
-          (let ((state-look-ahead-string (nth 0 state-look-ahead-list))
-                (state-look-ahead-action (nth 1 state-look-ahead-list)))
-            (if (equal state-look-ahead-action 'reduce)
-                (let ((state-look-ahead-reduction
-                       (nth 2 state-look-ahead-list))
-                      (state-look-ahead-production-number
-                       (nth 3 state-look-ahead-list)))
-                  (puthash
-                   (format "%S" state-look-ahead-string)
-                   (list
-                    state-look-ahead-action
-                    state-look-ahead-reduction
-                    state-look-ahead-production-number)
-                   state-hash-table))
-              (puthash
-               (format "%S" state-look-ahead-string)
-               state-look-ahead-action
-               state-hash-table))))
-        (puthash
-         (format "%S" state-key)
-         state-hash-table
-         hash-parsing-table)))
-    (setq
-     parser-generator-ll--parsing-table
-     hash-parsing-table))
-  (message "\n;; Completed generation of LL(k) parser-tables.\n"))
-
+(defun parser-generator-ll-generate-tables ()
+  "Generate tables for grammar."
+  (message "\n;; Starting generation of LL(k) tables..\n")
+  (if (> parser-generator--look-ahead-number 1)
+      (parser-generator-ll--generate-parser-tables-k-gt-1)
+    (parser-generator-ll--generate-parser-tables-k-eq-1))
+  (message "\n;; Completed generation of LL(k) tables.\n"))
 
 ;; Generally described at .p 339
 (defun parser-generator-ll-parse ()
@@ -176,9 +142,51 @@
 ;;; Algorithms
 
 
+(defun parser-generator-ll--generate-parser-tables-k-gt-1 ()
+  "Generate parsing tables for grammar k > 1."
+  (message "\n;; Starting generation of LL(k) parser-tables..\n")
+  (unless (parser-generator-ll--valid-grammar-p-k-gt-1)
+    (error "Invalid grammar specified!"))
+  (let ((list-parsing-table
+         (if (> parser-generator--look-ahead-number 1)
+             (parser-generator-ll--generate-parsing-table-k-gt-1
+              (parser-generator-ll--generate-tables-k-gt-1))
+           (parser-generator-ll--generate-parsing-table-k-eq-1)))
+        (hash-parsing-table (make-hash-table :test 'equal)))
+    (dolist (state-list list-parsing-table)
+      (let ((state-key (nth 0 state-list))
+            (state-look-aheads (nth 1 state-list))
+            (state-hash-table (make-hash-table :test 'equal)))
+        (dolist (state-look-ahead-list state-look-aheads)
+          (let ((state-look-ahead-string (nth 0 state-look-ahead-list))
+                (state-look-ahead-action (nth 1 state-look-ahead-list)))
+            (if (equal state-look-ahead-action 'reduce)
+                (let ((state-look-ahead-reduction
+                       (nth 2 state-look-ahead-list))
+                      (state-look-ahead-production-number
+                       (nth 3 state-look-ahead-list)))
+                  (puthash
+                   (format "%S" state-look-ahead-string)
+                   (list
+                    state-look-ahead-action
+                    state-look-ahead-reduction
+                    state-look-ahead-production-number)
+                   state-hash-table))
+              (puthash
+               (format "%S" state-look-ahead-string)
+               state-look-ahead-action
+               state-hash-table))))
+        (puthash
+         (format "%S" state-key)
+         state-hash-table
+         hash-parsing-table)))
+    (setq
+     parser-generator-ll--parsing-table
+     hash-parsing-table)))
+
 ;; Algorithm 5.2 p. 350
-(defun parser-generator-ll--generate-tables ()
-  "Construction of LL(k)-tables.  Output the set of LL(k) tables needed to construct a parsing table for the grammar G."
+(defun parser-generator-ll--generate-tables-k-gt-1 ()
+  "Construction of LL(k)-tables were k > 1.  Output the set of LL(k) tables needed to construct a parsing table for the grammar G."
   (let ((tables (make-hash-table :test 'equal))
         (distinct-item-p (make-hash-table :test 'equal))
         (stack)
@@ -253,6 +261,7 @@
                          first-concatenated-follow-set
                          nil
                          t))
+                       (local-follow)
                        (sub-symbol-rhss
                         (parser-generator--get-grammar-rhs
                          sub-symbol)))
@@ -278,34 +287,50 @@
                     sub-symbol-rhss))
                   (unless local-follow-set
                     (setq local-follow-set '(nil)))
+
+                  (when (> (length local-follow-set) 1)
+                    (signal
+                     'error
+                     (list
+                      (format
+                       "There are more than one follow set in state! %S -> %S + %S"
+                       sub-symbol
+                       production-rhs
+                       follow-set)
+                      sub-symbol
+                      production-rhs
+                      follow-set)))
+                  (setq
+                   local-follow
+                   (car local-follow-set))
+
                   (push
-                   local-follow-set
+                   local-follow
                    sets)
                   (parser-generator--debug
                    (message
                     "pushed local follow set to sets: %S"
                     local-follow-set))
-                  (dolist (local-follow local-follow-set)
-                    (dolist (sub-symbol-rhs sub-symbol-rhss)
-                      (let* ((new-stack-item
-                              (list
-                               (list sub-symbol)
-                               sub-symbol-rhs
-                               local-follow)))
-                        (unless (gethash
-                                 new-stack-item
-                                 distinct-stack-item-p)
-                          (parser-generator--debug
-                           (message
-                            "new-stack-item: %S"
-                            new-stack-item))
-                          (puthash
-                           new-stack-item
-                           t
-                           distinct-stack-item-p)
-                          (push
-                           new-stack-item
-                           stack))))))))
+                  (dolist (sub-symbol-rhs sub-symbol-rhss)
+                    (let* ((new-stack-item
+                            (list
+                             (list sub-symbol)
+                             sub-symbol-rhs
+                             local-follow)))
+                      (unless (gethash
+                               new-stack-item
+                               distinct-stack-item-p)
+                        (parser-generator--debug
+                         (message
+                          "new-stack-item: %S"
+                          new-stack-item))
+                        (puthash
+                         new-stack-item
+                         t
+                         distinct-stack-item-p)
+                        (push
+                         new-stack-item
+                         stack)))))))
             (setq
              sub-symbol-index
              (1+ sub-symbol-index))))
@@ -369,9 +394,8 @@
        tables)
       sorted-tables)))
 
-
 ;; Algorithm 5.3 p. 351
-(defun parser-generator-ll--generate-parsing-table (tables)
+(defun parser-generator-ll--generate-parsing-table-k-gt-1 (tables)
   "Generate a parsing table for an LL(k) grammar G and TABLES.  Output M, a valid parsing table for G."
   (let ((parsing-table))
 
@@ -479,9 +503,8 @@
 
     parsing-table))
 
-
 ;; Algorithm 5.4 p. 357
-(defun parser-generator-ll--valid-grammar-p ()
+(defun parser-generator-ll--valid-grammar-p-k-gt-1 ()
   "Test for LL(k)-ness.  Output t if grammar is LL(k).  nil otherwise."
   (let ((stack)
         (stack-item)
@@ -536,7 +559,8 @@
 
                   ;; Calculate following terminals to see if there is a conflict
                   (dolist (sub-symbol-rhs sub-symbol-rhss)
-                    (let ((first-sub-symbol-rhs (parser-generator--first sub-symbol-rhs nil t t)))
+                    (let ((first-sub-symbol-rhs
+                           (parser-generator--first sub-symbol-rhs nil t t)))
                       (let ((merged-terminal-sets
                              (parser-generator--merge-max-terminal-sets
                               first-sub-symbol-rhs
