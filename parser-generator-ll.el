@@ -554,13 +554,12 @@
               (let ((sub-symbol (nth sub-symbol-index right-hand-side)))
                 (if (parser-generator--valid-non-terminal-p
                      sub-symbol)
-                    (let ((local-follow-set (nth non-terminal-index local-follow-sets)))
-                      (dolist (local-follow local-follow-set)
-                        (push
-                         (list
-                          (list sub-symbol)
-                          local-follow)
-                         modified-right-hand-side))
+                    (let ((local-follow (nth non-terminal-index local-follow-sets)))
+                      (push
+                       (list
+                        (list sub-symbol)
+                        local-follow)
+                       modified-right-hand-side)
                       (setq
                        non-terminal-index
                        (1+ non-terminal-index)))

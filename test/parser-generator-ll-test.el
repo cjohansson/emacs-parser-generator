@@ -140,10 +140,13 @@
      )
    )
   (parser-generator-process-grammar)
-  (let ((parser-tables
-         (parser-generator-ll--generate-action-table-k-gt-1
-          (parser-generator-ll--generate-goto-table-k-gt-1))))
-    (message "parser-tables: %S" parser-tables)
+  (let* ((goto-table
+          (parser-generator-ll--generate-goto-table-k-gt-1))
+         (action-table
+          (parser-generator-ll--generate-action-table-k-gt-1
+           goto-table)))
+    ;; (message "goto-table: %S" goto-table)
+    ;; (message "action-table: %S" action-table)
     (should
      (equal
       '(
@@ -173,7 +176,7 @@
         (a (((a b) pop) ((a a) pop) ((a $) pop)))
         ($ ((($ $) accept)))
         )
-      parser-tables)))
+      action-table)))
   (message "Passed Example 5.15 p. 351 and 5.16 p. 352")
 
   (parser-generator-set-eof-identifier '$)
@@ -191,13 +194,13 @@
      )
    )
   (parser-generator-process-grammar)
-  (let* ((tables
+  (let* ((goto-table
           (parser-generator-ll--generate-goto-table-k-gt-1))
-         (parser-tables
+         (action-table
           (parser-generator-ll--generate-action-table-k-gt-1
-           tables)))
-    ;; (message "tables: %S" tables)
-    ;; (message "parser-tables: %S" parser-tables)
+           goto-table)))
+    ;; (message "goto-tables: %S" goto-table)
+    ;; (message "action-table: %S" action-table)
     (should
      (equal
       '(
@@ -235,7 +238,7 @@
         (a (((a b) pop) ((a a) pop) ((a $) pop)))
         ($ ((($ $) accept)))
         )
-      parser-tables)))
+      action-table)))
   (message "Passed Example 5.17 p. 356")
 
   (message "Passed tests for (parser-generator-ll--generate-action-table-k-gt-1)"))
@@ -525,10 +528,6 @@
   "Test `parser-generator-ll--generate-table-k-eq-1'."
   (message "Started tests for (parser-generator-ll--generate-table-k-eq-1)")
 
-  ;; TODO Implement this
-
-  ;; Move below to separate test
-
   (parser-generator-set-eof-identifier '$)
   (parser-generator-set-e-identifier 'e)
   (parser-generator-set-look-ahead-number 1)
@@ -546,30 +545,31 @@
   (parser-generator-process-grammar)
   (let* ((tables
           (parser-generator-ll--generate-table-k-eq-1)))
-    (message "tables: %S" tables)
+    ;; (message "tables: %S" tables)
     (should
      (equal
-      tables
       '(
-        (
-         (A)
+        (A
          (
-          ((a) (a))
-          ((b) (b S A))
+          ((b) reduce (b S A) 3)
+          ((a) reduce (a) 2)
           )
          )
-        (
-         (S)
+        (S
          (
-          ((a) (a A S))
-          ((b) (b))
+          ((b) reduce (b) 1)
+          ((a) reduce (a A S) 0)
           )
          )
+        (b (((b) pop)))
+        (a (((a) pop)))
+        ($ ((($) accept)))
         )
-      )
-     ))
+      tables
+     )))
   (message "Passed Example 5.5 p. 340")
 
+  ;; TODO Make this pass
   (parser-generator-set-eof-identifier '$)
   (parser-generator-set-e-identifier 'e)
   (parser-generator-set-look-ahead-number 1)
@@ -593,126 +593,38 @@
     (should
      (equal
       '(
-        (
-         (F)
-         (
-          (("(") ("(" E ")"))
-          (("a") ("a"))
-          )
-         )
-        (
-         (T2)
-         (
-          (($) (e))
-          (("*") ("*" F T2))
-          )
-         )
-        (
-         (T)
-         (
-          (("(") (F T2))
-          (("a") (F T2))
-          )
-         )
-        (
-         (E2)
-         (
-          ((")") (e))
-          (("+") ("+" T E2))
-          )
-         )
-        (
-         (E)
-         (
-          (("(") (T E2))
-          (("a") (T E2))
-          )
-         )
-        )
-      tables)))
-  (message "Passed Example 5.12 p. 346-347")
-
-
-  (parser-generator-set-eof-identifier '$)
-  (parser-generator-set-e-identifier 'e)
-  (parser-generator-set-look-ahead-number 1)
-  (parser-generator-set-grammar
-   '(
-     (E E2 T T2 F)
-     ("a" "(" ")" "+" "*")
-     (
-      (E (T E2))
-      (E2 ("+" T E2) e)
-      (T (F T2))
-      (T2 ("*" F T2) e)
-      (F ("(" E ")") "a")
-      )
-     E
-     )
-   )
-  (parser-generator-process-grammar)
-  (parser-generator-process-grammar)
-  (let ((parser-tables (parser-generator-ll--generate-action-table-k-eq-1)))
-    ;; (message "parser-tables: %S" parser-tables)
-    (should
-     (equal
-      '(
-        (
-         ((E) ($))
-         (
-          (("a") reduce (((T) ($)) ((T) ("+")) ((E2) ($))) 0)
-          (("(") reduce (((T) ($)) ((T) ("+")) ((E2) ($))) 0)
-          )
-         )
-        (
-         ((E2) ($))
-         (
-          (("+") reduce ("+" ((T) ($)) ((T) ("+")) ((E2) ($))) 1)
-          (($) reduce (e) 2)
-          )
-         )
-        (
-         ((T) ("+"))
-         (
-          (("a") reduce (((F) ("*")) ((F) ("+")) ((T2) ("+"))) 3)
-          (("(") reduce (((F) ("*")) ((F) ("+")) ((T2) ("+"))) 3)
-          )
-         )
-        (
-         ((T2) ("+"))
-         (
-          (("+") reduce (e) 5)
-          (("*") reduce ("*" ((F) ("*")) ((F) ("+")) ((T2) ("+"))) 4)
-          )
-         )
-        (
-         ((F) ("+"))
+        (F
          (
           (("a") reduce ("a") 7)
-          (("(") reduce ("(" ((E) (")")) ")") 6)
+          (("(") reduce ("(" E ")") 6)
           )
          )
-        (
-         ((E) (")"))
+        (T2
          (
-          (("a") reduce (((T) (")")) ((T) ("+")) ((E2) (")"))) 0)
-          (("(") reduce (((T) (")")) ((T) ("+")) ((E2) (")"))) 0)
+          ((e) reduce (e) 5)
+          ((")") reduce (e) 5)
+          (("*") reduce ("*" F T2) 4)
           )
          )
-        (
-         ((E2) (")"))
+        (T
          (
-          (("+") reduce ("+" ((T) (")")) ((T) ("+")) ((E2) (")"))) 1)
+          (("a") reduce (F T2) 3)
+          (("(") reduce (F T2) 3)
+          )
+         )
+        (E2
+         (
+          ((e) reduce (e) 2)
           ((")") reduce (e) 2)
+          (("+") reduce ("+" T E2) 1)
           )
          )
-        (((T) (")")) ((("a") reduce (((F) (")")) ((F) ("*")) ((T2) (")"))) 3) (("(") reduce (((F) (")")) ((F) ("*")) ((T2) (")"))) 3)))
-        (((T2) (")")) ((("*") reduce ("*" ((F) (")")) ((F) ("*")) ((T2) (")"))) 4) ((")") reduce (e) 5)))
-        (((F) (")")) ((("a") reduce ("a") 7) (("(") reduce ("(" ((E) (")")) ")") 6)))
-        (((F) ("*")) ((("a") reduce ("a") 7) (("(") reduce ("(" ((E) (")")) ")") 6)))
-        (((T) ($)) ((("a") reduce (((F) ($)) ((F) ("*")) ((T2) ($))) 3) (("(") reduce (((F) ($)) ((F) ("*")) ((T2) ($))) 3)))
-        (((T2) ($)) ((("*") reduce ("*" ((F) ($)) ((F) ("*")) ((T2) ($))) 4) (($) reduce (e) 5)))
-        (((F) ($)) ((("a") reduce ("a") 7) (("(") reduce ("(" ((E) (")")) ")") 6)))
+        (E
+         (
+          (("a") reduce (T E2) 0)
+          (("(") reduce (T E2) 0)
+          )
+         )
         ("a" ((("a") pop)))
         ("+" ((("+") pop)))
         ("*" ((("*") pop)))
@@ -720,8 +632,7 @@
         ("(" ((("(") pop)))
         ($ ((($) accept)))
         )
-      parser-tables)))
-  ;; TODO Verify above
+      tables)))
   (message "Passed Example 5.12 p. 346-347")
 
   (message "Passed tests for (parser-generator-ll--generate-table-k-eq-1)"))
