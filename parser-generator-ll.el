@@ -40,16 +40,17 @@
           (setq
            list-parsing-table
            (parser-generator-ll--generate-action-table-k-gt-1
-            (parser-generator-ll--generate-goto-table-k-gt-1))))
+            (parser-generator-ll--generate-goto-table))))
 
       (message "\n;; Starting generation of LL(1) tables..\n")
 
-      (unless (parser-generator-ll--valid-grammar-p-k-eq-1)
+      (unless (parser-generator-ll--valid-grammar-k-eq-1-p)
         (error "Invalid LL(1) grammar specified!"))
 
       (setq
        list-parsing-table
-       (parser-generator-ll--generate-table-k-eq-1)))
+       (parser-generator-ll--generate-action-table-k-eq-1
+        (parser-generator-ll--generate-goto-table))))
 
     ;; Convert list-structure to hash-map
     (dolist (state-list list-parsing-table)
@@ -92,14 +93,18 @@
   "Parse input via lex-analyzer and return parse trail."
   (let ((accept)
         (stack
-         (list
-          (list
+         (if (> parser-generator--look-ahead-number 1)
+             (list
+              (list
+               (list
+                (parser-generator--get-grammar-start))
+               (parser-generator--generate-list-of-symbol
+                parser-generator--look-ahead-number
+                parser-generator--eof-identifier))
+              parser-generator--eof-identifier)
            (list
-            (parser-generator--get-grammar-start))
-           (parser-generator--generate-list-of-symbol
-            parser-generator--look-ahead-number
-            parser-generator--eof-identifier))
-          parser-generator--eof-identifier))
+            (parser-generator--get-grammar-start)
+            parser-generator--eof-identifier)))
         (output)
         (eof-look-ahead
          (parser-generator--generate-list-of-symbol
@@ -196,8 +201,8 @@
 ;;; Algorithms
 
 
-(defun parser-generator-ll--generate-table-k-eq-1 ()
-  "Generate table for LL(1) grammar."
+(defun parser-generator-ll--generate-action-table-k-eq-1 (goto-table)
+  "Generate action-table for LL(1) grammar using GOTO-TABLE."
   (let ((parsing-table))
 
     ;; Iterate all possible look-aheads
@@ -248,30 +253,67 @@
          parsing-table)))
 
     ;; Add non-terminal -> FIRST(non-terminal) -> reduce RHS, production-number
-    (let ((non-terminals (parser-generator--get-grammar-non-terminals)))
-      (dolist (non-terminal non-terminals)
-        (let ((non-terminal-buffer))
-          (let ((rhss (parser-generator--get-grammar-rhs non-terminal)))
-            (dolist (rhs rhss)
-              (let ((firsts-rhs (parser-generator--first rhs))
-                    (production-number
-                     (parser-generator--get-grammar-production-number
-                      (list (list non-terminal) rhs))))
-                (dolist (first-rhs firsts-rhs)
+    (let ((non-terminal-look-ahead-p (make-hash-table :test 'equal))
+          (non-terminal-look-ahead-list (make-hash-table :test 'equal)))
+      (dolist (goto-row goto-table)
+        (let* ((stack (nth 0 goto-row))
+               (non-terminal (car (nth 0 stack)))
+               (local-follows (nth 1 stack))
+               (look-aheads (nth 1 goto-row)))
+          (parser-generator--debug
+           (message "\nnon-terminal: %S" non-terminal)
+           (message "local-follows: %S" local-follows)
+           (message "look-aheads: %S" look-aheads))
+          (dolist (look-ahead look-aheads)
+            (let* ((rhs
+                    (nth 1 look-ahead))
+                   (production
+                    (list (list non-terminal) rhs))
+                   (production-number
+                    (parser-generator--get-grammar-production-number
+                     production))
+                   (look-ahead-terminal
+                    (nth 0 look-ahead))
+                   (hashmap-key
+                    (format "%S-%S" non-terminal look-ahead-terminal)))
+              (parser-generator--debug
+               (message "\nrhs: %S" rhs)
+               (message "production: %S" production)
+               (message "production-number: %S" production-number)
+               (message "hashmap-key: %S" hashmap-key))
+              (unless (gethash hashmap-key non-terminal-look-ahead-p)
+                (let ((old-non-terminal-look-aheads
+                       (gethash
+                        non-terminal
+                        non-terminal-look-ahead-list)))
                   (push
-                   (list first-rhs 'reduce rhs production-number)
-                   non-terminal-buffer)))))
-          (when non-terminal-buffer
-            (push
-             (list
-              non-terminal
-              non-terminal-buffer)
-             parsing-table)))))
+                   (list
+                    look-ahead-terminal
+                    'reduce
+                    rhs
+                    production-number)
+                   old-non-terminal-look-aheads)
+                  (puthash
+                   non-terminal
+                   old-non-terminal-look-aheads
+                   non-terminal-look-ahead-list)
+                  (puthash
+                   hashmap-key
+                   t
+                   non-terminal-look-ahead-p)))))))
+      (maphash
+       (lambda (non-terminal look-ahead)
+         (push
+          (list
+           non-terminal
+           look-ahead)
+          parsing-table))
+       non-terminal-look-ahead-list))
 
     parsing-table))
 
 ;; Algorithm 5.2 p. 350
-(defun parser-generator-ll--generate-goto-table-k-gt-1 ()
+(defun parser-generator-ll--generate-goto-table ()
   "Construction of LL(k) GOTO-table.  Output the set of LL(k) tables needed to construct a action table for the grammar G."
   (let ((tables (make-hash-table :test 'equal))
         (distinct-item-p (make-hash-table :test 'equal))
@@ -347,7 +389,6 @@
                          first-concatenated-follow-set
                          nil
                          t))
-                       (local-follow)
                        (sub-symbol-rhss
                         (parser-generator--get-grammar-rhs
                          sub-symbol)))
@@ -374,49 +415,34 @@
                   (unless local-follow-set
                     (setq local-follow-set '(nil)))
 
-                  (when (> (length local-follow-set) 1)
-                    (signal
-                     'error
-                     (list
-                      (format
-                       "There are more than one possible follow set in state! %S -> %S + %S"
-                       sub-symbol
-                       production-rhs
-                       local-follow-set)
-                      sub-symbol
-                      production-rhs
-                      local-follow-set)))
-                  (setq
-                   local-follow
-                   (car local-follow-set))
-
                   (push
-                   local-follow
+                   local-follow-set
                    sets)
                   (parser-generator--debug
                    (message
                     "pushed local follow set to sets: %S"
                     local-follow-set))
-                  (dolist (sub-symbol-rhs sub-symbol-rhss)
-                    (let* ((new-stack-item
-                            (list
-                             (list sub-symbol)
-                             sub-symbol-rhs
-                             local-follow)))
-                      (unless (gethash
-                               new-stack-item
-                               distinct-stack-item-p)
-                        (parser-generator--debug
-                         (message
-                          "new-stack-item: %S"
-                          new-stack-item))
-                        (puthash
-                         new-stack-item
-                         t
-                         distinct-stack-item-p)
-                        (push
-                         new-stack-item
-                         stack)))))))
+                  (dolist (local-follow local-follow-set)
+                    (dolist (sub-symbol-rhs sub-symbol-rhss)
+                      (let* ((new-stack-item
+                              (list
+                               (list sub-symbol)
+                               sub-symbol-rhs
+                               local-follow)))
+                        (unless (gethash
+                                 new-stack-item
+                                 distinct-stack-item-p)
+                          (parser-generator--debug
+                           (message
+                            "new-stack-item: %S"
+                            new-stack-item))
+                          (puthash
+                           new-stack-item
+                           t
+                           distinct-stack-item-p)
+                          (push
+                           new-stack-item
+                           stack))))))))
             (setq
              sub-symbol-index
              (1+ sub-symbol-index))))
@@ -554,7 +580,8 @@
               (let ((sub-symbol (nth sub-symbol-index right-hand-side)))
                 (if (parser-generator--valid-non-terminal-p
                      sub-symbol)
-                    (let ((local-follow (nth non-terminal-index local-follow-sets)))
+                    (let ((local-follow
+                           (car (nth non-terminal-index local-follow-sets))))
                       (push
                        (list
                         (list sub-symbol)
