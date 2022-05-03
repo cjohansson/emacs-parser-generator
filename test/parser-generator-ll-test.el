@@ -280,9 +280,8 @@
    parser-generator-lex-analyzer--get-function
    (lambda (token)
      (car token)))
-  (message "parsing-table: %S" (parser-generator--hash-to-list
-     parser-generator-ll--table
-     t))
+  ;; (message "parsing-table: %S" (parser-generator--hash-to-list parser-generator-ll--table  t))
+
   (should
    (equal
     '(1 3) ;; Example is indexed from 1 so that is why they have '(2 4)
