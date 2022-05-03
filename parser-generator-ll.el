@@ -116,7 +116,9 @@
           parser-generator--look-ahead-number
           parser-generator--eof-identifier))
         (e-reduction
-         (list parser-generator--e-identifier)))
+         (list parser-generator--e-identifier))
+        (translation-stack)
+        (terminal-stack '()))
     (parser-generator-lex-analyzer--reset)
     (while (not accept)
       (let* ((state (car stack))
@@ -191,13 +193,70 @@
            ((equal action-type 'pop)
             (parser-generator--debug
              (message "pushed: %S" look-ahead))
-            (parser-generator-lex-analyzer--pop-token)
-            (pop stack))
+            (let ((popped-tokens
+                   (parser-generator-lex-analyzer--pop-token)))
+              (pop stack)
+
+              (let ((token-data)
+                    (old-terminal-stack (car terminal-stack)))
+                (dolist (popped-token popped-tokens)
+                  (let ((token-datum
+                         (parser-generator-lex-analyzer--get-function
+                          popped-token)))
+                    (push
+                     token-datum
+                     token-data)))
+                (push
+                 token-data
+                 old-terminal-stack)
+                (setf
+                 (car terminal-stack)
+                 old-terminal-stack))
+
+            ;; Is it time for SDT?
+            (when (and
+                   translation-stack
+                   (string=
+                    (format "%S" (car (car translation-stack)))
+                    (format "%S" stack)))
+              (let ((translation (pop translation-stack))
+                    (sdt-terminal-stack (pop terminal-stack)))
+                (message
+                 "Do SDT %S (%S)"
+                 translation
+                 sdt-terminal-stack)
+                ;; TODO Do something
+              ))))
 
            ((equal action-type 'reduce)
             (parser-generator--debug
              (message "reduced: %S -> %S" state (nth 1 action)))
             (pop stack)
+
+            ;; Is it time for SDT?
+            (when (and
+                   translation-stack
+                   (string=
+                    (format "%S" (car (car translation-stack)))
+                    (format "%S" stack)))
+              (let ((translation (pop translation-stack))
+                    (sdt-terminal-stack (pop terminal-stack)))
+                (message
+                 "Do SDT %S (%S)"
+                 translation
+                 sdt-terminal-stack)
+                ;; TODO Do something
+              ))
+
+            (push
+             (list
+              (format "%S" stack)
+              (nth 2 action))
+             translation-stack)
+            (push
+             '()
+             terminal-stack)
+
             (unless (equal (nth 1 action) e-reduction)
               (dolist (reduce-item (reverse (nth 1 action)))
                 (push reduce-item stack)))
@@ -649,7 +708,8 @@
           (setq rhs (nth rhss-index rhss))
           (let* ((firsts-rhs (parser-generator--first rhs))
                  (firsts-rhs-length (length firsts-rhs))
-                 (firsts-index 0))
+                 (firsts-index 0)
+                 (first-rhs))
             (while (and
                     valid
                     (< firsts-index firsts-rhs-length))
