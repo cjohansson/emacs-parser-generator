@@ -88,6 +88,11 @@
         (message "\n;; Completed generation of LL(k) tables.\n")
       (message "\n;; Completed generation of LL(1) tables.\n"))))
 
+;; TODO Add support for translation via SDT here
+;; When a reduction is being made, push current stack and production-number to a stack
+;; and record all popped terminals contents. When stack becomes previous state again
+;; use terminals to call SDT for a translation
+;;
 ;; Generally described at .p 339
 (defun parser-generator-ll-parse ()
   "Parse input via lex-analyzer and return parse trail."
@@ -191,7 +196,7 @@
 
            ((equal action-type 'reduce)
             (parser-generator--debug
-             (message "reduced: %S" (nth 1 action)))
+             (message "reduced: %S -> %S" state (nth 1 action)))
             (pop stack)
             (unless (equal (nth 1 action) e-reduction)
               (dolist (reduce-item (reverse (nth 1 action)))
