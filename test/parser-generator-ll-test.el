@@ -471,7 +471,45 @@
      parser-generator-ll--table
      t)))
 
-  ;; TODO Should test k = 1 here as well
+  (parser-generator-set-eof-identifier '$)
+  (parser-generator-set-e-identifier 'e)
+  (parser-generator-set-look-ahead-number 1)
+  (parser-generator-set-grammar
+   '(
+     (S A)
+     (a b)
+     (
+      (S (a A S) b)
+      (A a (b S A))
+      )
+     S
+     )
+   )
+  (parser-generator-process-grammar)
+  (parser-generator-ll-generate-table)
+  ;; (message "parsing-table: %S" (parser-generator--hash-to-list parser-generator-ll--table t))
+  (should
+   (equal
+    '(
+      ("S"
+       (
+        ("(b)" (reduce (b) 1))
+        ("(a)" (reduce (a A S) 0))
+        )
+       )
+      ("A"
+       (
+        ("(b)" (reduce (b S A) 3))
+        ("(a)" (reduce (a) 2))
+        )
+       )
+      ("b" (("(b)" pop)))
+      ("a" (("(a)" pop)))
+      ("$" (("($)" accept)))
+      )
+    (parser-generator--hash-to-list
+     parser-generator-ll--table
+     t)))
 
   (message "Passed tests for (parser-generator-ll-generate-table)"))
 
@@ -643,7 +681,47 @@
   "Test `parser-generator-ll--valid-grammar-k-eq-1-p'."
   (message "Started tests for (parser-generator-ll--valid-grammar-k-eq-1-p)")
 
-  ;; TODO Implement this
+  (parser-generator-set-eof-identifier '$)
+  (parser-generator-set-e-identifier 'e)
+  (parser-generator-set-look-ahead-number 1)
+  (parser-generator-set-grammar
+   '(
+     (S A B)
+     (a b)
+     (
+      (S (a A S) b B)
+      (A a (b S A))
+      (B a)
+      )
+     S
+     )
+   )
+  (parser-generator-process-grammar)
+  (should
+   (equal
+    nil
+    (parser-generator-ll--valid-grammar-k-eq-1-p)))
+
+  (parser-generator-set-eof-identifier '$)
+  (parser-generator-set-e-identifier 'e)
+  (parser-generator-set-look-ahead-number 1)
+  (parser-generator-set-grammar
+   '(
+     (S A B)
+     (a b c)
+     (
+      (S (a A S) b B)
+      (A a (b S A))
+      (B c)
+      )
+     S
+     )
+   )
+  (parser-generator-process-grammar)
+  (should
+   (equal
+    t
+    (parser-generator-ll--valid-grammar-k-eq-1-p)))
 
   (message "Passed tests for (parser-generator-ll--valid-grammar-k-eq-1-p)"))
 

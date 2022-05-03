@@ -122,10 +122,11 @@
              (look-ahead-list
               (parser-generator-lex-analyzer--peek-next-look-ahead))
              (look-ahead))
-        (message "\nstack: %S" stack)
-        (message "output: %S" output)
-        (message "state: %S" state)
-        (message "state-action-table: %S" state-action-table)
+        (parser-generator--debug
+         (message "\nstack: %S" stack)
+         (message "output: %S" output)
+         (message "state: %S" state)
+         (message "state-action-table: %S" state-action-table))
 
         (unless state-action-table
           (signal
@@ -138,7 +139,8 @@
 
         (if look-ahead-list
             (progn
-              (message "look-ahead-list: %S" look-ahead-list)
+              (parser-generator--debug
+               (message "look-ahead-list: %S" look-ahead-list))
               (dolist (look-ahead-list-item look-ahead-list)
                 (push (car look-ahead-list-item) look-ahead))
               (setq look-ahead (reverse look-ahead)))
@@ -146,7 +148,8 @@
            look-ahead
            eof-look-ahead))
 
-        (message "look-ahead: %S" look-ahead)
+        (parser-generator--debug
+         (message "look-ahead: %S" look-ahead))
 
         (unless (gethash
                  (format "%S" look-ahead)
@@ -172,19 +175,23 @@
                  (format "%S" look-ahead)
                  state-action-table))
                (action-type action))
-          (message "action: %S" action)
+          (parser-generator--debug
+           (message "action: %S" action))
           (when (listp action)
             (setq action-type (car action)))
-          (message "action-type: %S" action-type)
+          (parser-generator--debug
+           (message "action-type: %S" action-type))
           (cond
 
            ((equal action-type 'pop)
-            (message "pushed: %S" look-ahead)
+            (parser-generator--debug
+             (message "pushed: %S" look-ahead))
             (parser-generator-lex-analyzer--pop-token)
             (pop stack))
 
            ((equal action-type 'reduce)
-            (message "reduced: %S" (nth 1 action))
+            (parser-generator--debug
+             (message "reduced: %S" (nth 1 action)))
             (pop stack)
             (unless (equal (nth 1 action) e-reduction)
               (dolist (reduce-item (reverse (nth 1 action)))
