@@ -245,6 +245,8 @@
             (parser-generator--debug
              (message "reduced: %S -> %S" state (nth 1 action)))
 
+            (pop stack)
+
             ;; Is it time for SDT?
             (when (and
                    translation-stack
@@ -262,9 +264,6 @@
                  translation)
                 ;; TODO Do something
                 ))
-
-            (pop stack)
-
 
             (push
              (list
@@ -296,13 +295,35 @@
           (car (nth 0 production)))
          (production-rhs
           (nth 1 production))
-        (translation))
+         (translation)
+         (args))
+
+    ;; Collect arguments for translation
+    (let ((terminal-index 0))
+      (dolist (rhs-item production-rhs)
+        (cond
+
+         ((parser-generator--valid-non-terminal-p
+           rhs-item)
+          (let ((non-terminal-value-list (gethash rhs-item symbol-table))
+                (non-terminal-value))
+            (when non-terminal-value-list
+              (setq non-terminal-value (pop non-terminal-value-list))
+              (puthash rhs-item non-terminal-value-list symbol-table))
+            (push non-terminal-value args)))
+
+         ((parser-generator--valid-terminal-p
+           rhs-item)
+          (push (nth terminal-index terminals) args)
+          (setq terminal-index (1+ terminal-index))))))
+    (setq args (reverse args))
+
     (message
      "Perform translation %d: %S -> %S via args: %S"
      production-number
      production-lhs
      production-rhs
-     terminals)
+     args)
     (let ((old-symbol-value
            (gethash
             production-lhs
