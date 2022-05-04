@@ -202,12 +202,9 @@
               (let ((token-data)
                     (old-terminal-stack (car terminal-stack)))
                 (dolist (popped-token popped-tokens)
-                  (let ((token-datum
-                         (parser-generator-lex-analyzer--get-function
-                          popped-token)))
-                    (push
-                     token-datum
-                     token-data)))
+                  (push
+                   popped-token
+                   token-data))
                 (push
                  token-data
                  old-terminal-stack)
@@ -232,7 +229,7 @@
                       (parser-generator-ll--perform-translation
                        (nth 1 translation-item)
                        translation-symbol-table
-                       (pop terminal-stack))))
+                       (reverse (pop terminal-stack)))))
                 (message
                  "Translation: %S"
                  translation)
@@ -258,7 +255,7 @@
                       (parser-generator-ll--perform-translation
                        (nth 1 translation-item)
                        translation-symbol-table
-                       (pop terminal-stack))))
+                       (reverse (pop terminal-stack)))))
                 (message
                  "Translation: %S"
                  translation)
@@ -289,14 +286,16 @@
 (defun parser-generator-ll--perform-translation (production-number symbol-table terminals)
   "Perform translation by PRODUCTION-NUMBER, with SYMBOL-TABLE and TERMINALS."
   (let* ((production
-         (parser-generator--get-grammar-production-by-number
-          production-number))
+          (parser-generator--get-grammar-production-by-number
+           production-number))
          (production-lhs
           (car (nth 0 production)))
          (production-rhs
           (nth 1 production))
          (translation)
-         (args))
+         (args-1)
+         (args-2))
+    (message "terminals: %S" terminals)
 
     ;; Collect arguments for translation
     (let ((terminal-index 0))
@@ -305,36 +304,101 @@
 
          ((parser-generator--valid-non-terminal-p
            rhs-item)
-          (let ((non-terminal-value-list (gethash rhs-item symbol-table))
-                (non-terminal-value))
-            (when non-terminal-value-list
-              (setq non-terminal-value (pop non-terminal-value-list))
-              (puthash rhs-item non-terminal-value-list symbol-table))
-            (push non-terminal-value args)))
+          (let* ((non-terminal-value-list
+                 (gethash rhs-item symbol-table))
+                (non-terminal-value
+                 (pop non-terminal-value-list)))
+            (push
+             (car non-terminal-value)
+             args-1)
+            (push
+             (car (cdr non-terminal-value))
+             args-2)
+            (puthash
+             rhs-item
+             non-terminal-value-list
+             symbol-table)))
 
          ((parser-generator--valid-terminal-p
            rhs-item)
-          (push (nth terminal-index terminals) args)
-          (setq terminal-index (1+ terminal-index))))))
-    (setq args (reverse args))
+          (push
+           (parser-generator-lex-analyzer--get-function
+            (nth terminal-index terminals))
+            args-1)
+          (push
+           (nth terminal-index terminals)
+           args-2)
+          (setq
+           terminal-index
+           (1+ terminal-index))))))
+    (setq
+     args-1
+     (reverse args-1))
+    (setq
+     args-2
+     (reverse args-2))
 
     (message
-     "Perform translation %d: %S -> %S via args: %S"
+     "Perform translation %d: %S -> %S via args-1: %S and args-2: %S"
      production-number
      production-lhs
      production-rhs
-     args)
-    (let ((old-symbol-value
-           (gethash
-            production-lhs
-            symbol-table)))
-      (push
-       translation
-       old-symbol-value)
-      (puthash
-       production-lhs
-       old-symbol-value
-       symbol-table))
+     args-1
+     args-2)
+
+    (if (parser-generator--get-grammar-translation-by-number
+         production-number)
+        (let ((partial-translation
+               (funcall
+                (parser-generator--get-grammar-translation-by-number
+                 production-number)
+                args-1
+                args-2)))
+          (message
+           "\ntranslation-symbol-table: %S = %S (processed)\n"
+           production-lhs
+           partial-translation)
+          (let ((symbol-translations
+                 (gethash
+                  production-lhs
+                  symbol-table)))
+            (push
+             (list
+              partial-translation
+              args-2)
+             symbol-translations)
+            (puthash
+             production-lhs
+             symbol-translations
+             symbol-table)
+            (setq
+             translation
+             partial-translation)))
+
+      ;; When no translation is specified just use popped contents as translation
+      (let ((partial-translation
+             (list
+              args-1
+              args-2)))
+        (message
+         "\ntranslation-symbol-table: %S = %S (generic)\n"
+         production-lhs
+         partial-translation)
+        (let ((symbol-translations
+               (gethash
+                production-lhs
+                symbol-table)))
+          (push
+           partial-translation
+           symbol-translations)
+          (puthash
+           production-lhs
+           symbol-translations
+           symbol-table)
+          (setq
+           translation
+           (car partial-translation)))))
+
     translation))
 
 
