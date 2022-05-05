@@ -88,13 +88,16 @@
         (message "\n;; Completed generation of LL(k) tables.\n")
       (message "\n;; Completed generation of LL(1) tables.\n"))))
 
-;; TODO Add support for translation via SDT here
-;; When a reduction is being made, push current stack and production-number to a stack
-;; and record all popped terminals contents. When stack becomes previous state again
-;; use terminals to call SDT for a translation
-;;
-;; Generally described at .p 339
 (defun parser-generator-ll-parse ()
+  (let ((parse (parser-generator-ll--parse)))
+    (car parse)))
+
+(defun parser-generator-ll-translate ()
+  (let ((parse (parser-generator-ll--parse t)))
+    (car (cdr parse))))
+
+;; Generally described at .p 339
+(defun parser-generator-ll--parse (&optional translate-p)
   "Parse input via lex-analyzer and return parse trail."
   (let ((accept)
         (stack
@@ -117,6 +120,7 @@
           parser-generator--eof-identifier))
         (e-reduction
          (list parser-generator--e-identifier))
+        (translation)
         (translation-stack)
         (translation-symbol-table
          (make-hash-table :test 'equal))
@@ -133,6 +137,7 @@
              (look-ahead))
         (parser-generator--debug
          (message "\nstack: %S" stack)
+         (message "translation-stack: %S" translation-stack)
          (message "output: %S" output)
          (message "state: %S" state)
          (message "state-action-table: %S" state-action-table))
@@ -171,10 +176,10 @@
              'error
              (list
               (format
-              "Invalid look-ahead '%S' in state: '%S', valid look-aheads: '%S'"
-              look-ahead
-              state
-              possible-look-aheads)
+               "Invalid look-ahead '%S' in state: '%S', valid look-aheads: '%S'"
+               look-ahead
+               state
+               possible-look-aheads)
               look-ahead
               state
               possible-look-aheads))))
@@ -194,83 +199,111 @@
 
            ((equal action-type 'pop)
             (parser-generator--debug
-             (message "pushed: %S" look-ahead))
+             (message "popped: %S" look-ahead))
             (let ((popped-tokens
                    (parser-generator-lex-analyzer--pop-token)))
+
+              ;; Is it time for SDT?
+              (when (and
+                     translate-p
+                     translation-stack
+                     (string=
+                      (car (car translation-stack))
+                      (format "%S" stack)))
+                (let* ((translation-item (pop translation-stack))
+                       (partial-translation
+                        (parser-generator-ll--perform-translation
+                         (nth 1 translation-item)
+                         translation-symbol-table
+                         (reverse (pop terminal-stack)))))
+                  (setq
+                   translation
+                   partial-translation)))
+
               (pop stack)
 
-              (let ((token-data)
-                    (old-terminal-stack (car terminal-stack)))
-                (dolist (popped-token popped-tokens)
+              (when translate-p
+                (let ((token-data)
+                      (old-terminal-stack (car terminal-stack)))
+                  (dolist (popped-token popped-tokens)
+                    (push
+                     popped-token
+                     token-data))
                   (push
-                   popped-token
-                   token-data))
-                (push
-                 token-data
-                 old-terminal-stack)
-                (setf
-                 (car terminal-stack)
-                 old-terminal-stack))
+                   token-data
+                   old-terminal-stack)
+                  (setf
+                   (car terminal-stack)
+                   old-terminal-stack)))
 
-              (message
-               "pop token, translation-stack: %S vs %S"
-               translation-stack
-               stack
-               )
+              ;; Is it time for SDT?
+              (when (and
+                     translate-p
+                     translation-stack
+                     (string=
+                      (car (car translation-stack))
+                      (format "%S" stack)))
+                (let* ((translation-item (pop translation-stack))
+                       (partial-translation
+                        (parser-generator-ll--perform-translation
+                         (nth 1 translation-item)
+                         translation-symbol-table
+                         (reverse (pop terminal-stack)))))
+                  (setq
+                   translation
+                   partial-translation)))
 
-            ;; Is it time for SDT?
-            (when (and
-                   translation-stack
-                   (string=
-                    (car (car translation-stack))
-                    (format "%S" stack)))
-              (let* ((translation-item (pop translation-stack))
-                     (translation
-                      (parser-generator-ll--perform-translation
-                       (nth 1 translation-item)
-                       translation-symbol-table
-                       (reverse (pop terminal-stack)))))
-                (message
-                 "Translation: %S"
-                 translation)
-                ;; TODO Do something
-                ))
-
-            ))
+              ))
 
            ((equal action-type 'reduce)
             (parser-generator--debug
              (message "reduced: %S -> %S" state (nth 1 action)))
 
-            (pop stack)
-
             ;; Is it time for SDT?
             (when (and
+                   translate-p
                    translation-stack
                    (string=
                     (car (car translation-stack))
                     (format "%S" stack)))
               (let* ((translation-item (pop translation-stack))
-                     (translation
+                     (partial-translation
                       (parser-generator-ll--perform-translation
                        (nth 1 translation-item)
                        translation-symbol-table
                        (reverse (pop terminal-stack)))))
-                (message
-                 "Translation: %S"
-                 translation)
-                ;; TODO Do something
-                ))
+                (setq
+                 translation
+                 partial-translation)))
 
-            (push
-             (list
-              (format "%S" stack)
-              (nth 2 action))
-             translation-stack)
-            (push
-             '()
-             terminal-stack)
-            (message "translation-stack: %S" translation-stack)
+            (pop stack)
+
+            ;; Is it time for SDT?
+            (when (and
+                   translate-p
+                   translation-stack
+                   (string=
+                    (car (car translation-stack))
+                    (format "%S" stack)))
+              (let* ((translation-item (pop translation-stack))
+                     (partial-translation
+                      (parser-generator-ll--perform-translation
+                       (nth 1 translation-item)
+                       translation-symbol-table
+                       (reverse (pop terminal-stack)))))
+                (setq
+                 translation
+                 partial-translation)))
+
+            (when translate-p
+              (push
+               (list
+                (format "%S" stack)
+                (nth 2 action))
+               translation-stack)
+              (push
+               '()
+               terminal-stack))
 
             (unless (equal (nth 1 action) e-reduction)
               (dolist (reduce-item (reverse (nth 1 action)))
@@ -281,7 +314,9 @@
 
            ((equal action-type 'accept)
             (setq accept t))))))
-    (reverse output)))
+    (list
+     (reverse output)
+     translation)))
 
 (defun parser-generator-ll--perform-translation (production-number symbol-table terminals)
   "Perform translation by PRODUCTION-NUMBER, with SYMBOL-TABLE and TERMINALS."
@@ -295,7 +330,13 @@
          (translation)
          (args-1)
          (args-2))
-    (message "terminals: %S" terminals)
+    (parser-generator--debug
+     (message
+      "Perform translation %S %S %S = %S"
+      production-number
+      symbol-table
+      terminals
+      production-rhs))
 
     ;; Collect arguments for translation
     (let ((terminal-index 0))
@@ -338,13 +379,14 @@
      args-2
      (reverse args-2))
 
-    (message
-     "Perform translation %d: %S -> %S via args-1: %S and args-2: %S"
-     production-number
-     production-lhs
-     production-rhs
-     args-1
-     args-2)
+    (parser-generator--debug
+     (message
+      "Perform translation %d: %S -> %S via args-1: %S and args-2: %S"
+      production-number
+      production-lhs
+      production-rhs
+      args-1
+      args-2))
 
     (if (parser-generator--get-grammar-translation-by-number
          production-number)
@@ -354,10 +396,11 @@
                  production-number)
                 args-1
                 args-2)))
-          (message
+          (parser-generator--debug
+           (message
            "\ntranslation-symbol-table: %S = %S (processed)\n"
            production-lhs
-           partial-translation)
+           partial-translation))
           (let ((symbol-translations
                  (gethash
                   production-lhs
@@ -380,10 +423,11 @@
              (list
               args-1
               args-2)))
-        (message
+        (parser-generator--debug
+         (message
          "\ntranslation-symbol-table: %S = %S (generic)\n"
          production-lhs
-         partial-translation)
+         partial-translation))
         (let ((symbol-translations
                (gethash
                 production-lhs

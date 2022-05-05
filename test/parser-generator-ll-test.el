@@ -412,6 +412,76 @@
 
   (message "Passed tests for (parser-generator-ll-parse)"))
 
+(defun parser-generator-ll-test-translate ()
+  "Test `parser-generator-ll-translate'."
+  (message "Started tests for (parser-generator-ll-translate)")
+
+  (parser-generator-set-eof-identifier '$)
+  (parser-generator-set-e-identifier 'e)
+  (parser-generator-set-look-ahead-number 2)
+  (parser-generator-set-grammar
+   '(
+     (S A)
+     (a b)
+     (
+      (S
+       (a A a a (lambda(a b) (format "alfa %s laval" (nth 1 a))))
+       (b A b a (lambda(a b) (format "delta %s laval" (nth 1 a))))
+       )
+      (A
+       (b (lambda(a b) "sven"))
+       (e (lambda(a b) "ingrid"))
+       )
+      )
+     S
+     )
+   )
+  (parser-generator-process-grammar)
+  (parser-generator-ll-generate-table)
+  (setq
+   parser-generator-lex-analyzer--function
+   (lambda (index)
+     (let* ((string '((b 1 . 2) (b 2 . 3) (a 3 . 4)))
+            (string-length (length string))
+            (max-index index)
+            (tokens))
+       (while (and
+               (< (1- index) string-length)
+               (< (1- index) max-index))
+         (push (nth (1- index) string) tokens)
+         (setq index (1+ index)))
+       (nreverse tokens))))
+  (setq
+   parser-generator-lex-analyzer--get-function
+   (lambda (token)
+     (car token)))
+  (should
+   (equal
+    "delta ingrid laval"
+    (parser-generator-ll-translate)))
+  (message "Passed translation test 1")
+
+  (setq
+   parser-generator-lex-analyzer--function
+   (lambda (index)
+     (let* ((string '((b 1 . 2) (b 2 . 3) (b 3 . 4) (a 4 . 5)))
+            (string-length (length string))
+            (max-index index)
+            (tokens))
+       (while (and
+               (< (1- index) string-length)
+               (< (1- index) max-index))
+         (push (nth (1- index) string) tokens)
+         (setq index (1+ index)))
+       (nreverse tokens))))
+  (should
+   (equal
+    "delta sven laval"
+    (parser-generator-ll-translate)))
+  (message "Passed translation test 2")
+
+  (message "Passed tests for (parser-generator-ll-translate)"))
+
 (defun parser-generator-ll-test-generate-table ()
   "Test `parser-generator-ll-generate-table'."
   (message "Started tests for (parser-generator-ll-generate-table)")
@@ -741,7 +811,8 @@
 
   ;; Main stuff
   (parser-generator-ll-test-generate-table)
-  (parser-generator-ll-test-parse))
+  (parser-generator-ll-test-parse)
+  (parser-generator-ll-test-translate))
 
 
 (provide 'parser-generator-ll-test)
