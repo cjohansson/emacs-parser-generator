@@ -280,8 +280,6 @@
    parser-generator-lex-analyzer--get-function
    (lambda (token)
      (car token)))
-  ;; (message "parsing-table: %S" (parser-generator--hash-to-list parser-generator-ll--table  t))
-
   (should
    (equal
     '(1 3) ;; Example is indexed from 1 so that is why they have '(2 4)
@@ -321,7 +319,6 @@
    parser-generator-lex-analyzer--get-function
    (lambda (token)
      (car token)))
-  (parser-generator-ll-parse)
   (should
    (equal
     '(1 2 0) ;; Example is indexed from 1 so that is why they have '(2 3 1)
@@ -361,7 +358,6 @@
    parser-generator-lex-analyzer--get-function
    (lambda (token)
      (car token)))
-  (parser-generator-ll-parse)
   (should
    (equal
     '(0 3 1 2 1) ;; Example is indexed from 1 so that is why they have '(1 4 2 3 2)
@@ -479,6 +475,51 @@
     "delta sven laval"
     (parser-generator-ll-translate)))
   (message "Passed translation test 2")
+
+  (parser-generator-set-eof-identifier '$)
+  (parser-generator-set-e-identifier 'e)
+  (parser-generator-set-look-ahead-number 1)
+  (parser-generator-set-grammar
+   '(
+     (S A)
+     (a b)
+     (
+      (S
+       (a A S (lambda(a b) (format "alfa %s %s" (nth 1 a) (nth 2 a))))
+       (b (lambda(a b) "beta"))
+       )
+      (A
+       (a (lambda(a b) "delta"))
+       (b S A (lambda(a b) (format "gamma %s %s" (nth 1 a) (nth 2 a))))
+       )
+      )
+     S
+     )
+   )
+  (parser-generator-process-grammar)
+  (parser-generator-ll-generate-table)
+  (setq
+   parser-generator-lex-analyzer--function
+   (lambda (index)
+     (let* ((string '((a 1 . 2) (b 2 . 3) (b 3 . 4) (a 4 . 5) (b 5 . 6)))
+            (string-length (length string))
+            (max-index index)
+            (tokens))
+       (while (and
+               (< (1- index) string-length)
+               (< (1- index) max-index))
+         (push (nth (1- index) string) tokens)
+         (setq index (1+ index)))
+       (nreverse tokens))))
+  (setq
+   parser-generator-lex-analyzer--get-function
+   (lambda (token)
+     (car token)))
+  (should
+   (equal
+    "delta sven laval"
+    (parser-generator-ll-translate)))
+  (message "Passed translation test 3")
 
   (message "Passed tests for (parser-generator-ll-translate)"))
 
