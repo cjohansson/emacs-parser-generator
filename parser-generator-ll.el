@@ -345,27 +345,21 @@
 
          ((parser-generator--valid-non-terminal-p
            rhs-item)
-          (let* ((non-terminal-value-list
-                 (gethash rhs-item symbol-table))
-                (non-terminal-value
-                 (pop non-terminal-value-list)))
+          (let ((non-terminal-value
+                 (gethash rhs-item symbol-table)))
             (push
              (car non-terminal-value)
              args-1)
             (push
              (car (cdr non-terminal-value))
-             args-2)
-            (puthash
-             rhs-item
-             non-terminal-value-list
-             symbol-table)))
+             args-2)))
 
          ((parser-generator--valid-terminal-p
            rhs-item)
           (push
            (parser-generator-lex-analyzer--get-function
             (nth terminal-index terminals))
-            args-1)
+           args-1)
           (push
            (nth terminal-index terminals)
            args-2)
@@ -398,25 +392,18 @@
                 args-2)))
           (parser-generator--debug
            (message
-           "\ntranslation-symbol-table: %S = %S (processed)\n"
+            "\ntranslation-symbol-table: %S = %S (processed)\n"
+            production-lhs
+            partial-translation))
+          (puthash
            production-lhs
+           (list
+            partial-translation
+            args-2)
+           symbol-table)
+          (setq
+           translation
            partial-translation))
-          (let ((symbol-translations
-                 (gethash
-                  production-lhs
-                  symbol-table)))
-            (push
-             (list
-              partial-translation
-              args-2)
-             symbol-translations)
-            (puthash
-             production-lhs
-             symbol-translations
-             symbol-table)
-            (setq
-             translation
-             partial-translation)))
 
       ;; When no translation is specified just use popped contents as translation
       (let ((partial-translation
@@ -425,23 +412,16 @@
               args-2)))
         (parser-generator--debug
          (message
-         "\ntranslation-symbol-table: %S = %S (generic)\n"
+          "\ntranslation-symbol-table: %S = %S (generic)\n"
+          production-lhs
+          partial-translation))
+        (puthash
          production-lhs
-         partial-translation))
-        (let ((symbol-translations
-               (gethash
-                production-lhs
-                symbol-table)))
-          (push
-           partial-translation
-           symbol-translations)
-          (puthash
-           production-lhs
-           symbol-translations
-           symbol-table)
-          (setq
-           translation
-           (car partial-translation)))))
+         partial-translation
+         symbol-table)
+        (setq
+         translation
+         (car partial-translation))))
 
     translation))
 

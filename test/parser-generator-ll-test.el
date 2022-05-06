@@ -517,7 +517,7 @@
      (car token)))
   (should
    (equal
-    "delta sven laval"
+    "beta"
     (parser-generator-ll-translate)))
   (message "Passed translation test 3")
 

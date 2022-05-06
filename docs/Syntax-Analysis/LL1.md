@@ -11,6 +11,7 @@ Perform a left-parse of input-stream.
 ```emacs-lisp
 (require 'parser-generator-ll)
 (require 'ert)
+
 (parser-generator-set-eof-identifier '$)
 (parser-generator-set-e-identifier 'e)
 (parser-generator-set-look-ahead-number 1)
@@ -19,8 +20,14 @@ Perform a left-parse of input-stream.
    (S A)
    (a b)
    (
-    (S (a A S) b)
-    (A a (b S A))
+    (S
+     (a A S (lambda(a b) (format "alfa %s %s" (nth 1 a) (nth 2 a))))
+     (b (lambda(a b) "beta"))
+     )
+    (A
+     (a (lambda(a b) "delta"))
+     (b S A (lambda(a b) (format "gamma %s %s" (nth 1 a) (nth 2 a))))
+     )
     )
    S
    )
@@ -44,12 +51,11 @@ Perform a left-parse of input-stream.
  parser-generator-lex-analyzer--get-function
  (lambda (token)
    (car token)))
-(parser-generator-ll-parse)
 (should
  (equal
-  '(0 3 1 2 1) ;; Example is indexed from 1 so that is why they have '(1 4 2 3 2)
-  (parser-generator-ll-parse)))
-(message "Passed example 5.5 p. 340")
+  "beta"
+  (parser-generator-ll-translate)))
+(message "Passed translation test 3")
 ```
 
 ## Translate
