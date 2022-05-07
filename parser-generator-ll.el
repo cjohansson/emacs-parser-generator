@@ -345,14 +345,20 @@
 
          ((parser-generator--valid-non-terminal-p
            rhs-item)
-          (let ((non-terminal-value
-                 (gethash rhs-item symbol-table)))
+          (let* ((non-terminal-value-list
+                  (gethash rhs-item symbol-table))
+                 (non-terminal-value
+                  (pop non-terminal-value-list)))
             (push
              (car non-terminal-value)
              args-1)
             (push
              (car (cdr non-terminal-value))
-             args-2)))
+             args-2)
+            (puthash
+             rhs-item
+             non-terminal-value-list
+             symbol-table)))
 
          ((parser-generator--valid-terminal-p
            rhs-item)
@@ -389,17 +395,22 @@
                 (parser-generator--get-grammar-translation-by-number
                  production-number)
                 args-1
-                args-2)))
+                args-2))
+              (old-symbol-value
+               (gethash production-lhs symbol-table)))
           (parser-generator--debug
            (message
             "\ntranslation-symbol-table: %S = %S (processed)\n"
             production-lhs
             partial-translation))
-          (puthash
-           production-lhs
+          (push
            (list
             partial-translation
             args-2)
+           old-symbol-value)
+          (puthash
+           production-lhs
+           old-symbol-value
            symbol-table)
           (setq
            translation
@@ -409,15 +420,20 @@
       (let ((partial-translation
              (list
               args-1
-              args-2)))
+              args-2))
+            (old-symbol-value
+             (gethash production-lhs symbol-table)))
         (parser-generator--debug
          (message
           "\ntranslation-symbol-table: %S = %S (generic)\n"
           production-lhs
           partial-translation))
+        (push
+         partial-translation
+         old-symbol-value)
         (puthash
          production-lhs
-         partial-translation
+         old-symbol-value
          symbol-table)
         (setq
          translation
