@@ -406,6 +406,46 @@
     (parser-generator-ll-parse)))
   (message "Passed example 5.12 p. 346-347")
 
+  (parser-generator-set-eof-identifier '$)
+  (parser-generator-set-e-identifier 'e)
+  (parser-generator-set-look-ahead-number 1)
+  (parser-generator-set-grammar
+   '(
+     (S F)
+     ("(" "a" ")" "+")
+     (
+      (S F)
+      (S ("(" S "+" F ")"))
+      (F "a")
+      )
+     S
+     )
+   )
+  (parser-generator-process-grammar)
+  (parser-generator-ll-generate-table)
+  (setq
+   parser-generator-lex-analyzer--function
+   (lambda (index)
+     (let* ((string '(("(" 1 . 2) ("a" 2 . 3) ("+" 3 . 4) ("a" 4 . 5) (")" 5 . 6)))
+            (string-length (length string))
+            (max-index index)
+            (tokens))
+       (while (and
+               (< (1- index) string-length)
+               (< (1- index) max-index))
+         (push (nth (1- index) string) tokens)
+         (setq index (1+ index)))
+       (nreverse tokens))))
+  (setq
+   parser-generator-lex-analyzer--get-function
+   (lambda (token)
+     (car token)))
+  (should
+   (equal
+    '(1 0 2 2) ;; Example is 1 indexed '(2 1 3 3)
+    (parser-generator-ll-parse)))
+  (message "Passed example from Wikipedia")
+
   (message "Passed tests for (parser-generator-ll-parse)"))
 
 (defun parser-generator-ll-test-translate ()
