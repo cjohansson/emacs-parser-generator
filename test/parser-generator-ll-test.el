@@ -286,6 +286,27 @@
     (parser-generator-ll-parse)))
   (message "Passed example 5.16 p. 352")
 
+  (setq
+   parser-generator-lex-analyzer--function
+   (lambda (index)
+     (let* ((string '((b 1 . 2) (b 2 . 3)))
+            (string-length (length string))
+            (max-index index)
+            (tokens))
+       (while (and
+               (< (1- index) string-length)
+               (< (1- index) max-index))
+         (push (nth (1- index) string) tokens)
+         (setq index (1+ index)))
+       (nreverse tokens))))
+  (setq
+   parser-generator-lex-analyzer--get-function
+   (lambda (token)
+     (car token)))
+  (should-error
+   (parser-generator-ll-parse))
+  (message "Passed failing variant of example 5.16 p. 352")
+
   (parser-generator-set-eof-identifier '$)
   (parser-generator-set-e-identifier 'e)
   (parser-generator-set-look-ahead-number 2)
@@ -445,6 +466,27 @@
     '(1 0 2 2) ;; Example is 1 indexed '(2 1 3 3)
     (parser-generator-ll-parse)))
   (message "Passed example from Wikipedia")
+
+  (setq
+   parser-generator-lex-analyzer--function
+   (lambda (index)
+     (let* ((string '(("(" 1 . 2) ("a" 2 . 3) ("+" 3 . 4) ("a" 4 . 5)))
+            (string-length (length string))
+            (max-index index)
+            (tokens))
+       (while (and
+               (< (1- index) string-length)
+               (< (1- index) max-index))
+         (push (nth (1- index) string) tokens)
+         (setq index (1+ index)))
+       (nreverse tokens))))
+  (setq
+   parser-generator-lex-analyzer--get-function
+   (lambda (token)
+     (car token)))
+  (should-error
+   (parser-generator-ll-parse))
+  (message "Passed failing variant of example from Wikipedia")
 
   (message "Passed tests for (parser-generator-ll-parse)"))
 
