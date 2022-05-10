@@ -61,7 +61,16 @@
 
       (insert "\n;;; Variables:\n\n\n")
 
-      ;; Action-tables
+      ;; Grammar start
+      (insert
+       (format
+        "(defvar\n    %s--grammar-start\n %S\n  \"The start of grammar.\")\n\n"
+        namespace
+        (if (symbolp (parser-generator--get-grammar-start))
+            (quote (parser-generator--get-grammar-start))
+          (parser-generator--get-grammar-start))))
+
+      ;; Generated table
       (insert
        (format
         "(defvar\n  %s--table\n  %S\n  \"The generated table.\")\n\n"
@@ -410,6 +419,20 @@
                namespace
                namespace))
 
+      ;; Generate list of symbol
+      (insert
+       (format "
+(defun %s--generate-list-of-symbol (k symbol)
+  \"Generate list of K number of SYMBOL.\"
+  (let ((list-index 0)
+        (list))
+    (while (< list-index k)
+      (push symbol list)
+      (setq list-index (1+ list-index)))
+    list))
+"
+  namespace))
+
       ;; Get grammar translation by number
       (insert
        (format "
@@ -434,13 +457,13 @@
              (list
               (list
                (list
-                (%s--get-grammar-start))
+                %s--grammar-start)
                (%s--generate-list-of-symbol
                 %s--look-ahead-number
                 %s--eof-identifier))
               %s--eof-identifier)
            (list
-            (%s--get-grammar-start)
+            %s--grammar-start
             %s--eof-identifier)))
         (output)
         (eof-look-ahead
@@ -513,7 +536,7 @@
 
            ((equal action-type 'pop)
             (let ((popped-tokens
-                   (parser-generator-lex-analyzer--pop-token)))
+                   (%s-lex-analyzer--pop-token)))
 
               ;; Is it time for SDT?
               (when (and
@@ -654,7 +677,7 @@
       (dolist (rhs-item production-rhs)
         (cond
 
-         ((parser-generator--valid-non-terminal-p
+         ((%s--valid-non-terminal-p
            rhs-item)
           (let* ((non-terminal-value-list
                   (gethash rhs-item symbol-table))
@@ -671,10 +694,10 @@
              non-terminal-value-list
              symbol-table)))
 
-         ((parser-generator--valid-terminal-p
+         ((%s--valid-terminal-p
            rhs-item)
           (push
-           (parser-generator-lex-analyzer--get-function
+           (%s-lex-analyzer--get-function
             (nth terminal-index terminals))
            args-1)
           (push
@@ -690,30 +713,16 @@
      args-2
      (reverse args-2))
 
-    (parser-generator--debug
-     (message
-      "Perform translation %d: %S -> %S via args-1: %S and args-2: %S"
-      production-number
-      production-lhs
-      production-rhs
-      args-1
-      args-2))
-
-    (if (parser-generator--get-grammar-translation-by-number
+    (if (%s--get-grammar-translation-by-number
          production-number)
         (let ((partial-translation
                (funcall
-                (parser-generator--get-grammar-translation-by-number
+                (%s--get-grammar-translation-by-number
                  production-number)
                 args-1
                 args-2))
               (old-symbol-value
                (gethash production-lhs symbol-table)))
-          (parser-generator--debug
-           (message
-            "\ntranslation-symbol-table: %S = %S (processed)\n"
-            production-lhs
-            partial-translation))
           (push
            (list
             partial-translation
@@ -734,11 +743,6 @@
               args-2))
             (old-symbol-value
              (gethash production-lhs symbol-table)))
-        (parser-generator--debug
-         (message
-          "\ntranslation-symbol-table: %S = %S (generic)\n"
-          production-lhs
-          partial-translation))
         (push
          partial-translation
          old-symbol-value)
@@ -752,7 +756,40 @@
 
     translation))
 
-")
+"
+               namespace
+               namespace
+               namespace
+               namespace
+               namespace
+               namespace
+               namespace
+               namespace
+               namespace
+               namespace
+               namespace
+               namespace
+               namespace
+               namespace
+               namespace
+               namespace
+               namespace
+               namespace
+               namespace
+               namespace
+               namespace
+               namespace
+               namespace
+               namespace
+               namespace
+               namespace
+               namespace
+               namespace
+               namespace
+               namespace
+               namespace
+               namespace
+               ))
 
       ;; Footer
       (insert
@@ -774,6 +811,6 @@
     code))
 
 
-(provide 'parser-generator-lr-export)
+(provide 'parser-generator-ll-export)
 
-;;; parser-generator-lr-export.el ends here
+;;; parser-generator-ll-export.el ends here
