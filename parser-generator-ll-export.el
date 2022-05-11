@@ -64,11 +64,11 @@
       ;; Grammar start
       (insert
        (format
-        "(defvar\n    %s--grammar-start\n %S\n  \"The start of grammar.\")\n\n"
+        "(defvar\n  %s--grammar-start\n %s\n  \"The start of grammar.\")\n\n"
         namespace
         (if (symbolp (parser-generator--get-grammar-start))
-            (quote (parser-generator--get-grammar-start))
-          (parser-generator--get-grammar-start))))
+            (format "'%s" (parser-generator--get-grammar-start))
+          (format "\"%s\"" (parser-generator--get-grammar-start)))))
 
       ;; Generated table
       (insert
