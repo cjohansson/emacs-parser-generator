@@ -1124,28 +1124,6 @@
 
   (message "Passed tests for (parser-generator--generate-sets-of-terminals)"))
 
-(defun parser-generator-test--generate-terminal-saturated-first-set ()
-  "Test `parser-generator-generate-terminal-saturated-first-set'."
-  (message "Starting tests for (parser-generator-generate-terminal-saturated-first-set)")
-
-  (parser-generator-set-look-ahead-number 1)
-  (parser-generator-set-grammar '((S A B) ("a" "b") ((S A) (S (B)) (B "a") (A "a") (A ("b" "a"))) S))
-  (parser-generator-process-grammar)
-
-  (should
-   (equal
-    (parser-generator-generate-terminal-saturated-first-set
-     '(("a" "b") ("a" "a" e) ("b") ("a" e)))
-    '(("a" "b") ("a" "a"))))
-
-  (should
-   (equal
-    (parser-generator-generate-terminal-saturated-first-set
-     '(("a" "b") ("a" "a" e) ("b" "b") ("a" e)))
-    '(("a" "b") ("a" "a") ("b" "b"))))
-
-  (message "Passed tests for (parser-generator-generate-terminal-saturated-first-set)"))
-
 (defun parser-generator-test ()
   "Run test."
   ;; (setq debug-on-error t)
@@ -1171,7 +1149,6 @@
   (parser-generator-test--generate-f-sets)
   (parser-generator-test--calculate-max-terminal-count)
   (parser-generator-test--generate-sets-of-terminals)
-  (parser-generator-test--generate-terminal-saturated-first-set)
 
   ;; Algorithms
   (parser-generator-test--first)

@@ -5,8 +5,8 @@
 ;; Author: Christian Johansson <christian@cvj.se>
 ;; Maintainer: Christian Johansson <christian@cvj.se>
 ;; Created: 10 Oct 2020
-;; Modified: 19 Feb 2021
-;; Version: 0.1.5
+;; Modified: 19 May 2022
+;; Version: 0.1.6
 ;; Keywords: tools, convenience
 ;; URL: https://github.com/cjohansson/emacs-parser-generator
 
@@ -2139,20 +2139,6 @@
       (setq follow-set
             (parser-generator--distinct follow-set)))
     follow-set))
-
-(defun parser-generator-generate-terminal-saturated-first-set (first-set)
-  "Generated a set from FIRST-SET with items that does not end with the e-identifier if there is alternative items that continues with terminals."
-  (let ((max-terminal-count
-         (parser-generator-calculate-max-terminal-count
-          first-set))
-        (saturated-list))
-    (when (> max-terminal-count 0)
-      (setq
-       saturated-list
-       (parser-generator-generate-sets-of-terminals
-        first-set
-        max-terminal-count)))
-    saturated-list))
 
 (defun parser-generator-generate-sets-of-terminals (sets count)
   "Generate set of terminals in sequence from SETS with COUNT."
