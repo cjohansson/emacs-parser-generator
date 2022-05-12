@@ -254,13 +254,13 @@
 
 (defun parser-generator-lr-generate-parser-tables ()
   "Generate parsing tables for grammar."
-  (message "\n;; Starting generation of parser-tables..\n")
+  (message "\n;; Starting generation of LR(k) parser-tables..\n")
   (parser-generator-lr--generate-precedence-tables)
   (let ((table-lr-items
          (parser-generator-lr--generate-goto-tables)))
     (parser-generator-lr--generate-action-tables
      table-lr-items)
-    (message "\n;; Completed generation of parser-tables.\n")
+    (message "\n;; Completed generation of LR(k) parser-tables.\n")
     table-lr-items))
 
 (defun parser-generator-lr--get-expanded-action-tables ()

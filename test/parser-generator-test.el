@@ -967,27 +967,41 @@
 
   (message "Passed tests for (parser-generator--valid-terminal-p)"))
 
-(defun parser-generator-test--merge-max-terminals ()
-  "Test `parser-generator--merge-max-terminals'."
-  (message "Starting tests for (parser-generator--merge-max-terminals)")
+(defun parser-generator-test--merge-max-terminal-sets ()
+  "Test `parser-generator--merge-max-terminal-sets'."
+  (message "Starting tests for (parser-generator--merge-max-terminal-sets)")
+
+  (parser-generator-set-eof-identifier '$)
+  (parser-generator-set-e-identifier 'e)
+  (parser-generator-set-look-ahead-number 2)
+  (parser-generator-set-grammar '((S A B) (a b) ((S A) (S (B)) (B a) (A a) (A (b a))) S))
+  (parser-generator-process-grammar)
+
+  ;; Example 5.13 p. 348
+  (should
+   (equal
+    '((a b) (b) (b a))
+    (parser-generator--merge-max-terminal-sets
+     '((a b b) (e))
+     '((b) (b a b))
+     t)))
+
+  ;; Example 5.14 p. 350
+  (should
+   (equal
+    '((a a) (a b) (b b))
+    (parser-generator--merge-max-terminal-sets
+     '((a b) (a e a) (b b) (b e b))
+     nil)))
 
   (should
    (equal
-    '(a b e)
-    (parser-generator--merge-max-terminals
-     '(a)
-     '(b e)
-     3)))
+    '(($ $) (a $) (a a))
+    (parser-generator--merge-max-terminal-sets
+     '((a e) ($))
+     '(($ $) (a $)))))
 
-  (should
-   (equal
-    '(a e)
-    (parser-generator--merge-max-terminals
-     '(a e)
-     '(b e)
-     3)))
-
-  (message "Passed tests for (parser-generator--merge-max-terminals)"))
+  (message "Passed tests for (parser-generator--merge-max-terminal-sets)"))
 
 (defun parser-generator-test--get-list-permutations ()
   "Test `parser-generator--get-list-permutations'."
@@ -1051,6 +1065,87 @@
 
   (message "Passed tests for (parser-generator-test--generate-list-of-symbol)"))
 
+(defun parser-generator-test--calculate-max-terminal-count ()
+  "Test `parser-generator-calculate-max-terminal-count'."
+  (message "Starting tests for (parser-generator-calculate-max-terminal-count)")
+
+  (parser-generator-set-look-ahead-number 1)
+  (parser-generator-set-grammar '((S A B) ("a" "b") ((S A) (S (B)) (B "a") (A "a") (A ("b" "a"))) S))
+  (parser-generator-process-grammar)
+
+  (should
+   (equal
+    (parser-generator-calculate-max-terminal-count
+     '(("a" "a") ("b") ("a" e "b" "c") (B "a" "b" "c")))
+    2))
+  (should
+   (equal
+    (parser-generator-calculate-max-terminal-count
+     '(("a") ("b") ("a" e "b" "c") (B "a" "b" "c")))
+    1))
+
+  (message "Passed tests for (parser-generator-calculate-max-terminal-count)"))
+
+(defun parser-generator-test--generate-sets-of-terminals ()
+  "Test `parser-generator--generate-sets-of-terminals'."
+  (message "Starting tests for (parser-generator--generate-sets-of-terminals)")
+
+  (parser-generator-set-look-ahead-number 1)
+  (parser-generator-set-grammar '((S A B) ("a" "b") ((S A) (S (B)) (B "a") (A "a") (A ("b" "a"))) S))
+  (parser-generator-process-grammar)
+
+  (should
+   (equal
+    (parser-generator-generate-sets-of-terminals
+     '(("a" "a") ("b") ("b" "a") ("a" "b" "a") ("a" e S "b" "a") ("b" "b" A))
+     2)
+    '(("a" "a") ("b" "a") ("a" "b") ("b" "b"))))
+
+  (should
+   (equal
+    (parser-generator-generate-sets-of-terminals
+     '(("a" "a") ("b") ("b" "a") ("a" "b" "a") ("a" e S "b" "a") ("b" "b" A))
+     1)
+    '(("a") ("b"))))
+
+  (should
+   (equal
+    (parser-generator-generate-sets-of-terminals
+     '(("a" "a") ("b") ("b" "a") ("a" "b" "a") ("a" e S "b" "a") ("b" "b" A))
+     3)
+    '(("a" "b" "a"))))
+
+  (should
+   (equal
+    (parser-generator-generate-sets-of-terminals
+     '(("a" e) ("b") ("b" "a") ("a" "b" "a") ("a" e S "b" "a") ("b" "b" A))
+     1)
+    '(("a") ("b"))))
+
+  (message "Passed tests for (parser-generator--generate-sets-of-terminals)"))
+
+(defun parser-generator-test--generate-terminal-saturated-first-set ()
+  "Test `parser-generator-generate-terminal-saturated-first-set'."
+  (message "Starting tests for (parser-generator-generate-terminal-saturated-first-set)")
+
+  (parser-generator-set-look-ahead-number 1)
+  (parser-generator-set-grammar '((S A B) ("a" "b") ((S A) (S (B)) (B "a") (A "a") (A ("b" "a"))) S))
+  (parser-generator-process-grammar)
+
+  (should
+   (equal
+    (parser-generator-generate-terminal-saturated-first-set
+     '(("a" "b") ("a" "a" e) ("b") ("a" e)))
+    '(("a" "b") ("a" "a"))))
+
+  (should
+   (equal
+    (parser-generator-generate-terminal-saturated-first-set
+     '(("a" "b") ("a" "a" e) ("b" "b") ("a" e)))
+    '(("a" "b") ("a" "a") ("b" "b"))))
+
+  (message "Passed tests for (parser-generator-generate-terminal-saturated-first-set)"))
+
 (defun parser-generator-test ()
   "Run test."
   ;; (setq debug-on-error t)
@@ -1061,7 +1156,7 @@
   (parser-generator-test--get-grammar-look-aheads)
   (parser-generator-test--get-grammar-rhs)
   (parser-generator-test--get-list-permutations)
-  (parser-generator-test--merge-max-terminals)
+  (parser-generator-test--merge-max-terminal-sets)
   (parser-generator-test--sort-list)
   (parser-generator-test--valid-context-sensitive-attribute-p)
   (parser-generator-test--valid-context-sensitive-attributes-p)
@@ -1074,6 +1169,9 @@
   (parser-generator-test--valid-sentential-form-p)
   (parser-generator-test--valid-terminal-p)
   (parser-generator-test--generate-f-sets)
+  (parser-generator-test--calculate-max-terminal-count)
+  (parser-generator-test--generate-sets-of-terminals)
+  (parser-generator-test--generate-terminal-saturated-first-set)
 
   ;; Algorithms
   (parser-generator-test--first)

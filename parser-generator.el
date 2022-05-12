@@ -367,7 +367,10 @@
     (if (hash-table-p hash-table)
         (progn
           (maphash
-           (lambda (k v) (push (list k v) result))
+           (lambda (k v)
+             (if (hash-table-p v)
+                 (push (list k (parser-generator--hash-to-list v un-sorted)) result)
+               (push (list k v) result)))
            hash-table)
           (if un-sorted
               (nreverse result)
@@ -661,6 +664,14 @@
            (symbolp e-identifier))
     (error "E-identifier must be a symbol or string!"))
   (setq parser-generator--e-identifier e-identifier))
+
+(defun parser-generator-set-eof-identifier (eof-identifier)
+  "Set EOF-IDENTIFIER."
+  (unless (or
+           (stringp eof-identifier)
+           (symbolp eof-identifier))
+    (error "EOF-identifier must be a symbol or string!"))
+  (setq parser-generator--eof-identifier eof-identifier))
 
 (defun parser-generator-set-look-ahead-number (k)
   "Set look-ahead number K."
@@ -1230,36 +1241,155 @@
          look-ahead)))
     (nreverse look-ahead)))
 
-(defun parser-generator--merge-max-terminals (a b k)
-  "Merge terminals from A and B to a maximum length of K."
-  (let ((merged)
+(defun parser-generator--merge-max-terminal-sets (a &optional b allow-any-length)
+  "Calculate list of all lists of L1 (+) L2 which is a merge of all terminals in lists A combined with all terminals in lists B but with maximum length of the set look-ahead number."
+  (let ((a-length (length a))
+        (a-index 0)
+        (b-length (length b))
+        (merged-lists))
+    (cond
+     ((and a b)
+      (while (< a-index a-length)
+        (let ((a-element (nth a-index a))
+              (b-index 0))
+          (while (< b-index b-length)
+            (let ((b-element (nth b-index b)))
+              (when-let
+                  ((merged-element
+                    (parser-generator--merge-max-terminals
+                     a-element
+                     b-element
+                     allow-any-length)))
+                (if merged-lists
+                    (setq
+                     merged-lists
+                     (append
+                      merged-lists
+                      (list merged-element)))
+                  (setq
+                   merged-lists
+                   (list merged-element)))))
+            (setq b-index (1+ b-index)))
+          (setq a-index (1+ a-index)))))
+     (a
+      (while (< a-index a-length)
+        (let ((a-element (nth a-index a)))
+          (when-let
+              ((merged-element
+                (parser-generator--merge-max-terminals
+                 a-element
+                 nil
+                 allow-any-length)))
+            (if merged-lists
+                (setq
+                 merged-lists
+                 (append
+                  merged-lists
+                  (list merged-element)))
+              (setq
+               merged-lists
+               (list merged-element)))))
+        (setq a-index (1+ a-index))))
+
+     (b
+      (let ((b-index 0))
+        (while (< b-index b-length)
+          (let ((b-element (nth b-index b)))
+            (when-let
+                ((merged-element
+                  (parser-generator--merge-max-terminals
+                   nil
+                   b-element
+                   allow-any-length)))
+              (if merged-lists
+                  (setq
+                   merged-lists
+                   (append
+                    merged-lists
+                    (list merged-element)))
+                (setq
+                 merged-lists
+                 (list merged-element)))))
+          (setq b-index (1+ b-index))))))
+    (setq
+     merged-lists
+     (parser-generator--distinct
+      merged-lists))
+    (setq
+     merged-lists
+     (sort
+      merged-lists
+      'parser-generator--sort-list))
+    merged-lists))
+
+;; Lemma 5.1 p. 348
+(defun parser-generator--merge-max-terminals (a b &optional allow-any-length)
+  "Calculate L1 (+) L2 which is a merge of all terminals in A and B but with exactly length of the set look-ahead number. Optionally ALLOW-ANY-LENGTH."
+  (let ((k (max 1 parser-generator--look-ahead-number))
+        (merged)
         (merge-count 0)
-        (continue t)
         (a-element)
         (a-index 0)
         (a-length (length a))
         (b-element)
         (b-index 0)
-        (b-length (length b)))
+        (b-length (length b))
+        (only-eof))
+
     (while (and
             (< a-index a-length)
-            (< merge-count k)
-            continue)
+            (< merge-count k))
       (setq a-element (nth a-index a))
-      (when (parser-generator--valid-e-p a-element)
-        (setq continue nil))
-      (push a-element merged)
+
+      (when (parser-generator--valid-eof-p
+             a-element)
+        (setq only-eof t))
+
+      (when (or
+             (and
+              only-eof
+              (parser-generator--valid-eof-p
+               a-element))
+             (and
+              (not only-eof)
+              (parser-generator--valid-terminal-p
+               a-element)))
+        (push a-element merged)
+        (setq merge-count (1+ merge-count)))
+
       (setq a-index (1+ a-index)))
+
     (while (and
             (< b-index b-length)
-            (< merge-count k)
-            continue)
+            (< merge-count k))
       (setq b-element (nth b-index b))
-      (when (parser-generator--valid-e-p b-element)
-        (setq continue nil))
-      (push b-element merged)
+
+      (when (parser-generator--valid-eof-p
+             b-element)
+        (setq only-eof t))
+
+      (when (or
+             (and
+              only-eof
+              (parser-generator--valid-eof-p
+               b-element))
+             (and
+              (not only-eof)
+              (parser-generator--valid-terminal-p
+               b-element)))
+        (push b-element merged)
+        (setq merge-count (1+ merge-count)))
+
       (setq b-index (1+ b-index)))
-    (nreverse merged)))
+
+    (if (or
+         (and
+          allow-any-length
+          (> merge-count 0))
+         (and (not allow-any-length)
+              (= merge-count k)))
+        (nreverse merged)
+      nil)))
 
 ;; p. 357
 (defun parser-generator--f-set (input-tape state stack)
@@ -1512,8 +1642,8 @@
 
 ;; Algorithm 5.5, p. 357
 (defun parser-generator--first
-    (β &optional disallow-e-first ignore-validation skip-sorting)
-  "For sentential-form Β, calculate first terminals, optionally DISALLOW-E-FIRST, IGNORE-VALIDATION and SKIP-SORTING."
+    (β &optional disallow-e-first ignore-validation skip-sorting use-eof-for-trailing-symbols)
+  "For sentential-form Β, calculate first terminals, optionally DISALLOW-E-FIRST, IGNORE-VALIDATION, SKIP-SORTING and USE-EOF-FOR-TRAILING-SYMBOLS."
 
   ;; Make sure we are dealing with a list of symbols
   (unless (listp β)
@@ -1644,8 +1774,13 @@
            (parser-generator--valid-eof-p input-symbol)
            (parser-generator--valid-terminal-p input-symbol))
           (parser-generator--debug
-           (message
-            "symbol is a terminal, the e-identifier or the EOF-identifier"))
+           (cond
+            ((parser-generator--valid-e-p input-symbol)
+             (message "symbol is the e-identifier"))
+            ((parser-generator--valid-eof-p input-symbol)
+             (message "symbol is the EOF-identifier"))
+            ((parser-generator--valid-terminal-p input-symbol)
+             (message "symbol is a terminal"))))
           (let ((expanded-list-index 0)
                 (expanded-list-count
                  (length expanded-lists)))
@@ -1706,7 +1841,9 @@
             (setq
              expanded-lists-index
              (1+ expanded-lists-index)))
-          (when (>= minimum-terminal-count k)
+          (when (and
+                 minimum-terminal-count
+                 (>= minimum-terminal-count k))
             (setq still-looking nil)
             (parser-generator--debug
              (message
@@ -1866,14 +2003,18 @@
                           (missing-symbol-index 0))
                       (while (< missing-symbol-index missing-symbol-count)
                         (push
-                         parser-generator--e-identifier
+                         (if use-eof-for-trailing-symbols
+                             parser-generator--eof-identifier
+                             parser-generator--e-identifier)
                          processed-list)
                         (setq
                          missing-symbol-index
                          (1+ missing-symbol-index)))
                       (parser-generator--debug
                        (message
-                        "Added %d trailing e-identifiers to set"
+                        (if use-eof-for-trailing-symbols
+                          "Added %d trailing EOF-identifiers to set"
+                          "Added %d trailing e-identifiers to set")
                         missing-symbol-count))))
 
                   (when (> (length processed-list) k)
@@ -1998,6 +2139,93 @@
       (setq follow-set
             (parser-generator--distinct follow-set)))
     follow-set))
+
+(defun parser-generator-generate-terminal-saturated-first-set (first-set)
+  "Generated a set from FIRST-SET with items that does not end with the e-identifier if there is alternative items that continues with terminals."
+  (let ((max-terminal-count
+         (parser-generator-calculate-max-terminal-count
+          first-set))
+        (saturated-list))
+    (when (> max-terminal-count 0)
+      (setq
+       saturated-list
+       (parser-generator-generate-sets-of-terminals
+        first-set
+        max-terminal-count)))
+    saturated-list))
+
+(defun parser-generator-generate-sets-of-terminals (sets count)
+  "Generate set of terminals in sequence from SETS with COUNT."
+  (let ((sets-of-terminals)
+        (terminal-set-exists-p (make-hash-table :test 'equal)))
+    (dolist (set sets)
+      (let ((item-count (length set))
+            (item-index 0)
+            (only-terminals t)
+            (terminal-count 0)
+            (terminals))
+        (while (and
+                only-terminals
+                (< terminal-count count)
+                (< item-index item-count))
+          (let ((item (nth item-index set)))
+            (if (parser-generator--valid-terminal-p item)
+                (progn
+                  (push
+                   item
+                   terminals)
+                  (setq
+                   terminal-count
+                   (1+ terminal-count)))
+              (setq
+               only-terminals
+               nil)))
+          (setq
+           item-index
+           (1+ item-index)))
+        (when (and
+               only-terminals
+               (= terminal-count count)
+               (not
+                (gethash
+                 terminals
+                 terminal-set-exists-p)))
+          (puthash
+           terminals
+           t
+           terminal-set-exists-p)
+          (push
+           (reverse terminals)
+           sets-of-terminals))))
+    (reverse sets-of-terminals)))
+
+(defun parser-generator-calculate-max-terminal-count (sets)
+  "Calculate maximum number of terminals in sequence in SETS."
+  (let ((max-terminal-count 0))
+    (dolist (set sets)
+      (let ((item-count (length set))
+            (item-index 0)
+            (only-terminals t)
+            (terminal-count 0))
+        (while (and
+                only-terminals
+                (< item-index item-count))
+          (let ((item (nth item-index set)))
+            (if (parser-generator--valid-terminal-p item)
+                (setq
+                 terminal-count
+                 (1+ terminal-count))
+              (setq
+               only-terminals
+               nil)))
+          (setq
+           item-index
+           (1+ item-index)))
+        (when (> terminal-count max-terminal-count)
+          (setq
+           max-terminal-count
+           terminal-count))))
+    max-terminal-count))
 
 
 (provide 'parser-generator)
