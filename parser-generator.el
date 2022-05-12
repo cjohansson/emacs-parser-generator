@@ -35,6 +35,9 @@
 ;;; Code:
 
 
+(require 'subr-x)
+
+
 ;;; Variables:
 
 
