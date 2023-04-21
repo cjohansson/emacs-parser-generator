@@ -31,14 +31,24 @@
   "Index in lex-analyzer.")
 
 (defvar
+  parser-generation-lex-analyzer--index-init
+  1
+  "Initial value of index.")
+
+(defvar-local
+  parser-generation-lex-analyzer--state
+  nil
+  "State of lex-analyzer.")
+
+(defvar
+  parser-generator-lex-analyzer--state-init
+  nil
+  "Initial value of state.")
+
+(defvar
   parser-generator-lex-analyzer--reset-function
   nil
   "Function used when resetting lex-analyzer.")
-
-(defvar-local
-  parser-generator-lex-analyzer--move-to-index-flag
-  nil
-  "Non-nil means move index to value.")
 
 
 ;; Functions
@@ -55,10 +65,11 @@
   (let ((meta-information))
     (condition-case error
         (progn
-          (setq meta-information
-                (funcall
-                 parser-generator-lex-analyzer--get-function
-                 token)))
+          (setq
+           meta-information
+           (funcall
+            parser-generator-lex-analyzer--get-function
+            token)))
       (error
        (signal
         'error
@@ -88,6 +99,7 @@
   (let ((look-ahead)
         (look-ahead-length 0)
         (index parser-generator-lex-analyzer--index)
+        (state parser-generation-lex-analyzer--state)
         (k (max
             1
             parser-generator--look-ahead-number)))
@@ -96,22 +108,30 @@
             k)
       (condition-case error
           (progn
-            (setq-local
-             parser-generator-lex-analyzer--move-to-index-flag
-             nil)
-            (let ((next-look-ahead
+            (let* ((result-list
                    (funcall
                     parser-generator-lex-analyzer--function
-                    index)))
-              (if parser-generator-lex-analyzer--move-to-index-flag
-                  (setq
-                   index
-                   parser-generator-lex-analyzer--move-to-index-flag)
-                (if next-look-ahead
+                    index
+                    state))
+                   (token
+                    (nth 0 result-list))
+                   (move-to-index-flag
+                    (nth 1 result-list))
+                   (new-state
+                    (nth 3 result-list)))
+              (if move-to-index-flag
+                  (progn
+                    (setq
+                     index
+                     move-to-index-flag)
+                    (setq
+                     state
+                     new-state))
+                (if token
                     (progn
-                      (unless (listp (car next-look-ahead))
-                        (setq next-look-ahead (list next-look-ahead)))
-                      (dolist (next-look-ahead-item next-look-ahead)
+                      (unless (listp (car token))
+                        (setq token (list token)))
+                      (dolist (next-look-ahead-item token)
                         (when (<
                                look-ahead-length
                                k)
@@ -141,25 +161,34 @@
     (while continue
       (condition-case error
           (progn
-            (setq-local
-             parser-generator-lex-analyzer--move-to-index-flag
-             nil)
-            (let ((token
-                   (funcall
-                    parser-generator-lex-analyzer--function
-                    parser-generator-lex-analyzer--index)))
-              (if parser-generator-lex-analyzer--move-to-index-flag
+            (let* ((result-list
+                    (funcall
+                     parser-generator-lex-analyzer--function
+                     parser-generator-lex-analyzer--index
+                     parser-generator-lex-analyzer--state))
+                   (token
+                    (nth 0 result-list))
+                   (move-to-index-flag
+                    (nth 1 result-list))
+                   (new-index
+                    (nth 2 result-list))
+                   (new-state
+                    (nth 3 result-list)))
+              (if move-to-index-flag
                   (progn
                     (setq-local
                      parser-generator-lex-analyzer--index
-                     parser-generator-lex-analyzer--move-to-index-flag))
+                     move-to-index-flag)
+                    (setq-local
+                     parser-generator-lex-analyzer--state
+                     new-state))
+                (setq
+                 parser-generator-lex-analyzer--index
+                 new-index)
                 (when token
                   (unless (listp (car token))
                     (setq token (list token)))
                   (let ((first-token (car token)))
-                    (setq
-                     parser-generator-lex-analyzer--index
-                     (cdr (cdr first-token)))
                     (push
                      first-token
                      tokens)))
@@ -168,14 +197,20 @@
                  nil))))
         (error
          (error
-          "Lex-analyze failed to pop token at %s, error: %s"
+          "Lex-analyze failed to pop token at %s %s, error: %s"
           parser-generator-lex-analyzer--index
+          parser-generator-lex-analyzer--state
           (car (cdr error))))))
     (nreverse tokens)))
 
 (defun parser-generator-lex-analyzer--reset ()
   "Reset lex-analyzer."
-  (setq parser-generator-lex-analyzer--index 1)
+  (setq
+   parser-generator-lex-analyzer--index
+   parser-generation-lex-analyzer--index-init)
+  (setq
+   parser-generator-lex-analyzer--state
+   parser-generator-lex-analyzer--state-init)
   (when parser-generator-lex-analyzer--reset-function
     (funcall parser-generator-lex-analyzer--reset-function)))
 

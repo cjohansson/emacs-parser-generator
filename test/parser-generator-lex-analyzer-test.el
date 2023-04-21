@@ -24,7 +24,7 @@
    (parser-generator-lex-analyzer--peek-next-look-ahead))
   (setq
    parser-generator-lex-analyzer--function
-   (lambda (index)
+   (lambda (index _state)
      (let* ((string '(("a" 1 . 2) ("b" 2 . 3) ("c" 3 . 4) ("d" 4 . 5)))
             (string-length (length string))
             (max-index index)
@@ -36,7 +36,7 @@
          (setq next-token (nth (1- index) string))
          (push next-token tokens)
          (setq index (1+ index)))
-       (nreverse tokens))))
+       (list (nreverse tokens) nil nil nil))))
   (should-error
    (parser-generator-lex-analyzer--peek-next-look-ahead))
   (parser-generator-lex-analyzer--reset)
@@ -46,6 +46,7 @@
   (message "Passed failing lex analysis")
 
   (setq parser-generator--look-ahead-number 1)
+  (parser-generator-lex-analyzer--peek-next-look-ahead)
   (should
    (equal
     '(("a" 1 . 2))
@@ -65,7 +66,7 @@
 
   (setq
    parser-generator-lex-analyzer--function
-   (lambda (index)
+   (lambda (index _state)
      (let* ((string '(("a" 1 . 2) ("b" 2 . 3) ("c" 3 . 4) ("d" 4 . 5)))
             (string-length (length string))
             (max-index index)
@@ -79,7 +80,7 @@
            (error "Invalid token: %s" next-token))
          (push next-token tokens)
          (setq index (1+ index)))
-       (nreverse tokens))))
+       (list (nreverse tokens) nil nil nil))))
 
   (should-error
     (parser-generator-lex-analyzer--peek-next-look-ahead))
@@ -98,17 +99,19 @@
    (parser-generator-lex-analyzer--pop-token))
   (setq
    parser-generator-lex-analyzer--function
-   (lambda (index)
+   (lambda (index _state)
      (let* ((string '(("a" 1 . 2) ("b" 2 . 3)))
             (string-length (length string))
             (max-index index)
-            (tokens))
+            (tokens)
+            (new-index))
        (while (and
                (< (1- index) string-length)
                (< (1- index) max-index))
          (push (nth (1- index) string) tokens)
+         (setq new-index (cdr (cdr (nth (1- index) string))))
          (setq index (1+ index)))
-       (nreverse tokens))))
+       (list (nreverse tokens) nil new-index nil))))
   (should-error
    (parser-generator-lex-analyzer--pop-token))
   (parser-generator-lex-analyzer--reset)
@@ -122,10 +125,12 @@
    (equal
     '(("a" 1 . 2))
     (parser-generator-lex-analyzer--pop-token)))
+  (message "was there")
   (should
    (equal
     '(("b" 2 . 3))
     (parser-generator-lex-analyzer--pop-token)))
+  (message "was here")
   (should
    (equal
     nil

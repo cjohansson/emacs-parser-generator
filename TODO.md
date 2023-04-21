@@ -8,6 +8,8 @@ Functions (with validations) to set global variables:
 * parser-generator--global-attributes
 * parser-generator--global-declaration
 
+State-based lex-analyzer
+
 ## LR-Parser
 
 Functions (with validations) to set global variables:
