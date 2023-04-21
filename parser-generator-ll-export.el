@@ -174,7 +174,7 @@
 
       (insert "\n;;; Functions:\n\n")
 
-      (insert "\n;;; Functions for Lex-Analyzer:\n\n")
+      (insert "\n;;; Functions for Lex-Analyzer:\n\n\n")
 
       ;; Lex-Analyzer Get Function
       (insert

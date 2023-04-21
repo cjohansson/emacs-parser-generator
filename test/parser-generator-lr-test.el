@@ -320,9 +320,10 @@
   ;; Test grammar that can be only solved by using global and context-sensitive attributes
   (setq
    parser-generator-lex-analyzer--function
-   (lambda (index)
+   (lambda (index _state)
      (with-current-buffer "*buffer*"
-       (let ((token))
+       (let ((token)
+             (new-index))
          (when
              (<
               index
@@ -347,10 +348,13 @@
                      (match-beginning 0)
                      (match-end 0))))
                (setq
+                new-index
+                (match-end 0))
+               (setq
                 token
                 `(,symbol ,(match-beginning 0) . ,(match-end 0)))))
             (t (error "Unexpected input at %d!" index))))
-         token))))
+         (list token nil new-index nil)))))
 
   (setq
    parser-generator-lex-analyzer--get-function
@@ -419,7 +423,7 @@
    parser-generator-lr--context-sensitive-precedence-attribute
    '%prec)
   (parser-generator-lr-generate-parser-tables)
-  (message "Grammar not conflict anymore")
+  (message "Grammar not conflicting anymore")
 
   ;; Parse: 1+1*2\n
   ;;
