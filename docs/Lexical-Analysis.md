@@ -1,10 +1,12 @@
 # Lexical Analysis
 
-Set lexical analysis function by setting variable `parser-generator-lex-analyzer--function`. Optionally set reset function by setting variable `parser-generator-lex-analyzer--reset-function`. The lexical analysis is indexed on variable `parser-generator-lex-analyzer--index`. All parsers expect a list of tokens as response from lexical-analysis.
+Set lexical analysis function by setting variable `parser-generator-lex-analyzer--function`. Optionally set reset function by setting variable `parser-generator-lex-analyzer--reset-function`. 
 
-If you detect that the pointer needs to move, set flag `parser-generator-lex-analyzer--move-to-index-flag` to non-nil to move lex-analyzer position.
+The lexical analysis is internally indexed on a local variable `parser-generator-lex-analyzer--index` and has it optional state in the local variable `parser-generation-lex-analyzer--state`. The initial values for the index and state can be set in variables `parser-generation-lex-analyzer--index-init` and `parser-generator-lex-analyzer--state-init`.
 
-To enable exporting the functions need to be specified in a way that the entire body is within the same block, do that using `(let)` or `(progn)` for example.
+All parsers expect a list as response from lexical-analysis, the first item in the list should be a list of tokens. The second is "move index"-flag, if it is non-nil it is expected to be a integer representing the index to move the lex-analyzer to. Third item is the new index after the lex. The fourth item is the new state after the lex.
+
+To enable exporting, the functions need to be specified in a way that the entire body is within the same block, do that using `(let)` or `(progn)` for example.
 
 ## Token
 
@@ -12,6 +14,12 @@ A token is defined as a list with 3 elements, first is a string or symbol, secon
 
 ``` emacs-lisp
 '("a" 1 . 2)
+```
+
+or
+
+``` emacs-lisp
+'(a 1 . 2)
 ```
 
 ## Peek next look-ahead
@@ -22,19 +30,21 @@ Returns the look-ahead number of next terminals in stream, if end of stream is r
 (require 'ert)
 (setq
    parser-generator-lex-analyzer--function
-   (lambda (index)
+   (lambda (index _state)
      (let* ((string '(("a" 1 . 2) ("b" 2 . 3) ("c" 3 . 4) ("d" 4 . 5)))
             (string-length (length string))
             (max-index index)
             (tokens)
-            (next-token))
+            (next-token)
+            (new-index))
        (while (and
                (< (1- index) string-length)
                (< (1- index) max-index))
          (setq next-token (nth (1- index) string))
+         (setq new-index (cdr (cdr (nth (1- index) string))))
          (push next-token tokens)
          (setq index (1+ index)))
-       (nreverse tokens))))
+       (list (nreverse tokens) nil new-index nil))))
 (parser-generator-lex-analyzer--reset)
 
 (setq parser-generator--look-ahead-number 1)
@@ -58,13 +68,13 @@ Returns the look-ahead number of next terminals in stream, if end of stream is r
 
 ## Pop token
 
-Returns the next token in stream and moves the lexical analyzer index one point forwa<rd. If end of stream is reached return nil. The result is expected to be a list containing each token popped.
+Returns the next token in stream and moves the lexical analyzer index one point forward. If end of stream is reached return nil. The result is expected to be a list containing each token popped.
 
 ``` emacs-lisp
 (require 'ert)
 (setq
    parser-generator-lex-analyzer--function
-   (lambda (index)
+   (lambda (index _state)
      (let* ((string '(("a" 1 . 2) ("b" 2 . 3)))
             (string-length (length string))
             (max-index index)
@@ -73,8 +83,9 @@ Returns the next token in stream and moves the lexical analyzer index one point 
                (< (1- index) string-length)
                (< (1- index) max-index))
          (push (nth (1- index) string) tokens)
+         (list (nreverse tokens) nil new-index nil)
          (setq index (1+ index)))
-       (nreverse tokens))))
+       (list (nreverse tokens) nil new-index nil))))
 (parser-generator-lex-analyzer--reset)
 
 (setq parser-generator--look-ahead-number 1)

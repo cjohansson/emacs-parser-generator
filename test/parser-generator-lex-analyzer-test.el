@@ -125,12 +125,10 @@
    (equal
     '(("a" 1 . 2))
     (parser-generator-lex-analyzer--pop-token)))
-  (message "was there")
   (should
    (equal
     '(("b" 2 . 3))
     (parser-generator-lex-analyzer--pop-token)))
-  (message "was here")
   (should
    (equal
     nil
