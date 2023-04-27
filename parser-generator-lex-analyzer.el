@@ -91,11 +91,11 @@
 (defun parser-generator-lex-analyzer--peek-next-look-ahead ()
   "Peek next look-ahead number of tokens via lex-analyzer."
   (unless parser-generator-lex-analyzer--index
-    (error "Missing lex-analyzer index!"))
+    (error "Missing lex-analyzer index when peeking!"))
   (unless parser-generator-lex-analyzer--function
-    (error "Missing lex-analyzer function!"))
+    (error "Missing lex-analyzer function when peeking!"))
   (unless parser-generator--look-ahead-number
-    (error "Missing look-ahead-number!"))
+    (error "Missing look-ahead-number when peeking!"))
   (let ((look-ahead)
         (look-ahead-length 0)
         (index parser-generator-lex-analyzer--index)
@@ -151,11 +151,11 @@
 (defun parser-generator-lex-analyzer--pop-token ()
   "Pop next token via lex-analyzer."
   (unless parser-generator-lex-analyzer--index
-    (error "Missing lex-analyzer index!"))
+    (error "Missing lex-analyzer index when popping!"))
   (unless parser-generator-lex-analyzer--function
-    (error "Missing lex-analyzer function!"))
+    (error "Missing lex-analyzer function when popping!"))
   (unless parser-generator--look-ahead-number
-    (error "Missing look-ahead-number!"))
+    (error "Missing look-ahead-number when popping!"))
   (let ((continue t)
         (tokens))
     (while continue

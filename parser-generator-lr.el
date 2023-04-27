@@ -1680,17 +1680,15 @@
      input-tape-index
      pushdown-list
      output
-     translation
-     history)
-  "Perform a LR-parse via lex-analyzer, optionally at INPUT-TAPE-INDEX with PUSHDOWN-LIST, OUTPUT, TRANSLATION and HISTORY."
+     translation)
+  "Perform a LR-parse via lex-analyzer, optionally at INPUT-TAPE-INDEX with PUSHDOWN-LIST, OUTPUT, TRANSLATION."
   (let ((result
          (parser-generator-lr--parse
           nil
           input-tape-index
           pushdown-list
           output
-          translation
-          history)))
+          translation)))
     (nth 0 result)))
 
 (defun parser-generator-lr-translate
@@ -1698,17 +1696,15 @@
      input-tape-index
      pushdown-list
      output
-     translation
-     history)
-  "Perform a LR-parse via lex-analyzer, optionally at INPUT-TAPE-INDEX with PUSHDOWN-LIST, OUTPUT, TRANSLATION and HISTORY."
+     translation)
+  "Perform a LR-parse via lex-analyzer, optionally at INPUT-TAPE-INDEX with PUSHDOWN-LIST, OUTPUT, TRANSLATION."
   (let ((result
          (parser-generator-lr--parse
           t
           input-tape-index
           pushdown-list
           output
-          translation
-          history)))
+          translation)))
     (nth 1 result)))
 
 ;; Algorithm 5.7, p. 375
@@ -1719,9 +1715,8 @@
      pushdown-list
      output
      translation
-     translation-symbol-table-list
-     history)
-  "Perform a LR-parse via lex-analyzer, optionally PERFORM-SDT means to perform syntax-directed translation and optioanlly start at INPUT-TAPE-INDEX with PUSHDOWN-LIST, OUTPUT, TRANSLATION, TRANSLATION-SYMBOL-TABLE-LIST and HISTORY."
+     translation-symbol-table-list)
+  "Perform a LR-parse via lex-analyzer, optionally PERFORM-SDT means to perform syntax-directed translation and optioanlly start at INPUT-TAPE-INDEX with PUSHDOWN-LIST, OUTPUT, TRANSLATION, TRANSLATION-SYMBOL-TABLE-LIST."
   (unless input-tape-index
     (setq input-tape-index 1))
   (unless pushdown-list
@@ -1754,34 +1749,8 @@
     (unless parser-generator-lr--distinct-goto-tables
       (error "Missing distinct GOTO-tables for grammar!"))
 
-    (let ((accept)
-          (pre-index 0))
+    (let ((accept))
       (while (not accept)
-
-        ;; Save history when index has changed to enable incremental parsing / translating
-        (when
-            (>
-             parser-generator-lex-analyzer--index
-             pre-index)
-          ;; We make a copy of the hash-table here to avoid passing same
-          ;; hash-table every-time with pointer
-          (let ((translation-symbol-table-list))
-            (maphash
-             (lambda (key value)
-               (push
-                `(,key ,value)
-                translation-symbol-table-list))
-             translation-symbol-table)
-            (push
-             `(,parser-generator-lex-analyzer--index
-               ,pushdown-list
-               ,output
-               ,translation
-               ,translation-symbol-table-list)
-             history)
-            (setq
-             pre-index
-             parser-generator-lex-analyzer--index)))
 
         ;; (1) The look-ahead string u, consisting of the next k input symbols, is determined.
         (let ((look-ahead
@@ -2201,8 +2170,6 @@
            "Parsed entire string without getting accepting! Output: %s"
            (reverse output))
           (reverse output)))))
-    (when history
-      (setq history (reverse history)))
     (when output
       (setq output (reverse output)))
     (let ((translation-symbol-table-list))
@@ -2216,8 +2183,7 @@
       (list
        output
        translation
-       translation-symbol-table-list
-       history))))
+       translation-symbol-table-list))))
 
 (provide 'parser-generator-lr)
 

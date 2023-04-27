@@ -499,34 +499,8 @@
     (unless %s--distinct-goto-tables
       (error \"Missing distinct GOTO-tables for grammar!\"))
 
-    (let ((accept)
-          (pre-index 0))
+    (let ((accept))
       (while (not accept)
-
-        ;; Save history when index has changed to enable incremental parsing / translating
-        (when
-            (>
-             %s-lex-analyzer--index
-             pre-index)
-          ;; We make a copy of the hash-table here to avoid passing same
-          ;; hash-table every-time with pointer
-          (let ((translation-symbol-table-list))
-            (maphash
-             (lambda (key value)
-               (push
-                `(,key ,value)
-                translation-symbol-table-list))
-             translation-symbol-table)
-            (push
-             `(,%s-lex-analyzer--index
-               ,pushdown-list
-               ,output
-               ,translation
-               ,translation-symbol-table-list)
-             history)
-            (setq
-             pre-index
-             %s-lex-analyzer--index)))
 
         ;; (1) The look-ahead string u, consisting of the next k input symbols, is determined.
         (let ((look-ahead
@@ -554,9 +528,6 @@
                      (gethash
                       action-table-distinct-index
                       %s--distinct-action-tables)))"
-               namespace
-               namespace
-               namespace
                namespace
                namespace
                namespace

@@ -186,7 +186,7 @@
   (parser-generator-process-grammar)
   (should-error
    (parser-generator-lr-generate-parser-tables))
-  (message "Conflicted grammar caused expected exception")
+  (message "Passed test conflicted grammar caused expected exception")
 
   (setq
    parser-generator--global-attributes
@@ -215,7 +215,7 @@
   (parser-generator-process-grammar)
   (should-error
    (parser-generator-lr-generate-parser-tables))
-  (message "Conflicted grammar caused expected exception 2")
+  (message "Passed test conflicted grammar caused expected exception 2")
 
   (setq
    parser-generator-lr--context-sensitive-precedence-attribute
@@ -265,7 +265,7 @@
    (equal
     '((0 (((a) shift))) (1 (((c) shift))) (2 ((($) reduce 2))) (3 ((($) accept))) (4 (((b) shift))) (5 (((c) shift))) (6 ((($) reduce 4))) (7 ((($) reduce 1))))
     (parser-generator-lr--get-expanded-action-tables)))
-  (message "Grammar not conflicting anymore solution #1")
+  (message "Passed test grammar not conflicting anymore solution #1")
 
   ;; Example parse "a b c"
   ;; stack: 0
@@ -301,7 +301,7 @@
    (equal
     '((0 (((a) shift))) (1 (((c) shift))) (2 ((($) reduce 2))) (3 ((($) accept))) (4 (((b) shift))) (5 (((c) reduce 3))) (6 ((($) reduce 4))) (7 ((($) reduce 1))))
     (parser-generator-lr--get-expanded-action-tables)))
-  (message "Grammar not conflicting anymore solution #2")
+  (message "Passed test grammar not conflicting anymore solution #2")
 
   ;; Example parse "a b c"
   ;; stack: 0
@@ -340,6 +340,9 @@
            (cond
             ((looking-at "\\([0-9]+\\.[0-9]+\\|[0-9]+\\)")
              (setq
+              new-index
+              (match-end 0))
+             (setq
               token
               `(NUM ,(match-beginning 0) . ,(match-end 0))))
             ((looking-at "\\(\\+\\|-\\|*\\|/\\|\\^\\|)\\|(\\|\n\\)")
@@ -353,8 +356,8 @@
                (setq
                 token
                 `(,symbol ,(match-beginning 0) . ,(match-end 0)))))
-            (t (error "Unexpected input at %d!" index))))
-         (list token nil new-index nil)))))
+            (t (error "Unexpected input at %d!" index)))
+           (list token nil new-index nil) )))))
 
   (setq
    parser-generator-lex-analyzer--get-function
@@ -414,7 +417,7 @@
   (parser-generator-process-grammar)
   (should-error
    (parser-generator-lr-generate-parser-tables))
-  (message "Grammar caused expected conflict 3")
+  (message "Passed test grammar caused expected conflict 3")
 
   (setq
    parser-generator-lr--global-precedence-attributes
@@ -423,7 +426,7 @@
    parser-generator-lr--context-sensitive-precedence-attribute
    '%prec)
   (parser-generator-lr-generate-parser-tables)
-  (message "Grammar not conflicting anymore")
+  (message "Passed test grammar not conflicting anymore")
 
   ;; Parse: 1+1*2\n
   ;;
@@ -464,12 +467,13 @@
        (equal
         '(1 5 5 5 8 6 4 2)
         parse)))
+    (message "Passed parse with correct precedence of 2+3*5 = 2+(3*5)")
     (let ((translate (parser-generator-lr-translate)))
       (should
        (equal
         17.0
         translate)))
-    (message "Passed correct precedence of 2+3*5 = 2+(3*5) = 17")
+    (message "Passed translation with correct precedence of 2+3*5 = 2+(3*5) = 17")
 
     (kill-region (point-min) (point-max))
     (insert "2*3+5\n")
