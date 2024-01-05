@@ -23,7 +23,7 @@
 (defvar
   parser-generator-lex-analyzer--function
   nil
-  "Get next token like '(a b . c) or nil, expects signal if input-tape is invalid.")
+  "Get next token like \='(a b . c) or nil, expects signal if input-tape is invalid.")
 
 (defvar-local
   parser-generator-lex-analyzer--index
@@ -31,12 +31,12 @@
   "Index in lex-analyzer.")
 
 (defvar
-  parser-generation-lex-analyzer--index-init
+  parser-generator-lex-analyzer--index-init
   1
   "Initial value of index.")
 
 (defvar-local
-  parser-generation-lex-analyzer--state
+  parser-generator-lex-analyzer--state
   nil
   "State of lex-analyzer.")
 
@@ -102,7 +102,7 @@
         (index
          parser-generator-lex-analyzer--index)
         (state
-         parser-generation-lex-analyzer--state)
+         parser-generator-lex-analyzer--state)
         (k
          (max
           1
@@ -232,7 +232,7 @@
   "Reset lex-analyzer."
   (setq
    parser-generator-lex-analyzer--index
-   parser-generation-lex-analyzer--index-init)
+   parser-generator-lex-analyzer--index-init)
   (setq
    parser-generator-lex-analyzer--state
    parser-generator-lex-analyzer--state-init)

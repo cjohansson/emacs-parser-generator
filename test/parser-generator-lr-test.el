@@ -20,16 +20,14 @@
       ;; (message "regular-parse-history: %s" regular-parse-history)
       (let ((history-length (length regular-parse-history))
             (history-index 0)
-            (history)
-            (iterated-history))
+            (history))
         (while (< history-index history-length)
           (setq history (nth history-index regular-parse-history))
           (let ((input-tape-index (nth 0 history))
                 (pushdown-list (nth 1 history))
                 (output (nth 2 history))
                 (translation (nth 3 history))
-                (translation-symbol-table (nth 4 history))
-                (history-list iterated-history))
+                (translation-symbol-table (nth 4 history)))
 
             ;; (message "input-tape-index: %s" input-tape-index)
             ;; (message "pushdown-list: %s" pushdown-list)
@@ -44,8 +42,7 @@
                     pushdown-list
                     output
                     translation
-                    translation-symbol-table
-                    history-list)))
+                    translation-symbol-table)))
               ;; (message "incremental-parse: %s" incremental-parse)
               (should
                (equal
@@ -53,7 +50,6 @@
                 incremental-parse))
               (message "Passed incremental parse test %s" (1+ history-index)))
 
-            (push history iterated-history)
             (setq history-index (1+ history-index))))))))
 
 (defun parser-generator-lr-test--generate-precedence-tables ()

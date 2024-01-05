@@ -1028,7 +1028,8 @@
      lr-item-sets
      &optional signal-on-false
      )
-  "Return whether the set collection LR-ITEM-SETS is valid or not, optionally SIGNAL-ON-FALSE."
+  "Return whether the set collection LR-ITEM-SETS is
+valid or not, optionally SIGNAL-ON-FALSE."
   (parser-generator--debug
    (message "lr-item-sets: %s" lr-item-sets))
   (let ((valid-p t)
@@ -1226,7 +1227,9 @@
     valid-p))
 
 (defun parser-generator-lr--action-takes-precedence-p (symbol a-production-number &optional b-production-number)
-  "Return t if reduce action of SYMBOL at A-PRODUCTION-NUMBER takes precedence over shift action.  Optionally is b is a reduction at at B-PRODUCTION-NUMBER."
+  "Return t if reduce action of SYMBOL at A-PRODUCTION-NUMBER
+takes precedence over shift action.
+Optionally is b is a reduction at at B-PRODUCTION-NUMBER."
   (let* ((a-precedence-type
           (parser-generator-lr--get-symbol-precedence-type
            symbol))
@@ -1681,7 +1684,8 @@
      pushdown-list
      output
      translation)
-  "Perform a LR-parse via lex-analyzer, optionally at INPUT-TAPE-INDEX with PUSHDOWN-LIST, OUTPUT, TRANSLATION."
+  "Perform a LR-parse via lex-analyzer, optionally at
+INPUT-TAPE-INDEX with PUSHDOWN-LIST, OUTPUT, TRANSLATION."
   (let ((result
          (parser-generator-lr--parse
           nil
@@ -1697,7 +1701,8 @@
      pushdown-list
      output
      translation)
-  "Perform a LR-parse via lex-analyzer, optionally at INPUT-TAPE-INDEX with PUSHDOWN-LIST, OUTPUT, TRANSLATION."
+  "Perform a LR-parse via lex-analyzer, optionally at
+INPUT-TAPE-INDEX with PUSHDOWN-LIST, OUTPUT, TRANSLATION."
   (let ((result
          (parser-generator-lr--parse
           t
@@ -1716,7 +1721,11 @@
      output
      translation
      translation-symbol-table-list)
-  "Perform a LR-parse via lex-analyzer, optionally PERFORM-SDT means to perform syntax-directed translation and optioanlly start at INPUT-TAPE-INDEX with PUSHDOWN-LIST, OUTPUT, TRANSLATION, TRANSLATION-SYMBOL-TABLE-LIST."
+  "Perform a LR-parse via lex-analyzer,
+optionally PERFORM-SDT means to perform
+syntax-directed translation and optionally start
+at INPUT-TAPE-INDEX with PUSHDOWN-LIST,
+OUTPUT, TRANSLATION, TRANSLATION-SYMBOL-TABLE-LIST."
   (unless input-tape-index
     (setq input-tape-index 1))
   (unless pushdown-list

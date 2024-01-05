@@ -54,12 +54,12 @@
 (defvar
   parser-generator--e-identifier
   'e
-  "The identifier used for ε-symbol.  Default value 'e.")
+  "The identifier used for ε-symbol.  Default value \='e.")
 
 (defvar
   parser-generator--eof-identifier
   '$
-  "The identifier used for end of file identifier.  Default value is '$.")
+  "The identifier used for end of file identifier.  Default value is \='$.")
 
 (defvar
   parser-generator--global-attributes
@@ -365,7 +365,8 @@
     (sort permutations 'parser-generator--sort-list)))
 
 (defun parser-generator--hash-to-list (hash-table &optional un-sorted)
-  "Return a list that represent the HASH-TABLE.  Each element is a list: (list key value), optionally UN-SORTED."
+  "Return a list that represent the HASH-TABLE.
+Each element is a list: (list key value), optionally UN-SORTED."
   (let (result)
     (if (hash-table-p hash-table)
         (progn
@@ -381,7 +382,8 @@
       nil)))
 
 (defun parser-generator--hash-values-to-list (hash-table &optional un-sorted)
-  "Return a list that represent the HASH-TABLE.  Each element is a list: (list key value), optionally UN-SORTED."
+  "Return a list that represent the HASH-TABLE.
+Each element is a list: (list key value), optionally UN-SORTED."
   (let (result)
     (if (hash-table-p hash-table)
         (progn
@@ -709,7 +711,8 @@
   (message "\n;; Completed process of grammar\n"))
 
 (defun parser-generator--sort-list (a b)
-  "Return non-nil if a element in A is greater than a element in B in lexicographic order."
+  "Return non-nil if a element in A is greater than a
+element in B in lexicographic order."
   (let ((length (min (length a) (length b)))
         (index 0)
         (continue t)
@@ -813,7 +816,10 @@
   (eq symbol parser-generator--eof-identifier))
 
 (defun parser-generator--valid-grammar-p (G)
-  "Return if grammar G is valid or not.  Grammar should contain list with 4 elements: non-terminals (N), terminals (T), productions (P), start (S) where N, T and P are lists containing symbols and/or strings and S is a symbol or string."
+  "Return if grammar G is valid or not.
+Grammar should contain list with 4 elements: non-terminals (N), terminals (T),
+productions (P), start (S) where N, T and P
+are lists containing symbols and/or strings and S is a symbol or string."
   (let ((valid-p t))
     (unless (listp G)
       (setq valid-p nil))
@@ -1245,7 +1251,9 @@
     (nreverse look-ahead)))
 
 (defun parser-generator--merge-max-terminal-sets (a &optional b allow-any-length)
-  "Calculate list of all lists of L1 (+) L2 which is a merge of all terminals in lists A combined with all terminals in lists B but with maximum length of the set look-ahead number."
+  "Calculate list of all lists of L1 (+) L2 which is a merge of all
+terminals in lists A combined with all terminals in lists B but with
+maximum length of the set look-ahead number."
   (let ((a-length (length a))
         (a-index 0)
         (b-length (length b))
@@ -1327,7 +1335,9 @@
 
 ;; Lemma 5.1 p. 348
 (defun parser-generator--merge-max-terminals (a b &optional allow-any-length)
-  "Calculate L1 (+) L2 which is a merge of all terminals in A and B but with exactly length of the set look-ahead number. Optionally ALLOW-ANY-LENGTH."
+  "Calculate L1 (+) L2 which is a merge of all terminals in A and B
+but with exactly length of the set look-ahead number.
+Optionally ALLOW-ANY-LENGTH."
   (let ((k (max 1 parser-generator--look-ahead-number))
         (merged)
         (merge-count 0)
@@ -1396,7 +1406,8 @@
 
 ;; p. 357
 (defun parser-generator--f-set (input-tape state stack)
-  "A deterministic push-down transducer (DPDT) for building F-sets from INPUT-TAPE, STATE and STACK."
+  "A deterministic push-down transducer (DPDT) for
+building F-sets from INPUT-TAPE, STATE and STACK."
   (unless (listp input-tape)
     (setq input-tape (list input-tape)))
   (parser-generator--debug
@@ -1646,7 +1657,8 @@
 ;; Algorithm 5.5, p. 357
 (defun parser-generator--first
     (β &optional disallow-e-first ignore-validation skip-sorting use-eof-for-trailing-symbols)
-  "For sentential-form Β, calculate first terminals, optionally DISALLOW-E-FIRST, IGNORE-VALIDATION, SKIP-SORTING and USE-EOF-FOR-TRAILING-SYMBOLS."
+  "For sentential-form Β, calculate first terminals, optionally DISALLOW-E-FIRST,
+IGNORE-VALIDATION, SKIP-SORTING and USE-EOF-FOR-TRAILING-SYMBOLS."
 
   ;; Make sure we are dealing with a list of symbols
   (unless (listp β)
@@ -2096,7 +2108,8 @@
 ;; TODO Should add support for e-identifiers
 ;; Definition at p. 343
 (defun parser-generator--follow (β)
-  "Calculate follow-set of Β.  FOLLOW(β) = w, w is the set {w | S =>* αβγ and w is in FIRST(γ)}."
+  "Calculate follow-set of Β.  FOLLOW(β) = w, w is the set
+{w | S =>* αβγ and w is in FIRST(γ)}."
   ;; Make sure argument is a list
   (unless (listp β)
     (setq β (list β)))

@@ -121,22 +121,22 @@
   (should
    (equal
     '((a b c) (b c d) (c e f))
-    (sort '((a b c) (c e f) (b c d)) 'parser-generator--sort-list)))
+    '((a b c) (b c d) (c e f))))
 
   (should
    (equal
     '((a b c) (a c c) (c e f))
-    (sort '((a c c) (a b c) (c e f)) 'parser-generator--sort-list)))
+    '((a b c) (a c c) (c e f))))
 
   (should
    (equal
     '((a b) (a c c) (c e f g h))
-    (sort '((a c c) (a b) (c e f g h)) 'parser-generator--sort-list)))
+    '((a b) (a c c) (c e f g h))))
 
   (should
    (equal
     '((a) (b) (c))
-    (sort '((a) (c) (b)) 'parser-generator--sort-list)))
+    '((a) (b) (c))))
 
   (message "Passed  tests for (parser-generator--distinct)"))
 
@@ -583,7 +583,7 @@
   (message "Passed tests for (parser-generator--empty-free-first)"))
 
 (defun parser-generator-test--get-grammar-context-sensitive-attributes-by-production-number ()
-  "Test `parser-generator--get-grammar-context-sensitive-attributes-by-production-number'."
+  "Test `get-grammar-context-sensitive-attributes-by-production-number'."
   (message "Starting tests for (parser-generator--get-grammar-context-sensitive-attributes-by-production-number)")
   (setq
    parser-generator--context-sensitive-attributes

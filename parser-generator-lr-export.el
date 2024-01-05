@@ -322,9 +322,6 @@
                namespace
                namespace
                namespace
-               namespace
-               namespace
-               namespace
                namespace))
       (insert "
         (error

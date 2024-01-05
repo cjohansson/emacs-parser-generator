@@ -558,7 +558,9 @@
 
 ;; Algorithm 5.2 p. 350
 (defun parser-generator-ll--generate-goto-table ()
-  "Construction of LL(k) GOTO-table.  Output the set of LL(k) tables needed to construct a action table for the grammar G."
+  "Construction of LL(k) GOTO-table.
+Output the set of LL(k) tables needed to
+construct a action table for the grammar G."
   (let ((tables (make-hash-table :test 'equal))
         (distinct-item-p (make-hash-table :test 'equal))
         (stack)
@@ -752,7 +754,9 @@
 
 ;; Algorithm 5.3 p. 351
 (defun parser-generator-ll--generate-action-table-k-gt-1 (tables)
-  "Generate a action table for an LL(k) grammar G and TABLES.  Output M, a valid parsing table for G."
+  "Generate a action table for an LL(k)
+grammar G and TABLES.
+Output M, a valid parsing table for G."
   (let ((parsing-table))
 
     ;; (3) M($, e) = accept
