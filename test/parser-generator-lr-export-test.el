@@ -38,13 +38,13 @@
 
     (setq
      parser-generator-lex-analyzer--function
-     (lambda (index)
+     (lambda (index _state)
        (with-current-buffer "*a*"
          (when (<= (+ index 1) (point-max))
            (let ((start index)
                  (end (+ index 1)))
              (let ((token (buffer-substring-no-properties start end)))
-               `(,token ,start . ,end)))))))
+               (list `(,token ,start . ,end) nil end nil)))))))
 
     (setq
      parser-generator-lex-analyzer--get-function
@@ -165,9 +165,10 @@
   (parser-generator-set-look-ahead-number 1)
   (parser-generator-process-grammar)
   (parser-generator-lr-generate-parser-tables)
+
   (setq
    parser-generator-lex-analyzer--function
-   (lambda (index)
+   (lambda (index _state)
      (let* ((string '((a 1 . 2) (a 2 . 3) (b 3 . 4) (b 4 . 5)))
             (string-length (length string))
             (max-index index)
@@ -177,7 +178,7 @@
                (< (1- index) max-index))
          (push (nth (1- index) string) tokens)
          (setq index (1+ index)))
-       (nreverse tokens))))
+       (list (nreverse tokens) nil index nil))))
 
   (setq
    parser-generator-lex-analyzer--get-function
@@ -232,13 +233,13 @@
 
     (setq
      parser-generator-lex-analyzer--function
-     (lambda (index)
+     (lambda (index _state)
        (with-current-buffer "*a*"
          (when (<= (+ index 1) (point-max))
            (let ((start index)
                  (end (+ index 1)))
              (let ((token (buffer-substring-no-properties start end)))
-               `(,token ,start . ,end)))))))
+               (list `(,token ,start . ,end) nil end nil)))))))
 
     (setq
      parser-generator-lex-analyzer--get-function
@@ -303,13 +304,14 @@
   ;; Setup lex-analyzer
   (setq
    parser-generator-lex-analyzer--function
-   (lambda (index)
+   (lambda (index _state)
      (with-current-buffer "*a*"
        (when (<= (+ index 1) (point-max))
          (let ((start index)
                (end (+ index 1)))
            (let ((token (buffer-substring-no-properties start end)))
-             `(,token ,start . ,end)))))))
+             (list `(,token ,start . ,end) nil end nil)))))))
+
   (setq
    parser-generator-lex-analyzer--get-function
    (lambda (token)
@@ -373,13 +375,13 @@
 
     (setq
      parser-generator-lex-analyzer--function
-     (lambda (index)
+     (lambda (index _state)
        (with-current-buffer "*a*"
          (when (<= (+ index 1) (point-max))
            (let ((start index)
                  (end (+ index 1)))
              (let ((token (buffer-substring-no-properties start end)))
-               `(,token ,start . ,end)))))))
+               (list `(,token ,start . ,end) nil end nil)))))))
 
     (setq
      parser-generator-lex-analyzer--get-function
