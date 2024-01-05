@@ -1859,8 +1859,12 @@
        (
         (S (E $))
         (E
-         (E "*" B (lambda(args _terminals) (let ((ret (list (nth 0 args)))) (when (nth 2 args) (setq ret (append ret `(" x " ,(nth 2 args))))) ret)))
-         (E "+" B (lambda(args _terminals) (let ((ret (list (nth 0 args)))) (when (nth 2 args) (setq ret (append ret `(" . " ,(nth 2 args))))) ret)))
+         (E "*" B
+            (lambda(args _terminals)
+              (let ((ret (list (nth 0 args)))) (when (nth 2 args) (setq ret (append ret `(" x " ,(nth 2 args))))) ret)))
+         (E "+" B
+            (lambda(args _terminals)
+              (let ((ret (list (nth 0 args)))) (when (nth 2 args) (setq ret (append ret `(" . " ,(nth 2 args))))) ret)))
          (B)
          )
         (B
@@ -1881,7 +1885,7 @@
            (let ((start index)
                  (end (+ index 1)))
              (let ((token (buffer-substring-no-properties start end)))
-               (list `(,token ,start . ,end)) nil end nil))))))
+               (list `(,token ,start . ,end) nil end nil)))))))
 
     (setq
      parser-generator-lex-analyzer--get-function
@@ -1918,7 +1922,15 @@
       ("a" "b")
       (
        (Sp S)
-       (S (S "a" S "b" (lambda(args _terminals) (let ((list "")) (dolist (item args) (when item (setq list (format "%s%s" item list)))) list))))
+       (S
+        (S "a" S "b"
+           (lambda(args _terminals)
+             (let ((list ""))
+               (dolist (item args)
+                 (when item
+                   (setq list (format "%s%s" item list)))
+                 )
+               list))))
        (S e)
        )
       Sp))
@@ -1935,7 +1947,7 @@
            (let ((start index)
                  (end (+ index 1)))
              (let ((token (buffer-substring-no-properties start end)))
-               (list `(,token ,start . ,end)) nil end nil))))))
+               (list `(,token ,start . ,end) nil end nil)))))))
 
     (setq
      parser-generator-lex-analyzer--get-function
