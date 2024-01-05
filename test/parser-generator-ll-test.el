@@ -263,9 +263,10 @@
    )
   (parser-generator-process-grammar)
   (parser-generator-ll-generate-table)
+
   (setq
    parser-generator-lex-analyzer--function
-   (lambda (index)
+   (lambda (index _state)
      (let* ((string '((b 1 . 2) (b 2 . 3) (a 3 . 4)))
             (string-length (length string))
             (max-index index)
@@ -275,7 +276,8 @@
                (< (1- index) max-index))
          (push (nth (1- index) string) tokens)
          (setq index (1+ index)))
-       (nreverse tokens))))
+       (list (nreverse tokens) nil index nil))))
+
   (setq
    parser-generator-lex-analyzer--get-function
    (lambda (token)
@@ -288,7 +290,7 @@
 
   (setq
    parser-generator-lex-analyzer--function
-   (lambda (index)
+   (lambda (index _state)
      (let* ((string '((b 1 . 2) (b 2 . 3)))
             (string-length (length string))
             (max-index index)
@@ -298,7 +300,8 @@
                (< (1- index) max-index))
          (push (nth (1- index) string) tokens)
          (setq index (1+ index)))
-       (nreverse tokens))))
+       (list (nreverse tokens) nil index nil))))
+
   (setq
    parser-generator-lex-analyzer--get-function
    (lambda (token)
@@ -323,9 +326,10 @@
    )
   (parser-generator-process-grammar)
   (parser-generator-ll-generate-table)
+
   (setq
    parser-generator-lex-analyzer--function
-   (lambda (index)
+   (lambda (index _state)
      (let* ((string '((a 1 . 2) (b 2 . 3) (a 3 . 4) (a 4 . 5)))
             (string-length (length string))
             (max-index index)
@@ -335,7 +339,8 @@
                (< (1- index) max-index))
          (push (nth (1- index) string) tokens)
          (setq index (1+ index)))
-       (nreverse tokens))))
+       (list (nreverse tokens) nil index nil))))
+
   (setq
    parser-generator-lex-analyzer--get-function
    (lambda (token)
@@ -362,9 +367,10 @@
    )
   (parser-generator-process-grammar)
   (parser-generator-ll-generate-table)
+
   (setq
    parser-generator-lex-analyzer--function
-   (lambda (index)
+   (lambda (index _state)
      (let* ((string '((a 1 . 2) (b 2 . 3) (b 3 . 4) (a 4 . 5) (b 5 . 6)))
             (string-length (length string))
             (max-index index)
@@ -374,7 +380,8 @@
                (< (1- index) max-index))
          (push (nth (1- index) string) tokens)
          (setq index (1+ index)))
-       (nreverse tokens))))
+       (list (nreverse tokens) nil index nil))))
+
   (setq
    parser-generator-lex-analyzer--get-function
    (lambda (token)
@@ -404,9 +411,10 @@
    )
   (parser-generator-process-grammar)
   (parser-generator-ll-generate-table)
+
   (setq
    parser-generator-lex-analyzer--function
-   (lambda (index)
+   (lambda (index _state)
      (let* ((string '(("(" 1 . 2) ("a" 2 . 3) ("*" 3 . 4) ("a" 4 . 5) (")" 5 . 6)))
             (string-length (length string))
             (max-index index)
@@ -416,7 +424,8 @@
                (< (1- index) max-index))
          (push (nth (1- index) string) tokens)
          (setq index (1+ index)))
-       (nreverse tokens))))
+       (list (nreverse tokens) nil index nil))))
+
   (setq
    parser-generator-lex-analyzer--get-function
    (lambda (token)
@@ -444,9 +453,10 @@
    )
   (parser-generator-process-grammar)
   (parser-generator-ll-generate-table)
+
   (setq
    parser-generator-lex-analyzer--function
-   (lambda (index)
+   (lambda (index _state)
      (let* ((string '(("(" 1 . 2) ("a" 2 . 3) ("+" 3 . 4) ("a" 4 . 5) (")" 5 . 6)))
             (string-length (length string))
             (max-index index)
@@ -456,7 +466,8 @@
                (< (1- index) max-index))
          (push (nth (1- index) string) tokens)
          (setq index (1+ index)))
-       (nreverse tokens))))
+       (list (nreverse tokens) nil index nil))))
+
   (setq
    parser-generator-lex-analyzer--get-function
    (lambda (token)
@@ -469,7 +480,7 @@
 
   (setq
    parser-generator-lex-analyzer--function
-   (lambda (index)
+   (lambda (index _state)
      (let* ((string '(("(" 1 . 2) ("a" 2 . 3) ("+" 3 . 4) ("a" 4 . 5)))
             (string-length (length string))
             (max-index index)
@@ -479,7 +490,8 @@
                (< (1- index) max-index))
          (push (nth (1- index) string) tokens)
          (setq index (1+ index)))
-       (nreverse tokens))))
+       (list (nreverse tokens) nil index nil))))
+
   (setq
    parser-generator-lex-analyzer--get-function
    (lambda (token)
@@ -516,9 +528,10 @@
    )
   (parser-generator-process-grammar)
   (parser-generator-ll-generate-table)
+
   (setq
    parser-generator-lex-analyzer--function
-   (lambda (index)
+   (lambda (index _state)
      (let* ((string '((b 1 . 2) (b 2 . 3) (a 3 . 4)))
             (string-length (length string))
             (max-index index)
@@ -528,7 +541,8 @@
                (< (1- index) max-index))
          (push (nth (1- index) string) tokens)
          (setq index (1+ index)))
-       (nreverse tokens))))
+       (list (nreverse tokens) nil index nil))))
+
   (setq
    parser-generator-lex-analyzer--get-function
    (lambda (token)
@@ -541,7 +555,7 @@
 
   (setq
    parser-generator-lex-analyzer--function
-   (lambda (index)
+   (lambda (index _state)
      (let* ((string '((b 1 . 2) (b 2 . 3) (b 3 . 4) (a 4 . 5)))
             (string-length (length string))
             (max-index index)
@@ -551,7 +565,8 @@
                (< (1- index) max-index))
          (push (nth (1- index) string) tokens)
          (setq index (1+ index)))
-       (nreverse tokens))))
+       (list (nreverse tokens) nil index nil))))
+
   (should
    (equal
     "delta sven laval"
@@ -580,9 +595,10 @@
    )
   (parser-generator-process-grammar)
   (parser-generator-ll-generate-table)
+
   (setq
    parser-generator-lex-analyzer--function
-   (lambda (index)
+   (lambda (index _state)
      (let* ((string '((a 1 . 2) (b 2 . 3) (b 3 . 4) (a 4 . 5) (b 5 . 6)))
             (string-length (length string))
             (max-index index)
@@ -592,7 +608,8 @@
                (< (1- index) max-index))
          (push (nth (1- index) string) tokens)
          (setq index (1+ index)))
-       (nreverse tokens))))
+       (list (nreverse tokens) nil index nil))))
+
   (setq
    parser-generator-lex-analyzer--get-function
    (lambda (token)
