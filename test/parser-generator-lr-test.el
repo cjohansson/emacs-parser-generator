@@ -945,7 +945,7 @@
   (parser-generator-lr-generate-parser-tables)
   (setq
    parser-generator-lex-analyzer--function
-   (lambda (index)
+   (lambda (index _state)
      (let* ((string '((a 1 . 2) (a 2 . 3) (b 3 . 4) (b 4 . 5)))
             (string-length (length string))
             (max-index index)
@@ -955,7 +955,7 @@
                (< (1- index) max-index))
          (push (nth (1- index) string) tokens)
          (setq index (1+ index)))
-       (nreverse tokens))))
+       (list (car tokens) nil index nil))))
   (setq
    parser-generator-lex-analyzer--get-function
    (lambda (token)
@@ -968,7 +968,7 @@
 
   (setq
    parser-generator-lex-analyzer--function
-   (lambda (index)
+   (lambda (index _state)
      (let* ((string '((a 1 . 2) (a 2 . 3) (b 3 . 4) (b 4 . 5) (b 5 . 6)))
             (string-length (length string))
             (max-index index)
@@ -978,7 +978,8 @@
                (< (1- index) max-index))
          (push (nth (1- index) string) tokens)
          (setq index (1+ index)))
-       (nreverse tokens))))
+       (list (car tokens) nil index nil))))
+
   (should-error
    (parser-generator-lr--parse t))
   (message "Passed test with terminals as symbols, invalid syntax")
@@ -993,9 +994,10 @@
   (parser-generator--debug
    (message "goto-tables: %s" (parser-generator-lr--get-expanded-goto-tables))
    (message "action-tables: %s" (parser-generator-lr--get-expanded-action-tables)))
+
   (setq
    parser-generator-lex-analyzer--function
-   (lambda (index)
+   (lambda (index _state)
      (let* ((string '(("a" 1 . 2) ("a" 2 . 3) ("b" 3 . 4) ("b" 4 . 5)))
             (string-length (length string))
             (max-index index)
@@ -1005,7 +1007,8 @@
                (< (1- index) max-index))
          (push (nth (1- index) string) tokens)
          (setq index (1+ index)))
-       (nreverse tokens))))
+       (list (car tokens) nil index nil))))
+
   (should
    (equal
     '(2 2 2 1 1)
@@ -1014,7 +1017,7 @@
 
   (setq
    parser-generator-lex-analyzer--function
-   (lambda (index)
+   (lambda (index _state)
      (let* ((string '(("a" 1 . 2) ("a" 2 . 3) ("b" 3 . 4) ("b" 4 . 5) ("b" 5 . 6)))
             (string-length (length string))
             (max-index index)
@@ -1024,14 +1027,15 @@
                (< (1- index) max-index))
          (push (nth (1- index) string) tokens)
          (setq index (1+ index)))
-       (nreverse tokens))))
+       (list (car tokens) nil index nil))))
+
   (should-error
    (parser-generator-lr--parse t))
   (message "Passed test with terminals as string, invalid syntax")
 
   (setq
    parser-generator-lex-analyzer--function
-   (lambda (index)
+   (lambda (index _state)
      (let* ((string '(("a" 1 . 2) ("a" 2 . 3) ("b" 3 . 4) ("b" 4 . 5)))
             (string-length (length string))
             (max-index index)
@@ -1041,7 +1045,7 @@
                (< (1- index) max-index))
          (push (nth (1- index) string) tokens)
          (setq index (1+ index)))
-       (nreverse tokens))))
+       (list (car tokens) nil index nil))))
 
   (parser-generator-lr-test--parse-incremental-vs-regular)
   (message "Passed incremental-tests")
@@ -1090,16 +1094,18 @@
   (parser-generator-set-look-ahead-number 1)
   (parser-generator-process-grammar)
   (parser-generator-lr-generate-parser-tables)
+
   (setq
    parser-generator-lex-analyzer--function
-   (lambda (index)
+   (lambda (index _state)
      (with-current-buffer "*PHP8.0*"
-       (let ((token))
+       (let ((token)
+             (move-to-index-flag))
          (goto-char index)
          (cond
           ((looking-at "[ \n\t]+")
            (setq
-            parser-generator-lex-analyzer--move-to-index-flag
+            move-to-index-flag
             (match-end 0)))
           ((or
             (looking-at "{")
@@ -1154,8 +1160,8 @@
             )
            )
           )
-         token
-         ))))
+         (list token move-to-index-flag (match-end 0) nil)))))
+
   (let ((buffer (generate-new-buffer "*PHP8.0*")))
     (with-current-buffer buffer
       (kill-region (point-min) (point-max))
@@ -1211,16 +1217,18 @@
   (parser-generator-set-look-ahead-number 1)
   (parser-generator-process-grammar)
   (parser-generator-lr-generate-parser-tables)
+  
   (setq
    parser-generator-lex-analyzer--function
-   (lambda (index)
+   (lambda (index _state)
      (with-current-buffer "*PHP8.0*"
-       (let ((token))
+       (let ((token)
+             (move-to-index-flag))
          (goto-char index)
          (cond
           ((looking-at "[ \n\t]+")
            (setq
-            parser-generator-lex-analyzer--move-to-index-flag
+            move-to-index-flag
             (match-end 0)))
           ((looking-at "\\(\".+\"\\)")
            (setq
@@ -1269,8 +1277,8 @@
             )
            )
           )
-         token
-         ))))
+         (list token move-to-index-flag (match-end 0) nil)))))
+
   (let ((buffer (generate-new-buffer "*PHP8.0*")))
     (with-current-buffer buffer
       (kill-region (point-min) (point-max))
@@ -1528,13 +1536,14 @@
     ;; Setup lex-analyzer
     (setq
      parser-generator-lex-analyzer--function
-     (lambda (index)
+     (lambda (index _state)
        (with-current-buffer buffer
          (when (<= (+ index 1) (point-max))
            (let ((start index)
                  (end (+ index 1)))
              (let ((token (buffer-substring-no-properties start end)))
-               `(,token ,start . ,end)))))))
+               (list `(,token ,start . ,end) nil end nil)))))))
+
     (setq
      parser-generator-lex-analyzer--get-function
      (lambda (token)
@@ -1589,13 +1598,13 @@
     ;; Setup lex-analyzer
     (setq
      parser-generator-lex-analyzer--function
-     (lambda (index)
+     (lambda (index _state)
        (with-current-buffer buffer
          (when (<= (+ index 1) (point-max))
            (let ((start index)
                  (end (+ index 1)))
              (let ((token (buffer-substring-no-properties start end)))
-               `(,token ,start . ,end)))))))
+               (list `(,token ,start . ,end) nil end nil)))))))
     (setq
      parser-generator-lex-analyzer--get-function
      (lambda (token)
@@ -1802,13 +1811,14 @@
     ;; Setup lex-analyzer
     (setq
      parser-generator-lex-analyzer--function
-     (lambda (index)
+     (lambda (index _state)
        (with-current-buffer buffer
          (when (<= (+ index 1) (point-max))
            (let ((start index)
                  (end (+ index 1)))
              (let ((token (buffer-substring-no-properties start end)))
-               `(,token ,start . ,end)))))))
+               (list `(,token ,start . ,end) nil end nil)))))))
+
     (setq
      parser-generator-lex-analyzer--get-function
      (lambda (token)
@@ -1865,13 +1875,14 @@
     ;; Setup lex-analyzer
     (setq
      parser-generator-lex-analyzer--function
-     (lambda (index)
+     (lambda (index _state)
        (with-current-buffer buffer
          (when (< index (point-max))
            (let ((start index)
                  (end (+ index 1)))
              (let ((token (buffer-substring-no-properties start end)))
-               `(,token ,start . ,end)))))))
+               (list `(,token ,start . ,end)) nil end nil))))))
+
     (setq
      parser-generator-lex-analyzer--get-function
      (lambda (token)
@@ -1918,13 +1929,13 @@
 
     (setq
      parser-generator-lex-analyzer--function
-     (lambda (index)
+     (lambda (index _state)
        (with-current-buffer buffer
          (when (<= (+ index 1) (point-max))
            (let ((start index)
                  (end (+ index 1)))
              (let ((token (buffer-substring-no-properties start end)))
-               `(,token ,start . ,end)))))))
+               (list `(,token ,start . ,end)) nil end nil))))))
 
     (setq
      parser-generator-lex-analyzer--get-function
@@ -1965,7 +1976,7 @@
 
     (setq
      parser-generator-lex-analyzer--function
-     (lambda (index)
+     (lambda (index _state)
        (with-current-buffer buffer
          (unless (>= index (point-max))
            (goto-char index)
@@ -1991,7 +2002,7 @@
               ((looking-at "[a-zA-Z]+")
                (setq token `(VARIABLE ,(match-beginning 0) . ,(match-end 0))))
               (t (error "Invalid syntax! Could not lex-analyze at %s!" (point))))
-             token)))))
+             (list token nil (match-end 0) nil))))))
 
     (setq
      parser-generator-lex-analyzer--get-function
@@ -2068,7 +2079,7 @@
 
     (setq
      parser-generator-lex-analyzer--function
-     (lambda (index)
+     (lambda (index _state)
        (with-current-buffer "*a*"
          (unless (>= index (point-max))
            (goto-char index)
@@ -2092,7 +2103,7 @@
               ((looking-at "[a-zA-Z]+")
                (setq token `(VARIABLE ,(match-beginning 0) . ,(match-end 0))))
               (t (error "Invalid syntax! Could not lex-analyze at %s!" (point))))
-             token)))))
+             (list token nil (match-end 0) nil))))))
 
     (setq
      parser-generator-lex-analyzer--get-function
@@ -2112,8 +2123,8 @@
 
 (defun parser-generator-lr-test ()
   "Run test."
-  ;; (setq debug-on-error nil)
-  ;; (setq debug-on-signal nil)
+  (setq debug-on-error nil)
+  (setq debug-on-signal nil)
 
   (parser-generator-lr-test--items-for-prefix)
   (parser-generator-lr-test--items-valid-p)

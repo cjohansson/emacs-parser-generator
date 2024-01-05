@@ -29,14 +29,16 @@
             (string-length (length string))
             (max-index index)
             (tokens)
-            (next-token))
+            (next-token)
+            (new-index))
        (while (and
                (< (1- index) string-length)
                (< (1- index) max-index))
          (setq next-token (nth (1- index) string))
+         (setq new-index (cdr (cdr (nth (1- index) string))))
          (push next-token tokens)
          (setq index (1+ index)))
-       (list (nreverse tokens) nil nil nil))))
+       (list (nreverse tokens) nil new-index nil))))
   (should-error
    (parser-generator-lex-analyzer--peek-next-look-ahead))
   (parser-generator-lex-analyzer--reset)
@@ -71,6 +73,7 @@
             (string-length (length string))
             (max-index index)
             (tokens)
+            (new-index)
             (next-token))
        (while (and
                (< (1- index) string-length)
@@ -78,9 +81,10 @@
          (setq next-token (nth (1- index) string))
          (when (string= (car next-token) "d")
            (error "Invalid token: %s" next-token))
+         (setq new-index (cdr (cdr (nth (1- index) string))))
          (push next-token tokens)
          (setq index (1+ index)))
-       (list (nreverse tokens) nil nil nil))))
+       (list (nreverse tokens) nil new-index nil))))
 
   (should-error
     (parser-generator-lex-analyzer--peek-next-look-ahead))

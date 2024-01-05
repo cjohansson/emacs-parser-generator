@@ -97,12 +97,16 @@
   (unless parser-generator--look-ahead-number
     (error "Missing look-ahead-number when peeking!"))
   (let ((look-ahead)
-        (look-ahead-length 0)
-        (index parser-generator-lex-analyzer--index)
-        (state parser-generation-lex-analyzer--state)
-        (k (max
-            1
-            parser-generator--look-ahead-number)))
+        (look-ahead-length
+         0)
+        (index
+         parser-generator-lex-analyzer--index)
+        (state
+         parser-generation-lex-analyzer--state)
+        (k
+         (max
+          1
+          parser-generator--look-ahead-number)))
     (while (<
             look-ahead-length
             k)
@@ -117,6 +121,8 @@
                     (nth 0 result-list))
                    (move-to-index-flag
                     (nth 1 result-list))
+                   (new-index
+                    (nth 2 result-list))
                    (new-state
                     (nth 3 result-list)))
               (if move-to-index-flag
@@ -129,23 +135,42 @@
                      new-state))
                 (if token
                     (progn
+                      (setq index new-index)
                       (unless (listp (car token))
                         (setq token (list token)))
-                      (dolist (next-look-ahead-item token)
-                        (when (<
-                               look-ahead-length
-                               k)
-                          (push next-look-ahead-item look-ahead)
-                          (setq look-ahead-length (1+ look-ahead-length))
-                          (setq index (cdr (cdr next-look-ahead-item))))))
+                      (let ((token-count (length token))
+                            (token-index 0))
+                        (while
+                            (and
+                             (<
+                              look-ahead-length
+                              k)
+                             (<
+                              token-index
+                              token-count))
+                          (let ((next-look-ahead-item
+                                 (nth token-index token)))
+                            (push
+                             next-look-ahead-item
+                             look-ahead)
+                            (setq
+                             look-ahead-length
+                             (1+ look-ahead-length))
+                            (setq
+                             token-index
+                             (1+ token-index))))))
+
+                  ;; Fill up look-ahead with EOF-identifier if we found nothing
                   (push (list parser-generator--eof-identifier) look-ahead)
                   (setq look-ahead-length (1+ look-ahead-length))
                   (setq index (1+ index))))))
+
         (error
          (error
-          "Lex-analyze failed to peek next look-ahead at %s, error: %s"
+          "Lex-analyze failed to peek next look-ahead at %s, error: %s, look-ahead: %S"
           index
-          error))))
+          error
+          look-ahead))))
     (nreverse look-ahead)))
 
 (defun parser-generator-lex-analyzer--pop-token ()

@@ -4,13 +4,29 @@ Set lexical analysis function by setting variable `parser-generator-lex-analyzer
 
 The lexical analysis is internally indexed on a local variable `parser-generator-lex-analyzer--index` and has it optional state in the local variable `parser-generation-lex-analyzer--state`. The initial values for the index and state can be set in variables `parser-generation-lex-analyzer--index-init` and `parser-generator-lex-analyzer--state-init`.
 
-All parsers expect a list as response from lexical-analysis, the first item in the list should be a list of tokens. The second is "move index"-flag, if it is non-nil it is expected to be a integer representing the index to move the lex-analyzer to. Third item is the new index after the lex. The fourth item is the new state after the lex.
+All parsers expect a list as response from lexical-analysis, the first item in the list should be a list of one or more tokens. The second is "move index"-flag, if it is non-nil it is expected to be a integer representing the index to move the lex-analyzer to and perform a new lex. Third item is the new index after the lex. The fourth item is the new state after the lex.
 
 To enable exporting, the functions need to be specified in a way that the entire body is within the same block, do that using `(let)` or `(progn)` for example.
 
+```emacs-lisp
+  (setq
+   parser-generator-lex-analyzer--function
+   (lambda (index _state)
+     (let* ((string '(("a" 1 . 2) ("a" 2 . 3) ("b" 3 . 4) ("b" 4 . 5)))
+            (string-length (length string))
+            (max-index index)
+            (tokens))
+       (while (and
+               (< (1- index) string-length)
+               (< (1- index) max-index))
+         (push (nth (1- index) string) tokens)
+         (setq index (1+ index)))
+       (list tokens nil index nil))))
+```
+
 ## Token
 
-A token is defined as a list with 3 elements, first is a string or symbol, second is the start index of token in stream and third is the end index of token in stream, second and third element have a dot between them, this structure is to be compatible with Emacs Semantic system. Example token:
+A token is defined as a list with 3 elements, first is a string or symbol, second is the start index (including) of the token in the stream and third is the end index (excluding) of token in stream, second and third element have a dot between them, this structure is to be compatible with Emacs Semantic system. Example token:
 
 ``` emacs-lisp
 '("a" 1 . 2)
@@ -21,6 +37,8 @@ or
 ``` emacs-lisp
 '(a 1 . 2)
 ```
+
+Which is a token that starts before position 1 and ends after position 2.
 
 ## Peek next look-ahead
 
@@ -78,12 +96,13 @@ Returns the next token in stream and moves the lexical analyzer index one point 
      (let* ((string '(("a" 1 . 2) ("b" 2 . 3)))
             (string-length (length string))
             (max-index index)
-            (tokens))
+            (tokens)
+            (new-index))
        (while (and
                (< (1- index) string-length)
                (< (1- index) max-index))
+         (setq new-index (cdr (cdr (nth (1- index) string))))
          (push (nth (1- index) string) tokens)
-         (list (nreverse tokens) nil new-index nil)
          (setq index (1+ index)))
        (list (nreverse tokens) nil new-index nil))))
 (parser-generator-lex-analyzer--reset)
