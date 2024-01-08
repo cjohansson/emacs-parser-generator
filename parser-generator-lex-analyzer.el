@@ -133,22 +133,15 @@
               (nth 0 result-list))
              (new-index
               (nth 2 result-list)))
-        (if token
-            (progn
-              (push
-               token
-               look-ahead)
-              (setq
-               look-ahead-length
-               (1+ look-ahead-length))
-              (setq
-               index
-               new-index))
-
-      ;; Fill up look-ahead with EOF-identifier if we found nothing
-      (push (list parser-generator--eof-identifier) look-ahead)
-      (setq look-ahead-length (1+ look-ahead-length))
-      (setq index (1+ index)))))
+        (push
+         token
+         look-ahead)
+        (setq
+         look-ahead-length
+         (1+ look-ahead-length))
+        (setq
+         index
+         new-index)))
 
     (nreverse look-ahead)))
 
@@ -174,9 +167,9 @@
     (setq-local
      parser-generator-lex-analyzer--state
      new-state)
-    (if token
-        (list token)
-      nil)))
+    (if (equal token (list parser-generator--eof-identifier))
+        nil
+      (list token))))
 
 (defun parser-generator-lex-analyzer--reset ()
   "Reset lex-analyzer."
@@ -228,31 +221,52 @@
 
                   (if tokens
 
-                      (unless (listp (car tokens))
-                        (setq tokens (list tokens)))
+                      (progn
+                        (unless (listp (car tokens))
+                          (setq tokens (list tokens)))
+
+                        (let* ((first-token (car tokens))
+                               (first-token-start (car (cdr first-token)))
+                               (first-token-end (cdr (cdr first-token))))
+                          (when (< index first-token-start)
+                            (let ((token-start index))
+                              (while (< token-start first-token-start)
+                                (puthash
+                                 token-start
+                                 (list
+                                  first-token
+                                  nil
+                                  first-token-end
+                                  nil)
+                                 parser-generator-lex-analyzer--buffered-response)
+                                (setq
+                                 token-start
+                                 (1+ token-start))))))
+
+                        (dolist (token tokens)
+                          (let ((token-start (car (cdr token)))
+                                (token-end (cdr (cdr token))))
+                            (puthash
+                             token-start
+                             (list token nil token-end new-state)
+                             parser-generator-lex-analyzer--buffered-response))))
 
                     ;; Fill up look-ahead with EOF-identifier if we found nothing
-                    (push
-                     (list parser-generator--eof-identifier)
-                     tokens))
-
-                  (dolist (token tokens)
-                    (let ((token-start (car (cdr token)))
-                          (token-end (cdr (cdr token))))
-                      (puthash
-                       token-start
-                       (list token nil token-end new-state)
-                       parser-generator-lex-analyzer--buffered-response)))
+                    (puthash
+                     index
+                     (list (list parser-generator--eof-identifier) nil (1+ index) nil)
+                     parser-generator-lex-analyzer--buffered-response))
 
                   (setq
                    continue
                    nil))))
+
           (error
            (error
             "Lex-analyze failed to get next token at: %s in state: %s, error: %s"
             index
             state
-            (car (cdr error))))))))
+            error))))))
 
   (gethash
    index

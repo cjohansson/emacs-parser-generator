@@ -119,12 +119,11 @@
        (list (nreverse tokens) nil new-index nil))))
   (should-error
    (parser-generator-lex-analyzer--pop-token))
-  (parser-generator-lex-analyzer--reset)
 
   (message "Passed failing lex analysis 2")
 
-  (parser-generator-lex-analyzer--reset)
   (setq parser-generator--look-ahead-number 1)
+  (parser-generator-lex-analyzer--reset)
 
   (should
    (equal

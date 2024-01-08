@@ -353,7 +353,7 @@
                 token
                 `(,symbol ,(match-beginning 0) . ,(match-end 0)))))
             (t (error "Unexpected input at %d!" index)))
-           (list token nil new-index nil) )))))
+           (list token nil nil nil) )))))
 
   (setq
    parser-generator-lex-analyzer--get-function
@@ -561,6 +561,15 @@
         4.0
         translate)))
     (message "Passed correct precedence of 10/5+2 => (10/5)+2 = 4")
+
+    (kill-region (point-min) (point-max))
+    (insert "-55\n")
+    (let ((translate (parser-generator-lr-translate)))
+      (should
+       (equal
+        -55.0
+        translate)))
+    (message "Passed correct precedence of -55")
 
     (kill-region (point-min) (point-max))
     (insert "- 55\n")
