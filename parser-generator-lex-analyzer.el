@@ -25,21 +25,6 @@
   nil
   "Get next token like \='(a b . c) or nil, expects signal if input-tape is invalid.")
 
-(defvar-local
-  parser-generator-lex-analyzer--index
-  nil
-  "Index in lex-analyzer.")
-
-(defvar
-  parser-generator-lex-analyzer--index-init
-  1
-  "Initial value of index.")
-
-(defvar-local
-  parser-generator-lex-analyzer--state
-  nil
-  "State of lex-analyzer.")
-
 (defvar
   parser-generator-lex-analyzer--state-init
   nil
@@ -49,6 +34,36 @@
   parser-generator-lex-analyzer--reset-function
   nil
   "Function used when resetting lex-analyzer.")
+
+(defvar
+  parser-generator-lex-analyzer--index-init
+  1
+  "Initial value of index.")
+
+
+;;; Buffer-Local Variables:
+
+
+(defvar-local
+  parser-generator-lex-analyzer--index
+  nil
+  "Index in lex-analyzer.")
+
+(defvar-local
+  parser-generator-lex-analyzer--state
+  nil
+  "State of lex-analyzer.")
+
+(defvar-local
+  parser-generator-lex-analyzer--state
+  nil
+  "State of lex-analyzer.")
+
+(defvar-local
+  parser-generator-lex-analyzer--buffered-response
+  nil
+  "Buffered tokens of lex-analyzer.")
+
 
 
 ;; Functions
@@ -92,8 +107,6 @@
   "Peek next look-ahead number of tokens via lex-analyzer."
   (unless parser-generator-lex-analyzer--index
     (error "Missing lex-analyzer index when peeking!"))
-  (unless parser-generator-lex-analyzer--function
-    (error "Missing lex-analyzer function when peeking!"))
   (unless parser-generator--look-ahead-number
     (error "Missing look-ahead-number when peeking!"))
   (let ((look-ahead)
@@ -107,129 +120,69 @@
          (max
           1
           parser-generator--look-ahead-number)))
+
     (while (<
             look-ahead-length
             k)
-      (condition-case error
-          (progn
-            (let* ((result-list
-                   (funcall
-                    parser-generator-lex-analyzer--function
-                    index
-                    state))
-                   (token
-                    (nth 0 result-list))
-                   (move-to-index-flag
-                    (nth 1 result-list))
-                   (new-index
-                    (nth 2 result-list))
-                   (new-state
-                    (nth 3 result-list)))
-              (if move-to-index-flag
-                  (progn
-                    (setq
-                     index
-                     move-to-index-flag)
-                    (setq
-                     state
-                     new-state))
-                (if token
-                    (progn
-                      (setq index new-index)
-                      (unless (listp (car token))
-                        (setq token (list token)))
-                      (let ((token-count (length token))
-                            (token-index 0))
-                        (while
-                            (and
-                             (<
-                              look-ahead-length
-                              k)
-                             (<
-                              token-index
-                              token-count))
-                          (let ((next-look-ahead-item
-                                 (nth token-index token)))
-                            (push
-                             next-look-ahead-item
-                             look-ahead)
-                            (setq
-                             look-ahead-length
-                             (1+ look-ahead-length))
-                            (setq
-                             token-index
-                             (1+ token-index))))))
 
-                  ;; Fill up look-ahead with EOF-identifier if we found nothing
-                  (push (list parser-generator--eof-identifier) look-ahead)
-                  (setq look-ahead-length (1+ look-ahead-length))
-                  (setq index (1+ index))))))
+      (let* ((result-list
+              (parser-generator-lex-analyzer--get-buffered-lex
+               index
+               state))
+             (token
+              (nth 0 result-list))
+             (new-index
+              (nth 2 result-list)))
+        (if token
+            (progn
+              (push
+               token
+               look-ahead)
+              (setq
+               look-ahead-length
+               (1+ look-ahead-length))
+              (setq
+               index
+               new-index))
 
-        (error
-         (error
-          "Lex-analyze failed to peek next look-ahead at %s, error: %s, look-ahead: %S"
-          index
-          error
-          look-ahead))))
+      ;; Fill up look-ahead with EOF-identifier if we found nothing
+      (push (list parser-generator--eof-identifier) look-ahead)
+      (setq look-ahead-length (1+ look-ahead-length))
+      (setq index (1+ index)))))
+
     (nreverse look-ahead)))
 
 (defun parser-generator-lex-analyzer--pop-token ()
   "Pop next token via lex-analyzer."
   (unless parser-generator-lex-analyzer--index
     (error "Missing lex-analyzer index when popping!"))
-  (unless parser-generator-lex-analyzer--function
-    (error "Missing lex-analyzer function when popping!"))
   (unless parser-generator--look-ahead-number
     (error "Missing look-ahead-number when popping!"))
-  (let ((continue t)
-        (tokens))
-    (while continue
-      (condition-case error
-          (progn
-            (let* ((result-list
-                    (funcall
-                     parser-generator-lex-analyzer--function
-                     parser-generator-lex-analyzer--index
-                     parser-generator-lex-analyzer--state))
-                   (token
-                    (nth 0 result-list))
-                   (move-to-index-flag
-                    (nth 1 result-list))
-                   (new-index
-                    (nth 2 result-list))
-                   (new-state
-                    (nth 3 result-list)))
-              (if move-to-index-flag
-                  (progn
-                    (setq-local
-                     parser-generator-lex-analyzer--index
-                     move-to-index-flag)
-                    (setq-local
-                     parser-generator-lex-analyzer--state
-                     new-state))
-                (setq
-                 parser-generator-lex-analyzer--index
-                 new-index)
-                (when token
-                  (unless (listp (car token))
-                    (setq token (list token)))
-                  (let ((first-token (car token)))
-                    (push
-                     first-token
-                     tokens)))
-                (setq
-                 continue
-                 nil))))
-        (error
-         (error
-          "Lex-analyze failed to pop token at %s %s, error: %s"
-          parser-generator-lex-analyzer--index
-          parser-generator-lex-analyzer--state
-          (car (cdr error))))))
-    (nreverse tokens)))
+  (let* ((result-list
+          (parser-generator-lex-analyzer--get-buffered-lex
+           parser-generator-lex-analyzer--index
+           parser-generator-lex-analyzer--state))
+         (token
+          (nth 0 result-list))
+         (new-index
+          (nth 2 result-list))
+         (new-state
+          (nth 3 result-list)))
+    (setq-local
+     parser-generator-lex-analyzer--index
+     new-index)
+    (setq-local
+     parser-generator-lex-analyzer--state
+     new-state)
+    (if token
+        (list token)
+      nil)))
 
 (defun parser-generator-lex-analyzer--reset ()
   "Reset lex-analyzer."
+  (setq
+   parser-generator-lex-analyzer--buffered-response
+   (make-hash-table :test 'equal))
   (setq
    parser-generator-lex-analyzer--index
    parser-generator-lex-analyzer--index-init)
@@ -238,6 +191,72 @@
    parser-generator-lex-analyzer--state-init)
   (when parser-generator-lex-analyzer--reset-function
     (funcall parser-generator-lex-analyzer--reset-function)))
+
+(defun parser-generator-lex-analyzer--get-buffered-lex (index state)
+  "Get next token in stream, use buffer to only call function when needed."
+
+  (unless (gethash
+           index
+           parser-generator-lex-analyzer--buffered-response)
+    (let ((continue t)
+          (tmp-index index)
+          (tmp-state state))
+      (unless parser-generator-lex-analyzer--function
+        (error "Missing lex-analyzer function!"))
+      (while continue
+        (condition-case error
+            (progn
+              (let* ((result-list
+                      (funcall
+                       parser-generator-lex-analyzer--function
+                       tmp-index
+                       tmp-state))
+                     (tokens
+                      (nth 0 result-list))
+                     (move-to-index-flag
+                      (nth 1 result-list))
+                     (new-state
+                      (nth 3 result-list)))
+                (if move-to-index-flag
+                    (progn
+                      (setq
+                       tmp-index
+                       move-to-index-flag)
+                      (setq
+                       tmp-state
+                       new-state))
+
+                  (if tokens
+
+                      (unless (listp (car tokens))
+                        (setq tokens (list tokens)))
+
+                    ;; Fill up look-ahead with EOF-identifier if we found nothing
+                    (push
+                     (list parser-generator--eof-identifier)
+                     tokens))
+
+                  (dolist (token tokens)
+                    (let ((token-start (car (cdr token)))
+                          (token-end (cdr (cdr token))))
+                      (puthash
+                       token-start
+                       (list token nil token-end new-state)
+                       parser-generator-lex-analyzer--buffered-response)))
+
+                  (setq
+                   continue
+                   nil))))
+          (error
+           (error
+            "Lex-analyze failed to get next token at: %s in state: %s, error: %s"
+            index
+            state
+            (car (cdr error))))))))
+
+  (gethash
+   index
+   parser-generator-lex-analyzer--buffered-response))
 
 
 (provide 'parser-generator-lex-analyzer)

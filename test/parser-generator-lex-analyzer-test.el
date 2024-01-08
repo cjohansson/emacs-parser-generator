@@ -86,6 +86,7 @@
          (setq index (1+ index)))
        (list (nreverse tokens) nil new-index nil))))
 
+  (parser-generator-lex-analyzer--reset)
   (should-error
     (parser-generator-lex-analyzer--peek-next-look-ahead))
 
