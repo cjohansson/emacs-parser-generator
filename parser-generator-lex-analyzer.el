@@ -167,9 +167,7 @@
     (setq-local
      parser-generator-lex-analyzer--state
      new-state)
-    (if (equal token (list parser-generator--eof-identifier))
-        nil
-      (list token))))
+    (list token)))
 
 (defun parser-generator-lex-analyzer--reset ()
   "Reset lex-analyzer."
