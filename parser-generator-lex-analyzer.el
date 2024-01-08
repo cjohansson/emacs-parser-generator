@@ -132,7 +132,9 @@
              (token
               (nth 0 result-list))
              (new-index
-              (nth 2 result-list)))
+              (nth 2 result-list))
+             (new-state
+              (nth 3 result-list)))
         (push
          token
          look-ahead)
@@ -141,7 +143,10 @@
          (1+ look-ahead-length))
         (setq
          index
-         new-index)))
+         new-index)
+        (setq
+         state
+         new-state)))
 
     (nreverse look-ahead)))
 

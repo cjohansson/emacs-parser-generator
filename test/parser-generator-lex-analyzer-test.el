@@ -88,7 +88,58 @@
 
   (parser-generator-lex-analyzer--reset)
   (should-error
-    (parser-generator-lex-analyzer--peek-next-look-ahead))
+   (parser-generator-lex-analyzer--peek-next-look-ahead))
+
+  (setq parser-generator--look-ahead-number 6)
+  (setq
+   parser-generator-lex-analyzer--function
+   (lambda (index state)
+     (let* ((string '(("a" 1 . 2) ("b" 2 . 3) ("c" 3 . 4) ("d" 4 . 5) ("e" 5 . 6)))
+            (string-length (length string))
+            (max-index index)
+            (tokens)
+            (new-index)
+            (new-state)
+            (next-token))
+       (while (and
+               (< (1- index) string-length)
+               (< (1- index) max-index))
+         (setq next-token (nth (1- index) string))
+         (cond
+          ((equal state nil)
+           (if (string= (car next-token) "c")
+               (progn
+                 (push next-token tokens)
+                 (setq index (1+ index))
+                 (setq next-token (nth (1- index) string))
+                 (push next-token tokens)
+                 (setq index (1+ index))
+                 (setq new-state (list 'epislon)))
+             (if (string= (car next-token) "e")
+                 (error "Invalid token: %s" next-token)
+               (setq next-token (nth (1- index) string))
+               (when (string= (car next-token) "d")
+                 (error "Invalid token: %s" next-token))
+               (setq new-index (cdr (cdr (nth (1- index) string))))
+               (push next-token tokens)
+               (setq index (1+ index)))))
+          ((equal state (list 'epislon))
+           (setq next-token (nth (1- index) string))
+           (when (string= (car next-token) "d")
+             (error "Invalid token: %s" next-token))
+           (setq new-index (cdr (cdr (nth (1- index) string))))
+           (push next-token tokens)
+           (setq index (1+ index)))
+          (t
+           (error "Invalid state: %s" state))))
+       (list (nreverse tokens) nil nil new-state))))
+  (parser-generator-lex-analyzer--reset)
+  (should
+   (equal
+    '(("a" 1 . 2) ("b" 2 . 3) ("c" 3 . 4) ("d" 4 . 5) ("e" 5 . 6) ($))
+    (parser-generator-lex-analyzer--peek-next-look-ahead)))
+
+  (message "Passed peek for state-based lexer")
 
   (message "Ended tests for (parser-generator-lex-analyzer--peek-next-look-ahead)"))
 
@@ -137,6 +188,77 @@
    (equal
     '(($))
     (parser-generator-lex-analyzer--pop-token)))
+
+  (setq parser-generator--look-ahead-number 1)
+  (setq
+   parser-generator-lex-analyzer--function
+   (lambda (index state)
+     (let* ((string '(("a" 1 . 2) ("b" 2 . 3) ("c" 3 . 4) ("d" 4 . 5) ("e" 5 . 6)))
+            (string-length (length string))
+            (max-index index)
+            (tokens)
+            (new-index)
+            (new-state)
+            (next-token))
+       (while (and
+               (< (1- index) string-length)
+               (< (1- index) max-index))
+         (setq next-token (nth (1- index) string))
+         (cond
+          ((equal state nil)
+           (if (string= (car next-token) "c")
+               (progn
+                 (push next-token tokens)
+                 (setq index (1+ index))
+                 (setq next-token (nth (1- index) string))
+                 (push next-token tokens)
+                 (setq index (1+ index))
+                 (setq new-state (list 'epislon)))
+             (if (string= (car next-token) "e")
+                 (error "Invalid token: %s" next-token)
+               (setq next-token (nth (1- index) string))
+               (when (string= (car next-token) "d")
+                 (error "Invalid token: %s" next-token))
+               (setq new-index (cdr (cdr (nth (1- index) string))))
+               (push next-token tokens)
+               (setq index (1+ index)))))
+          ((equal state (list 'epislon))
+           (setq next-token (nth (1- index) string))
+           (when (string= (car next-token) "d")
+             (error "Invalid token: %s" next-token))
+           (setq new-index (cdr (cdr (nth (1- index) string))))
+           (push next-token tokens)
+           (setq index (1+ index)))
+          (t
+           (error "Invalid state: %s" state))))
+       (list (nreverse tokens) nil nil new-state))))
+  (parser-generator-lex-analyzer--reset)
+  (should
+   (equal
+    '(("a" 1 . 2))
+    (parser-generator-lex-analyzer--pop-token)))
+  (should
+   (equal
+    '(("b" 2 . 3))
+    (parser-generator-lex-analyzer--pop-token)))
+  (should
+   (equal
+    '(("c" 3 . 4))
+    (parser-generator-lex-analyzer--pop-token)))
+  (should
+   (equal
+    '(("d" 4 . 5))
+    (parser-generator-lex-analyzer--pop-token)))
+  (should
+   (equal
+    '(("e" 5 . 6))
+    (parser-generator-lex-analyzer--pop-token)))
+  (should
+   (equal
+    '(($))
+    (parser-generator-lex-analyzer--pop-token)))
+
+  (message "Passed pop for state-based lexer")
 
   (message "Ended tests for (parser-generator-lex-analyzer--pop-token)"))
 
