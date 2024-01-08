@@ -8,7 +8,12 @@ Functions (with validations) to set global variables:
 * parser-generator--global-attributes
 * parser-generator--global-declaration
 
-State-based lex-analyzer
+## Lex-analyzer
+
+* State-based lex-analyzer
+* Verify that parser-generator-lex-analyzer--index is used in exported lex-analyzers
+* Verify that parser-generator-lex-analyzer--state-init is used in exported lex-analyzers
+* Use buffer when lexing in case more tokens are return than what are needed
 
 ## LR-Parser
 
