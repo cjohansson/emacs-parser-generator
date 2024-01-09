@@ -45,6 +45,11 @@
 
 
 (defvar-local
+  parser-generator-lex-analyzer--buffered-response
+  nil
+  "Buffered tokens of lex-analyzer.")
+
+(defvar-local
   parser-generator-lex-analyzer--index
   nil
   "Index in lex-analyzer.")
@@ -53,17 +58,6 @@
   parser-generator-lex-analyzer--state
   nil
   "State of lex-analyzer.")
-
-(defvar-local
-  parser-generator-lex-analyzer--state
-  nil
-  "State of lex-analyzer.")
-
-(defvar-local
-  parser-generator-lex-analyzer--buffered-response
-  nil
-  "Buffered tokens of lex-analyzer.")
-
 
 
 ;; Functions

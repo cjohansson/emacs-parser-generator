@@ -318,8 +318,7 @@
    parser-generator-lex-analyzer--function
    (lambda (index _state)
      (with-current-buffer "*buffer*"
-       (let ((token)
-             (new-index))
+       (let ((token))
          (when
              (<
               index
@@ -336,9 +335,6 @@
            (cond
             ((looking-at "\\([0-9]+\\.[0-9]+\\|[0-9]+\\)")
              (setq
-              new-index
-              (match-end 0))
-             (setq
               token
               `(NUM ,(match-beginning 0) . ,(match-end 0))))
             ((looking-at "\\(\\+\\|-\\|*\\|/\\|\\^\\|)\\|(\\|\n\\)")
@@ -346,9 +342,6 @@
                     (buffer-substring-no-properties
                      (match-beginning 0)
                      (match-end 0))))
-               (setq
-                new-index
-                (match-end 0))
                (setq
                 token
                 `(,symbol ,(match-beginning 0) . ,(match-end 0)))))
