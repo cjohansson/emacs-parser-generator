@@ -212,7 +212,7 @@
                      (move-to-index-flag
                       (nth 1 result-list))
                      (new-state
-                      (nth 3 result-list)))
+                      (nth 2 result-list)))
                 (if move-to-index-flag
                     (progn
                       (setq

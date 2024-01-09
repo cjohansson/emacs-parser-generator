@@ -11,11 +11,9 @@ Functions (with validations) to set global variables:
 ## Lex-analyzer
 
 * State-based lex-analyzer
-* Added unit test for state-based lex-analyzer
-* Change lex-function return value count
-* Verify that parser-generator-lex-analyzer--index is used in exported lex-analyzers
-* Verify that parser-generator-lex-analyzer--state-init is used in exported lex-analyzers
-* Use buffer when lexing in exported parsers as well
+** Verify that parser-generator-lex-analyzer--index is used in exported lex-analyzers
+** Verify that parser-generator-lex-analyzer--state-init is used in exported lex-analyzers
+** Use buffered lexer when lexing in exported parsers as well
 
 ## LR-Parser
 

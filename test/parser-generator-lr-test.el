@@ -353,7 +353,7 @@
                 token
                 `(,symbol ,(match-beginning 0) . ,(match-end 0)))))
             (t (error "Unexpected input at %d!" index)))
-           (list token nil nil nil) )))))
+           (list token))))))
 
   (setq
    parser-generator-lex-analyzer--get-function

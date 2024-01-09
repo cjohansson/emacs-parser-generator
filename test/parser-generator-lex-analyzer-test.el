@@ -38,7 +38,7 @@
          (setq new-index (cdr (cdr (nth (1- index) string))))
          (push next-token tokens)
          (setq index (1+ index)))
-       (list (nreverse tokens) nil new-index nil))))
+       (list (nreverse tokens)))))
   (should-error
    (parser-generator-lex-analyzer--peek-next-look-ahead))
   (parser-generator-lex-analyzer--reset)
@@ -84,7 +84,7 @@
          (setq new-index (cdr (cdr (nth (1- index) string))))
          (push next-token tokens)
          (setq index (1+ index)))
-       (list (nreverse tokens) nil new-index nil))))
+       (list (nreverse tokens)))))
 
   (parser-generator-lex-analyzer--reset)
   (should-error
@@ -132,7 +132,7 @@
            (setq index (1+ index)))
           (t
            (error "Invalid state: %s" state))))
-       (list (nreverse tokens) nil nil new-state))))
+       (list (nreverse tokens) nil new-state))))
   (parser-generator-lex-analyzer--reset)
   (should
    (equal
@@ -167,7 +167,7 @@
          (push (nth (1- index) string) tokens)
          (setq new-index (cdr (cdr (nth (1- index) string))))
          (setq index (1+ index)))
-       (list (nreverse tokens) nil new-index nil))))
+       (list (nreverse tokens)))))
   (should-error
    (parser-generator-lex-analyzer--pop-token))
 
@@ -231,7 +231,7 @@
            (setq index (1+ index)))
           (t
            (error "Invalid state: %s" state))))
-       (list (nreverse tokens) nil nil new-state))))
+       (list (nreverse tokens) nil new-state))))
   (parser-generator-lex-analyzer--reset)
   (should
    (equal
