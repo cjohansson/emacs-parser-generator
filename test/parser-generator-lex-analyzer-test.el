@@ -1,6 +1,6 @@
 ;;; parser-generator-lex-analyzer-test.el --- Tests for lex-analyzer -*- lexical-binding: t -*-
 
-;; Copyright (C) 2020-2022  Free Software Foundation, Inc.
+;; Copyright (C) 2020-2024  Free Software Foundation, Inc.
 
 
 ;;; Commentary:

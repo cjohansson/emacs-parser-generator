@@ -1,6 +1,6 @@
 ;; parser-generator-lr-test.el --- Tests for LR(k) Parser Generator -*- lexical-binding: t -*-
 
-;; Copyright (C) 2020-2022  Free Software Foundation, Inc.
+;; Copyright (C) 2020-2024  Free Software Foundation, Inc.
 
 
 ;;; Commentary:
