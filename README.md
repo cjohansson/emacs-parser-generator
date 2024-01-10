@@ -9,7 +9,7 @@ At the moment it is possible to generate canonical LR(k) parsers using this libr
 
 ## Lexical Analysis
 
-We use a regular-language based lexical analyzer that can be implemented by a finite-state-machine (FSM). Read more [here](docs/Lexical-Analysis.md).
+We use a regular-language based lexical analyzer that can be implemented by a finite-state-machine (FSM) that supports states. Read more [here](docs/Lexical-Analysis.md).
 
 ## Syntax Analysis / Parser
 
