@@ -405,7 +405,7 @@
                                   first-token
                                   nil
                                   first-token-end
-                                  nil)
+                                  new-state)
                                  %s-lex-analyzer--buffered-response)
                                 (setq
                                  token-start
@@ -564,7 +564,9 @@
     translation
     translation-symbol-table-list
     history)
-  \"Perform a LR-parse via lex-analyzer, optionally PERFORM-SDT means to perform syntax-directed translation and optioanlly start at INPUT-TAPE-INDEX with PUSHDOWN-LIST, OUTPUT, TRANSLATION, TRANSLATION-SYMBOL-TABLE-LIST and HISTORY.\"
+  \"Perform a LR-parse via lex-analyzer, optionally PERFORM-SDT means to perform
+  syntax-directed translation and optioanlly start at INPUT-TAPE-INDEX with
+  PUSHDOWN-LIST, OUTPUT, TRANSLATION, TRANSLATION-SYMBOL-TABLE-LIST and HISTORY.\"
   (unless input-tape-index
     (setq input-tape-index 1))
   (unless pushdown-list
@@ -1021,7 +1023,8 @@
      output
      translation
      history)
-  \"Perform a LR-parse via lex-analyzer, optionally at INPUT-TAPE-INDEX with PUSHDOWN-LIST, OUTPUT, TRANSLATION and HISTORY.\"
+  \"Perform a LR-parse via lex-analyzer, optionally at INPUT-TAPE-INDEX with
+  PUSHDOWN-LIST, OUTPUT, TRANSLATION and HISTORY.\"
   (let ((result
          (%s--parse
           nil
@@ -1044,7 +1047,8 @@
      output
      translation
      history)
-  \"Perform a LR-parse via lex-analyzer, optionally at INPUT-TAPE-INDEX with PUSHDOWN-LIST, OUTPUT, TRANSLATION and HISTORY.\"
+  \"Perform a LR-parse via lex-analyzer, optionally at INPUT-TAPE-INDEX with
+  PUSHDOWN-LIST, OUTPUT, TRANSLATION and HISTORY.\"
   (let ((result
          (%s--parse
           t

@@ -60,6 +60,7 @@
   (let ((export (parser-generator-ll-export-to-elisp "ba")))
     (with-temp-buffer
       (insert export)
+      (write-file "test-ll-2-exported-parser.el")
       (eval-buffer)
       (should
        (equal
@@ -152,6 +153,7 @@
   (let ((export (parser-generator-ll-export-to-elisp "ba3")))
     (with-temp-buffer
       (insert export)
+      (write-file "test-ll-1-exported-parser.el")
       (eval-buffer)
       (should
        (equal

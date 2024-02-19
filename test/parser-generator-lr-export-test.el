@@ -263,6 +263,7 @@
         (parser-generator--debug
          (message "export:\n%S\n" export))
         (insert export)
+        (write-file "test-lr-1-exported-parser.el")
         (eval-buffer)
         (should
          (equal
@@ -333,6 +334,7 @@
 
     (with-temp-buffer
       (insert export)
+      (write-file "test-lr-0-exported-parser.el")
       (eval-buffer)
       (should
        (equal

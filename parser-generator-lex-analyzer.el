@@ -234,7 +234,7 @@
                                   first-token
                                   nil
                                   first-token-end
-                                  nil)
+                                  new-state)
                                  parser-generator-lex-analyzer--buffered-response)
                                 (setq
                                  token-start
