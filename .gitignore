@@ -3,3 +3,4 @@
 flycheck_*
 .tern-port
 *.elc
+test-*.el*
