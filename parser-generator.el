@@ -136,6 +136,11 @@
   nil
   "Hash-table of attributes related to productions.")
 
+(defvar
+  parser-generator--last-grammar-error
+  nil
+  "Error message of last grammar.")
+
 
 ;; Macros
 
@@ -687,7 +692,7 @@ Each element is a list: (list key value), optionally UN-SORTED."
 (defun parser-generator-set-grammar (G)
   "Set grammar G.."
   (unless (parser-generator--valid-grammar-p G)
-    (error "Invalid grammar G! %s" G))
+    (error "Invalid grammar G! Error %s" (parser-generator--get-last-grammar-error)))
   (setq parser-generator--grammar G))
 
 (defun parser-generator-process-grammar ()
@@ -706,7 +711,9 @@ Each element is a list: (list key value), optionally UN-SORTED."
   (unless
       (parser-generator--valid-grammar-p
        parser-generator--grammar)
-    (error "Invalid grammar G!"))
+    (error
+     "Invalid grammar! Error: %s"
+     (parser-generator--get-last-grammar-error)))
   (parser-generator--load-symbols)
   (message "\n;; Completed process of grammar\n"))
 
@@ -815,17 +822,28 @@ element in B in lexicographic order."
   "Return whether SYMBOL is the EOF identifier or not."
   (eq symbol parser-generator--eof-identifier))
 
+(defun parser-generator--get-last-grammar-error ()
+  "Get last grammar validation error, if any otherwise nil."
+  parser-generator--last-grammar-error)
+
 (defun parser-generator--valid-grammar-p (G)
   "Return if grammar G is valid or not.
 Grammar should contain list with 4 elements: non-terminals (N), terminals (T),
 productions (P), start (S) where N, T and P
 are lists containing symbols and/or strings and S is a symbol or string."
+  (setq parser-generator--last-grammar-error nil)
   (let ((valid-p t))
     (unless (listp G)
+      (setq
+       parser-generator--last-grammar-error
+       "Grammar is not a list!")
       (setq valid-p nil))
     (when (and
            valid-p
            (not (= (length G) 4)))
+      (setq
+       parser-generator--last-grammar-error
+       "Grammar is not a list of length 4! (non-terminals, terminals, productions, start)")
       (setq valid-p nil))
     (when (and
            valid-p
@@ -836,6 +854,26 @@ are lists containing symbols and/or strings and S is a symbol or string."
             (not (or
                   (stringp (nth 3 G))
                   (symbolp (nth 3 G))))))
+      (cond
+       ((not (listp (nth 0 G)))
+        (setq
+         parser-generator--last-grammar-error
+         "The grammars first element, the list of non-terminals, is not a list!"))
+       ((not (listp (nth 1 G)))
+        (setq
+         parser-generator--last-grammar-error
+         "The grammars second element, the list of terminals, is not a list!"))
+       ((not (listp (nth 2 G)))
+        (setq
+         parser-generator--last-grammar-error
+         "The grammars third element, the list of productions, is not a list!"))
+       ((not
+         (or
+          (stringp (nth 3 G))
+          (symbolp (nth 3 G))))
+        (setq
+         parser-generator--last-grammar-error
+         "The grammars fourth element, the grammar start, is neither a string or symbol!")))
       (setq valid-p nil))
     (when valid-p
 
@@ -852,6 +890,11 @@ are lists containing symbols and/or strings and S is a symbol or string."
                   (or
                    (symbolp non-terminal)
                    (stringp non-terminal))
+                (setq
+                 parser-generator--last-grammar-error
+                 (format
+                  "Non-terminal %S is neither a string or a symbol!"
+                  non-terminal))
                 (setq valid-p nil)))
             (setq
              non-terminal-index
@@ -870,6 +913,11 @@ are lists containing symbols and/or strings and S is a symbol or string."
                   (or
                    (symbolp terminal)
                    (stringp terminal))
+                (setq
+                 parser-generator--last-grammar-error
+                 (format
+                  "Terminal %S is neither a string or a symbol!"
+                  terminal))
                 (setq valid-p nil)))
             (setq
              terminal-index
@@ -891,6 +939,11 @@ are lists containing symbols and/or strings and S is a symbol or string."
               (unless
                   (parser-generator--valid-production-p
                    production)
+                (setq
+                 parser-generator--last-grammar-error
+                 (format
+                  "Production %S is not a valid production!"
+                  production))
                 (setq valid-p nil)))
             (setq
              production-index
@@ -901,6 +954,11 @@ are lists containing symbols and/or strings and S is a symbol or string."
         (when (and
                valid-p
                (not (or (stringp start) (symbolp start))))
+          (setq
+           parser-generator--last-grammar-error
+           (format
+            "Start %S is neither a string or a symbol!"
+            start))
           (setq valid-p nil))))
     valid-p))
 

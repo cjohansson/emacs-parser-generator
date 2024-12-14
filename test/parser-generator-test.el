@@ -642,41 +642,81 @@
    (equal
     nil
     (parser-generator--valid-grammar-p '((A B C) ("a" "b" "c") ((A "a")) (A)))))
+  (message "Passed invalid grammar 1")
+  (should
+   (equal
+    (parser-generator--get-last-grammar-error)
+    "The grammars fourth element, the grammar start, is neither a string or symbol!"))
 
   (should
    (equal
     nil
     (parser-generator--valid-grammar-p '((A B C) (("a" "b") "c") ((A "a")) A))))
+  (message "Passed invalid grammar 2")
+  (should
+   (equal
+    (parser-generator--get-last-grammar-error)
+    "Terminal (\"a\" \"b\") is neither a string or a symbol!"))
 
   (should
    (equal
     nil
     (parser-generator--valid-grammar-p '(((A B) C) ("a" "b" "c") ((A "a")) A))))
+  (message "Passed invalid grammar 3")
+  (should
+   (equal
+    (parser-generator--get-last-grammar-error)
+    "Non-terminal (A B) is neither a string or a symbol!"))
 
   (should
    (equal
     nil
     (parser-generator--valid-grammar-p '(((A B) C) ("a" "b" "c") ((A)) A))))
+  (message "Passed invalid grammar 4")
+  (should
+   (equal
+    (parser-generator--get-last-grammar-error)
+    "Non-terminal (A B) is neither a string or a symbol!"))
 
   (should
    (equal
     nil
     (parser-generator--valid-grammar-p "A")))
+  (message "Passed invalid grammar 5")
+  (should
+   (equal
+    (parser-generator--get-last-grammar-error)
+    "Grammar is not a list!"))
 
   (should
    (equal
     nil
     (parser-generator--valid-grammar-p '(A B C))))
+  (message "Passed invalid grammar 6")
+  (should
+   (equal
+    (parser-generator--get-last-grammar-error)
+    "Grammar is not a list of length 4! (non-terminals, terminals, productions, start)"))
 
   (should
    (equal
     nil
     (parser-generator--valid-grammar-p '((A B)))))
+  (message "Passed invalid grammar 7")
+  (should
+   (equal
+    (parser-generator--get-last-grammar-error)
+    "Grammar is not a list of length 4! (non-terminals, terminals, productions, start)"))
 
   (should
    (equal
     nil
     (parser-generator--valid-grammar-p '((A B C) (a (b c) "c") (A ("a" "b") (a b)) (B b) (C "c")))))
+  (message "Passed invalid grammar 8")
+  (should
+   (equal
+    (parser-generator--get-last-grammar-error)
+    "Grammar is not a list of length 4! (non-terminals, terminals, productions, start)"))
 
   (should
    (equal
@@ -687,6 +727,11 @@
    (equal
     nil
     (parser-generator--valid-grammar-p '((A B C) ("a" "b" "c") ((A "a" (lambda(a) (message "Was here: %s" a)) "b")) A))))
+  (message "Passed invalid grammar 9")
+  (should
+   (equal
+    (parser-generator--get-last-grammar-error)
+    "Production (A \"a\" (lambda (a) (message \"Was here: %s\" a)) \"b\") is not a valid production!"))
 
   (should
    (equal
