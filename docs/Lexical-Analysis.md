@@ -122,8 +122,54 @@ Returns the next token in stream and moves the lexical analyzer index one point 
   (parser-generator-lex-analyzer--pop-token)))
 ```
 
-## Get Token
+## Get Function
 
 Specified in the variable `parser-generator-lex-analyzer--get-function` as a function. Returns the semantical value for the token. For instance the token might be a `('T_STRING 1 . 5)` but it's semantical value might be `"Emacs"`, another example `('T_INTEGER 1 . 2)` might be `25`, another example `('T_BOOLEAN 1 . 4)` might be `nil` or `t`.
+
+``` emacs-lisp
+(require 'ert)
+
+;; Example of semantical value stored in the token itself
+(setq
+ parser-generator-lex-analyzer--get-function
+ (lambda (token)
+   (car token)))
+(should
+ (equal
+  (parser-generator-lex-analyzer--get-function '("a" 1 . 2))
+  "a"))
+(should
+ (equal
+  (parser-generator-lex-analyzer--get-function '("DEF" 1 . 4))
+  "DEF"))
+(should
+ (equal
+  (parser-generator-lex-analyzer--get-function '(3 1 . 2))
+  3))
+(should
+ (equal
+  (parser-generator-lex-analyzer--get-function '(nil 1 . 2))
+  nil))
+(should
+ (equal
+  (parser-generator-lex-analyzer--get-function '(t 1 . 2))
+  t))
+(should
+ (equal
+  (parser-generator-lex-analyzer--get-function '(t 1 . 2))
+  t))
+
+;; Example of semantical value stored in a separate buffer
+(with-temp-buffer
+  (insert "Abraham Lincoln")
+  (setq
+   parser-generator-lex-analyzer--get-function
+   (lambda (token)
+     (buffer-substring-no-properties (car (cdr token)) (cdr (cdr token)))))
+  (should
+   (equal
+    (parser-generator-lex-analyzer--get-function '(T_STRING 1 . 8))
+    "Abraham")))
+```
 
 [Back to start](../../../)

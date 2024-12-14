@@ -250,9 +250,57 @@
 
   (message "Ended tests for (parser-generator-lex-analyzer--pop-token)"))
 
+(defun parser-generator-lex-analyzer-test--get-function ()
+  "Test `parser-generator-lex-analyzer--get-function'."
+  (message "Starting tests for (parser-generator-lex-analyzer--get-function)")
+
+  (setq
+   parser-generator-lex-analyzer--get-function
+   (lambda (token)
+     (car token)))
+
+  (should
+   (equal
+    (parser-generator-lex-analyzer--get-function '("a" 1 . 2))
+    "a"))
+  (should
+   (equal
+    (parser-generator-lex-analyzer--get-function '("DEF" 1 . 4))
+    "DEF"))
+  (should
+   (equal
+    (parser-generator-lex-analyzer--get-function '(3 1 . 2))
+    3))
+  (should
+   (equal
+    (parser-generator-lex-analyzer--get-function '(nil 1 . 2))
+    nil))
+  (should
+   (equal
+    (parser-generator-lex-analyzer--get-function '(t 1 . 2))
+    t))
+  (should
+   (equal
+    (parser-generator-lex-analyzer--get-function '(t 1 . 2))
+    t))
+
+  (with-temp-buffer
+    (insert "Abraham Lincoln")
+    (setq
+     parser-generator-lex-analyzer--get-function
+     (lambda (token)
+       (buffer-substring-no-properties (car (cdr token)) (cdr (cdr token)))))
+    (should
+     (equal
+      (parser-generator-lex-analyzer--get-function '(T_STRING 1 . 8))
+      "Abraham")))
+
+  (message "Ended tests for (parser-generator-lex-analyzer--get-function)"))
+
 (defun parser-generator-lex-analyzer-test ()
   "Run test."
   ;; (setq debug-on-error t)
+  (parser-generator-lex-analyzer-test--get-function)
   (parser-generator-lex-analyzer-test--peek-next-look-ahead)
   (parser-generator-lex-analyzer-test--pop-token))
 
