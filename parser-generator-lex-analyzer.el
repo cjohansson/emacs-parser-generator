@@ -18,7 +18,7 @@
 (defvar
   parser-generator-lex-analyzer--get-function
   nil
-  "Get token contents.  Anything other than nil is expected.")
+  "Get token contents.  Any return is valid even nil.")
 
 (defvar
   parser-generator-lex-analyzer--function
@@ -89,12 +89,6 @@
           (car (cdr error)))
          token
          (car (cdr error))))))
-    (unless meta-information
-      (signal
-       'error
-       (list
-        (format "Could not find any token meta-information for: %s" token)
-        token)))
     meta-information))
 
 (defun parser-generator-lex-analyzer--peek-next-look-ahead ()

@@ -122,4 +122,8 @@ Returns the next token in stream and moves the lexical analyzer index one point 
   (parser-generator-lex-analyzer--pop-token)))
 ```
 
+## Get Token
+
+Specified in the variable `parser-generator-lex-analyzer--get-function` as a function. Returns the semantical value for the token. For instance the token might be a `('T_STRING 1 . 5)` but it's semantical value might be `"Emacs"`, another example `('T_INTEGER 1 . 2)` might be `25`, another example `('T_BOOLEAN 1 . 4)` might be `nil` or `t`.
+
 [Back to start](../../../)
