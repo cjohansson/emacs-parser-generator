@@ -218,8 +218,6 @@
         \"Lex-analyze failed to get token meta-data of %s, error: %s\"
         token
         (car (cdr error)))))
-    (unless meta-information
-      (error \"Could not find any token meta-information for: %s\" token))
     meta-information))\n")
 
       ;; Lex-Analyzer Reset Function
