@@ -523,12 +523,6 @@ Each element is a list: (list key value), optionally UN-SORTED."
                  (nth
                   rhs-element-index
                   rhs))
-                (when (functionp rhs-element)
-                  (error
-                   "Unexpected function element %s in RHS %s of LHS %s"
-                   rhs-element
-                   rhs
-                   lhs))
 
                 ;; Potentially each symbol in RHS could be a separate RHS
                 (unless (listp rhs-element)

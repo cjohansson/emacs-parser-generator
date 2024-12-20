@@ -626,6 +626,31 @@
    '(%prec))
   (parser-generator-process-grammar)
 
+  (parser-generator-set-grammar '((A B C) (stringp if xor) ((A (stringp (lambda() (message "Was there"))) (stringp if xor (lambda() (message "Was here"))))) A))
+  (parser-generator-process-grammar)
+  (should
+   (equal
+    t
+    (parser-generator--valid-grammar-p '((A B C) (stringp if xor) ((A (stringp (lambda() (message "Was there"))) (stringp if xor (lambda() (message "Was here"))))) A))))
+  (should
+   (equal
+    '(A B C)
+    (parser-generator--get-grammar-non-terminals)))
+  (should
+   (equal
+    '(stringp if xor)
+    (parser-generator--get-grammar-terminals)))
+  (message "parser-generator--table-translations: %S" parser-generator--table-translations)
+  (should
+   (equal
+    '(lambda nil (message "Was there"))
+    (parser-generator--get-grammar-translation-by-number 0)))
+  (should
+   (equal
+    '(lambda nil (message "Was here"))
+    (parser-generator--get-grammar-translation-by-number 1)))
+  (message "Passed valid grammar 0")
+
   (should
    (equal
     t
